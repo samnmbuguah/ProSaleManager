@@ -125,14 +125,14 @@ export function registerRoutes(app: Express) {
 
       const salesData = await db
         .select({
-          date: sql<string>`date_trunc(${period}, ${sales.createdAt})::date`,
-          total: sql<string>`COALESCE(SUM(${sales.total}), 0)::decimal`,
-          count: sql<number>`COUNT(*)`
+          date: sql`date_trunc(${period}, ${sales.createdAt})::date`,
+          total: sql`COALESCE(SUM(${sales.total}), 0)::decimal`,
+          count: sql`COUNT(*)::integer`
         })
         .from(sales)
         .where(sql`${sales.createdAt} >= ${startDate}`)
-        .groupBy(1) // Group by the first selected column (the truncated date)
-        .orderBy(1); // Order by the first selected column (the truncated date)
+        .groupBy(sql`date_trunc(${period}, ${sales.createdAt})::date`)
+        .orderBy(sql`date_trunc(${period}, ${sales.createdAt})::date`);
       
       // Transform the data to ensure proper formatting
       const response: SalesReportData[] = salesData.map(row => ({
