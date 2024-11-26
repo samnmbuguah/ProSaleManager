@@ -137,6 +137,30 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  // Top Selling Products Report
+  app.get("/api/reports/top-selling", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const topProducts = await db
+        .select({
+          productId: saleItems.productId,
+          name: products.name,
+          category: products.category,
+          units: sql<number>`SUM(${saleItems.quantity})`,
+          revenue: sql<number>`SUM(${saleItems.quantity} * ${saleItems.price})`
+        })
+        .from(saleItems)
+        .innerJoin(products, eq(products.id, saleItems.productId))
+        .groupBy(saleItems.productId, products.name, products.category)
+        .orderBy(sql<number>`SUM(${saleItems.quantity})`, 'desc')
+        .limit(4);
+      
+      res.json(topProducts);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch top selling products" });
+    }
+  });
+
   app.get("/api/reports/low-stock", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {

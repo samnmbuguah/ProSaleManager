@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ProductPerformance } from "../components/reports/ProductPerformance";
 import { CustomerHistory } from "../components/reports/CustomerHistory";
 import { InventoryStatus } from "../components/reports/InventoryStatus";
+import { TopSelling } from "../components/reports/TopSelling";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCustomers } from "@/hooks/use-customers";
 import {
@@ -37,6 +38,11 @@ export default function ReportsPage() {
 
   const selectedCustomer = customers?.find(c => c.id === Number(selectedCustomerId)) || null;
 
+  const { data: topSelling } = useQuery({
+    queryKey: ['reports', 'top-selling'],
+    queryFn: () => fetch('/api/reports/top-selling').then(res => res.json()),
+  });
+
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Reports & Analytics</h1>
@@ -50,6 +56,26 @@ export default function ReportsPage() {
             <ProductPerformance data={productPerformance || []} />
           </CardContent>
         </Card>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Top Selling Products</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TopSelling data={topSelling || []} />
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Inventory Metrics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <InventoryStatus data={inventoryStatus || []} />
+            </CardContent>
+          </Card>
+        </div>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
@@ -75,15 +101,6 @@ export default function ReportsPage() {
               data={customerHistory || []} 
               customer={selectedCustomer}
             />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Low Stock Alert</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <InventoryStatus data={inventoryStatus || []} />
           </CardContent>
         </Card>
       </div>
