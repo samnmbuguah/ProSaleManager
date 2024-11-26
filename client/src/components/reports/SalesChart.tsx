@@ -19,7 +19,7 @@ interface SalesChartProps {
   period: string;
 }
 
-export function SalesChart({ data = [], period }: SalesChartProps) {
+export function SalesChart({ data, period }: SalesChartProps) {
   const getDateFormat = (period: string) => {
     switch (period) {
       case 'daily':
@@ -35,11 +35,12 @@ export function SalesChart({ data = [], period }: SalesChartProps) {
     }
   };
 
-  const chartData = (data || []).map((sale) => ({
+  // Add proper type checking and default value
+  const chartData = Array.isArray(data) ? data.map((sale) => ({
     date: format(new Date(sale.date), getDateFormat(period)),
     amount: Number(sale.total) || 0,
     count: sale.count || 0,
-  }));
+  })) : [];
 
   if (chartData.length === 0) {
     return (
