@@ -92,6 +92,12 @@ export function registerRoutes(app: Express) {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
       const period = req.query.period as string || 'monthly';
+      
+      // Validate period parameter
+      if (!['daily', 'weekly', 'monthly', 'yearly'].includes(period)) {
+        return res.status(400).json({ error: "Invalid period parameter" });
+      }
+
       const startDate = new Date();
       
       // Calculate start date based on period
@@ -108,23 +114,25 @@ export function registerRoutes(app: Express) {
         case 'yearly':
           startDate.setFullYear(startDate.getFullYear() - 5); // Last 5 years
           break;
-        default:
-          startDate.setMonth(startDate.getMonth() - 12); // Default to last 12 months
       }
 
       const salesData = await db.select({
-        date: sql`DATE_TRUNC(${period}, ${sales.createdAt})::date`,
-        total: sql`SUM(${sales.total})`,
+        date: sql`DATE_TRUNC('${period}', ${sales.createdAt})::date`,
+        total: sql`COALESCE(SUM(${sales.total}), 0)`,
         count: sql`COUNT(*)`,
       })
       .from(sales)
       .where(sql`${sales.createdAt} >= ${startDate}`)
-      .groupBy(sql`DATE_TRUNC(${period}, ${sales.createdAt})`)
-      .orderBy(sql`DATE_TRUNC(${period}, ${sales.createdAt})`);
+      .groupBy(sql`DATE_TRUNC('${period}', ${sales.createdAt})`)
+      .orderBy(sql`DATE_TRUNC('${period}', ${sales.createdAt})`);
       
       res.json(salesData);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch sales report" });
+    } catch (error: any) {
+      console.error("Sales report error:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch sales report", 
+        details: error.message 
+      });
     }
   });
 

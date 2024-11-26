@@ -19,7 +19,7 @@ interface SalesChartProps {
   period: string;
 }
 
-export function SalesChart({ data, period }: SalesChartProps) {
+export function SalesChart({ data = [], period }: SalesChartProps) {
   const getDateFormat = (period: string) => {
     switch (period) {
       case 'daily':
@@ -35,11 +35,19 @@ export function SalesChart({ data, period }: SalesChartProps) {
     }
   };
 
-  const chartData = data.map((sale) => ({
+  const chartData = (data || []).map((sale) => ({
     date: format(new Date(sale.date), getDateFormat(period)),
-    amount: Number(sale.total),
-    count: sale.count,
+    amount: Number(sale.total) || 0,
+    count: sale.count || 0,
   }));
+
+  if (chartData.length === 0) {
+    return (
+      <div className="h-[300px] flex items-center justify-center bg-card rounded-lg border">
+        <p className="text-muted-foreground">No sales data available for this period</p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[300px]" style={{
