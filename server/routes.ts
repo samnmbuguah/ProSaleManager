@@ -125,17 +125,22 @@ export function registerRoutes(app: Express) {
 
       const salesData = await db
         .select({
-          date: sql`date_trunc(${period}, ${sales.createdAt})::date as date`,
-          total: sql`COALESCE(SUM(${sales.total}), 0)::decimal as total`,
-          count: sql`COUNT(*)::integer as count`
+          date: sql<string>`date_trunc(${period}, ${sales.createdAt})::date`,
+          total: sql<string>`COALESCE(SUM(${sales.total}), 0)::decimal`,
+          count: sql<number>`COUNT(*)::integer`
         })
         .from(sales)
         .where(sql`${sales.createdAt} >= ${startDate}`)
         .groupBy(sql`date_trunc(${period}, ${sales.createdAt})::date`)
         .orderBy(sql`date_trunc(${period}, ${sales.createdAt})::date`);
       
-      // Ensure response is always an array
-      const response: SalesReportData[] = salesData || [];
+      // Transform the data to ensure proper formatting
+      const response: SalesReportData[] = salesData.map(row => ({
+        date: new Date(row.date).toISOString().split('T')[0],
+        total: row.total.toString(),
+        count: Number(row.count)
+      }));
+      
       res.json(response);
     } catch (error: any) {
       console.error("Sales report error:", error);
