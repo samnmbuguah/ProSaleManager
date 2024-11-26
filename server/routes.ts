@@ -125,9 +125,9 @@ export function registerRoutes(app: Express) {
 
       const salesData = await db
         .select({
-          date: sql`date_trunc(${period}, ${sales.createdAt})::date`,
-          total: sql`COALESCE(SUM(${sales.total}), 0)`,
-          count: sql`COUNT(*)`
+          date: sql`date_trunc(${period}, ${sales.createdAt})::date as date`,
+          total: sql`COALESCE(SUM(${sales.total}), 0)::decimal as total`,
+          count: sql`COUNT(*)::integer as count`
         })
         .from(sales)
         .where(sql`${sales.createdAt} >= ${startDate}`)
