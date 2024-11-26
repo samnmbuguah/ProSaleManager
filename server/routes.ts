@@ -170,9 +170,14 @@ export function registerRoutes(app: Express) {
         .select({
           date: sql<string>`DATE_TRUNC('day', ${sales.createdAt})::date`,
           total: sql<number>`COALESCE(SUM(${sales.total}), 0)`,
+          profit: sql<number>`COALESCE(SUM(
+            ${saleItems.quantity} * (${saleItems.price} - COALESCE(${products.buying_price}, 0))
+          ), 0)`,
           count: sql<number>`COUNT(*)`
         })
         .from(sales)
+        .innerJoin(saleItems, eq(saleItems.saleId, sales.id))
+        .innerJoin(products, eq(products.id, saleItems.productId))
         .groupBy(sql`DATE_TRUNC('day', ${sales.createdAt})::date`)
         .orderBy(sql`DATE_TRUNC('day', ${sales.createdAt})::date`);
       
@@ -212,15 +217,15 @@ export function registerRoutes(app: Express) {
           productId: saleItems.productId,
           name: products.name,
           category: products.category,
-          units: sql<number>`SUM(${saleItems.quantity})`,
-          revenue: sql<number>`SUM(${saleItems.quantity} * ${saleItems.price})`,
-          cost: sql<number>`SUM(${saleItems.quantity} * ${products.buying_price})`,
-          profit: sql<number>`SUM(${saleItems.quantity} * (${saleItems.price} - ${products.buying_price}))`
+          units: sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`,
+          revenue: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price}), 0)`,
+          cost: sql<number>`COALESCE(SUM(${saleItems.quantity} * COALESCE(${products.buying_price}, 0)), 0)`,
+          profit: sql<number>`COALESCE(SUM(${saleItems.quantity} * (${saleItems.price} - COALESCE(${products.buying_price}, 0))), 0)`
         })
         .from(saleItems)
         .innerJoin(products, eq(products.id, saleItems.productId))
         .groupBy(saleItems.productId, products.name, products.category)
-        .orderBy(sql`SUM(${saleItems.quantity} * (${saleItems.price} - ${products.buying_price})) DESC`)
+        .orderBy(sql`COALESCE(SUM(${saleItems.quantity} * (${saleItems.price} - COALESCE(${products.buying_price}, 0))), 0) DESC`)
         .limit(10);
       
       res.json(topProducts);
