@@ -23,6 +23,7 @@ export function PaymentDialog({
   const [selectedCustomerId, setSelectedCustomerId] = useState<number>();
   const { customers, searchCustomers } = useCustomers();
   const [query, setQuery] = useState("");
+  const selectedCustomer = customers?.find(c => c.id === selectedCustomerId);
 
   const handlePayment = (method: string) => {
     onComplete(method, selectedCustomerId);
@@ -40,25 +41,47 @@ export function PaymentDialog({
             KSh {total.toFixed(2)}
           </div>
 
-          <Command className="rounded-lg border shadow-md">
-            <CommandInput
-              placeholder="Search customer..."
-              value={query}
-              onValueChange={setQuery}
-            />
-            <CommandEmpty>No customer found.</CommandEmpty>
-            <CommandGroup>
-              {searchCustomers(query).map((customer) => (
-                <CommandItem
-                  key={customer.id}
-                  onSelect={() => setSelectedCustomerId(customer.id)}
-                >
-                  <User className="mr-2 h-4 w-4" />
-                  {customer.name}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </Command>
+          <div className="space-y-4">
+            <Command className="rounded-lg border shadow-md">
+              <CommandInput
+                placeholder="Search customer..."
+                value={query}
+                onValueChange={setQuery}
+              />
+              <CommandEmpty>No customer found.</CommandEmpty>
+              <CommandGroup>
+                {searchCustomers(query).map((customer) => (
+                  <CommandItem
+                    key={customer.id}
+                    onSelect={() => setSelectedCustomerId(customer.id)}
+                  >
+                    <User className="mr-2 h-4 w-4" />
+                    {customer.name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </Command>
+
+            {selectedCustomer && (
+              <div className="rounded-lg border p-4 bg-accent">
+                <div className="space-y-2">
+                  <div className="font-medium">{selectedCustomer.name}</div>
+                  {selectedCustomer.email && (
+                    <div className="text-sm flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      {selectedCustomer.email}
+                    </div>
+                  )}
+                  {selectedCustomer.phone && (
+                    <div className="text-sm flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      {selectedCustomer.phone}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Button
