@@ -123,17 +123,16 @@ export function registerRoutes(app: Express) {
           break;
       }
 
-      const periodColumn = sql`date_trunc(${period}::text, ${sales.createdAt})::date`;
       const salesData = await db
         .select({
-          date: periodColumn,
-          total: sql<string>`COALESCE(SUM(${sales.total}), 0)::decimal`,
-          count: sql<number>`COUNT(*)::integer`
+          date: sql`date_trunc(${period}::text, ${sales.createdAt})::date`,
+          total: sql`COALESCE(SUM(${sales.total}), 0)::decimal`,
+          count: sql`COUNT(*)::integer`
         })
         .from(sales)
         .where(sql`${sales.createdAt} >= ${startDate}`)
-        .groupBy(periodColumn)
-        .orderBy(periodColumn);
+        .groupBy(sql`date_trunc(${period}::text, ${sales.createdAt})::date`)
+        .orderBy(sql`date_trunc(${period}::text, ${sales.createdAt})::date`);
       
       // Ensure response is always an array
       const response: SalesReportData[] = salesData || [];
