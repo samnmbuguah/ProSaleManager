@@ -4,6 +4,7 @@ import { ProductPerformance } from "../components/reports/ProductPerformance";
 import { CustomerHistory } from "../components/reports/CustomerHistory";
 import { InventoryStatus } from "../components/reports/InventoryStatus";
 import { TopSelling } from "../components/reports/TopSelling";
+import { SalesChart } from "../components/reports/SalesChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCustomers } from "@/hooks/use-customers";
 import {
@@ -42,6 +43,10 @@ export default function ReportsPage() {
     queryKey: ['reports', 'top-selling'],
     queryFn: () => fetch('/api/reports/top-selling').then(res => res.json()),
   });
+  const { data: salesTrend } = useQuery({
+    queryKey: ['reports', 'sales-trend'],
+    queryFn: () => fetch('/api/reports/sales-trend').then(res => res.json()),
+  });
 
   return (
     <div className="space-y-4">
@@ -52,6 +57,14 @@ export default function ReportsPage() {
           <CardHeader>
             <CardTitle>Product Performance</CardTitle>
           </CardHeader>
+        <Card>
+          <CardHeader>
+            <CardTitle>Sales Trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SalesChart data={salesTrend || []} period="daily" />
+          </CardContent>
+        </Card>
           <CardContent>
             <ProductPerformance data={productPerformance || []} />
           </CardContent>
