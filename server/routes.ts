@@ -117,14 +117,14 @@ export function registerRoutes(app: Express) {
       }
 
       const salesData = await db.select({
-        date: sql`date_trunc(${sql.raw(period)}, ${sales.createdAt})::date`,
-        total: sql`COALESCE(SUM(${sales.total}), 0)`,
-        count: sql`COUNT(*)`
+        date: sql<string>`date_trunc(${period}::text, ${sales.createdAt})::date`,
+        total: sql<string>`COALESCE(SUM(${sales.total}), 0)`,
+        count: sql<number>`COUNT(*)`
       })
       .from(sales)
       .where(sql`${sales.createdAt} >= ${startDate}`)
-      .groupBy(sql`date_trunc(${sql.raw(period)}, ${sales.createdAt})::date`)
-      .orderBy(sql`date_trunc(${sql.raw(period)}, ${sales.createdAt})::date`);
+      .groupBy(sql`date_trunc(${period}::text, ${sales.createdAt})::date`)
+      .orderBy(sql`date_trunc(${period}::text, ${sales.createdAt})::date`);
       
       res.json(salesData);
     } catch (error: any) {
