@@ -62,14 +62,29 @@ export function registerRoutes(app: Express) {
         paymentMethod,
       }).returning();
 
-      // Create sale items
+      // Get products with their buying prices
+      const productPrices = await db
+        .select({
+          id: products.id,
+          buying_price: products.buying_price,
+        })
+        .from(products)
+        .where(
+          sql`${products.id} IN (${items.map((item: any) => item.productId).join(',')})`
+        );
+
+      // Create sale items with buying prices
       await db.insert(saleItems).values(
-        items.map((item: any) => ({
-          saleId: sale.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          price: item.price,
-        }))
+        items.map((item: any) => {
+          const product = productPrices.find(p => p.id === item.productId);
+          return {
+            saleId: sale.id,
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+            buying_price: product?.buying_price || null,
+          };
+        })
       );
 
       // Update product stock
@@ -103,7 +118,7 @@ export function registerRoutes(app: Express) {
         .innerJoin(products, eq(products.id, saleItems.productId))
         .innerJoin(sales, eq(sales.id, saleItems.saleId))
         .groupBy(saleItems.productId, products.name, products.category)
-        .orderBy(sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`, 'desc');
+        .orderBy(desc(sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`));
       
       res.json(productStats);
     } catch (error) {
@@ -200,7 +215,7 @@ export function registerRoutes(app: Express) {
         })
         .from(sales)
         .where(eq(sales.customerId, parseInt(req.params.customerId)))
-        .orderBy(sales.createdAt, "desc");
+        .orderBy(desc(sales.createdAt));
       
       res.json(customerSales);
     } catch (error) {

@@ -139,7 +139,7 @@ export function setupAuth(app: Express) {
         .returning();
 
       // Log the user in after registration
-      req.login(newUser, (err) => {
+      req.login(newUser as Express.User, (err) => {
         if (err) {
           return next(err);
         }

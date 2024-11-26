@@ -50,6 +50,7 @@ export const saleItems = pgTable("sale_items", {
   productId: integer("product_id").references(() => products.id).notNull(),
   quantity: integer("quantity").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  buying_price: decimal("buying_price", { precision: 10, scale: 2 }),
 });
 
 // Schema validation
