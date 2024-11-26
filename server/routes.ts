@@ -87,6 +87,13 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  // Sales report response type
+  type SalesReportData = {
+    date: string;
+    total: string;
+    count: number;
+  };
+
   // Reports API
   app.get("/api/reports/sales", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
@@ -116,22 +123,27 @@ export function registerRoutes(app: Express) {
           break;
       }
 
-      const salesData = await db.select({
-        date: sql<string>`date_trunc(${period}::text, ${sales.createdAt})::date`,
-        total: sql<string>`COALESCE(SUM(${sales.total}), 0)`,
-        count: sql<number>`COUNT(*)`
-      })
-      .from(sales)
-      .where(sql`${sales.createdAt} >= ${startDate}`)
-      .groupBy(sql`date_trunc(${period}::text, ${sales.createdAt})::date`)
-      .orderBy(sql`date_trunc(${period}::text, ${sales.createdAt})::date`);
+      const periodText = sql.raw(period);
+      const salesData = await db
+        .select({
+          date: sql<string>`date_trunc(${periodText}, ${sales.createdAt})::date`,
+          total: sql<string>`COALESCE(SUM(${sales.total}), 0)`,
+          count: sql<number>`COUNT(*)`
+        })
+        .from(sales)
+        .where(sql`${sales.createdAt} >= ${startDate}`)
+        .groupBy(sql`date_trunc(${periodText}, ${sales.createdAt})::date`)
+        .orderBy(sql`date_trunc(${periodText}, ${sales.createdAt})::date`);
       
-      res.json(salesData);
+      // Ensure response is always an array
+      const response: SalesReportData[] = salesData || [];
+      res.json(response);
     } catch (error: any) {
       console.error("Sales report error:", error);
       res.status(500).json({ 
         error: "Failed to fetch sales report", 
-        details: error.message 
+        details: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   });
