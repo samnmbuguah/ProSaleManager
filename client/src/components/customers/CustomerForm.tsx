@@ -37,7 +37,7 @@ export function CustomerForm({ onSubmit, isSubmitting }: CustomerFormProps) {
             <FormItem>
               <FormLabel>Customer Name</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -47,11 +47,16 @@ export function CustomerForm({ onSubmit, isSubmitting }: CustomerFormProps) {
         <FormField
           control={form.control}
           name="email"
-          render={({ field }) => (
+          render={({ field: { value, onChange, ...field } }) => (
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" {...field} />
+                <Input 
+                  type="email" 
+                  value={value || ""} 
+                  onChange={e => onChange(e.target.value || null)} 
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -61,11 +66,15 @@ export function CustomerForm({ onSubmit, isSubmitting }: CustomerFormProps) {
         <FormField
           control={form.control}
           name="phone"
-          render={({ field }) => (
+          render={({ field: { value, onChange, ...field } }) => (
             <FormItem>
               <FormLabel>Phone Number</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input 
+                  value={value || ""} 
+                  onChange={e => onChange(e.target.value || null)} 
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
