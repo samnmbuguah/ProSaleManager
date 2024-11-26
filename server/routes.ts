@@ -62,29 +62,14 @@ export function registerRoutes(app: Express) {
         paymentMethod,
       }).returning();
 
-      // Get products with their buying prices
-      const productPrices = await db
-        .select({
-          id: products.id,
-          buying_price: products.buying_price,
-        })
-        .from(products)
-        .where(
-          sql`${products.id} IN (${items.map((item: any) => item.productId).join(',')})`
-        );
-
-      // Create sale items with buying prices
+      // Create sale items
       await db.insert(saleItems).values(
-        items.map((item: any) => {
-          const product = productPrices.find(p => p.id === item.productId);
-          return {
-            saleId: sale.id,
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.price,
-            buying_price: product?.buying_price || null,
-          };
-        })
+        items.map((item: any) => ({
+          saleId: sale.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.price,
+        }))
       );
 
       // Update product stock
@@ -112,13 +97,14 @@ export function registerRoutes(app: Express) {
           name: products.name,
           category: products.category,
           totalQuantity: sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`,
-          totalRevenue: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price}), 0)`
+          totalRevenue: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price}), 0)`,
+          profit: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * ${products.profit_margin} / 100), 0)`
         })
         .from(saleItems)
-        .innerJoin(products, eq(products.id, saleItems.productId))
-        .innerJoin(sales, eq(sales.id, saleItems.saleId))
+        .rightJoin(products, eq(products.id, saleItems.productId))
         .groupBy(saleItems.productId, products.name, products.category)
-        .orderBy(desc(sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`));
+        .orderBy(desc(sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * ${products.profit_margin} / 100), 0)`))
+        .limit(10);
       
       res.json(productStats);
     } catch (error) {
@@ -130,52 +116,6 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Customer Purchase History
-  app.get("/api/reports/customer-history/:customerId", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    try {
-      const customerId = Number(req.params.customerId);
-      const history = await db
-        .select({
-          saleId: sales.id,
-          date: sales.createdAt,
-          total: sales.total,
-          paymentMethod: sales.paymentMethod
-        })
-        .from(sales)
-        .where(eq(sales.customerId, customerId))
-        .orderBy(desc(sales.createdAt));
-      
-      res.json(history);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch customer history" });
-    }
-  });
-  // Product Performance Report
-  app.get("/api/reports/product-performance", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    try {
-      const productStats = await db
-        .select({
-          productId: saleItems.productId,
-          name: products.name,
-          category: products.category,
-          totalQuantity: sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`,
-          totalRevenue: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price}), 0)`,
-          profit: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * ${products.profit_margin} / 100), 0)`
-        })
-        .from(saleItems)
-        .rightJoin(products, eq(products.id, saleItems.productId))
-        .groupBy(saleItems.productId, products.name, products.category)
-        .orderBy(sql`COALESCE(SUM(${saleItems.quantity} * (${saleItems.price} - COALESCE(NULLIF(${products.buying_price}, 0), ${saleItems.price}))), 0) DESC`)
-        .limit(10);
-      
-      res.json(productStats);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch product performance" });
-    }
-  });
-
   // Sales Trend Analysis
   app.get("/api/reports/sales-trend", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
@@ -184,9 +124,7 @@ export function registerRoutes(app: Express) {
         .select({
           date: sql<string>`DATE_TRUNC('day', ${sales.createdAt})::date`,
           total: sql<number>`COALESCE(SUM(${sales.total}), 0)`,
-          profit: sql<number>`COALESCE(SUM(
-            ${saleItems.quantity} * (${saleItems.price} - COALESCE(${products.buying_price}, 0))
-          ), 0)`,
+          profit: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * ${products.profit_margin} / 100), 0)`,
           count: sql<number>`COUNT(*)`
         })
         .from(sales)
@@ -238,7 +176,7 @@ export function registerRoutes(app: Express) {
         .from(saleItems)
         .innerJoin(products, eq(products.id, saleItems.productId))
         .groupBy(saleItems.productId, products.name, products.category)
-        .orderBy(sql`COALESCE(SUM(${saleItems.quantity} * (${saleItems.price} - COALESCE(NULLIF(${products.buying_price}, 0), ${saleItems.price}))), 0) DESC`)
+        .orderBy(desc(sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * ${products.profit_margin} / 100), 0)`))
         .limit(10);
       
       res.json(topProducts);
@@ -247,6 +185,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  // Low Stock Report
   app.get("/api/reports/low-stock", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
