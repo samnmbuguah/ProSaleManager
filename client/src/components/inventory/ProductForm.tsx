@@ -40,7 +40,7 @@ export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
       name: "",
       sku: "",
       price: "0",
-      buying_price: "0",
+      profit_margin: 20,
       stock: 0,
       category: "Other",
     },
@@ -98,16 +98,17 @@ export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
 
         <FormField
           control={form.control}
-          name="buying_price"
+          name="profit_margin"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Buying Price</FormLabel>
+              <FormLabel>Profit Margin (%)</FormLabel>
               <FormControl>
                 <Input
                   type="number"
-                  step="0.01"
+                  min="10"
+                  max="199"
                   {...field}
-                  onChange={(e) => field.onChange(e.target.value)}
+                  onChange={(e) => field.onChange(parseInt(e.target.value))}
                 />
               </FormControl>
               <FormMessage />
