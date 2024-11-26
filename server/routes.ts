@@ -136,6 +136,69 @@ export function registerRoutes(app: Express) {
       res.status(500).json({ error: "Failed to fetch customer history" });
     }
   });
+  // Product Performance Report
+  app.get("/api/reports/product-performance", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const productStats = await db
+        .select({
+          productId: saleItems.productId,
+          name: products.name,
+          category: products.category,
+          totalQuantity: sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`,
+          totalRevenue: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price}), 0)`
+        })
+        .from(saleItems)
+        .rightJoin(products, eq(products.id, saleItems.productId))
+        .groupBy(saleItems.productId, products.name, products.category)
+        .orderBy(sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`);
+      
+      res.json(productStats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch product performance" });
+    }
+  });
+
+  // Sales Trend Analysis
+  app.get("/api/reports/sales-trend", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const salesTrend = await db
+        .select({
+          date: sql<string>`DATE_TRUNC('day', ${sales.createdAt})::date`,
+          total: sql<number>`COALESCE(SUM(${sales.total}), 0)`,
+          count: sql<number>`COUNT(*)`
+        })
+        .from(sales)
+        .groupBy(sql`DATE_TRUNC('day', ${sales.createdAt})::date`)
+        .orderBy(sql`DATE_TRUNC('day', ${sales.createdAt})::date`);
+      
+      res.json(salesTrend);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch sales trend" });
+    }
+  });
+
+  // Customer Purchase History
+  app.get("/api/reports/customer-history/:customerId", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const customerSales = await db
+        .select({
+          saleId: sales.id,
+          date: sales.createdAt,
+          total: sales.total,
+          paymentMethod: sales.paymentMethod
+        })
+        .from(sales)
+        .where(eq(sales.customerId, parseInt(req.params.customerId)))
+        .orderBy(sales.createdAt, "desc");
+      
+      res.json(customerSales);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch customer history" });
+    }
+  });
 
   // Top Selling Products Report
   app.get("/api/reports/top-selling", async (req, res) => {
@@ -152,7 +215,7 @@ export function registerRoutes(app: Express) {
         .from(saleItems)
         .innerJoin(products, eq(products.id, saleItems.productId))
         .groupBy(saleItems.productId, products.name, products.category)
-        .orderBy(sql<number>`SUM(${saleItems.quantity})`, 'desc')
+        .orderBy(sql<number>`SUM(${saleItems.quantity})`)
         .limit(4);
       
       res.json(topProducts);
