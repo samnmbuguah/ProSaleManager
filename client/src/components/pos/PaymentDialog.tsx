@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { useCustomers } from "@/hooks/use-customers";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { CreditCard, Receipt, User } from "lucide-react";
+import { CreditCard, Mail, Phone, Receipt, User } from "lucide-react";
 
 interface PaymentDialogProps {
   open: boolean;
