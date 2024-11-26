@@ -21,6 +21,17 @@ interface ProductPerformanceProps {
 }
 
 export function ProductPerformance({ data }: ProductPerformanceProps) {
+  // Ensure data is always an array
+  const safeData = Array.isArray(data) ? data : [];
+
+  if (safeData.length === 0) {
+    return (
+      <div className="text-center p-4">
+        <p>No product performance data available</p>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-lg border">
       <Table>
@@ -33,7 +44,7 @@ export function ProductPerformance({ data }: ProductPerformanceProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.map((item) => (
+          {safeData.map((item) => (
             <TableRow key={item.productId}>
               <TableCell className="font-medium">{item.name}</TableCell>
               <TableCell>{item.category}</TableCell>

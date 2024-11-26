@@ -96,18 +96,22 @@ export function registerRoutes(app: Express) {
           productId: saleItems.productId,
           name: products.name,
           category: products.category,
-          totalQuantity: sql`SUM(${saleItems.quantity})`,
-          totalRevenue: sql`SUM(${saleItems.quantity} * ${saleItems.price})`
+          totalQuantity: sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`,
+          totalRevenue: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price}), 0)`
         })
         .from(saleItems)
         .innerJoin(products, eq(products.id, saleItems.productId))
         .innerJoin(sales, eq(sales.id, saleItems.saleId))
         .groupBy(saleItems.productId, products.name, products.category)
-        .orderBy(sql`SUM(${saleItems.quantity})`.desc());
+        .orderBy(sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`, 'desc');
       
       res.json(productStats);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch product performance report" });
+      console.error('Product performance error:', error);
+      res.status(500).json({ 
+        error: "Failed to fetch product performance report",
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
