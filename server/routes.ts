@@ -127,12 +127,12 @@ export function registerRoutes(app: Express) {
         .select({
           date: sql<string>`date_trunc(${period}, ${sales.createdAt})::date`,
           total: sql<string>`COALESCE(SUM(${sales.total}), 0)::decimal`,
-          count: sql<number>`COUNT(*)::integer`
+          count: sql<number>`COUNT(*)`
         })
         .from(sales)
         .where(sql`${sales.createdAt} >= ${startDate}`)
-        .groupBy(sql`date_trunc(${period}, ${sales.createdAt})::date`)
-        .orderBy(sql`date_trunc(${period}, ${sales.createdAt})::date`);
+        .groupBy(1) // Group by the first selected column (the truncated date)
+        .orderBy(1); // Order by the first selected column (the truncated date)
       
       // Transform the data to ensure proper formatting
       const response: SalesReportData[] = salesData.map(row => ({
