@@ -38,23 +38,23 @@ async function handleRequest(
 }
 
 async function fetchUser(): Promise<User | null> {
-  const response = await fetch('/api/user', {
-    credentials: 'include'
-  });
+  try {
+    const response = await fetch('/api/user', {
+      credentials: 'include'
+    });
 
-  if (!response.ok) {
-    if (response.status === 401) {
-      return null;
+    if (!response.ok) {
+      if (response.status === 401) {
+        return null;
+      }
+      throw new Error(`${response.status}: ${await response.text()}`);
     }
 
-    if (response.status >= 500) {
-      throw new Error(`${response.status}: ${response.statusText}`);
-    }
-
-    throw new Error(`${response.status}: ${await response.text()}`);
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    return null;
   }
-
-  return response.json();
 }
 
 export function useUser() {
