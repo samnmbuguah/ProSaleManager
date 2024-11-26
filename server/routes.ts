@@ -162,8 +162,7 @@ export function registerRoutes(app: Express) {
           category: products.category,
           totalQuantity: sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`,
           totalRevenue: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price}), 0)`,
-          totalCost: sql<number>`COALESCE(SUM(${saleItems.quantity} * NULLIF(${products.buying_price}, 0)), 0)`,
-          profit: sql<number>`COALESCE(SUM(${saleItems.quantity} * (${saleItems.price} - COALESCE(NULLIF(${products.buying_price}, 0), ${saleItems.price}))), 0)`
+          profit: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * ${products.profit_margin} / 100), 0)`
         })
         .from(saleItems)
         .rightJoin(products, eq(products.id, saleItems.productId))
@@ -234,8 +233,7 @@ export function registerRoutes(app: Express) {
           category: products.category,
           units: sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`,
           revenue: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price}), 0)`,
-          cost: sql<number>`COALESCE(SUM(${saleItems.quantity} * NULLIF(${products.buying_price}, 0)), 0)`,
-          profit: sql<number>`COALESCE(SUM(${saleItems.quantity} * (${saleItems.price} - COALESCE(NULLIF(${products.buying_price}, 0), ${saleItems.price}))), 0)`
+          profit: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * ${products.profit_margin} / 100), 0)`
         })
         .from(saleItems)
         .innerJoin(products, eq(products.id, saleItems.productId))
