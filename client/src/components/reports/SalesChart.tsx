@@ -10,16 +10,26 @@ import {
 import { format } from "date-fns";
 import type { Sale } from "@db/schema";
 
+interface SalesData {
+  date: string;
+  total: string;
+  count: number;
+}
+
 interface SalesChartProps {
-  data: {
-    date: string;
-    total: string;
-    count: number;
-  }[];
+  data: SalesData[];
   period: string;
 }
 
-export function SalesChart({ data, period }: SalesChartProps) {
+// Format number as KSh currency
+function formatCurrency(amount: number): string {
+  return `KSh ${amount.toLocaleString('en-KE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+export function SalesChart({ data = [], period }: SalesChartProps) {
   const getDateFormat = (period: string) => {
     switch (period) {
       case 'daily':
@@ -83,7 +93,7 @@ export function SalesChart({ data, period }: SalesChartProps) {
               type="monotone"
               dataKey="amount"
               name="Amount"
-              formatter={(value) => `KSh ${value}`}
+              formatter={(value: number) => formatCurrency(value)}
               stroke="hsl(215 25% 27%)"
               fillOpacity={1}
               fill="url(#colorSales)"
