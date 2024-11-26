@@ -91,13 +91,36 @@ export function registerRoutes(app: Express) {
   app.get("/api/reports/sales", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
+      const period = req.query.period as string || 'monthly';
       const startDate = new Date();
-      startDate.setDate(startDate.getDate() - 30);
       
-      const salesData = await db.select()
-        .from(sales)
-        .where(sql`${sales.createdAt} >= ${startDate}`)
-        .orderBy(sales.createdAt);
+      // Calculate start date based on period
+      switch (period) {
+        case 'daily':
+          startDate.setDate(startDate.getDate() - 7); // Last 7 days
+          break;
+        case 'weekly':
+          startDate.setDate(startDate.getDate() - 28); // Last 4 weeks
+          break;
+        case 'monthly':
+          startDate.setMonth(startDate.getMonth() - 12); // Last 12 months
+          break;
+        case 'yearly':
+          startDate.setFullYear(startDate.getFullYear() - 5); // Last 5 years
+          break;
+        default:
+          startDate.setMonth(startDate.getMonth() - 12); // Default to last 12 months
+      }
+
+      const salesData = await db.select({
+        date: sql`DATE_TRUNC(${period}, ${sales.createdAt})::date`,
+        total: sql`SUM(${sales.total})`,
+        count: sql`COUNT(*)`,
+      })
+      .from(sales)
+      .where(sql`${sales.createdAt} >= ${startDate}`)
+      .groupBy(sql`DATE_TRUNC(${period}, ${sales.createdAt})`)
+      .orderBy(sql`DATE_TRUNC(${period}, ${sales.createdAt})`);
       
       res.json(salesData);
     } catch (error) {
