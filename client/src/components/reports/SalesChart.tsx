@@ -11,13 +11,34 @@ import { format } from "date-fns";
 import type { Sale } from "@db/schema";
 
 interface SalesChartProps {
-  data: Sale[];
+  data: {
+    date: string;
+    total: string;
+    count: number;
+  }[];
+  period: string;
 }
 
-export function SalesChart({ data }: SalesChartProps) {
+export function SalesChart({ data, period }: SalesChartProps) {
+  const getDateFormat = (period: string) => {
+    switch (period) {
+      case 'daily':
+        return "MMM d";
+      case 'weekly':
+        return "'Week' w, MMM";
+      case 'monthly':
+        return "MMM yyyy";
+      case 'yearly':
+        return "yyyy";
+      default:
+        return "MMM d";
+    }
+  };
+
   const chartData = data.map((sale) => ({
-    date: format(new Date(sale.createdAt!), "MMM d"),
+    date: format(new Date(sale.date), getDateFormat(period)),
     amount: Number(sale.total),
+    count: sale.count,
   }));
 
   return (
