@@ -52,6 +52,8 @@ export function SalesChart({ data }: SalesChartProps) {
             <Area
               type="monotone"
               dataKey="amount"
+              name="Amount"
+              formatter={(value) => `KSh ${value}`}
               stroke="hsl(215 25% 27%)"
               fillOpacity={1}
               fill="url(#colorSales)"

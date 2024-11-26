@@ -37,7 +37,7 @@ export function PaymentDialog({
 
         <div className="space-y-4">
           <div className="text-2xl font-bold text-center">
-            ${total.toFixed(2)}
+            KSh {total.toFixed(2)}
           </div>
 
           <Command className="rounded-lg border shadow-md">
