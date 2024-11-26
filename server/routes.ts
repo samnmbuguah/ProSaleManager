@@ -146,12 +146,15 @@ export function registerRoutes(app: Express) {
           name: products.name,
           category: products.category,
           totalQuantity: sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`,
-          totalRevenue: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price}), 0)`
+          totalRevenue: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price}), 0)`,
+          totalCost: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${products.buying_price}), 0)`,
+          profit: sql<number>`COALESCE(SUM(${saleItems.quantity} * (${saleItems.price} - ${products.buying_price})), 0)`
         })
         .from(saleItems)
         .rightJoin(products, eq(products.id, saleItems.productId))
         .groupBy(saleItems.productId, products.name, products.category)
-        .orderBy(sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`);
+        .orderBy(sql`COALESCE(SUM(${saleItems.quantity} * (${saleItems.price} - ${products.buying_price})), 0) DESC`)
+        .limit(10);
       
       res.json(productStats);
     } catch (error) {
@@ -210,13 +213,15 @@ export function registerRoutes(app: Express) {
           name: products.name,
           category: products.category,
           units: sql<number>`SUM(${saleItems.quantity})`,
-          revenue: sql<number>`SUM(${saleItems.quantity} * ${saleItems.price})`
+          revenue: sql<number>`SUM(${saleItems.quantity} * ${saleItems.price})`,
+          cost: sql<number>`SUM(${saleItems.quantity} * ${products.buying_price})`,
+          profit: sql<number>`SUM(${saleItems.quantity} * (${saleItems.price} - ${products.buying_price}))`
         })
         .from(saleItems)
         .innerJoin(products, eq(products.id, saleItems.productId))
         .groupBy(saleItems.productId, products.name, products.category)
-        .orderBy(sql<number>`SUM(${saleItems.quantity})`)
-        .limit(4);
+        .orderBy(sql`SUM(${saleItems.quantity} * (${saleItems.price} - ${products.buying_price})) DESC`)
+        .limit(10);
       
       res.json(topProducts);
     } catch (error) {

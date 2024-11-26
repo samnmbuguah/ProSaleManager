@@ -4,6 +4,8 @@ interface TopSellingProduct {
   category: string;
   units: number;
   revenue: number;
+  cost: number;
+  profit: number;
 }
 
 export function TopSelling({ data }: { data: TopSellingProduct[] }) {
@@ -19,8 +21,11 @@ export function TopSelling({ data }: { data: TopSellingProduct[] }) {
             </div>
             <div className="ml-auto text-right">
               <div>Units: {product.units}</div>
-              <div className="text-sm text-muted-foreground">
-                KSh {Number(product.revenue).toLocaleString()}
+              <div className="text-sm">
+                Revenue: KSh {Number(product.revenue).toLocaleString()}
+              </div>
+              <div className={`text-sm ${Number(product.profit) >= 0 ? "text-green-600" : "text-red-600"}`}>
+                Profit: KSh {Number(product.profit).toLocaleString()}
               </div>
             </div>
           </div>

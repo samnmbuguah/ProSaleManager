@@ -14,6 +14,8 @@ interface ProductStats {
   category: string;
   totalQuantity: number;
   totalRevenue: number;
+  totalCost: number;
+  profit: number;
 }
 
 interface ProductPerformanceProps {
@@ -41,6 +43,8 @@ export function ProductPerformance({ data }: ProductPerformanceProps) {
             <TableHead>Category</TableHead>
             <TableHead>Total Quantity</TableHead>
             <TableHead>Total Revenue</TableHead>
+            <TableHead>Total Cost</TableHead>
+            <TableHead>Profit</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -51,6 +55,18 @@ export function ProductPerformance({ data }: ProductPerformanceProps) {
               <TableCell>{item.totalQuantity}</TableCell>
               <TableCell>
                 KSh {Number(item.totalRevenue).toLocaleString("en-KE", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </TableCell>
+              <TableCell>
+                KSh {Number(item.totalCost).toLocaleString("en-KE", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </TableCell>
+              <TableCell className={Number(item.profit) >= 0 ? "text-green-600" : "text-red-600"}>
+                KSh {Number(item.profit).toLocaleString("en-KE", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
