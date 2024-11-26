@@ -31,7 +31,7 @@ export function Cart({ items, onUpdateQuantity, onCheckout, total }: CartProps) 
             <div>
               <div className="font-medium">{item.name}</div>
               <div className="text-sm text-muted-foreground">
-                ${item.price} each
+                KSh {item.price} each
               </div>
             </div>
             
@@ -66,7 +66,7 @@ export function Cart({ items, onUpdateQuantity, onCheckout, total }: CartProps) 
       <div className="mt-4 space-y-4">
         <div className="flex justify-between text-lg font-bold">
           <span>Total</span>
-          <span>${total.toFixed(2)}</span>
+          <span>KSh {total.toFixed(2)}</span>
         </div>
 
         <Button

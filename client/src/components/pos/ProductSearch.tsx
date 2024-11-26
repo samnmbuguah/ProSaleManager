@@ -35,7 +35,7 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
             onClick={() => onSelect(product)}
           >
             <div className="font-bold">{product.name}</div>
-            <div className="text-sm text-muted-foreground">${product.price}</div>
+            <div className="text-sm text-muted-foreground">KSh {product.price}</div>
           </Button>
         ))}
       </div>

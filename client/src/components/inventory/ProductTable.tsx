@@ -38,7 +38,7 @@ export function ProductTable({ products, isLoading }: ProductTableProps) {
               <TableCell className="font-medium">{product.name}</TableCell>
               <TableCell>{product.sku}</TableCell>
               <TableCell>{product.category}</TableCell>
-              <TableCell>${Number(product.price).toFixed(2)}</TableCell>
+              <TableCell>KSh {Number(product.price).toFixed(2)}</TableCell>
               <TableCell>{product.stock}</TableCell>
               <TableCell>
                 <Badge variant={product.stock > 10 ? "default" : "destructive"}>
