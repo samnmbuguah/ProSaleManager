@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { SalesChart } from "../components/reports/SalesChart";
+import { ProductPerformance } from "../components/reports/ProductPerformance";
+import { CustomerHistory } from "../components/reports/CustomerHistory";
 import { InventoryStatus } from "../components/reports/InventoryStatus";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCustomers } from "@/hooks/use-customers";
 import {
   Select,
   SelectContent,
@@ -12,11 +14,20 @@ import {
 } from "@/components/ui/select";
 
 export default function ReportsPage() {
-  const [period, setPeriod] = useState<string>("monthly");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>();
+  const { customers } = useCustomers();
 
-  const { data: salesData } = useQuery({
-    queryKey: ['reports', 'sales', period],
-    queryFn: () => fetch(`/api/reports/sales?period=${period}`).then(res => res.json()),
+  const { data: productPerformance } = useQuery({
+    queryKey: ['reports', 'product-performance'],
+    queryFn: () => fetch('/api/reports/product-performance').then(res => res.json()),
+  });
+
+  const { data: customerHistory } = useQuery({
+    queryKey: ['reports', 'customer-history', selectedCustomerId],
+    queryFn: () => selectedCustomerId 
+      ? fetch(`/api/reports/customer-history/${selectedCustomerId}`).then(res => res.json())
+      : Promise.resolve([]),
+    enabled: !!selectedCustomerId,
   });
 
   const { data: inventoryStatus } = useQuery({
@@ -24,28 +35,46 @@ export default function ReportsPage() {
     queryFn: () => fetch('/api/reports/low-stock').then(res => res.json()),
   });
 
+  const selectedCustomer = customers?.find(c => c.id === Number(selectedCustomerId)) || null;
+
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Reports & Analytics</h1>
 
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Product Performance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProductPerformance data={productPerformance || []} />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <CardTitle>Sales Trend</CardTitle>
-            <Select onValueChange={setPeriod} defaultValue={period}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select period" />
+            <CardTitle>Customer Purchase History</CardTitle>
+            <Select
+              value={selectedCustomerId}
+              onValueChange={setSelectedCustomerId}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select customer" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
+                {customers?.map((customer) => (
+                  <SelectItem key={customer.id} value={String(customer.id)}>
+                    {customer.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </CardHeader>
           <CardContent>
-            <SalesChart data={salesData || []} period={period} />
+            <CustomerHistory 
+              data={customerHistory || []} 
+              customer={selectedCustomer}
+            />
           </CardContent>
         </Card>
 

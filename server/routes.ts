@@ -87,68 +87,49 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Sales report response type
-  type SalesReportData = {
-    date: string;
-    total: string;
-    count: number;
-  };
-
-  // Reports API
-  app.get("/api/reports/sales", async (req, res) => {
+  // Product Performance Report
+  app.get("/api/reports/product-performance", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const period = req.query.period as string || 'monthly';
-      
-      // Validate period parameter
-      if (!['daily', 'weekly', 'monthly', 'yearly'].includes(period)) {
-        return res.status(400).json({ error: "Invalid period parameter" });
-      }
-
-      const startDate = new Date();
-      
-      // Calculate start date based on period
-      switch (period) {
-        case 'daily':
-          startDate.setDate(startDate.getDate() - 7); // Last 7 days
-          break;
-        case 'weekly':
-          startDate.setDate(startDate.getDate() - 28); // Last 4 weeks
-          break;
-        case 'monthly':
-          startDate.setMonth(startDate.getMonth() - 12); // Last 12 months
-          break;
-        case 'yearly':
-          startDate.setFullYear(startDate.getFullYear() - 5); // Last 5 years
-          break;
-      }
-
-      const salesData = await db
+      const productStats = await db
         .select({
-          date: sql`date_trunc(${period}, ${sales.createdAt})::date`,
-          total: sql`COALESCE(SUM(${sales.total}), 0)::decimal`,
-          count: sql`COUNT(*)::integer`
+          productId: saleItems.productId,
+          name: products.name,
+          category: products.category,
+          totalQuantity: sql`SUM(${saleItems.quantity})`,
+          totalRevenue: sql`SUM(${saleItems.quantity} * ${saleItems.price})`
+        })
+        .from(saleItems)
+        .innerJoin(products, eq(products.id, saleItems.productId))
+        .innerJoin(sales, eq(sales.id, saleItems.saleId))
+        .groupBy(saleItems.productId, products.name, products.category)
+        .orderBy(sql`SUM(${saleItems.quantity})`.desc());
+      
+      res.json(productStats);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch product performance report" });
+    }
+  });
+
+  // Customer Purchase History
+  app.get("/api/reports/customer-history/:customerId", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const customerId = Number(req.params.customerId);
+      const history = await db
+        .select({
+          saleId: sales.id,
+          date: sales.createdAt,
+          total: sales.total,
+          paymentMethod: sales.paymentMethod
         })
         .from(sales)
-        .where(sql`${sales.createdAt} >= ${startDate}`)
-        .groupBy(sql`date_trunc(${period}, ${sales.createdAt})::date`)
-        .orderBy(sql`date_trunc(${period}, ${sales.createdAt})::date`);
+        .where(eq(sales.customerId, customerId))
+        .orderBy(desc(sales.createdAt));
       
-      // Transform the data to ensure proper formatting
-      const response: SalesReportData[] = salesData.map(row => ({
-        date: new Date(row.date).toISOString().split('T')[0],
-        total: row.total.toString(),
-        count: Number(row.count)
-      }));
-      
-      res.json(response);
-    } catch (error: any) {
-      console.error("Sales report error:", error);
-      res.status(500).json({ 
-        error: "Failed to fetch sales report", 
-        details: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      });
+      res.json(history);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch customer history" });
     }
   });
 
