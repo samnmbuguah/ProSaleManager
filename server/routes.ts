@@ -31,6 +31,32 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  app.post("/api/products/:id/stock", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const { quantity } = req.body;
+      const productId = parseInt(req.params.id);
+      
+      const [updatedProduct] = await db
+        .update(products)
+        .set({ 
+          stock: sql`${products.stock} + ${quantity}`,
+          updatedAt: new Date()
+        })
+        .where(eq(products.id, productId))
+        .returning();
+      
+      res.json(updatedProduct);
+    } catch (error) {
+      console.error('Stock update error:', error);
+      res.status(500).json({ 
+        error: "Failed to update stock",
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+
   // Customers API
   app.get("/api/customers", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
