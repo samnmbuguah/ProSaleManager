@@ -72,14 +72,14 @@ export function setupAuth(app: Express) {
           .where(eq(users.username, username))
           .limit(1);
 
-        if (!user) {
-          return done(null, false, { message: "Incorrect username." });
+        if (!user || user.createdAt === null) {
+          return done(null, false, { message: "Invalid user data." });
         }
         const isMatch = await crypto.compare(password, user.password);
         if (!isMatch) {
           return done(null, false, { message: "Incorrect password." });
         }
-        return done(null, user);
+        return done(null, user as Express.User);
       } catch (err) {
         return done(err);
       }
@@ -97,7 +97,10 @@ export function setupAuth(app: Express) {
         .from(users)
         .where(eq(users.id, id))
         .limit(1);
-      done(null, user);
+      if (!user || user.createdAt === null) {
+        return done(new Error("Invalid user data"));
+      }
+      done(null, user as Express.User);
     } catch (err) {
       done(err);
     }

@@ -93,6 +93,7 @@ export function SalesChart({ data = [], period }: SalesChartProps) {
               type="monotone"
               dataKey="amount"
               name="Amount"
+              name="Amount"
               formatter={(value: number) => formatCurrency(value)}
               stroke="hsl(215 25% 27%)"
               fillOpacity={1}
