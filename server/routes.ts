@@ -66,13 +66,13 @@ export function registerRoutes(app: Express) {
         paymentMethod,
       }).returning();
 
-      // Create sale items
+      // Create sale items with profit margin
       await db.insert(saleItems).values(
         items.map((item: any) => ({
           saleId: sale.id,
           productId: item.productId,
           quantity: item.quantity,
-          price: item.price,
+          price: item.price
         }))
       );
 
@@ -87,7 +87,11 @@ export function registerRoutes(app: Express) {
 
       res.json(sale);
     } catch (error) {
-      res.status(500).json({ error: "Failed to create sale" });
+      console.error('Sale creation error:', error);
+      res.status(500).json({ 
+        error: "Failed to create sale",
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
