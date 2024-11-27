@@ -29,6 +29,23 @@ function formatCurrency(amount: number): string {
   })}`;
 }
 
+// Custom tooltip formatter
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-background border rounded-lg p-2 shadow-lg">
+        <p className="font-semibold">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} style={{ color: entry.color }}>
+            {entry.name}: {formatCurrency(entry.value)}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 export function SalesChart({ data = [], period }: SalesChartProps) {
   const getDateFormat = (period: string) => {
     switch (period) {
@@ -100,12 +117,11 @@ export function SalesChart({ data = [], period }: SalesChartProps) {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
             <YAxis />
-            <Tooltip />
+            <Tooltip content={<CustomTooltip />} />
             <Area
               type="monotone"
               dataKey="total"
               name="Revenue"
-              tooltipFormatter={(value: number) => formatCurrency(value)}
               stroke="hsl(215 25% 27%)"
               fillOpacity={1}
               fill="url(#colorSales)"
@@ -114,7 +130,6 @@ export function SalesChart({ data = [], period }: SalesChartProps) {
               type="monotone"
               dataKey="cost"
               name="Cost"
-              tooltipFormatter={(value: number) => formatCurrency(value)}
               stroke="hsl(0 62% 50%)"
               fillOpacity={0.5}
               fill="url(#colorCost)"
