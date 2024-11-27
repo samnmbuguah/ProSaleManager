@@ -27,13 +27,21 @@ export function usePos() {
   });
 
   const createSaleMutation = useMutation<Sale, Error, SalePayload>({
-    mutationFn: (sale) =>
-      fetch('/api/sales', {
+    mutationFn: async (sale) => {
+      const response = await fetch('/api/sales', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(sale),
         credentials: 'include',
-      }).then(res => res.json()),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.details || error.error || 'Failed to create sale');
+      }
+      
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast({
