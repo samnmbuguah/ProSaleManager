@@ -8,7 +8,7 @@ export const users = pgTable("users", {
   username: text("username").unique().notNull(),
   password: text("password").notNull(),
   role: text("role").notNull().default("cashier"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 // Products table
@@ -20,8 +20,8 @@ export const products = pgTable("products", {
   profit_margin: integer("profit_margin").notNull().default(20),
   stock: integer("stock").notNull().default(0),
   category: text("category").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 // Customers table
@@ -30,7 +30,7 @@ export const customers = pgTable("customers", {
   name: text("name").notNull(),
   email: text("email").unique(),
   phone: text("phone"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 // Sales table
@@ -40,7 +40,7 @@ export const sales = pgTable("sales", {
   userId: integer("user_id").references(() => users.id).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: text("payment_method").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 // Sale items table
