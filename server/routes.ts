@@ -13,7 +13,11 @@ export function registerRoutes(app: Express) {
       const allProducts = await db.select().from(products).orderBy(products.name);
       res.json(allProducts);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch products" });
+      console.error('Error fetching products:', error);
+      res.status(500).json({ 
+        error: "Failed to fetch products",
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
