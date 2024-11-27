@@ -129,6 +129,7 @@ export function registerRoutes(app: Express) {
           date: sql<string>`DATE_TRUNC('day', ${sales.createdAt})::date`,
           total: sql<number>`COALESCE(SUM(${sales.total}), 0)`,
           profit: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * ${products.profit_margin} / 100), 0)`,
+          cost: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * (100 - ${products.profit_margin}) / 100), 0)`,
           count: sql<number>`COUNT(*)`
         })
         .from(sales)
