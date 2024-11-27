@@ -84,6 +84,18 @@ export function SalesChart({ data = [], period }: SalesChartProps) {
                   stopOpacity={0}
                 />
               </linearGradient>
+              <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
+                <stop
+                  offset="5%"
+                  stopColor="hsl(0 62% 50%)"
+                  stopOpacity={0.8}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="hsl(0 62% 50%)"
+                  stopOpacity={0}
+                />
+              </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
@@ -91,13 +103,21 @@ export function SalesChart({ data = [], period }: SalesChartProps) {
             <Tooltip />
             <Area
               type="monotone"
-              dataKey="amount"
-              name="Amount"
-              name="Amount"
-              formatter={(value: number) => formatCurrency(value)}
+              dataKey="total"
+              name="Revenue"
+              tooltipFormatter={(value: number) => formatCurrency(value)}
               stroke="hsl(215 25% 27%)"
               fillOpacity={1}
               fill="url(#colorSales)"
+            />
+            <Area
+              type="monotone"
+              dataKey="cost"
+              name="Cost"
+              tooltipFormatter={(value: number) => formatCurrency(value)}
+              stroke="hsl(0 62% 50%)"
+              fillOpacity={0.5}
+              fill="url(#colorCost)"
             />
           </AreaChart>
         </ResponsiveContainer>
