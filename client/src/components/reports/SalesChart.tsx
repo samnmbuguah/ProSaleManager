@@ -13,6 +13,7 @@ import type { Sale } from "@db/schema";
 interface SalesData {
   date: string;
   total: string;
+  cost: number;
   count: number;
 }
 
@@ -66,6 +67,7 @@ export function SalesChart({ data = [], period }: SalesChartProps) {
   const chartData = Array.isArray(data) ? data.map((sale) => ({
     date: format(new Date(sale.date), getDateFormat(period)),
     amount: Number(sale.total) || 0,
+    cost: Number(sale.cost) || 0,
     count: sale.count || 0,
   })) : [];
 
@@ -120,7 +122,7 @@ export function SalesChart({ data = [], period }: SalesChartProps) {
             <Tooltip content={<CustomTooltip />} />
             <Area
               type="monotone"
-              dataKey="total"
+              dataKey="amount"
               name="Revenue"
               stroke="hsl(215 25% 27%)"
               fillOpacity={1}
