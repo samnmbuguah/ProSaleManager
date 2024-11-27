@@ -8,7 +8,7 @@ import { useInventory } from "../hooks/use-inventory";
 
 export default function InventoryPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const { products, isLoading, createProduct, isCreating } = useInventory();
+  const { products, isLoading, createProduct, isCreating, addStock, isAddingStock } = useInventory();
 
   return (
     <div className="space-y-4">
@@ -20,7 +20,12 @@ export default function InventoryPage() {
         </Button>
       </div>
 
-      <ProductTable products={products || []} isLoading={isLoading} />
+      <ProductTable
+        products={products || []}
+        isLoading={isLoading}
+        onAddStock={addStock}
+        isAddingStock={isAddingStock}
+      />
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[425px]">
