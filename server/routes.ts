@@ -1,23 +1,17 @@
-import { Express } from "express";
-import { setupAuth } from "./auth";
+import { eq, desc, sql } from "drizzle-orm";
+import { type Express } from "express";
 import { db } from "../db";
-import { products, customers, sales, saleItems } from "@db/schema";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { products, sales, saleItems, customers } from "@db/schema";
+import { initiateSTKPush } from "./mpesa";
 
 export function registerRoutes(app: Express) {
-  setupAuth(app);
-
-  // Products API
   app.get("/api/products", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const allProducts = await db.select().from(products).orderBy(products.name);
+      const allProducts = await db.select().from(products).orderBy(desc(products.updatedAt));
       res.json(allProducts);
     } catch (error) {
-      console.error('Error fetching products:', error);
-      res.status(500).json({ 
-        error: "Failed to fetch products",
-        details: error instanceof Error ? error.message : String(error)
-      });
+      res.status(500).json({ error: "Failed to fetch products" });
     }
   });
 
@@ -28,6 +22,30 @@ export function registerRoutes(app: Express) {
       res.json(product);
     } catch (error) {
       res.status(500).json({ error: "Failed to create product" });
+    }
+  });
+
+  
+
+  
+
+  // M-Pesa payment endpoint
+  app.post("/api/payments/mpesa", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const { phone, amount } = req.body;
+      if (!phone || !amount) {
+        return res.status(400).json({ error: "Phone number and amount are required" });
+      }
+      
+      const result = await initiateSTKPush(phone, amount);
+      res.json(result);
+    } catch (error) {
+      console.error('M-Pesa payment error:', error);
+      res.status(500).json({ 
+        error: "Failed to initiate M-Pesa payment",
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
@@ -55,7 +73,6 @@ export function registerRoutes(app: Express) {
       });
     }
   });
-
 
   // Customers API
   app.get("/api/customers", async (req, res) => {
