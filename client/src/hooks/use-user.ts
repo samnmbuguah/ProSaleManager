@@ -37,40 +37,38 @@ async function handleRequest(
   }
 }
 
-async function fetchUser(): Promise<User | null> {
-  try {
-    const response = await fetch('/api/user', {
-      credentials: 'include'
-    });
-
-    if (response.status === 401) {
-      return null;
-    }
-
-    if (!response.ok) {
-      throw new Error(`${response.status}: ${await response.text()}`);
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error('Error fetching user:', error);
-    return null;
-  }
-}
-
 export function useUser() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const { data: user, error, isLoading } = useQuery<User | null, Error>({
     queryKey: ['user'],
-    queryFn: fetchUser,
-    retry: false,
-    staleTime: 30000, // Cache for 30 seconds
-    refetchOnWindowFocus: false, // Prevent refetch on window focus
-    refetchInterval: false, // Disable automatic refetching
-    refetchOnMount: false, // Prevent refetch on component mount
-    cacheTime: 60000 // Keep cache for 1 minute
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/user', {
+          credentials: 'include'
+        });
+
+        if (response.status === 401) {
+          return null;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data');
+        }
+
+        return response.json();
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        return null;
+      }
+    },
+    retry: 0, // Don't retry on failure
+    staleTime: Infinity, // Keep data fresh indefinitely
+    gcTime: 30 * 60 * 1000, // Cache for 30 minutes (renamed from cacheTime in v5)
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false
   });
 
   const loginMutation = useMutation({
