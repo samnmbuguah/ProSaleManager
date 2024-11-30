@@ -92,15 +92,8 @@ export function PaymentDialog({
             <Button
               size="lg"
               className="h-24"
-              onClick={() => {
-                toast({
-                  title: "Processing cash payment",
-                  description: "Completing sale with cash payment"
-                });
-                handlePayment("cash");
-              }}
+              onClick={() => handlePayment("cash")}
               disabled={isProcessing}
-              variant="default"
             >
               <div className="space-y-2">
                 <Receipt className="h-6 w-6 mx-auto" />
@@ -111,27 +104,14 @@ export function PaymentDialog({
             <Button
               size="lg"
               className="h-24"
-              onClick={() => {
-                if (total < 10) {
-                  toast({
-                    variant: "destructive",
-                    title: "Invalid amount",
-                    description: "M-Pesa payments must be at least KSh 10"
-                  });
-                  return;
-                }
-                setIsMpesaOpen(true);
-              }}
+              onClick={() => setIsMpesaOpen(true)}
               disabled={isProcessing}
-              variant="default"
             >
               <div className="space-y-2">
                 <Smartphone className="h-6 w-6 mx-auto" />
                 <div>M-Pesa</div>
               </div>
             </Button>
-
-            
           </div>
         </div>
       </DialogContent>

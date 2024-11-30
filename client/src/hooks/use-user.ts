@@ -43,10 +43,11 @@ async function fetchUser(): Promise<User | null> {
       credentials: 'include'
     });
 
+    if (response.status === 401) {
+      return null;
+    }
+
     if (!response.ok) {
-      if (response.status === 401) {
-        return null;
-      }
       throw new Error(`${response.status}: ${await response.text()}`);
     }
 
@@ -66,7 +67,10 @@ export function useUser() {
     queryFn: fetchUser,
     retry: false,
     staleTime: 30000, // Cache for 30 seconds
-    refetchOnWindowFocus: false // Prevent refetch on window focus
+    refetchOnWindowFocus: false, // Prevent refetch on window focus
+    refetchInterval: false, // Disable automatic refetching
+    refetchOnMount: false, // Prevent refetch on component mount
+    cacheTime: 60000 // Keep cache for 1 minute
   });
 
   const loginMutation = useMutation({
