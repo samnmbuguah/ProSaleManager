@@ -64,8 +64,9 @@ export function useUser() {
   const { data: user, error, isLoading } = useQuery<User | null, Error>({
     queryKey: ['user'],
     queryFn: fetchUser,
-    staleTime: Infinity,
-    retry: false
+    retry: false,
+    staleTime: 30000, // Cache for 30 seconds
+    refetchOnWindowFocus: false // Prevent refetch on window focus
   });
 
   const loginMutation = useMutation({
