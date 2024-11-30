@@ -28,15 +28,16 @@ export function useUser() {
         return null;
       }
     },
-    enabled: true, // Only run once when component mounts
-    staleTime: Infinity, // Never mark cache as stale
-    gcTime: Infinity, // Never delete from cache
-    retry: 0, // Don't retry on failure
+    enabled: true,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    retry: false,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchInterval: false,
-    refetchIntervalInBackground: false
+    suspense: false,
+    networkMode: 'offlineFirst'
   });
 
   const loginMutation = useMutation({
