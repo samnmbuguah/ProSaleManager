@@ -48,24 +48,25 @@ export function useUser() {
         const response = await fetch('/api/user', {
           credentials: 'include'
         });
-
+        
+        // Return null for 401 without throwing error
         if (response.status === 401) {
           return null;
         }
 
         if (!response.ok) {
-          throw new Error('Failed to fetch user data');
+          throw new Error(`Failed to fetch user: ${response.statusText}`);
         }
 
         return response.json();
       } catch (error) {
         console.error('Error fetching user:', error);
-        return null;
+        return null; // Return null instead of throwing
       }
     },
-    retry: 0, // Don't retry on failure
-    staleTime: Infinity, // Keep data fresh indefinitely
-    gcTime: 30 * 60 * 1000, // Cache for 30 minutes (renamed from cacheTime in v5)
+    retry: false,
+    staleTime: Infinity, // Never consider data stale
+    gcTime: 24 * 60 * 60 * 1000, // Cache for 24 hours
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchInterval: false
