@@ -24,7 +24,6 @@ export function PaymentDialog({
 }: PaymentDialogProps) {
   const [selectedCustomerId, setSelectedCustomerId] = useState<number>();
   const [isMpesaOpen, setIsMpesaOpen] = useState(false);
-  
   const { customers, searchCustomers } = useCustomers();
   const [query, setQuery] = useState("");
   const { toast } = useToast();
@@ -103,7 +102,7 @@ export function PaymentDialog({
 
             <Button
               size="lg"
-              className="h-24"
+              className="h-24 bg-green-600 hover:bg-green-700"
               onClick={() => setIsMpesaOpen(true)}
               disabled={isProcessing}
             >
@@ -115,12 +114,6 @@ export function PaymentDialog({
           </div>
         </div>
       </DialogContent>
-
-      
-
-      
-
-      
 
       <MpesaDialog
         open={isMpesaOpen}
