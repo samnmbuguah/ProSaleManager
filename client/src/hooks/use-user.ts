@@ -14,10 +14,11 @@ export function useUser() {
           credentials: 'include'
         });
         
+        if (response.status === 401) {
+          return null;
+        }
+
         if (!response.ok) {
-          if (response.status === 401) {
-            return null;
-          }
           throw new Error('Failed to fetch user');
         }
 
@@ -27,13 +28,15 @@ export function useUser() {
         return null;
       }
     },
-    staleTime: Infinity,
-    gcTime: Infinity,
-    retry: false,
+    enabled: true, // Only run once when component mounts
+    staleTime: Infinity, // Never mark cache as stale
+    gcTime: Infinity, // Never delete from cache
+    retry: 0, // Don't retry on failure
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchInterval: false
+    refetchInterval: false,
+    refetchIntervalInBackground: false
   });
 
   const loginMutation = useMutation({
