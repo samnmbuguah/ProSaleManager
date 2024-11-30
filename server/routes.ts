@@ -4,7 +4,9 @@ import { db } from "../db";
 import { products, sales, saleItems, customers } from "@db/schema";
 import { initiateSTKPush } from "./mpesa";
 
+
 export function registerRoutes(app: Express) {
+  
   app.get("/api/products", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {

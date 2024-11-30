@@ -41,7 +41,7 @@ export function useUser() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: user, error, isLoading } = useQuery<User | null, Error>({
+  const { data: user, error, isLoading } = useQuery<User | null>({
     queryKey: ['user'],
     queryFn: async () => {
       try {
@@ -49,26 +49,26 @@ export function useUser() {
           credentials: 'include'
         });
         
-        // Return null for 401 without throwing error
         if (response.status === 401) {
           return null;
         }
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch user: ${response.statusText}`);
+          throw new Error('Failed to fetch user');
         }
 
         return response.json();
       } catch (error) {
         console.error('Error fetching user:', error);
-        return null; // Return null instead of throwing
+        return null;
       }
     },
-    retry: false,
-    staleTime: Infinity, // Never consider data stale
-    gcTime: 24 * 60 * 60 * 1000, // Cache for 24 hours
-    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    retry: 0,
     refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     refetchInterval: false
   });
 
