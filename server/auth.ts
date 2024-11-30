@@ -201,7 +201,6 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    // Only send necessary user data
     const { password, ...userData } = req.user;
     res.json(userData);
   });
