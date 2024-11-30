@@ -3,7 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { useCustomers } from "@/hooks/use-customers";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { CreditCard, Mail, Phone, Receipt, User } from "lucide-react";
+import { Mail, Phone, Receipt, User, Smartphone } from "lucide-react";
+import { MpesaDialog } from "./MpesaDialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface PaymentDialogProps {
   open: boolean;
@@ -21,8 +23,12 @@ export function PaymentDialog({
   isProcessing
 }: PaymentDialogProps) {
   const [selectedCustomerId, setSelectedCustomerId] = useState<number>();
+  const [isMpesaOpen, setIsMpesaOpen] = useState(false);
+  
+  
   const { customers, searchCustomers } = useCustomers();
   const [query, setQuery] = useState("");
+  const { toast } = useToast();
   const selectedCustomer = customers?.find(c => c.id === selectedCustomerId);
 
   const handlePayment = (method: string) => {
@@ -87,29 +93,90 @@ export function PaymentDialog({
             <Button
               size="lg"
               className="h-24"
-              onClick={() => handlePayment("card")}
+              onClick={() => {
+                toast({
+                  title: "Processing cash payment",
+                  description: "Completing sale with cash payment"
+                });
+                handlePayment("cash");
+              }}
               disabled={isProcessing}
-            >
-              <div className="space-y-2">
-                <CreditCard className="h-6 w-6 mx-auto" />
-                <div>Card</div>
-              </div>
-            </Button>
-
-            <Button
-              size="lg"
-              className="h-24"
-              onClick={() => handlePayment("cash")}
-              disabled={isProcessing}
+              variant="default"
             >
               <div className="space-y-2">
                 <Receipt className="h-6 w-6 mx-auto" />
                 <div>Cash</div>
               </div>
             </Button>
+
+            <Button
+              size="lg"
+              className="h-24"
+              onClick={() => {
+                if (total < 10) {
+                  toast({
+                    variant: "destructive",
+                    title: "Invalid amount",
+                    description: "M-Pesa payments must be at least KSh 10"
+                  });
+                  return;
+                }
+                setIsMpesaOpen(true);
+              }}
+              disabled={isProcessing}
+              variant="default"
+            >
+              <div className="space-y-2">
+                <Smartphone className="h-6 w-6 mx-auto" />
+                <div>M-Pesa</div>
+              </div>
+            </Button>
+
+            
           </div>
         </div>
       </DialogContent>
+
+      
+
+      
+
+      <MpesaDialog
+        open={isMpesaOpen}
+        onClose={() => setIsMpesaOpen(false)}
+        onSubmit={async (phone) => {
+          try {
+            const response = await fetch('/api/payments/mpesa', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ phone, amount: total }),
+              credentials: 'include',
+            });
+
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(error.details || error.error || 'Payment failed');
+            }
+
+            const result = await response.json();
+            toast({
+              title: "Payment initiated",
+              description: "Please check your phone for the M-Pesa prompt"
+            });
+
+            onComplete('mpesa', selectedCustomerId);
+            setIsMpesaOpen(false);
+          } catch (error) {
+            toast({
+              variant: "destructive",
+              title: "Payment failed",
+              description: error instanceof Error ? error.message : 'Failed to process payment'
+            });
+          }
+        }}
+        amount={total}
+        isProcessing={isProcessing}
+      />
     </Dialog>
   );
 }

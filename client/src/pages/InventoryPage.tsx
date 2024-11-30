@@ -23,7 +23,9 @@ export default function InventoryPage() {
       <ProductTable
         products={products || []}
         isLoading={isLoading}
-        onAddStock={addStock}
+        onAddStock={async (productId, quantity) => {
+          await addStock({ productId, quantity });
+        }}
         isAddingStock={isAddingStock}
       />
 

@@ -53,7 +53,7 @@ export function useInventory() {
   });
 
   const addStockMutation = useMutation<Product, Error, { productId: number, quantity: number }>({
-    mutationFn: ({ productId, quantity }) =>
+    mutationFn: async ({ productId, quantity }) =>
       fetch(`/api/products/${productId}/stock`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
