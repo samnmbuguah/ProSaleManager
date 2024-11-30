@@ -15,6 +15,7 @@ export function useUser() {
         });
         
         if (response.status === 401) {
+          queryClient.setQueryData(['user'], null);
           return null;
         }
 
@@ -22,22 +23,22 @@ export function useUser() {
           throw new Error('Failed to fetch user');
         }
 
-        return response.json();
+        const data = await response.json();
+        return data;
       } catch (error) {
         console.error('Error fetching user:', error);
         return null;
       }
     },
-    enabled: true,
-    staleTime: Infinity,
-    gcTime: Infinity,
+    initialData: null,
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours
+    gcTime: 24 * 60 * 60 * 1000,    // 24 hours
     retry: false,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchInterval: false,
-    suspense: false,
-    networkMode: 'offlineFirst'
+    refetchIntervalInBackground: false
   });
 
   const loginMutation = useMutation({
