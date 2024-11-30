@@ -3,8 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { useCustomers } from "@/hooks/use-customers";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { Mail, Phone, Receipt, User, Smartphone } from "lucide-react";
+import { Mail, Phone, Receipt, User, Smartphone, CreditCard } from "lucide-react";
 import { MpesaDialog } from "./MpesaDialog";
+import { CardPaymentDialog } from "./CardPaymentDialog";
 import { useToast } from "@/hooks/use-toast";
 
 interface PaymentDialogProps {
@@ -24,13 +25,14 @@ export function PaymentDialog({
 }: PaymentDialogProps) {
   const [selectedCustomerId, setSelectedCustomerId] = useState<number>();
   const [isMpesaOpen, setIsMpesaOpen] = useState(false);
+  const [isCardOpen, setIsCardOpen] = useState(false);
   const { customers, searchCustomers } = useCustomers();
   const [query, setQuery] = useState("");
   const { toast } = useToast();
   const selectedCustomer = customers?.find(c => c.id === selectedCustomerId);
 
-  const handlePayment = (method: string) => {
-    onComplete(method, selectedCustomerId);
+  const handlePayment = async (method: string) => {
+    await onComplete(method, selectedCustomerId);
   };
 
   return (
@@ -87,7 +89,7 @@ export function PaymentDialog({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <Button
               size="lg"
               className="h-24"
@@ -111,9 +113,40 @@ export function PaymentDialog({
                 <div>M-Pesa</div>
               </div>
             </Button>
+
+            <Button
+              size="lg"
+              className="h-24"
+              onClick={() => setIsCardOpen(true)}
+              disabled={isProcessing}
+            >
+              <div className="space-y-2">
+                <CreditCard className="h-6 w-6 mx-auto" />
+                <div>Card</div>
+              </div>
+            </Button>
           </div>
         </div>
       </DialogContent>
+
+      <CardPaymentDialog
+        open={isCardOpen}
+        onClose={() => setIsCardOpen(false)}
+        onSubmit={async () => {
+          try {
+            await handlePayment('card');
+            setIsCardOpen(false);
+          } catch (error) {
+            toast({
+              variant: "destructive",
+              title: "Payment failed",
+              description: error instanceof Error ? error.message : 'Failed to process payment'
+            });
+          }
+        }}
+        amount={total}
+        isProcessing={isProcessing}
+      />
 
       <MpesaDialog
         open={isMpesaOpen}
@@ -138,7 +171,7 @@ export function PaymentDialog({
               description: "Please check your phone for the M-Pesa prompt"
             });
 
-            onComplete('mpesa', selectedCustomerId);
+            await handlePayment('mpesa');
             setIsMpesaOpen(false);
           } catch (error) {
             toast({

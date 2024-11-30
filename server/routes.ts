@@ -1,12 +1,11 @@
-import { eq, desc, sql } from "drizzle-orm";
 import { type Express } from "express";
+import { desc, eq, sql } from "drizzle-orm";
 import { db } from "../db";
 import { products, sales, saleItems, customers } from "@db/schema";
 import { initiateSTKPush } from "./mpesa";
 
-
 export function registerRoutes(app: Express) {
-  
+  // Products API
   app.get("/api/products", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
@@ -23,13 +22,13 @@ export function registerRoutes(app: Express) {
       const [product] = await db.insert(products).values(req.body).returning();
       res.json(product);
     } catch (error) {
-      res.status(500).json({ error: "Failed to create product" });
+      console.error('Product creation error:', error);
+      res.status(500).json({ 
+        error: "Failed to create product",
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   });
-
-  
-
-  
 
   // M-Pesa payment endpoint
   app.post("/api/payments/mpesa", async (req, res) => {
@@ -140,7 +139,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Product Performance Report
+  // Reports API endpoints...
   app.get("/api/reports/product-performance", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
@@ -169,7 +168,6 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Sales Trend Analysis
   app.get("/api/reports/sales-trend", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
@@ -193,7 +191,6 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Customer Purchase History
   app.get("/api/reports/customer-history/:customerId", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
@@ -214,7 +211,6 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Top Selling Products Report
   app.get("/api/reports/top-selling", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
@@ -239,7 +235,6 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Low Stock Report
   app.get("/api/reports/low-stock", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
