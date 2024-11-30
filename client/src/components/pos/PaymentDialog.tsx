@@ -25,7 +25,6 @@ export function PaymentDialog({
   const [selectedCustomerId, setSelectedCustomerId] = useState<number>();
   const [isMpesaOpen, setIsMpesaOpen] = useState(false);
   
-  
   const { customers, searchCustomers } = useCustomers();
   const [query, setQuery] = useState("");
   const { toast } = useToast();
@@ -136,6 +135,8 @@ export function PaymentDialog({
           </div>
         </div>
       </DialogContent>
+
+      
 
       
 
