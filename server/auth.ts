@@ -46,18 +46,12 @@ export function setupAuth(app: Express) {
     secret: process.env.REPL_ID || "pos-system-secret",
     resave: false,
     saveUninitialized: false,
-    cookie: {},
-    store: new MemoryStore({
-      checkPeriod: 86400000,
-    }),
+    cookie: {
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      secure: app.get("env") === "production",
+      httpOnly: true
+    }
   };
-
-  if (app.get("env") === "production") {
-    app.set("trust proxy", 1);
-    sessionSettings.cookie = {
-      secure: true,
-    };
-  }
 
   app.use(session(sessionSettings));
   app.use(passport.initialize());
