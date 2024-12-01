@@ -1,50 +1,72 @@
-import { type Express } from "express";
-import { desc, eq, sql } from "drizzle-orm";
+import type { Express } from "express";
+import { eq, desc, sql } from "drizzle-orm";
 import { db } from "../db";
-import { products, sales, saleItems, customers } from "@db/schema";
+import { products, customers, sales, saleItems } from "@db/schema";
 import { initiateSTKPush } from "./mpesa";
+import { createPaymentIntent } from "./stripe";
 
-export function registerRoutes(app: Express) {
-  // Products API
+export function setupRoutes(app: Express) {
   app.get("/api/products", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const allProducts = await db.select().from(products).orderBy(desc(products.updatedAt));
+      const allProducts = await db.select().from(products).orderBy(products.name);
       res.json(allProducts);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch products" });
     }
   });
 
-  app.post("/api/products", async (req, res) => {
+  app.get("/api/products/search", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const [product] = await db.insert(products).values(req.body).returning();
-      res.json(product);
+      const { q } = req.query;
+      if (typeof q !== "string") {
+        return res.status(400).json({ error: "Search query is required" });
+      }
+
+      const searchResults = await db
+        .select()
+        .from(products)
+        .where(sql`${products.name} ILIKE ${`%${q}%`}`)
+        .limit(10);
+
+      res.json(searchResults);
     } catch (error) {
-      console.error('Product creation error:', error);
-      res.status(500).json({ 
-        error: "Failed to create product",
-        details: error instanceof Error ? error.message : String(error)
-      });
+      res.status(500).json({ error: "Search failed" });
     }
   });
 
-  // M-Pesa payment endpoint
+  // Payment endpoints
   app.post("/api/payments/mpesa", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
       const { phone, amount } = req.body;
       if (!phone || !amount) {
-        return res.status(400).json({ error: "Phone number and amount are required" });
+        return res.status(400).json({ error: "Phone and amount are required" });
       }
-      
+
       const result = await initiateSTKPush(phone, amount);
       res.json(result);
     } catch (error) {
       console.error('M-Pesa payment error:', error);
       res.status(500).json({ 
         error: "Failed to initiate M-Pesa payment",
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Stripe payment endpoint
+  app.post("/api/payments/stripe/create-payment-intent", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const { amount } = req.body;
+      const paymentIntent = await createPaymentIntent(amount);
+      res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error) {
+      console.error('Stripe payment error:', error);
+      res.status(500).json({ 
+        error: "Failed to create payment intent",
         details: error instanceof Error ? error.message : String(error)
       });
     }
@@ -110,7 +132,7 @@ export function registerRoutes(app: Express) {
         paymentMethod,
       }).returning();
 
-      // Create sale items with profit margin
+      // Create sale items
       await db.insert(saleItems).values(
         items.map((item: any) => ({
           saleId: sale.id,
@@ -139,7 +161,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Reports API endpoints...
+  // Reports API endpoints
   app.get("/api/reports/product-performance", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {

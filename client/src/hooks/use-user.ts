@@ -15,7 +15,6 @@ export function useUser() {
         });
         
         if (response.status === 401) {
-          queryClient.setQueryData(['user'], null);
           return null;
         }
 
@@ -30,15 +29,15 @@ export function useUser() {
         return null;
       }
     },
-    initialData: null,
-    staleTime: 24 * 60 * 60 * 1000, // 24 hours
-    gcTime: 24 * 60 * 60 * 1000,    // 24 hours
+    staleTime: Infinity,
+    gcTime: Infinity,
     retry: false,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     refetchInterval: false,
-    refetchIntervalInBackground: false
+    enabled: true,
+    suspense: false
   });
 
   const loginMutation = useMutation({
@@ -55,10 +54,11 @@ export function useUser() {
         throw new Error(error);
       }
 
-      return response.json();
-    },
-    onSuccess: (data) => {
+      const data = await response.json();
       queryClient.setQueryData(['user'], data.user);
+      return data;
+    },
+    onSuccess: () => {
       toast({
         title: "Success",
         description: "Logged in successfully",
@@ -137,10 +137,11 @@ export function useUser() {
 
   return {
     user: query.data,
-    ...query,
     login: loginMutation.mutateAsync,
     register: registerMutation.mutateAsync,
     logout: logoutMutation.mutateAsync,
-    isAuthenticating: loginMutation.isPending || registerMutation.isPending,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    isAuthenticating: loginMutation.isPending || registerMutation.isPending
   };
 }

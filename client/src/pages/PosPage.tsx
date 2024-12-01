@@ -1,4 +1,4 @@
-import { useState } from "react";
+2import { useState } from "react";
 import { ProductSearch } from "../components/pos/ProductSearch";
 import { Cart } from "../components/pos/Cart";
 import { PaymentDialog } from "../components/pos/PaymentDialog";
