@@ -1,7 +1,7 @@
 import { Express } from "express";
 import { setupAuth } from "./auth";
 import { db } from "../db";
-import { products, customers, sales, saleItems, suppliers, productSuppliers } from "@db/schema";
+import { products, customers, sales, saleItems, suppliers, productSuppliers as productSuppliersTable } from "@db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { desc } from "drizzle-orm";
 
@@ -32,12 +32,12 @@ export function registerRoutes(app: Express) {
   app.get("/api/product-suppliers", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const productSuppliers = await db
+      const supplierProducts = await db
         .select()
-        .from(productSuppliers)
-        .innerJoin(suppliers, eq(suppliers.id, productSuppliers.supplierId))
-        .innerJoin(products, eq(products.id, productSuppliers.productId));
-      res.json(productSuppliers);
+        .from(productSuppliersTable)
+        .innerJoin(suppliers, eq(suppliers.id, productSuppliersTable.supplierId))
+        .innerJoin(products, eq(products.id, productSuppliersTable.productId));
+      res.json(supplierProducts);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch product suppliers" });
     }
@@ -47,7 +47,7 @@ export function registerRoutes(app: Express) {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
       const [productSupplier] = await db
-        .insert(productSuppliers)
+        .insert(productSuppliersTable)
         .values(req.body)
         .returning();
       res.json(productSupplier);
