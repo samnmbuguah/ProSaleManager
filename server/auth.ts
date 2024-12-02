@@ -72,14 +72,24 @@ export function setupAuth(app: Express) {
           .where(eq(users.username, username))
           .limit(1);
 
-        if (!user) {
+        if (!user || user.createdAt === null) {
           return done(null, false, { message: "Incorrect username." });
         }
         const isMatch = await crypto.compare(password, user.password);
         if (!isMatch) {
           return done(null, false, { message: "Incorrect password." });
         }
-        return done(null, user);
+
+        // Ensure createdAt is not null before creating the Express.User object
+        const authenticatedUser: Express.User = {
+          id: user.id,
+          username: user.username,
+          password: user.password,
+          role: user.role,
+          createdAt: user.createdAt,
+        };
+
+        return done(null, authenticatedUser);
       } catch (err) {
         return done(err);
       }
@@ -93,11 +103,31 @@ export function setupAuth(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       const [user] = await db
-        .select()
+        .select({
+          id: users.id,
+          username: users.username,
+          role: users.role,
+          password: users.password,
+          createdAt: users.createdAt,
+        })
         .from(users)
         .where(eq(users.id, id))
         .limit(1);
-      done(null, user);
+
+      if (!user || user.createdAt === null) {
+        return done(null, false);
+      }
+
+      // Ensure createdAt is not null before creating the Express.User object
+      const authenticatedUser: Express.User = {
+        id: user.id,
+        username: user.username,
+        password: user.password,
+        role: user.role,
+        createdAt: user.createdAt,
+      };
+
+      done(null, authenticatedUser);
     } catch (err) {
       done(err);
     }
@@ -138,14 +168,27 @@ export function setupAuth(app: Express) {
         })
         .returning();
 
+      if (!newUser || newUser.createdAt === null) {
+        return res.status(500).send("Failed to create user");
+      }
+
+      // Create the Express.User object with non-null createdAt
+      const authenticatedUser: Express.User = {
+        id: newUser.id,
+        username: newUser.username,
+        password: newUser.password,
+        role: newUser.role,
+        createdAt: newUser.createdAt,
+      };
+
       // Log the user in after registration
-      req.login(newUser, (err) => {
+      req.login(authenticatedUser, (err) => {
         if (err) {
           return next(err);
         }
         return res.json({
           message: "Registration successful",
-          user: { id: newUser.id, username: newUser.username, role: newUser.role },
+          user: { id: authenticatedUser.id, username: authenticatedUser.username, role: authenticatedUser.role },
         });
       });
     } catch (error) {
@@ -161,7 +204,7 @@ export function setupAuth(app: Express) {
         .send("Invalid input: " + result.error.issues.map(i => i.message).join(", "));
     }
 
-    const cb = (err: any, user: Express.User, info: IVerifyOptions) => {
+    passport.authenticate("local", (err: any, user: Express.User | false, info: IVerifyOptions) => {
       if (err) {
         return next(err);
       }
@@ -180,8 +223,7 @@ export function setupAuth(app: Express) {
           user: { id: user.id, username: user.username, role: user.role },
         });
       });
-    };
-    passport.authenticate("local", cb)(req, res, next);
+    })(req, res, next);
   });
 
   app.post("/api/logout", (req, res) => {
