@@ -3,10 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { useCustomers } from "@/hooks/use-customers";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { Mail, Phone, Receipt, User, Smartphone } from "lucide-react";
-import { MpesaDialog } from "./MpesaDialog";
-import { CardPaymentDialog } from "./CardPaymentDialog";
-import { useToast } from "@/hooks/use-toast";
+import { CreditCard, Mail, Phone, Receipt, User } from "lucide-react";
 
 interface PaymentDialogProps {
   open: boolean;
@@ -24,15 +21,12 @@ export function PaymentDialog({
   isProcessing
 }: PaymentDialogProps) {
   const [selectedCustomerId, setSelectedCustomerId] = useState<number>();
-  const [isMpesaOpen, setIsMpesaOpen] = useState(false);
-  const [isCardPaymentOpen, setIsCardPaymentOpen] = useState(false);
   const { customers, searchCustomers } = useCustomers();
   const [query, setQuery] = useState("");
-  const { toast } = useToast();
   const selectedCustomer = customers?.find(c => c.id === selectedCustomerId);
 
-  const handlePayment = async (method: string) => {
-    await onComplete(method, selectedCustomerId);
+  const handlePayment = (method: string) => {
+    onComplete(method, selectedCustomerId);
   };
 
   return (
@@ -89,7 +83,19 @@ export function PaymentDialog({
             )}
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Button
+              size="lg"
+              className="h-24"
+              onClick={() => handlePayment("card")}
+              disabled={isProcessing}
+            >
+              <div className="space-y-2">
+                <CreditCard className="h-6 w-6 mx-auto" />
+                <div>Card</div>
+              </div>
+            </Button>
+
             <Button
               size="lg"
               className="h-24"
@@ -101,81 +107,9 @@ export function PaymentDialog({
                 <div>Cash</div>
               </div>
             </Button>
-
-            <Button
-              size="lg"
-              className="h-24 bg-green-600 hover:bg-green-700"
-              onClick={() => setIsMpesaOpen(true)}
-              disabled={isProcessing}
-            >
-              <div className="space-y-2">
-                <Smartphone className="h-6 w-6 mx-auto" />
-                <div>M-Pesa</div>
-              </div>
-            </Button>
-
-            <Button
-              size="lg"
-              className="h-24 bg-blue-600 hover:bg-blue-700"
-              onClick={() => setIsCardPaymentOpen(true)}
-              disabled={isProcessing}
-            >
-              <div className="space-y-2">
-                <Receipt className="h-6 w-6 mx-auto" />
-                <div>Card</div>
-              </div>
-            </Button>
           </div>
         </div>
       </DialogContent>
-
-      <CardPaymentDialog
-        open={isCardPaymentOpen}
-        onClose={() => setIsCardPaymentOpen(false)}
-        onComplete={async () => {
-          await handlePayment('card');
-          setIsCardPaymentOpen(false);
-        }}
-        amount={total}
-        isProcessing={isProcessing}
-      />
-
-      <MpesaDialog
-        open={isMpesaOpen}
-        onClose={() => setIsMpesaOpen(false)}
-        onSubmit={async (phone) => {
-          try {
-            const response = await fetch('/api/payments/mpesa', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ phone, amount: total }),
-              credentials: 'include',
-            });
-
-            if (!response.ok) {
-              const error = await response.json();
-              throw new Error(error.details || error.error || 'Payment failed');
-            }
-
-            const result = await response.json();
-            toast({
-              title: "Payment initiated",
-              description: "Please check your phone for the M-Pesa prompt"
-            });
-
-            await handlePayment('mpesa');
-            setIsMpesaOpen(false);
-          } catch (error) {
-            toast({
-              variant: "destructive",
-              title: "Payment failed",
-              description: error instanceof Error ? error.message : 'Failed to process payment'
-            });
-          }
-        }}
-        amount={total}
-        isProcessing={isProcessing}
-      />
     </Dialog>
   );
 }

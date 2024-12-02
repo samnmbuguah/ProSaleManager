@@ -2,7 +2,6 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
 import { createServer } from "http";
-import { setupAuth } from "./auth";
 
 function log(message: string) {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -50,10 +49,6 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Setup authentication before routes
-  setupAuth(app);
-  
-  // Register routes after auth setup
   registerRoutes(app);
   const server = createServer(app);
 

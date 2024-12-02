@@ -32,13 +32,10 @@ declare global {
   namespace Express {
     interface User {
       id: number;
-      email: string;
-      name: string;
       username: string;
       role: string;
-      passwordHash: string;
+      password: string;
       createdAt: Date;
-      updatedAt: Date;
     }
   }
 }
@@ -49,16 +46,18 @@ export function setupAuth(app: Express) {
     secret: process.env.REPL_ID || "pos-system-secret",
     resave: false,
     saveUninitialized: false,
+    cookie: {},
     store: new MemoryStore({
-      checkPeriod: 86400000 // prune expired entries every 24h
+      checkPeriod: 86400000,
     }),
-    cookie: {
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      secure: false, // Set to true in production
-      httpOnly: true,
-      sameSite: 'lax'
-    }
   };
+
+  if (app.get("env") === "production") {
+    app.set("trust proxy", 1);
+    sessionSettings.cookie = {
+      secure: true,
+    };
+  }
 
   app.use(session(sessionSettings));
   app.use(passport.initialize());
@@ -73,14 +72,14 @@ export function setupAuth(app: Express) {
           .where(eq(users.username, username))
           .limit(1);
 
-        if (!user || user.createdAt === null) {
-          return done(null, false, { message: "Invalid user data." });
+        if (!user) {
+          return done(null, false, { message: "Incorrect username." });
         }
-        const isMatch = await crypto.compare(password, user.passwordHash);
+        const isMatch = await crypto.compare(password, user.password);
         if (!isMatch) {
           return done(null, false, { message: "Incorrect password." });
         }
-        return done(null, user as Express.User);
+        return done(null, user);
       } catch (err) {
         return done(err);
       }
@@ -98,10 +97,7 @@ export function setupAuth(app: Express) {
         .from(users)
         .where(eq(users.id, id))
         .limit(1);
-      if (!user || user.createdAt === null) {
-        return done(new Error("Invalid user data"));
-      }
-      done(null, user as Express.User);
+      done(null, user);
     } catch (err) {
       done(err);
     }
@@ -116,7 +112,7 @@ export function setupAuth(app: Express) {
           .send("Invalid input: " + result.error.issues.map(i => i.message).join(", "));
       }
 
-      const { username, email, name, password } = result.data;
+      const { username, password } = result.data;
 
       // Check if user already exists
       const [existingUser] = await db
@@ -137,15 +133,13 @@ export function setupAuth(app: Express) {
         .insert(users)
         .values({
           username,
-          email,
-          name,
-          passwordHash: hashedPassword,
+          password: hashedPassword,
           role: "cashier",
         })
         .returning();
 
       // Log the user in after registration
-      req.login(newUser as Express.User, (err) => {
+      req.login(newUser, (err) => {
         if (err) {
           return next(err);
         }
@@ -160,19 +154,34 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate(
-      "local",
-      (err: Error | null, user: Express.User | false, info: IVerifyOptions | undefined) => {
-        if (err) return next(err);
-        if (!user) return res.status(401).json({ error: info?.message || "Invalid credentials" });
-        
-        req.logIn(user, (err) => {
-          if (err) return next(err);
-          const { passwordHash, ...userData } = user;
-          return res.json(userData);
-        });
+    const result = insertUserSchema.safeParse(req.body);
+    if (!result.success) {
+      return res
+        .status(400)
+        .send("Invalid input: " + result.error.issues.map(i => i.message).join(", "));
+    }
+
+    const cb = (err: any, user: Express.User, info: IVerifyOptions) => {
+      if (err) {
+        return next(err);
       }
-    )(req, res, next);
+
+      if (!user) {
+        return res.status(400).send(info.message ?? "Login failed");
+      }
+
+      req.logIn(user, (err) => {
+        if (err) {
+          return next(err);
+        }
+
+        return res.json({
+          message: "Login successful",
+          user: { id: user.id, username: user.username, role: user.role },
+        });
+      });
+    };
+    passport.authenticate("local", cb)(req, res, next);
   });
 
   app.post("/api/logout", (req, res) => {
@@ -186,17 +195,10 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-    
-    // Ensure we have a user object
-    if (!req.user) {
-      return res.status(500).json({ message: "User session error" });
+    if (req.isAuthenticated()) {
+      return res.json(req.user);
     }
 
-    // Remove sensitive data before sending
-    const { passwordHash, ...userData } = req.user;
-    res.json(userData);
+    res.status(401).send("Not logged in");
   });
 }
