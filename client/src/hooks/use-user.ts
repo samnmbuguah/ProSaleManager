@@ -29,15 +29,9 @@ export function useUser() {
         return null;
       }
     },
-    staleTime: Infinity,
-    gcTime: Infinity,
-    retry: false,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchInterval: false,
-    enabled: true,
-    suspense: false
+    staleTime: 30000, // 30 seconds
+    gcTime: 24 * 60 * 60 * 1000, // 24 hours
+    retry: false
   });
 
   const loginMutation = useMutation({

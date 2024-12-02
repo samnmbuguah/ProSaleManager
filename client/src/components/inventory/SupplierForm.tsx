@@ -26,9 +26,8 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
       email: "",
       phone: "",
       address: "",
-      rating: 0,
-      onTimeDeliveryRate: 0,
-      qualityRating: 0,
+      onTimeDeliveryRate: "0",
+      qualityRating: "0",
       responseTime: 0,
     },
   });
@@ -57,7 +56,7 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input {...field} type="email" placeholder="supplier@example.com" />
+                <Input {...field} type="email" placeholder="supplier@example.com" value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -71,7 +70,7 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
             <FormItem>
               <FormLabel>Phone</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Phone number" />
+                <Input {...field} placeholder="Phone number" value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -85,7 +84,7 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
             <FormItem>
               <FormLabel>Address</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="Physical address" />
+                <Input {...field} placeholder="Physical address" value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>

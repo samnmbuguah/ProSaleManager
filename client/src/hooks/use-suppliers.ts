@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Supplier, InsertSupplier, PurchaseOrder } from '@db/schema';
+import type { Supplier, InsertSupplier, PurchaseOrder, InsertSupplierProduct } from '@db/schema';
 import { useToast } from '@/hooks/use-toast';
 
 export function useSuppliers() {
@@ -201,6 +201,8 @@ export function useSuppliers() {
     isCreatingOrder: createPurchaseOrderMutation.isPending,
     receivePurchaseOrder: receivePurchaseOrderMutation.mutateAsync,
     isReceivingOrder: receivePurchaseOrderMutation.isPending,
+    updateSupplierQuality: updateSupplierQualityMutation.mutateAsync,
+    isUpdatingQuality: updateSupplierQualityMutation.isPending,
     reorderSuggestions,
     getSupplierProducts,
     addSupplierProduct: addSupplierProductMutation.mutateAsync,

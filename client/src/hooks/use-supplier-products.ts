@@ -1,11 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import type { SupplierProduct } from "@db/schema";
+import { type Product, type SupplierProduct } from "@db/schema";
 
-export function useSupplierProducts(supplierId: number) {
-  return useQuery<SupplierProduct[]>({
-    queryKey: ["supplier-products", supplierId],
+export interface SupplierProductWithProduct extends SupplierProduct {
+  product?: Product;
+}
+
+export function useSupplierProducts(supplierId?: number) {
+  return useQuery<SupplierProductWithProduct[]>({
+    queryKey: ['supplier-products', supplierId],
     queryFn: () =>
-      fetch(`/api/supplier-products/${supplierId}`).then((res) => res.json()),
+      supplierId
+        ? fetch(`/api/supplier-products/${supplierId}`).then((res) => res.json())
+        : Promise.resolve([]),
     enabled: !!supplierId,
   });
 }

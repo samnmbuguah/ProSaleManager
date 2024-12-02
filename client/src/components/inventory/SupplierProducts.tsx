@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { type Product, type SupplierProduct } from "@db/schema";
 import { useSupplierProducts } from "@/hooks/use-supplier-products";
+import { type SupplierProductWithProduct } from "@/hooks/use-supplier-products";
 import {
   Table,
   TableBody,
@@ -35,7 +36,7 @@ interface SupplierProductsProps {
   supplierId: number;
   products: Product[];
   onAddProduct: (data: InsertSupplierProduct) => Promise<void>;
-  onUpdateProduct: (id: number, data: Partial<InsertSupplierProduct>) => Promise<void>;
+  onUpdateProduct: (data: { id: number } & Partial<InsertSupplierProduct>) => Promise<void>;
 }
 
 export function SupplierProducts({
@@ -44,7 +45,7 @@ export function SupplierProducts({
   onAddProduct,
   onUpdateProduct,
 }: SupplierProductsProps) {
-  const { data: supplierProducts, isLoading } = useSupplierProducts(supplierId);
+  const { data: supplierProducts = [], isLoading } = useSupplierProducts(supplierId);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   const form = useForm({
@@ -108,7 +109,7 @@ export function SupplierProducts({
                   <Switch
                     checked={sp.isPreferred}
                     onCheckedChange={(checked) =>
-                      onUpdateProduct(sp.id, { isPreferred: checked })
+                      onUpdateProduct({ id: sp.id, isPreferred: checked })
                     }
                   />
                 </TableCell>
@@ -125,7 +126,11 @@ export function SupplierProducts({
           </DialogHeader>
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit(async (data) => {
+              onSubmit={form.handleSubmit(async (values) => {
+                const data = {
+                  ...values,
+                  unitPrice: values.unitPrice.toString(),
+                };
                 await onAddProduct(data);
                 setIsDialogOpen(false);
                 form.reset();

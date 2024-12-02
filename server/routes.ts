@@ -395,6 +395,15 @@ export function registerRoutes(app: Express) {
           const expectedDate = order.expectedDeliveryDate;
           const onTime = expectedDate ? deliveryDate <= expectedDate : true;
           
+          // Calculate metrics
+          const leadTime = Math.floor((deliveryDate.getTime() - order.orderDate.getTime()) / (1000 * 60 * 60));
+          const orderItems = await db.query.purchaseOrderItems.findMany({
+            where: eq(purchaseOrderItems.purchaseOrderId, order.id),
+          });
+          
+          const fulfilledItems = orderItems.filter(item => item.receivedQuantity === item.quantity);
+          const fulfillmentRate = (fulfilledItems.length / orderItems.length) * 100;
+
           // Update supplier metrics
           await db.update(suppliers)
             .set({
@@ -408,12 +417,56 @@ export function registerRoutes(app: Express) {
               responseTime: sql`
                 CASE 
                   WHEN ${suppliers.responseTime} = 0 
-                  THEN ${Math.floor((deliveryDate.getTime() - order.orderDate.getTime()) / (1000 * 60 * 60))}
-                  ELSE (${suppliers.responseTime} * 0.8 + ${Math.floor((deliveryDate.getTime() - order.orderDate.getTime()) / (1000 * 60 * 60))} * 0.2)
+                  THEN ${leadTime}
+                  ELSE (${suppliers.responseTime} * 0.8 + ${leadTime} * 0.2)
                 END
-              `
+              `,
+              orderFulfillmentRate: sql`
+                CASE 
+                  WHEN ${suppliers.orderFulfillmentRate} = 0 
+                  THEN ${fulfillmentRate}
+                  ELSE (${suppliers.orderFulfillmentRate} * 0.8 + ${fulfillmentRate} * 0.2)
+                END
+              `,
+              averageLeadTime: sql`
+                CASE 
+                  WHEN ${suppliers.averageLeadTime} = 0 
+                  THEN ${leadTime}
+                  ELSE (${suppliers.averageLeadTime} * 0.8 + ${leadTime} * 0.2)
+                END
+              `,
+              lastOrderDate: new Date()
             })
             .where(eq(suppliers.id, order.supplierId));
+
+          // Update supplier product price history
+          for (const item of orderItems) {
+            const supplierProduct = await db.query.supplierProducts.findFirst({
+              where: and(
+                eq(supplierProducts.supplierId, order.supplierId),
+                eq(supplierProducts.productId, item.productId)
+              ),
+            });
+
+            if (supplierProduct && supplierProduct.unitPrice !== item.unitPrice) {
+              const priceVariance = ((Number(item.unitPrice) - Number(supplierProduct.unitPrice)) / Number(supplierProduct.unitPrice)) * 100;
+              
+              await db.update(supplierProducts)
+                .set({
+                  previousPrice: supplierProduct.unitPrice,
+                  unitPrice: item.unitPrice,
+                  lastPriceChange: new Date(),
+                  priceVariance: sql`
+                    CASE 
+                      WHEN ${supplierProducts.priceVariance} IS NULL 
+                      THEN ${priceVariance}
+                      ELSE (${supplierProducts.priceVariance} * 0.8 + ${priceVariance} * 0.2)
+                    END
+                  `
+                })
+                .where(eq(supplierProducts.id, supplierProduct.id));
+            }
+          }
         }
 
         // Update order status

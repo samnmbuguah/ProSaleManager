@@ -14,6 +14,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useInventory } from "../hooks/use-inventory";
 import { useSuppliers } from "../hooks/use-suppliers";
 
+interface ReorderSuggestion {
+  product: {
+    id: number;
+    name: string;
+    currentStock: number;
+    reorderPoint: number;
+    maxStock: number;
+    minStock: number;
+  };
+  supplier: {
+    id: number;
+    name: string;
+    onTimeDeliveryRate: string;
+    qualityRating: string;
+    responseTime: number;
+  } | null;
+  suggestedOrderQuantity: number;
+  isUrgent: boolean;
+  stockOutDays: number;
+}
+
+interface ExtendedPurchaseOrder extends PurchaseOrder {
+  supplier?: Supplier;
+  items: Array<PurchaseOrderItem & { product?: Product }>;
+}
+
 export default function InventoryPage() {
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
   const [isSupplierFormOpen, setIsSupplierFormOpen] = useState(false);
@@ -95,11 +121,11 @@ export default function InventoryPage() {
                 <CardContent>
                   {isLoadingSuppliers ? (
                     <div>Loading suppliers...</div>
-                  ) : suppliers?.length === 0 ? (
+                  ) : !suppliers?.length ? (
                     <div>No suppliers found</div>
                   ) : (
                     <div className="space-y-4">
-                      {suppliers?.map((supplier) => (
+                      {suppliers.map((supplier) => (
                         <div key={supplier.id} className="space-y-4">
                           <SupplierPerformance 
                             supplier={supplier}
@@ -122,6 +148,7 @@ export default function InventoryPage() {
                   )}
                 </CardContent>
               </Card>
+
               {reorderSuggestions && reorderSuggestions.length > 0 && (
                 <Card>
                   <CardHeader>
@@ -129,7 +156,7 @@ export default function InventoryPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {reorderSuggestions.map((suggestion) => (
+                      {(reorderSuggestions as ReorderSuggestion[]).map((suggestion) => (
                         <div
                           key={suggestion.product.id}
                           className={`p-4 rounded-lg border ${suggestion.isUrgent ? 'bg-destructive/10 border-destructive/50' : 'bg-card'} text-card-foreground`}
@@ -191,14 +218,11 @@ export default function InventoryPage() {
               <CardContent>
                 {isLoadingOrders ? (
                   <div>Loading purchase orders...</div>
-                ) : purchaseOrders?.length === 0 ? (
+                ) : !purchaseOrders?.length ? (
                   <div>No purchase orders found</div>
                 ) : (
                   <div className="space-y-2">
-                    {purchaseOrders?.map((order: PurchaseOrder & { 
-  supplier?: Supplier; 
-  items: Array<PurchaseOrderItem & { product?: Product }>;
-}) => (
+                    {(purchaseOrders as ExtendedPurchaseOrder[]).map((order) => (
                       <div
                         key={order.id}
                         className="p-4 rounded-lg border bg-card text-card-foreground"
@@ -220,7 +244,7 @@ export default function InventoryPage() {
                               onClick={() => {
                                 receivePurchaseOrder({
                                   id: order.id,
-                                  items: order.items.map((item: { id: number; productId: number; quantity: number; receivedQuantity?: number }) => ({
+                                  items: order.items.map((item) => ({
                                     id: item.id,
                                     productId: item.productId,
                                     quantity: item.quantity - (item.receivedQuantity || 0),
