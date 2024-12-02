@@ -160,16 +160,19 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
-      if (err) return next(err);
-      if (!user) return res.status(401).json({ error: info?.message || "Invalid credentials" });
-      
-      req.logIn(user, (err) => {
+    passport.authenticate(
+      "local",
+      (err: Error | null, user: Express.User | false, info: IVerifyOptions | undefined) => {
         if (err) return next(err);
-        const { passwordHash, ...userData } = user;
-        return res.json(userData);
-      });
-    })(req, res, next);
+        if (!user) return res.status(401).json({ error: info?.message || "Invalid credentials" });
+        
+        req.logIn(user, (err) => {
+          if (err) return next(err);
+          const { passwordHash, ...userData } = user;
+          return res.json(userData);
+        });
+      }
+    )(req, res, next);
   });
 
   app.post("/api/logout", (req, res) => {
