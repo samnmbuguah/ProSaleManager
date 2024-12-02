@@ -39,12 +39,19 @@ export default function AuthPage() {
   const onSubmit = async (data: InsertUser) => {
     setIsLoading(true);
     try {
-      await (isRegister ? register(data) : login(data));
+      const result = await (isRegister ? register(data) : login(data));
+      if (!result.ok) {
+        toast({
+          variant: "destructive",
+          title: isRegister ? "Registration failed" : "Login failed",
+          description: result.message,
+        });
+      }
     } catch (error: any) {
       toast({
-        variant: "destructive", 
-        title: isRegister ? "Registration failed" : "Login failed",
-        description: error.message
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
       });
     } finally {
       setIsLoading(false);

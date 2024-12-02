@@ -12,10 +12,7 @@ interface ProductSearchProps {
 
 export function ProductSearch({ products, onSelect, searchProducts }: ProductSearchProps) {
   const [query, setQuery] = useState("");
-  // Ensure products is always an array
-  const safeProducts = Array.isArray(products) ? products : [];
-  // Use safe products array for filtering
-  const filteredProducts = query ? searchProducts(query) : safeProducts;
+  const filteredProducts = query ? searchProducts(query) : products;
 
   return (
     <div className="space-y-4">
@@ -38,9 +35,7 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
             onClick={() => onSelect(product)}
           >
             <div className="font-bold">{product.name}</div>
-            <div className="text-sm text-muted-foreground">
-              KSh {Number(product.price).toFixed(2)}
-            </div>
+            <div className="text-sm text-muted-foreground">KSh {product.price}</div>
           </Button>
         ))}
       </div>

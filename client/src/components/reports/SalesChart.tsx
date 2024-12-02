@@ -13,7 +13,6 @@ import type { Sale } from "@db/schema";
 interface SalesData {
   date: string;
   total: string;
-  cost: number;
   count: number;
 }
 
@@ -29,23 +28,6 @@ function formatCurrency(amount: number): string {
     maximumFractionDigits: 2,
   })}`;
 }
-
-// Custom tooltip formatter
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-background border rounded-lg p-2 shadow-lg">
-        <p className="font-semibold">{label}</p>
-        {payload.map((entry: any, index: number) => (
-          <p key={index} style={{ color: entry.color }}>
-            {entry.name}: {formatCurrency(entry.value)}
-          </p>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
 
 export function SalesChart({ data = [], period }: SalesChartProps) {
   const getDateFormat = (period: string) => {
@@ -67,7 +49,6 @@ export function SalesChart({ data = [], period }: SalesChartProps) {
   const chartData = Array.isArray(data) ? data.map((sale) => ({
     date: format(new Date(sale.date), getDateFormat(period)),
     amount: Number(sale.total) || 0,
-    cost: Number(sale.cost) || 0,
     count: sale.count || 0,
   })) : [];
 
@@ -103,38 +84,19 @@ export function SalesChart({ data = [], period }: SalesChartProps) {
                   stopOpacity={0}
                 />
               </linearGradient>
-              <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor="hsl(0 62% 50%)"
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor="hsl(0 62% 50%)"
-                  stopOpacity={0}
-                />
-              </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
             <YAxis />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip />
             <Area
               type="monotone"
               dataKey="amount"
-              name="Revenue"
+              name="Amount"
+              formatter={(value: number) => formatCurrency(value)}
               stroke="hsl(215 25% 27%)"
               fillOpacity={1}
               fill="url(#colorSales)"
-            />
-            <Area
-              type="monotone"
-              dataKey="cost"
-              name="Cost"
-              stroke="hsl(0 62% 50%)"
-              fillOpacity={0.5}
-              fill="url(#colorCost)"
             />
           </AreaChart>
         </ResponsiveContainer>
