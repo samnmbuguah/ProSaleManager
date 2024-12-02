@@ -69,9 +69,18 @@ export function registerRoutes(app: Express) {
   // Products API
   app.get("/api/products", async (req, res) => {
     try {
-      const allProducts = await db.select().from(products).orderBy(products.name);
+      const allProducts = await db
+        .select()
+        .from(products)
+        .orderBy(products.name);
+      
+      if (!allProducts) {
+        return res.json([]);
+      }
+      
       res.json(allProducts);
     } catch (error) {
+      console.error('Fetch products error:', error);
       res.status(500).json({ error: "Failed to fetch products" });
     }
   });
