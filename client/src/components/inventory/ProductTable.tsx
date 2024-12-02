@@ -35,7 +35,9 @@ export function ProductTable({ products, isLoading }: ProductTableProps) {
               <TableHead>Name</TableHead>
               <TableHead>SKU</TableHead>
               <TableHead>Category</TableHead>
-              <TableHead>Price</TableHead>
+              <TableHead>Buying Price</TableHead>
+              <TableHead>Selling Price</TableHead>
+              <TableHead>Profit Margin</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Suppliers</TableHead>
@@ -47,7 +49,11 @@ export function ProductTable({ products, isLoading }: ProductTableProps) {
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{product.sku}</TableCell>
                 <TableCell>{product.category}</TableCell>
-                <TableCell>KSh {Number(product.price).toFixed(2)}</TableCell>
+                <TableCell>KSh {Number(product.buyingPrice).toFixed(2)}</TableCell>
+                <TableCell>KSh {Number(product.sellingPrice).toFixed(2)}</TableCell>
+                <TableCell>
+                  {(((product.sellingPrice - product.buyingPrice) / product.buyingPrice) * 100).toFixed(1)}%
+                </TableCell>
                 <TableCell>{product.stock}</TableCell>
                 <TableCell>
                   <Badge variant={product.stock > 10 ? "default" : "destructive"}>
