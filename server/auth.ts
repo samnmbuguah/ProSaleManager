@@ -32,10 +32,13 @@ declare global {
   namespace Express {
     interface User {
       id: number;
+      email: string;
+      name: string;
       username: string;
       role: string;
-      password: string;
+      passwordHash: string;
       createdAt: Date;
+      updatedAt: Date;
     }
   }
 }
@@ -49,7 +52,8 @@ export function setupAuth(app: Express) {
     cookie: {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       secure: app.get("env") === "production",
-      httpOnly: true
+      httpOnly: true,
+      sameSite: 'lax'
     }
   };
 
@@ -69,7 +73,7 @@ export function setupAuth(app: Express) {
         if (!user || user.createdAt === null) {
           return done(null, false, { message: "Invalid user data." });
         }
-        const isMatch = await crypto.compare(password, user.password);
+        const isMatch = await crypto.compare(password, user.passwordHash);
         if (!isMatch) {
           return done(null, false, { message: "Incorrect password." });
         }
@@ -109,7 +113,7 @@ export function setupAuth(app: Express) {
           .send("Invalid input: " + result.error.issues.map(i => i.message).join(", "));
       }
 
-      const { username, password } = result.data;
+      const { username, email, name, password } = result.data;
 
       // Check if user already exists
       const [existingUser] = await db
@@ -130,7 +134,9 @@ export function setupAuth(app: Express) {
         .insert(users)
         .values({
           username,
-          password: hashedPassword,
+          email,
+          name,
+          passwordHash: hashedPassword,
           role: "cashier",
         })
         .returning();
@@ -195,7 +201,7 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    const { password, ...userData } = req.user;
+    const { passwordHash, ...userData } = req.user;
     res.json(userData);
   });
 }

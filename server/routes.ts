@@ -1,38 +1,74 @@
 import type { Express } from "express";
-import { eq, desc, sql } from "drizzle-orm";
+import { Request, Response } from "express";
+import { eq, sql, asc, desc, and, or } from "drizzle-orm";
 import { db } from "../db";
-import { products, customers, sales, saleItems } from "@db/schema";
+import {
+  products,
+  type Product,
+  type InsertProduct,
+  customers,
+  type Customer,
+  type InsertCustomer,
+  sales,
+  type Sale,
+  type InsertSale,
+  saleItems,
+  type SaleItem,
+  type InsertSaleItem,
+  suppliers,
+  type Supplier,
+  type InsertSupplier,
+  purchaseOrders,
+  type PurchaseOrder,
+  purchaseOrderItems,
+  type PurchaseOrderItem,
+  supplierProducts,
+  type SupplierProduct,
+  type InsertSupplierProduct,
+} from "@db/schema";
 import { initiateSTKPush } from "./mpesa";
-import { createPaymentIntent } from "./stripe";
 
-export function setupRoutes(app: Express) {
+export function registerRoutes(app: Express) {
+  // Products routes
   app.get("/api/products", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    const allProducts = await db.query.products.findMany({
+      orderBy: [asc(products.name)],
+    });
+    res.json(allProducts);
+  });
+
+  app.post("/api/products", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const allProducts = await db.select().from(products).orderBy(products.name);
-      res.json(allProducts);
+      const [product] = await db
+        .insert(products)
+        .values(req.body)
+        .returning();
+      res.json(product);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch products" });
+      res.status(500).json({ error: "Failed to create product" });
     }
   });
 
-  app.get("/api/products/search", async (req, res) => {
+  app.post("/api/products/:id/stock", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    const { id } = req.params;
+    const { quantity } = req.body;
+
     try {
-      const { q } = req.query;
-      if (typeof q !== "string") {
-        return res.status(400).json({ error: "Search query is required" });
-      }
+      const [product] = await db
+        .update(products)
+        .set({
+          stock: sql`${products.stock} + ${quantity}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(products.id, parseInt(id)))
+        .returning();
 
-      const searchResults = await db
-        .select()
-        .from(products)
-        .where(sql`${products.name} ILIKE ${`%${q}%`}`)
-        .limit(10);
-
-      res.json(searchResults);
+      res.json(product);
     } catch (error) {
-      res.status(500).json({ error: "Search failed" });
+      res.status(500).json({ error: "Failed to update stock" });
     }
   });
 
@@ -56,44 +92,55 @@ export function setupRoutes(app: Express) {
     }
   });
 
-  // Stripe payment endpoint
-  app.post("/api/payments/stripe/create-payment-intent", async (req, res) => {
+  // Reports API endpoints
+  app.get("/api/reports/product-performance", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const { amount } = req.body;
-      const paymentIntent = await createPaymentIntent(amount);
-      res.json({ clientSecret: paymentIntent.client_secret });
+      const productStats = await db
+        .select({
+          productId: saleItems.productId,
+          name: products.name,
+          category: products.category,
+          totalQuantity: sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`,
+          totalRevenue: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price}), 0)`,
+          profit: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * ${products.profitMargin} / 100), 0)`
+        })
+        .from(saleItems)
+        .rightJoin(products, eq(products.id, saleItems.productId))
+        .groupBy(saleItems.productId, products.name, products.category)
+        .orderBy(desc(sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * ${products.profitMargin} / 100), 0)`))
+        .limit(10);
+      
+      res.json(productStats);
     } catch (error) {
-      console.error('Stripe payment error:', error);
+      console.error('Product performance error:', error);
       res.status(500).json({ 
-        error: "Failed to create payment intent",
+        error: "Failed to fetch product performance report",
         details: error instanceof Error ? error.message : String(error)
       });
     }
   });
 
-  app.post("/api/products/:id/stock", async (req, res) => {
+  app.get("/api/reports/sales-trend", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const { quantity } = req.body;
-      const productId = parseInt(req.params.id);
-      
-      const [updatedProduct] = await db
-        .update(products)
-        .set({ 
-          stock: sql`${products.stock} + ${quantity}`,
-          updatedAt: new Date()
+      const salesTrend = await db
+        .select({
+          date: sql<string>`DATE_TRUNC('day', ${sales.createdAt})::date`,
+          total: sql<number>`COALESCE(SUM(${sales.total}), 0)`,
+          profit: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * ${products.profitMargin} / 100), 0)`,
+          cost: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * (100 - ${products.profitMargin}) / 100), 0)`,
+          count: sql<number>`COUNT(*)`
         })
-        .where(eq(products.id, productId))
-        .returning();
+        .from(sales)
+        .innerJoin(saleItems, eq(saleItems.saleId, sales.id))
+        .innerJoin(products, eq(products.id, saleItems.productId))
+        .groupBy(sql`DATE_TRUNC('day', ${sales.createdAt})::date`)
+        .orderBy(sql`DATE_TRUNC('day', ${sales.createdAt})::date`);
       
-      res.json(updatedProduct);
+      res.json(salesTrend);
     } catch (error) {
-      console.error('Stock update error:', error);
-      res.status(500).json({ 
-        error: "Failed to update stock",
-        details: error instanceof Error ? error.message : String(error)
-      });
+      res.status(500).json({ error: "Failed to fetch sales trend" });
     }
   });
 
@@ -118,156 +165,373 @@ export function setupRoutes(app: Express) {
     }
   });
 
-  // Sales API
-  app.post("/api/sales", async (req, res) => {
+  // Get supplier performance and reorder suggestions
+  app.get("/api/inventory/reorder-suggestions", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const { items, customerId, total, paymentMethod } = req.body;
-      
-      // Create sale record
-      const [sale] = await db.insert(sales).values({
-        customerId,
-        userId: req.user!.id,
-        total,
-        paymentMethod,
-      }).returning();
+      // Get all products that need reordering
+      const lowStockProducts = await db
+        .select({
+          product: products,
+          supplier: suppliers,
+        })
+        .from(products)
+        .leftJoin(
+          suppliers,
+          eq(products.preferredSupplierId, suppliers.id)
+        )
+        .where(
+          or(
+            sql`${products.stock} <= ${products.reorderPoint}`,
+            sql`${products.stock} <= ${products.minStock}`
+          )
+        );
 
-      // Create sale items
-      await db.insert(saleItems).values(
+      // Get performance metrics for all suppliers
+      const allSuppliers = await db
+        .select()
+        .from(suppliers)
+        .where(
+          and(
+            sql`${suppliers.onTimeDeliveryRate} > 0`,
+            sql`${suppliers.qualityRating} > 0`
+          )
+        )
+        .orderBy(desc(suppliers.onTimeDeliveryRate));
+
+      const suggestions = await Promise.all(
+        lowStockProducts.map(async ({ product, supplier: preferredSupplier }) => {
+          // Calculate urgency based on current stock level
+          const stockOutDays = Math.ceil(product.stock / (product.maxStock / 30)); // Assuming max stock is monthly capacity
+          const isUrgent = stockOutDays <= 7; // Mark as urgent if less than 7 days of stock
+
+          // Find best supplier based on performance metrics
+          let bestSupplier = preferredSupplier;
+          if (!bestSupplier || Number(bestSupplier.onTimeDeliveryRate) < 80) {
+            const potentialSuppliers = allSuppliers.filter(s => 
+              Number(s.onTimeDeliveryRate) >= 80 && Number(s.qualityRating) >= 4
+            );
+            if (potentialSuppliers.length > 0) {
+              bestSupplier = potentialSuppliers[0];
+            }
+          }
+
+          // Calculate optimal order quantity considering min and max stock levels
+          const optimalQuantity = Math.min(
+            product.maxStock - product.stock,
+            Math.max(
+              product.reorderPoint * 2 - product.stock,
+              product.minStock * 3 - product.stock
+            )
+          );
+
+          return {
+            product: {
+              id: product.id,
+              name: product.name,
+              currentStock: product.stock,
+              reorderPoint: product.reorderPoint,
+              maxStock: product.maxStock,
+              minStock: product.minStock,
+            },
+            supplier: bestSupplier ? {
+              id: bestSupplier.id,
+              name: bestSupplier.name,
+              onTimeDeliveryRate: bestSupplier.onTimeDeliveryRate,
+              qualityRating: bestSupplier.qualityRating,
+              responseTime: bestSupplier.responseTime,
+            } : null,
+            suggestedOrderQuantity: optimalQuantity,
+            isUrgent,
+            stockOutDays,
+          };
+        })
+      );
+
+      // Sort suggestions by urgency and stock out days
+      suggestions.sort((a, b) => {
+        if (a.isUrgent !== b.isUrgent) return a.isUrgent ? -1 : 1;
+        return a.stockOutDays - b.stockOutDays;
+      });
+
+      res.json(suggestions);
+    } catch (error) {
+      console.error('Reorder suggestions error:', error);
+      res.status(500).json({ 
+        error: "Failed to fetch reorder suggestions",
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Suppliers routes
+  app.get("/api/suppliers", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    const allSuppliers = await db.query.suppliers.findMany({
+      orderBy: [asc(suppliers.name)],
+    });
+    res.json(allSuppliers);
+  });
+
+  app.post("/api/suppliers", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const [supplier] = await db
+        .insert(suppliers)
+        .values(req.body)
+        .returning();
+      res.json(supplier);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create supplier" });
+    }
+  });
+
+  // Purchase Orders routes
+  app.get("/api/purchase-orders", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const orders = await db.query.purchaseOrders.findMany({
+        with: {
+          supplier: true,
+          items: {
+            with: {
+              product: true,
+            },
+          },
+        },
+        orderBy: [desc(purchaseOrders.createdAt)],
+      });
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch purchase orders" });
+    }
+  });
+
+  app.post("/api/purchase-orders", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    const { supplierId, items, expectedDeliveryDate } = req.body;
+
+    try {
+      const total = items.reduce(
+        (sum: number, item: { quantity: number; unitPrice: number }) =>
+          sum + item.quantity * item.unitPrice,
+        0
+      );
+
+      const [order] = await db
+        .insert(purchaseOrders)
+        .values({
+          supplierId,
+          userId: req.user!.id,
+          total,
+          expectedDeliveryDate: expectedDeliveryDate
+            ? new Date(expectedDeliveryDate)
+            : null,
+        })
+        .returning();
+
+      await db.insert(purchaseOrderItems).values(
         items.map((item: any) => ({
-          saleId: sale.id,
+          purchaseOrderId: order.id,
           productId: item.productId,
           quantity: item.quantity,
-          price: item.price
+          unitPrice: item.unitPrice,
         }))
       );
 
-      // Update product stock
+      res.json(order);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create purchase order" });
+    }
+  });
+
+  app.post("/api/purchase-orders/:id/receive", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    const { id } = req.params;
+    const { items } = req.body;
+
+    try {
+      // Update received quantities and product stock
       for (const item of items) {
-        await db.update(products)
-          .set({ 
-            stock: sql`${products.stock} - ${item.quantity}`
-          })
-          .where(eq(products.id, item.productId));
+        await db.transaction(async (tx) => {
+          await tx
+            .update(purchaseOrderItems)
+            .set({
+              receivedQuantity: sql`${purchaseOrderItems.receivedQuantity} + ${item.quantity}`,
+            })
+            .where(eq(purchaseOrderItems.id, item.id));
+
+          await tx
+            .update(products)
+            .set({
+              stock: sql`${products.stock} + ${item.quantity}`,
+              updatedAt: new Date(),
+            })
+            .where(eq(products.id, item.productId));
+        });
       }
 
-      res.json(sale);
+      // Check if all items are received
+      const orderItems = await db
+        .select()
+        .from(purchaseOrderItems)
+        .where(eq(purchaseOrderItems.purchaseOrderId, Number(id)));
+
+      const allReceived = orderItems.every(
+        (item) => item.receivedQuantity === item.quantity
+      );
+
+      // Update order status if all items are received
+      if (allReceived) {
+        const order = await db.query.purchaseOrders.findFirst({
+          where: eq(purchaseOrders.id, Number(id)),
+          with: {
+            supplier: true,
+          }
+        });
+
+        if (order) {
+          const deliveryDate = new Date();
+          const expectedDate = order.expectedDeliveryDate;
+          const onTime = expectedDate ? deliveryDate <= expectedDate : true;
+          
+          // Update supplier metrics
+          await db.update(suppliers)
+            .set({
+              onTimeDeliveryRate: sql`
+                CASE 
+                  WHEN ${suppliers.onTimeDeliveryRate} = 0 
+                  THEN ${onTime ? 100 : 0}
+                  ELSE (${suppliers.onTimeDeliveryRate} * 0.8 + ${onTime ? 100 : 0} * 0.2)
+                END
+              `,
+              responseTime: sql`
+                CASE 
+                  WHEN ${suppliers.responseTime} = 0 
+                  THEN ${Math.floor((deliveryDate.getTime() - order.orderDate.getTime()) / (1000 * 60 * 60))}
+                  ELSE (${suppliers.responseTime} * 0.8 + ${Math.floor((deliveryDate.getTime() - order.orderDate.getTime()) / (1000 * 60 * 60))} * 0.2)
+                END
+              `
+            })
+            .where(eq(suppliers.id, order.supplierId));
+        }
+
+        // Update order status
+        await db.update(purchaseOrders)
+          .set({ 
+            status: 'completed',
+            deliveryDate: new Date()
+          })
+          .where(eq(purchaseOrders.id, Number(id)));
+      }
+
+      res.json({ message: "Items received successfully" });
     } catch (error) {
-      console.error('Sale creation error:', error);
+      res.status(500).json({ error: "Failed to receive items" });
+    }
+  });
+
+  app.post("/api/suppliers/:id/quality-rating", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    const { id } = req.params;
+    const { rating } = req.body;
+
+    try {
+      if (rating < 0 || rating > 5) {
+        return res.status(400).json({ error: "Rating must be between 0 and 5" });
+      }
+
+      const [supplier] = await db
+        .update(suppliers)
+        .set({
+          qualityRating: sql`
+            CASE 
+              WHEN ${suppliers.qualityRating} = 0 
+              THEN ${rating}
+              ELSE (${suppliers.qualityRating} * 0.8 + ${rating} * 0.2)
+            END
+          `,
+          updatedAt: new Date(),
+        })
+        .where(eq(suppliers.id, parseInt(id)))
+        .returning();
+
+      res.json(supplier);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update supplier quality rating" });
+    }
+  });
+
+  // Supplier Products routes
+  app.get("/api/supplier-products/:supplierId", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const products = await db.query.supplierProducts.findMany({
+        where: eq(supplierProducts.supplierId, parseInt(req.params.supplierId)),
+        with: {
+          product: true,
+        },
+      });
+      res.json(products);
+    } catch (error) {
+      console.error('Fetch supplier products error:', error);
       res.status(500).json({ 
-        error: "Failed to create sale",
+        error: "Failed to fetch supplier products",
         details: error instanceof Error ? error.message : String(error)
       });
     }
   });
 
-  // Reports API endpoints
-  app.get("/api/reports/product-performance", async (req, res) => {
+  app.post("/api/supplier-products", async (req: Request<{}, {}, InsertSupplierProduct>, res: Response) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const productStats = await db
-        .select({
-          productId: saleItems.productId,
-          name: products.name,
-          category: products.category,
-          totalQuantity: sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`,
-          totalRevenue: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price}), 0)`,
-          profit: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * ${products.profit_margin} / 100), 0)`
-        })
-        .from(saleItems)
-        .rightJoin(products, eq(products.id, saleItems.productId))
-        .groupBy(saleItems.productId, products.name, products.category)
-        .orderBy(desc(sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * ${products.profit_margin} / 100), 0)`))
-        .limit(10);
+      const [supplierProduct] = await db
+        .insert(supplierProducts)
+        .values(req.body)
+        .returning();
       
-      res.json(productStats);
+      // If this is marked as preferred, update the product's preferred supplier
+      if (supplierProduct.isPreferred) {
+        await db
+          .update(products)
+          .set({ preferredSupplierId: supplierProduct.supplierId })
+          .where(eq(products.id, supplierProduct.productId));
+      }
+      
+      res.json(supplierProduct);
     } catch (error) {
-      console.error('Product performance error:', error);
+      console.error('Create supplier product error:', error);
       res.status(500).json({ 
-        error: "Failed to fetch product performance report",
+        error: "Failed to create supplier product",
         details: error instanceof Error ? error.message : String(error)
       });
     }
   });
 
-  app.get("/api/reports/sales-trend", async (req, res) => {
+  app.put("/api/supplier-products/:id", async (req: Request<{ id: string }, {}, Partial<InsertSupplierProduct>>, res: Response) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const salesTrend = await db
-        .select({
-          date: sql<string>`DATE_TRUNC('day', ${sales.createdAt})::date`,
-          total: sql<number>`COALESCE(SUM(${sales.total}), 0)`,
-          profit: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * ${products.profit_margin} / 100), 0)`,
-          cost: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * (100 - ${products.profit_margin}) / 100), 0)`,
-          count: sql<number>`COUNT(*)`
-        })
-        .from(sales)
-        .innerJoin(saleItems, eq(saleItems.saleId, sales.id))
-        .innerJoin(products, eq(products.id, saleItems.productId))
-        .groupBy(sql`DATE_TRUNC('day', ${sales.createdAt})::date`)
-        .orderBy(sql`DATE_TRUNC('day', ${sales.createdAt})::date`);
+      const [supplierProduct] = await db
+        .update(supplierProducts)
+        .set(req.body)
+        .where(eq(supplierProducts.id, parseInt(req.params.id)))
+        .returning();
       
-      res.json(salesTrend);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch sales trend" });
-    }
-  });
-
-  app.get("/api/reports/customer-history/:customerId", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    try {
-      const customerSales = await db
-        .select({
-          saleId: sales.id,
-          date: sales.createdAt,
-          total: sales.total,
-          paymentMethod: sales.paymentMethod
-        })
-        .from(sales)
-        .where(eq(sales.customerId, parseInt(req.params.customerId)))
-        .orderBy(desc(sales.createdAt));
+      // Update preferred supplier if needed
+      if (supplierProduct.isPreferred) {
+        await db
+          .update(products)
+          .set({ preferredSupplierId: supplierProduct.supplierId })
+          .where(eq(products.id, supplierProduct.productId));
+      }
       
-      res.json(customerSales);
+      res.json(supplierProduct);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch customer history" });
-    }
-  });
-
-  app.get("/api/reports/top-selling", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    try {
-      const topProducts = await db
-        .select({
-          productId: saleItems.productId,
-          name: products.name,
-          category: products.category,
-          units: sql<number>`COALESCE(SUM(${saleItems.quantity}), 0)`,
-          revenue: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price}), 0)`,
-          profit: sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * ${products.profit_margin} / 100), 0)`
-        })
-        .from(saleItems)
-        .innerJoin(products, eq(products.id, saleItems.productId))
-        .groupBy(saleItems.productId, products.name, products.category)
-        .orderBy(desc(sql<number>`COALESCE(SUM(${saleItems.quantity} * ${saleItems.price} * ${products.profit_margin} / 100), 0)`))
-        .limit(10);
-      
-      res.json(topProducts);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch top selling products" });
-    }
-  });
-
-  app.get("/api/reports/low-stock", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    try {
-      const lowStockProducts = await db.select()
-        .from(products)
-        .where(sql`${products.stock} < 10`)
-        .orderBy(products.stock);
-      
-      res.json(lowStockProducts);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch low stock report" });
+      console.error('Update supplier product error:', error);
+      res.status(500).json({ 
+        error: "Failed to update supplier product",
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 }
