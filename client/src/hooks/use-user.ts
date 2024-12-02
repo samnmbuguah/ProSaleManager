@@ -44,15 +44,14 @@ export function useUser() {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
+        const error = await response.json();
+        throw new Error(error.error || "Login failed");
       }
 
-      const data = await response.json();
-      queryClient.setQueryData(['user'], data.user);
-      return data;
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData(['user'], data);
       toast({
         title: "Success",
         description: "Logged in successfully",
