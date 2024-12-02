@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { type Supplier, type Product } from "@db/schema";
@@ -62,7 +62,8 @@ export function PurchaseOrderForm({
     },
   });
 
-  const { fields, append, remove } = form.useFieldArray({
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
     name: "items",
   });
 
@@ -113,7 +114,7 @@ export function PurchaseOrderForm({
             <FormItem>
               <FormLabel>Expected Delivery Date</FormLabel>
               <FormControl>
-                <Input {...field} type="date" />
+                <Input {...field} type="date" value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -139,7 +140,7 @@ export function PurchaseOrderForm({
                       <SelectContent>
                         {products.map((product) => (
                           <SelectItem key={product.id} value={String(product.id)}>
-                            {product.name}
+                            {product.name} - KSh {Number(product.price).toLocaleString()}
                           </SelectItem>
                         ))}
                       </SelectContent>

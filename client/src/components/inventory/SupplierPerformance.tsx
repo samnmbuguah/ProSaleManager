@@ -15,7 +15,7 @@ import { QualityRatingDialog } from "./QualityRatingDialog";
 
 interface SupplierPerformanceProps {
   supplier: Supplier;
-  onUpdateQualityRating?: (supplierId: number, rating: number) => Promise<void>;
+  onUpdateQualityRating?: (data: { id: number; rating: number }) => Promise<void>;
 }
 
 export function SupplierPerformance({ supplier, onUpdateQualityRating }: SupplierPerformanceProps) {
@@ -131,7 +131,7 @@ export function SupplierPerformance({ supplier, onUpdateQualityRating }: Supplie
           onOpenChange={setIsQualityDialogOpen}
           onSubmit={async (rating) => {
             if (onUpdateQualityRating) {
-              await onUpdateQualityRating(supplier.id, rating);
+              await onUpdateQualityRating({ id: supplier.id, rating });
               setIsQualityDialogOpen(false);
             }
           }}

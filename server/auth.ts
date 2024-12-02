@@ -49,9 +49,12 @@ export function setupAuth(app: Express) {
     secret: process.env.REPL_ID || "pos-system-secret",
     resave: false,
     saveUninitialized: false,
+    store: new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    }),
     cookie: {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      secure: app.get("env") === "production",
+      secure: false, // Set to true in production
       httpOnly: true,
       sameSite: 'lax'
     }
@@ -198,9 +201,16 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
+    if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Not authenticated" });
     }
+    
+    // Ensure we have a user object
+    if (!req.user) {
+      return res.status(500).json({ message: "User session error" });
+    }
+
+    // Remove sensitive data before sending
     const { passwordHash, ...userData } = req.user;
     res.json(userData);
   });

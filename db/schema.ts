@@ -57,6 +57,11 @@ export const suppliers = pgTable("suppliers", {
   onTimeDeliveryRate: decimal("on_time_delivery_rate", { precision: 5, scale: 2 }).notNull().default("0"),
   qualityRating: decimal("quality_rating", { precision: 3, scale: 1 }).notNull().default("0"),
   responseTime: integer("response_time").notNull().default(0),
+  orderFulfillmentRate: decimal("order_fulfillment_rate", { precision: 5, scale: 2 }).notNull().default("0"),
+  averageLeadTime: integer("average_lead_time").notNull().default(0),
+  lastOrderDate: timestamp("last_order_date"),
+  status: text("status").notNull().default("active"),
+  paymentTerms: text("payment_terms"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -73,6 +78,10 @@ export const supplierProducts = pgTable("supplier_products", {
   isPreferred: boolean("is_preferred").notNull().default(false),
   lastDeliveryQuality: decimal("last_delivery_quality", { precision: 3, scale: 1 }),
   lastDeliveryTime: integer("last_delivery_time"),
+  lastPriceChange: timestamp("last_price_change"),
+  previousPrice: decimal("previous_price", { precision: 10, scale: 2 }),
+  priceVariance: decimal("price_variance", { precision: 5, scale: 2 }),
+  qualityConsistency: decimal("quality_consistency", { precision: 3, scale: 1 }).notNull().default("0"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

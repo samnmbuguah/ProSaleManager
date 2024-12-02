@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 
 interface ProductFormProps {
   onSubmit: (data: InsertProduct) => Promise<void>;
@@ -31,7 +32,7 @@ const categories = [
   "Home & Garden",
   "Books",
   "Other",
-];
+] as const;
 
 export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
   const form = useForm<InsertProduct>({
@@ -39,10 +40,14 @@ export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
     defaultValues: {
       name: "",
       sku: "",
-      price: "0",
-      profit_margin: 20,
-      stock: 0,
+      description: "",
       category: "Other",
+      price: "0",
+      stock: 0,
+      minStock: 10,
+      maxStock: 100,
+      reorderPoint: 20,
+      profitMargin: "30",
     },
   });
 
@@ -79,16 +84,30 @@ export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
 
         <FormField
           control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Input {...field} value={field.value ?? ""} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="price"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Selling Price</FormLabel>
+              <FormLabel>Selling Price (KSh)</FormLabel>
               <FormControl>
                 <Input
                   type="number"
+                  min="0"
                   step="0.01"
                   {...field}
-                  onChange={(e) => field.onChange(e.target.value)}
                 />
               </FormControl>
               <FormMessage />
@@ -98,7 +117,7 @@ export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
 
         <FormField
           control={form.control}
-          name="profit_margin"
+          name="profitMargin"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Profit Margin (%)</FormLabel>
@@ -108,7 +127,7 @@ export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
                   min="10"
                   max="199"
                   {...field}
-                  onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  value={field.value ?? "30"}
                 />
               </FormControl>
               <FormMessage />
@@ -125,6 +144,7 @@ export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
               <FormControl>
                 <Input
                   type="number"
+                  min="0"
                   {...field}
                   onChange={(e) => field.onChange(parseInt(e.target.value))}
                 />
@@ -134,13 +154,72 @@ export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
           )}
         />
 
+        <div className="grid grid-cols-3 gap-4">
+          <FormField
+            control={form.control}
+            name="minStock"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Min Stock</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="maxStock"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Max Stock</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="reorderPoint"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Reorder Point</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
           name="category"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value ?? "Other"}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
@@ -160,6 +239,7 @@ export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
         />
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Add Product
         </Button>
       </form>
