@@ -4,6 +4,18 @@ import { useToast } from '@/hooks/use-toast';
 
 interface CartItem extends Product {
   quantity: number;
+  // Use sellingPrice for calculations
+}
+
+interface SalePayload {
+  items: {
+    productId: number;
+    quantity: number;
+    price: number;
+  }[];
+  customerId?: number;
+  total: number;
+  paymentMethod: string;
 }
 
 interface SalePayload {
@@ -59,7 +71,7 @@ export function usePos() {
   };
 
   const calculateTotal = (items: CartItem[]) => {
-    return items.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
+    return items.reduce((sum, item) => sum + Number(item.sellingPrice) * item.quantity, 0);
   };
 
   return {

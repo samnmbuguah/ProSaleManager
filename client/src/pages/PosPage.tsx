@@ -48,7 +48,7 @@ export default function PosPage() {
       items: cartItems.map(item => ({
         productId: item.id,
         quantity: item.quantity,
-        price: Number(item.price),
+        price: Number(item.sellingPrice),
       })),
       customerId,
       total: calculateTotal(cartItems),

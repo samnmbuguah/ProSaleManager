@@ -1,0 +1,131 @@
+ ERROR(TypeScript)  Type '{ onChange: (e: ChangeEvent<HTMLInputElement>) => void; onBlur: Noop; value: string | number | Date | null | undefined; disabled?: boolean | undefined; name: "id" | ... 7 more ... | "category"; ref: RefCallBack; type: "number"; step: string; }' is not assignable to type 'InputProps'.
+  Types of property 'value' are incompatible.
+    Type 'string | number | Date | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+      Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/ProductForm.tsx:86:18
+
+    84 |               <FormLabel>Price</FormLabel>
+    85 |               <FormControl>
+  > 86 |                 <Input
+       |                  ^^^^^
+    87 |                   type="number"
+    88 |                   step="0.01"
+    89 |                   {...field}
+
+ ERROR(TypeScript)  The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/ProductTable.tsx:59:23
+
+    57 |                 <TableCell>KSh {Number(product.sellingPrice).toFixed(2)}</TableCell>
+    58 |                 <TableCell>
+  > 59 |                   {(((product.sellingPrice - product.buyingPrice) / product.buyingPrice) * 100).toFixed(1)}%
+       |                       ^^^^^^^^^^^^^^^^^^^^
+    60 |                 </TableCell>
+    61 |                 <TableCell>{product.stock}</TableCell>
+    62 |                 <TableCell>
+
+ ERROR(TypeScript)  The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/ProductTable.tsx:59:46
+
+    57 |                 <TableCell>KSh {Number(product.sellingPrice).toFixed(2)}</TableCell>
+    58 |                 <TableCell>
+  > 59 |                   {(((product.sellingPrice - product.buyingPrice) / product.buyingPrice) * 100).toFixed(1)}%
+       |                                              ^^^^^^^^^^^^^^^^^^^
+    60 |                 </TableCell>
+    61 |                 <TableCell>{product.stock}</TableCell>
+    62 |                 <TableCell>
+
+ ERROR(TypeScript)  The right-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/ProductTable.tsx:59:69
+
+    57 |                 <TableCell>KSh {Number(product.sellingPrice).toFixed(2)}</TableCell>
+    58 |                 <TableCell>
+  > 59 |                   {(((product.sellingPrice - product.buyingPrice) / product.buyingPrice) * 100).toFixed(1)}%
+       |                                                                     ^^^^^^^^^^^^^^^^^^^
+    60 |                 </TableCell>
+    61 |                 <TableCell>{product.stock}</TableCell>
+    62 |                 <TableCell>
+
+ ERROR(TypeScript)  Type 'number' is not assignable to type 'string'.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/SupplierPricing.tsx:71:7
+
+    69 |     await linkProductToSupplier({
+    70 |       ...data,
+  > 71 |       costPrice: parseFloat(data.costPrice as string),
+       |       ^^^^^^^^^
+    72 |     });
+    73 |     setIsLinkFormOpen(false);
+    74 |     linkForm.reset();
+
+ ERROR(TypeScript)  Property 'supplier' does not exist on type '{ id: number; createdAt: Date | null; updatedAt: Date | null; productId: number; supplierId: number; costPrice: string; isPreferred: boolean; lastSupplyDate: Date | null; }'. Did you mean 'supplierId'?
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/SupplierPricing.tsx:108:30
+
+    106 |           {productSuppliersList.map((ps) => (
+    107 |             <TableRow key={ps.id}>
+  > 108 |               <TableCell>{ps.supplier.name}</TableCell>
+        |                              ^^^^^^^^
+    109 |               <TableCell>KSh {Number(ps.costPrice).toFixed(2)}</TableCell>
+    110 |               <TableCell>{ps.isPreferred ? "Yes" : "No"}</TableCell>
+    111 |               <TableCell>
+
+ ERROR(TypeScript)  Property 'price' does not exist on type 'CartItem'.
+ FILE  /home/runner/ProSaleManager/client/src/components/pos/Cart.tsx:34:27
+
+    32 |               <div className="font-medium">{item.name}</div>
+    33 |               <div className="text-sm text-muted-foreground">
+  > 34 |                 KSh {item.price} each
+       |                           ^^^^^
+    35 |               </div>
+    36 |             </div>
+    37 |             
+
+ ERROR(TypeScript)  Property 'price' does not exist on type '{ id: number; name: string; createdAt: Date | null; updatedAt: Date | null; sku: string; buyingPrice: string; sellingPrice: string; stock: number; category: string; }'.
+ FILE  /home/runner/ProSaleManager/client/src/components/pos/ProductSearch.tsx:38:73
+
+    36 |           >
+    37 |             <div className="font-bold">{product.name}</div>
+  > 38 |             <div className="text-sm text-muted-foreground">KSh {product.price}</div>
+       |                                                                         ^^^^^
+    39 |           </Button>
+    40 |         ))}
+    41 |       </div>
+
+ ERROR(TypeScript)  No overload matches this call.
+  Overload 1 of 2, '(props: Props): Area', gave the following error.
+    Type '{ type: "monotone"; dataKey: string; name: string; formatter: (value: number) => string; stroke: string; fillOpacity: number; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Area> & Pick<Readonly<Props>, "string" | "id" | "name" | ... 485 more ... | "baseLine"> & InexactPartial<...> & InexactPartial<...>'.
+      Property 'formatter' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Area> & Pick<Readonly<Props>, "string" | "id" | "name" | ... 485 more ... | "baseLine"> & InexactPartial<...> & InexactPartial<...>'. Did you mean 'format'?
+  Overload 2 of 2, '(props: Props, context: any): Area', gave the following error.
+    Type '{ type: "monotone"; dataKey: string; name: string; formatter: (value: number) => string; stroke: string; fillOpacity: number; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Area> & Pick<Readonly<Props>, "string" | "id" | "name" | ... 485 more ... | "baseLine"> & InexactPartial<...> & InexactPartial<...>'.
+      Property 'formatter' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Area> & Pick<Readonly<Props>, "string" | "id" | "name" | ... 485 more ... | "baseLine"> & InexactPartial<...> & InexactPartial<...>'. Did you mean 'format'?
+ FILE  /home/runner/ProSaleManager/client/src/components/reports/SalesChart.tsx:96:15
+
+    94 |               dataKey="amount"
+    95 |               name="Amount"
+  > 96 |               formatter={(value: number) => formatCurrency(value)}
+       |               ^^^^^^^^^
+    97 |               stroke="hsl(215 25% 27%)"
+    98 |               fillOpacity={1}
+    99 |               fill="url(#colorSales)"
+
+ ERROR(TypeScript)  Property 'price' does not exist on type 'CartItem'.
+ FILE  /home/runner/ProSaleManager/client/src/hooks/use-pos.ts:62:58
+
+    60 |
+    61 |   const calculateTotal = (items: CartItem[]) => {
+  > 62 |     return items.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
+       |                                                          ^^^^^
+    63 |   };
+    64 |
+    65 |   return {
+
+ ERROR(TypeScript)  Property 'price' does not exist on type 'CartItem'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/PosPage.tsx:51:28
+
+    49 |         productId: item.id,
+    50 |         quantity: item.quantity,
+  > 51 |         price: Number(item.price),
+       |                            ^^^^^
+    52 |       })),
+    53 |       customerId,
+    54 |       total: calculateTotal(cartItems),
+
+[TypeScript] Found 13 errors. Watching for file changes.
