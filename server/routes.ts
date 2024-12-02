@@ -33,12 +33,22 @@ export function registerRoutes(app: Express) {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
       const supplierProducts = await db
-        .select()
+        .select({
+          id: productSuppliersTable.id,
+          productId: productSuppliersTable.productId,
+          supplierId: productSuppliersTable.supplierId,
+          costPrice: productSuppliersTable.costPrice,
+          isPreferred: productSuppliersTable.isPreferred,
+          lastSupplyDate: productSuppliersTable.lastSupplyDate,
+          supplier: suppliers,
+          product: products,
+        })
         .from(productSuppliersTable)
-        .innerJoin(suppliers, eq(suppliers.id, productSuppliersTable.supplierId))
-        .innerJoin(products, eq(products.id, productSuppliersTable.productId));
+        .leftJoin(suppliers, eq(suppliers.id, productSuppliersTable.supplierId))
+        .leftJoin(products, eq(products.id, productSuppliersTable.productId));
       res.json(supplierProducts);
     } catch (error) {
+      console.error('Fetch product suppliers error:', error);
       res.status(500).json({ error: "Failed to fetch product suppliers" });
     }
   });
