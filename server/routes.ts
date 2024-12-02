@@ -1,12 +1,60 @@
 import { Express } from "express";
 import { setupAuth } from "./auth";
 import { db } from "../db";
-import { products, customers, sales, saleItems } from "@db/schema";
+import { products, customers, sales, saleItems, suppliers, productSuppliers } from "@db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { desc } from "drizzle-orm";
 
 export function registerRoutes(app: Express) {
   setupAuth(app);
+
+  // Suppliers API
+  app.get("/api/suppliers", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const allSuppliers = await db.select().from(suppliers).orderBy(suppliers.name);
+      res.json(allSuppliers);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch suppliers" });
+    }
+  });
+
+  app.post("/api/suppliers", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const [supplier] = await db.insert(suppliers).values(req.body).returning();
+      res.json(supplier);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create supplier" });
+    }
+  });
+
+  app.get("/api/product-suppliers", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const productSuppliers = await db
+        .select()
+        .from(productSuppliers)
+        .innerJoin(suppliers, eq(suppliers.id, productSuppliers.supplierId))
+        .innerJoin(products, eq(products.id, productSuppliers.productId));
+      res.json(productSuppliers);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch product suppliers" });
+    }
+  });
+
+  app.post("/api/product-suppliers", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const [productSupplier] = await db
+        .insert(productSuppliers)
+        .values(req.body)
+        .returning();
+      res.json(productSupplier);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to link product to supplier" });
+    }
+  });
 
   // Products API
   app.get("/api/products", async (req, res) => {
