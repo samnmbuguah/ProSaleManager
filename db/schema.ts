@@ -43,6 +43,10 @@ export const products = pgTable("products", {
   sellingPrice: decimal("sellingprice", { precision: 10, scale: 2 }).notNull(),
   stock: integer("stock").notNull().default(0),
   category: text("category").notNull(),
+  minStock: integer("min_stock").notNull().default(10),
+  maxStock: integer("max_stock").notNull().default(100),
+  reorderPoint: integer("reorder_point").notNull().default(20),
+  preferredSupplierId: integer("preferred_supplier_id").references(() => suppliers.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -110,6 +114,37 @@ export type Supplier = z.infer<typeof selectSupplierSchema>;
 
 // ProductSupplier schemas
 export const insertProductSupplierSchema = createInsertSchema(productSuppliers);
+// Purchase Orders table
+export const purchaseOrders = pgTable("purchase_orders", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  supplierId: integer("supplier_id").references(() => suppliers.id).notNull(),
+  status: text("status").notNull().default("pending"), // pending, approved, received
+  orderDate: timestamp("order_date").defaultNow(),
+  receivedDate: timestamp("received_date"),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Purchase Order Items table
+export const purchaseOrderItems = pgTable("purchase_order_items", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  purchaseOrderId: integer("purchase_order_id").references(() => purchaseOrders.id).notNull(),
+  productId: integer("product_id").references(() => products.id).notNull(),
+  quantity: integer("quantity").notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+});
+
+// Schema validation for purchase orders
+export const insertPurchaseOrderSchema = createInsertSchema(purchaseOrders);
+export const selectPurchaseOrderSchema = createSelectSchema(purchaseOrders);
+export type InsertPurchaseOrder = z.infer<typeof insertPurchaseOrderSchema>;
+export type PurchaseOrder = z.infer<typeof selectPurchaseOrderSchema>;
+
+export const insertPurchaseOrderItemSchema = createInsertSchema(purchaseOrderItems);
+export const selectPurchaseOrderItemSchema = createSelectSchema(purchaseOrderItems);
+export type InsertPurchaseOrderItem = z.infer<typeof insertPurchaseOrderItemSchema>;
+export type PurchaseOrderItem = z.infer<typeof selectPurchaseOrderItemSchema>;
 export const selectProductSupplierSchema = createSelectSchema(productSuppliers);
 export type InsertProductSupplier = z.infer<typeof insertProductSupplierSchema>;
 export type ProductSupplier = z.infer<typeof selectProductSupplierSchema>;
