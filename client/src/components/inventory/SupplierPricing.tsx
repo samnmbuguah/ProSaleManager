@@ -29,6 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface SupplierPricingProps {
   product: Product;
@@ -65,7 +66,10 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
   };
 
   const onLinkSubmit = async (data: InsertProductSupplier) => {
-    await linkProductToSupplier(data);
+    await linkProductToSupplier({
+      ...data,
+      costPrice: parseFloat(data.costPrice as string),
+    });
     setIsLinkFormOpen(false);
     linkForm.reset();
   };
@@ -128,7 +132,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                   <FormItem>
                     <FormLabel>Name</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -141,7 +145,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" {...field} />
+                      <Input type="email" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -154,7 +158,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -167,7 +171,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                   <FormItem>
                     <FormLabel>Address</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -221,7 +225,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                   <FormItem>
                     <FormLabel>Cost Price</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" {...field} />
+                      <Input type="number" step="0.01" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -231,15 +235,14 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                 control={linkForm.control}
                 name="isPreferred"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preferred Supplier</FormLabel>
+                  <FormItem className="flex flex-row items-center space-x-2">
                     <FormControl>
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={field.value}
-                        onChange={(e) => field.onChange(e.target.checked)}
+                        onCheckedChange={field.onChange}
                       />
                     </FormControl>
+                    <FormLabel>Preferred Supplier</FormLabel>
                     <FormMessage />
                   </FormItem>
                 )}
