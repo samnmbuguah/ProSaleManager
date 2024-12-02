@@ -8,7 +8,7 @@ import { useInventory } from "../hooks/use-inventory";
 
 export default function InventoryPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const { products, isLoading, createProduct, isCreating } = useInventory();
+  const { products = [], isLoading, createProduct, isCreating } = useInventory();
 
   return (
     <div className="space-y-4">

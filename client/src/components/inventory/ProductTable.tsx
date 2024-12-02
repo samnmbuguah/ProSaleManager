@@ -19,11 +19,15 @@ interface ProductTableProps {
   isLoading: boolean;
 }
 
-export function ProductTable({ products, isLoading }: ProductTableProps) {
+export function ProductTable({ products = [], isLoading }: ProductTableProps) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   if (isLoading) {
     return <div>Loading...</div>;
+  }
+
+  if (!Array.isArray(products)) {
+    return <div>No products found</div>;
   }
 
   return (
