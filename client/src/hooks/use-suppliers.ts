@@ -134,10 +134,20 @@ export function useSuppliers() {
 
   const getSupplierProducts = (supplierId?: number) => useQuery({
     queryKey: ['supplier-products', supplierId],
-    queryFn: () =>
-      supplierId
-        ? fetch(`/api/supplier-products/${supplierId}`).then((res) => res.json())
-        : Promise.resolve([]),
+    queryFn: async () => {
+      if (!supplierId) return Promise.resolve([]);
+      
+      const response = await fetch(`/api/supplier-products/${supplierId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch supplier products');
+      }
+      
+      const products = await response.json();
+      return products.map((product: any) => ({
+        ...product,
+        priceHistory: product.priceHistory || [],
+      }));
+    },
     enabled: !!supplierId,
   });
 

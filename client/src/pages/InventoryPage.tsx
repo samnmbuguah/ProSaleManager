@@ -6,6 +6,7 @@ import { SupplierForm } from "../components/inventory/SupplierForm";
 import { PurchaseOrderForm } from "../components/inventory/PurchaseOrderForm";
 import { SupplierPerformance } from "../components/inventory/SupplierPerformance";
 import { SupplierProducts } from "../components/inventory/SupplierProducts";
+import { SupplierPricing } from "../components/inventory/SupplierPricing";
 import { Button } from "@/components/ui/button";
 import { Plus, Package, Truck } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -70,6 +71,7 @@ export default function InventoryPage() {
     reorderSuggestions,
     addSupplierProduct,
     updateSupplierProduct,
+    getSupplierProducts,
   } = useSuppliers();
 
   return (
@@ -136,12 +138,17 @@ export default function InventoryPage() {
                             {supplier.phone && <div>Phone: {supplier.phone}</div>}
                             {supplier.address && <div>Address: {supplier.address}</div>}
                           </div>
-                          <SupplierProducts
-                            supplierId={supplier.id}
-                            products={products || []}
-                            onAddProduct={addSupplierProduct}
-                            onUpdateProduct={updateSupplierProduct}
-                          />
+                          <div className="space-y-4">
+                            <SupplierProducts
+                              supplierId={supplier.id}
+                              products={products || []}
+                              onAddProduct={addSupplierProduct}
+                              onUpdateProduct={updateSupplierProduct}
+                            />
+                            <SupplierPricing
+                              supplierProducts={getSupplierProducts(supplier.id).data || []}
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
