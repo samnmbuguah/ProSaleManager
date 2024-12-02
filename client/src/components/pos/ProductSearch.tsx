@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import type { Product } from "@db/schema";
@@ -10,17 +10,9 @@ interface ProductSearchProps {
   searchProducts: (query: string) => Product[];
 }
 
-export function ProductSearch({ products = [], onSelect, searchProducts }: ProductSearchProps) {
+export function ProductSearch({ products, onSelect, searchProducts }: ProductSearchProps) {
   const [query, setQuery] = useState("");
-  
-  const filteredProducts = useMemo(() => {
-    if (!Array.isArray(products)) return [];
-    return query ? searchProducts(query) : products;
-  }, [query, products, searchProducts]);
-
-  if (!Array.isArray(filteredProducts)) {
-    return <div>No products available</div>;
-  }
+  const filteredProducts = query ? searchProducts(query) : products;
 
   return (
     <div className="space-y-4">
@@ -35,25 +27,17 @@ export function ProductSearch({ products = [], onSelect, searchProducts }: Produ
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {filteredProducts.length > 0 ? (
-          filteredProducts.map((product) => (
-            <Button
-              key={product.id}
-              variant="outline"
-              className="h-24 flex flex-col items-center justify-center text-center"
-              onClick={() => onSelect(product)}
-            >
-              <div className="font-bold">{product.name}</div>
-              <div className="text-sm text-muted-foreground">
-                KSh {Number(product.sellingPrice).toFixed(2)}
-              </div>
-            </Button>
-          ))
-        ) : (
-          <div className="col-span-full text-center text-muted-foreground">
-            No products found
-          </div>
-        )}
+        {filteredProducts.map((product) => (
+          <Button
+            key={product.id}
+            variant="outline"
+            className="h-24 flex flex-col items-center justify-center text-center"
+            onClick={() => onSelect(product)}
+          >
+            <div className="font-bold">{product.name}</div>
+            <div className="text-sm text-muted-foreground">KSh {product.price}</div>
+          </Button>
+        ))}
       </div>
     </div>
   );
