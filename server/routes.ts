@@ -70,7 +70,17 @@ export function registerRoutes(app: Express) {
   app.get("/api/products", async (req, res) => {
     try {
       const allProducts = await db
-        .select()
+        .select({
+          id: products.id,
+          name: products.name,
+          sku: products.sku,
+          buyingPrice: products.buying_price,
+          sellingPrice: products.selling_price,
+          stock: products.stock,
+          category: products.category,
+          createdAt: products.createdAt,
+          updatedAt: products.updatedAt,
+        })
         .from(products)
         .orderBy(products.name);
       
