@@ -29,6 +29,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  // Product-Supplier Management
   app.get("/api/product-suppliers", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
@@ -40,8 +41,19 @@ export function registerRoutes(app: Express) {
           costPrice: productSuppliersTable.costPrice,
           isPreferred: productSuppliersTable.isPreferred,
           lastSupplyDate: productSuppliersTable.lastSupplyDate,
-          supplier: suppliers,
-          product: products,
+          createdAt: productSuppliersTable.createdAt,
+          updatedAt: productSuppliersTable.updatedAt,
+          supplier: {
+            id: suppliers.id,
+            name: suppliers.name,
+            email: suppliers.email,
+            phone: suppliers.phone,
+          },
+          product: {
+            id: products.id,
+            name: products.name,
+            sku: products.sku,
+          },
         })
         .from(productSuppliersTable)
         .leftJoin(suppliers, eq(suppliers.id, productSuppliersTable.supplierId))
@@ -66,7 +78,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Products API
+  // Products API with correct column names
   app.get("/api/products", async (req, res) => {
     try {
       const allProducts = await db
@@ -78,15 +90,14 @@ export function registerRoutes(app: Express) {
           sellingPrice: products.sellingPrice,
           stock: products.stock,
           category: products.category,
+          minStock: products.minStock,
+          maxStock: products.maxStock,
+          reorderPoint: products.reorderPoint,
           createdAt: products.createdAt,
           updatedAt: products.updatedAt,
         })
         .from(products)
         .orderBy(products.name);
-      
-      if (!allProducts) {
-        return res.json([]);
-      }
       
       res.json(allProducts);
     } catch (error) {
@@ -102,6 +113,136 @@ export function registerRoutes(app: Express) {
       res.json(product);
     } catch (error) {
       res.status(500).json({ error: "Failed to create product" });
+    }
+  });
+
+  // Purchase Orders endpoints
+  app.get("/api/purchase-orders", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const result = await db.select({
+        id: purchaseOrders.id,
+        supplierId: purchaseOrders.supplierId,
+        status: purchaseOrders.status,
+        orderDate: purchaseOrders.orderDate,
+        receivedDate: purchaseOrders.receivedDate,
+        total: purchaseOrders.total,
+        createdAt: purchaseOrders.createdAt,
+        updatedAt: purchaseOrders.updatedAt,
+        supplier: {
+          id: suppliers.id,
+          name: suppliers.name,
+          email: suppliers.email,
+          phone: suppliers.phone,
+        }
+      })
+      .from(purchaseOrders)
+      .leftJoin(suppliers, eq(purchaseOrders.supplierId, suppliers.id))
+      .orderBy(desc(purchaseOrders.createdAt));
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Fetch purchase orders error:", error);
+      res.status(500).json({ error: "Failed to fetch purchase orders" });
+    }
+  });
+
+  app.post("/api/purchase-orders", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const { items, supplierId, total } = req.body;
+      
+      // Create purchase order
+      const [order] = await db.insert(purchaseOrders)
+        .values({
+          supplierId,
+          total,
+          status: "pending",
+        })
+        .returning();
+
+      // Create purchase order items
+      await db.insert(purchaseOrderItems)
+        .values(items.map((item: any) => ({
+          purchaseOrderId: order.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })));
+
+      res.json(order);
+    } catch (error) {
+      console.error("Create purchase order error:", error);
+      res.status(500).json({ error: "Failed to create purchase order" });
+    }
+  });
+
+  app.put("/api/purchase-orders/:id/status", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    const { id } = req.params;
+    const { status } = req.body;
+    try {
+      // Update purchase order status
+      const [updatedOrder] = await db
+        .update(purchaseOrders)
+        .set({ 
+          status,
+          receivedDate: status === "received" ? new Date() : null,
+          updatedAt: new Date()
+        })
+        .where(eq(purchaseOrders.id, parseInt(id)))
+        .returning();
+
+      // If order is received, update product stock levels
+      if (status === "received") {
+        const orderItems = await db
+          .select()
+          .from(purchaseOrderItems)
+          .where(eq(purchaseOrderItems.purchaseOrderId, parseInt(id)));
+
+        for (const item of orderItems) {
+          await db
+            .update(products)
+            .set({ 
+              stock: sql`${products.stock} + ${item.quantity}`,
+              updatedAt: new Date()
+            })
+            .where(eq(products.id, item.productId));
+        }
+      }
+
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error("Update purchase order status error:", error);
+      res.status(500).json({ error: "Failed to update purchase order status" });
+    }
+  });
+
+  // Get purchase order items
+  app.get("/api/purchase-orders/:id/items", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const orderId = parseInt(req.params.id);
+      const items = await db
+        .select({
+          id: purchaseOrderItems.id,
+          purchaseOrderId: purchaseOrderItems.purchaseOrderId,
+          quantity: purchaseOrderItems.quantity,
+          unitPrice: purchaseOrderItems.unitPrice,
+          product: {
+            id: products.id,
+            name: products.name,
+            sku: products.sku,
+          }
+        })
+        .from(purchaseOrderItems)
+        .leftJoin(products, eq(purchaseOrderItems.productId, products.id))
+        .where(eq(purchaseOrderItems.purchaseOrderId, orderId));
+
+      res.json(items);
+    } catch (error) {
+      console.error("Fetch purchase order items error:", error);
+      res.status(500).json({ error: "Failed to fetch purchase order items" });
     }
   });
 
@@ -224,113 +365,6 @@ export function registerRoutes(app: Express) {
       res.status(500).json({ error: "Failed to fetch low stock report" });
     }
   });
-// This duplicate endpoint has been removed as it exists above at line 32
-  // Purchase Orders endpoints
-  app.get("/api/purchase-orders", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    try {
-      const result = await db.select({
-        id: purchaseOrders.id,
-        supplierId: purchaseOrders.supplierId,
-        status: purchaseOrders.status,
-        orderDate: purchaseOrders.orderDate,
-        receivedDate: purchaseOrders.receivedDate,
-        total: purchaseOrders.total,
-        supplier: {
-          id: suppliers.id,
-          name: suppliers.name,
-          email: suppliers.email,
-          phone: suppliers.phone,
-        }
-      })
-      .from(purchaseOrders)
-      .leftJoin(suppliers, eq(purchaseOrders.supplierId, suppliers.id));
-      
-      res.json(result);
-    } catch (error) {
-      console.error("Fetch purchase orders error:", error);
-      res.status(500).json({ error: "Failed to fetch purchase orders" });
-    }
-  });
-
-  app.post("/api/purchase-orders", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    try {
-      const { items, supplierId, total } = req.body;
-      
-      // Create purchase order
-      const [order] = await db.insert(purchaseOrders)
-        .values({
-          supplierId,
-          total,
-          status: "pending"
-        })
-        .returning();
-
-      // Create purchase order items
-      await db.insert(purchaseOrderItems)
-        .values(items.map((item: any) => ({
-          purchaseOrderId: order.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-        })));
-
-      res.json(order);
-    } catch (error) {
-      console.error("Create purchase order error:", error);
-      res.status(500).json({ error: "Failed to create purchase order" });
-    }
-  });
-  // Get purchase order items
-  app.get("/api/purchase-orders/:id/items", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    try {
-      const orderId = parseInt(req.params.id);
-      const items = await db
-        .select({
-          id: purchaseOrderItems.id,
-          purchaseOrderId: purchaseOrderItems.purchaseOrderId,
-          quantity: purchaseOrderItems.quantity,
-          unitPrice: purchaseOrderItems.unitPrice,
-          product: {
-            id: products.id,
-            name: products.name,
-            sku: products.sku,
-          }
-        })
-        .from(purchaseOrderItems)
-        .leftJoin(products, eq(purchaseOrderItems.productId, products.id))
-        .where(eq(purchaseOrderItems.purchaseOrderId, orderId));
-
-      res.json(items);
-    } catch (error) {
-      console.error("Fetch purchase order items error:", error);
-      res.status(500).json({ error: "Failed to fetch purchase order items" });
-    }
-  });
-
-
-  app.put("/api/purchase-orders/:id/status", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    const { id } = req.params;
-    const { status } = req.body;
-    try {
-      const result = await db
-        .update(purchaseOrders)
-        .set({ 
-          status,
-          receivedDate: status === "received" ? new Date() : null,
-          updatedAt: new Date()
-        })
-        .where(eq(purchaseOrders.id, parseInt(id)))
-        .returning();
-      res.json(result[0]);
-    } catch (error) {
-      console.error("Update purchase order status error:", error);
-      res.status(500).json({ error: "Failed to update purchase order status" });
-    }
-  });
 
   // Demo data seeding endpoint
   app.post("/api/seed-demo-data", async (req, res) => {
@@ -344,6 +378,9 @@ export function registerRoutes(app: Express) {
           sellingPrice: "65.00",
           stock: 50,
           category: "Dairy",
+          minStock: 10,
+          maxStock: 100,
+          reorderPoint: 20,
         },
         {
           name: "Bread",
@@ -352,6 +389,9 @@ export function registerRoutes(app: Express) {
           sellingPrice: "70.00",
           stock: 30,
           category: "Bakery",
+          minStock: 5,
+          maxStock: 50,
+          reorderPoint: 10,
         },
         {
           name: "Sugar 1kg",
@@ -360,6 +400,9 @@ export function registerRoutes(app: Express) {
           sellingPrice: "165.00",
           stock: 100,
           category: "Grocery",
+          minStock: 20,
+          maxStock: 200,
+          reorderPoint: 50,
         }
       ];
 
