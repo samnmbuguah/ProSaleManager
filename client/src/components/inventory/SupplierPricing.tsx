@@ -68,7 +68,9 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
   const onLinkSubmit = async (data: InsertProductSupplier) => {
     await linkProductToSupplier({
       ...data,
-      costPrice: parseFloat(data.costPrice as string),
+      costPrice: data.costPrice,
+      productId: product.id,
+      supplierId: Number(data.supplierId),
     });
     setIsLinkFormOpen(false);
     linkForm.reset();

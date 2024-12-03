@@ -56,7 +56,7 @@ export function ProductTable({ products = [], isLoading }: ProductTableProps) {
                 <TableCell>KSh {Number(product.buyingPrice).toFixed(2)}</TableCell>
                 <TableCell>KSh {Number(product.sellingPrice).toFixed(2)}</TableCell>
                 <TableCell>
-                  {(((product.sellingPrice - product.buyingPrice) / product.buyingPrice) * 100).toFixed(1)}%
+                  {(((Number(product.sellingPrice) - Number(product.buyingPrice)) / Number(product.buyingPrice)) * 100).toFixed(1)}%
                 </TableCell>
                 <TableCell>{product.stock}</TableCell>
                 <TableCell>

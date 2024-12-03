@@ -1,7 +1,7 @@
 import { Express } from "express";
 import { setupAuth } from "./auth";
 import { db } from "../db";
-import { products, customers, sales, saleItems, suppliers, productSuppliers as productSuppliersTable } from "@db/schema";
+import { products, customers, sales, saleItems, suppliers, productSuppliers as productSuppliersTable, purchaseOrders, purchaseOrderItems } from "@db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { desc } from "drizzle-orm";
 
@@ -222,6 +222,152 @@ export function registerRoutes(app: Express) {
       res.json(lowStockProducts);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch low stock report" });
+    }
+  });
+// This duplicate endpoint has been removed as it exists above at line 32
+  // Purchase Orders endpoints
+  app.get("/api/purchase-orders", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const result = await db.select({
+        id: purchaseOrders.id,
+        supplierId: purchaseOrders.supplierId,
+        status: purchaseOrders.status,
+        orderDate: purchaseOrders.orderDate,
+        receivedDate: purchaseOrders.receivedDate,
+        total: purchaseOrders.total,
+        supplier: {
+          id: suppliers.id,
+          name: suppliers.name,
+          email: suppliers.email,
+          phone: suppliers.phone,
+        }
+      })
+      .from(purchaseOrders)
+      .leftJoin(suppliers, eq(purchaseOrders.supplierId, suppliers.id));
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Fetch purchase orders error:", error);
+      res.status(500).json({ error: "Failed to fetch purchase orders" });
+    }
+  });
+
+  app.post("/api/purchase-orders", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const { items, supplierId, total } = req.body;
+      
+      // Create purchase order
+      const [order] = await db.insert(purchaseOrders)
+        .values({
+          supplierId,
+          total,
+          status: "pending"
+        })
+        .returning();
+
+      // Create purchase order items
+      await db.insert(purchaseOrderItems)
+        .values(items.map((item: any) => ({
+          purchaseOrderId: order.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })));
+
+      res.json(order);
+    } catch (error) {
+      console.error("Create purchase order error:", error);
+      res.status(500).json({ error: "Failed to create purchase order" });
+    }
+  });
+  // Get purchase order items
+  app.get("/api/purchase-orders/:id/items", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const orderId = parseInt(req.params.id);
+      const items = await db
+        .select({
+          id: purchaseOrderItems.id,
+          purchaseOrderId: purchaseOrderItems.purchaseOrderId,
+          quantity: purchaseOrderItems.quantity,
+          unitPrice: purchaseOrderItems.unitPrice,
+          product: {
+            id: products.id,
+            name: products.name,
+            sku: products.sku,
+          }
+        })
+        .from(purchaseOrderItems)
+        .leftJoin(products, eq(purchaseOrderItems.productId, products.id))
+        .where(eq(purchaseOrderItems.purchaseOrderId, orderId));
+
+      res.json(items);
+    } catch (error) {
+      console.error("Fetch purchase order items error:", error);
+      res.status(500).json({ error: "Failed to fetch purchase order items" });
+    }
+  });
+
+
+  app.put("/api/purchase-orders/:id/status", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    const { id } = req.params;
+    const { status } = req.body;
+    try {
+      const result = await db
+        .update(purchaseOrders)
+        .set({ 
+          status,
+          receivedDate: status === "received" ? new Date() : null,
+          updatedAt: new Date()
+        })
+        .where(eq(purchaseOrders.id, parseInt(id)))
+        .returning();
+      res.json(result[0]);
+    } catch (error) {
+      console.error("Update purchase order status error:", error);
+      res.status(500).json({ error: "Failed to update purchase order status" });
+    }
+  });
+
+  // Demo data seeding endpoint
+  app.post("/api/seed-demo-data", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const demoProducts = [
+        {
+          name: "Milk 500ml",
+          sku: "DAIRY-001",
+          buyingPrice: "45.00",
+          sellingPrice: "65.00",
+          stock: 50,
+          category: "Dairy",
+        },
+        {
+          name: "Bread",
+          sku: "BAKERY-001", 
+          buyingPrice: "50.00",
+          sellingPrice: "70.00",
+          stock: 30,
+          category: "Bakery",
+        },
+        {
+          name: "Sugar 1kg",
+          sku: "GROCERY-001",
+          buyingPrice: "130.00",
+          sellingPrice: "165.00",
+          stock: 100,
+          category: "Grocery",
+        }
+      ];
+
+      await db.insert(products).values(demoProducts);
+      res.json({ message: "Demo data added successfully" });
+    } catch (error) {
+      console.error('Add demo data error:', error);
+      res.status(500).json({ error: "Failed to add demo data" });
     }
   });
 }
