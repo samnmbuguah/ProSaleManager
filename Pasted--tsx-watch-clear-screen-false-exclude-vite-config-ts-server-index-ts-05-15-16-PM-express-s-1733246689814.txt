@@ -1,0 +1,112 @@
+> tsx watch --clear-screen=false --exclude vite.config.ts.* server/index.ts
+
+05:15:16 PM [express] serving on port 5000
+
+ ERROR(TypeScript)  No overload matches this call.
+  Overload 1 of 4, '(value: string | number | Date): Date', gave the following error.
+    Argument of type 'Date | null' is not assignable to parameter of type 'string | number | Date'.
+      Type 'null' is not assignable to type 'string | number | Date'.
+  Overload 2 of 4, '(value: string | number): Date', gave the following error.
+    Argument of type 'Date | null' is not assignable to parameter of type 'string | number'.
+      Type 'null' is not assignable to type 'string | number'.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/PurchaseOrderList.tsx:61:36
+
+    59 |               <TableRow key={order.id}>
+    60 |                 <TableCell>
+  > 61 |                   {format(new Date(order.orderDate), "MMM d, yyyy")}
+       |                                    ^^^^^^^^^^^^^^^
+    62 |                 </TableCell>
+    63 |                 <TableCell>{order.supplier.name}</TableCell>
+    64 |                 <TableCell>
+
+ ERROR(TypeScript)  Property 'supplier' does not exist on type '{ id: number; createdAt: Date | null; updatedAt: Date | null; supplierId: number; total: string; status: string; orderDate: Date | null; receivedDate: Date | null; }'. Did you mean 'supplierId'?
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/PurchaseOrderList.tsx:63:35
+
+    61 |                   {format(new Date(order.orderDate), "MMM d, yyyy")}
+    62 |                 </TableCell>
+  > 63 |                 <TableCell>{order.supplier.name}</TableCell>
+       |                                   ^^^^^^^^
+    64 |                 <TableCell>
+    65 |                   KSh {Number(order.total).toLocaleString("en-KE", {
+    66 |                     minimumFractionDigits: 2,
+
+ ERROR(TypeScript)  Type '"default" | "secondary" | "warning" | "success"' is not assignable to type '"default" | "destructive" | "outline" | "secondary" | null | undefined'.
+  Type '"warning"' is not assignable to type '"default" | "destructive" | "outline" | "secondary" | null | undefined'.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/PurchaseOrderList.tsx:71:26
+
+    69 |                 </TableCell>
+    70 |                 <TableCell>
+  > 71 |                   <Badge variant={getStatusColor(order.status)}>
+       |                          ^^^^^^^
+    72 |                     {order.status}
+    73 |                   </Badge>
+    74 |                 </TableCell>
+
+ ERROR(TypeScript)  Property 'supplier' does not exist on type '{ id: number; createdAt: Date | null; updatedAt: Date | null; productId: number; supplierId: number; costPrice: string; isPreferred: boolean; lastSupplyDate: Date | null; }'. Did you mean 'supplierId'?
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/SupplierPricing.tsx:110:30
+
+    108 |           {productSuppliersList.map((ps) => (
+    109 |             <TableRow key={ps.id}>
+  > 110 |               <TableCell>{ps.supplier.name}</TableCell>
+        |                              ^^^^^^^^
+    111 |               <TableCell>KSh {Number(ps.costPrice).toFixed(2)}</TableCell>
+    112 |               <TableCell>{ps.isPreferred ? "Yes" : "No"}</TableCell>
+    113 |               <TableCell>
+
+ ERROR(TypeScript)  No overload matches this call.
+  Overload 1 of 2, '(props: Props): Area', gave the following error.
+    Type '{ type: "monotone"; dataKey: string; name: string; formatter: (value: number) => string; stroke: string; fillOpacity: number; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Area> & Pick<Readonly<Props>, "string" | "id" | "name" | ... 485 more ... | "baseLine"> & InexactPartial<...> & InexactPartial<...>'.
+      Property 'formatter' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Area> & Pick<Readonly<Props>, "string" | "id" | "name" | ... 485 more ... | "baseLine"> & InexactPartial<...> & InexactPartial<...>'. Did you mean 'format'?
+  Overload 2 of 2, '(props: Props, context: any): Area', gave the following error.
+    Type '{ type: "monotone"; dataKey: string; name: string; formatter: (value: number) => string; stroke: string; fillOpacity: number; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Area> & Pick<Readonly<Props>, "string" | "id" | "name" | ... 485 more ... | "baseLine"> & InexactPartial<...> & InexactPartial<...>'.
+      Property 'formatter' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Area> & Pick<Readonly<Props>, "string" | "id" | "name" | ... 485 more ... | "baseLine"> & InexactPartial<...> & InexactPartial<...>'. Did you mean 'format'?
+ FILE  /home/runner/ProSaleManager/client/src/components/reports/SalesChart.tsx:96:15
+
+    94 |               dataKey="amount"
+    95 |               name="Amount"
+  > 96 |               formatter={(value: number) => formatCurrency(value)}
+       |               ^^^^^^^^^
+    97 |               stroke="hsl(215 25% 27%)"
+    98 |               fillOpacity={1}
+    99 |               fill="url(#colorSales)"
+
+ ERROR(TypeScript)  Type 'null' is not assignable to type '{ id: number; name: string; createdAt: Date | null; updatedAt: Date | null; sku: string; buyingPrice: string; sellingPrice: string; stock: number; category: string; minStock: number; maxStock: number; reorderPoint: number; preferredSupplierId: number | null; }'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/InventoryPage.tsx:67:13
+
+    65 |             }}
+    66 |             isSubmitting={isCreatingPO}
+  > 67 |             product={null}
+       |             ^^^^^^^
+    68 |           />
+    69 |         </DialogContent>
+    70 |       </Dialog>
+
+[TypeScript] Found 6 errors. Watching for file changes.
+05:18:46 PM [express] GET /api/user 401 in 2ms
+05:22:47 PM [express] POST /api/login 200 in 859ms :: {"message":"Login successful","user":{"id":2,"u…
+05:22:47 PM [express] GET /api/user 304 in 70ms :: {"id":2,"username":"Newuser@gmail.com","password":…
+05:22:48 PM [express] GET /api/customers 304 in 144ms :: [{"id":7,"name":"John Doe","email":"john@exa…
+Fetch products error: error: column "selling_price" does not exist
+    at file:///home/runner/ProSaleManager/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at NeonPreparedQuery.execute (/home/runner/ProSaleManager/node_modules/src/neon-serverless/session.ts:102:18)
+    at <anonymous> (/home/runner/ProSaleManager/server/routes.ts:72:27) {
+  length: 113,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '45',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3722',
+  routine: 'errorMissingColumn'
+}
+05:22:48 PM [express] GET /api/products 500 in 352ms :: {"error":"Failed to fetch products"}

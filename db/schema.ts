@@ -46,7 +46,6 @@ export const products = pgTable("products", {
   minStock: integer("min_stock").notNull().default(10),
   maxStock: integer("max_stock").notNull().default(100),
   reorderPoint: integer("reorder_point").notNull().default(20),
-  preferredSupplierId: integer("preferred_supplier_id").references(() => suppliers.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
