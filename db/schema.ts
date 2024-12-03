@@ -36,11 +36,11 @@ export const users = pgTable("users", {
 
 // Products table
 export const products = pgTable("products", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull(),
   sku: text("sku").unique().notNull(),
-  buyingPrice: decimal("buyingprice", { precision: 10, scale: 2 }).notNull(),
-  sellingPrice: decimal("sellingprice", { precision: 10, scale: 2 }).notNull(),
+  buyingPrice: decimal("buying_price", { precision: 10, scale: 2 }).notNull(),
+  sellingPrice: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
   stock: integer("stock").notNull().default(0),
   category: text("category").notNull(),
   minStock: integer("min_stock").notNull().default(10),

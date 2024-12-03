@@ -25,11 +25,11 @@ interface ProductFormProps {
 }
 
 const categories = [
-  "Electronics",
-  "Clothing",
-  "Food & Beverages",
-  "Home & Garden",
-  "Books",
+  "Dairy",
+  "Bakery",
+  "Grocery",
+  "Beverages",
+  "Snacks",
   "Other",
 ];
 
@@ -39,9 +39,13 @@ export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
     defaultValues: {
       name: "",
       sku: "",
-      price: "0",
+      buyingPrice: "0",
+      sellingPrice: "0",
       stock: 0,
       category: "Other",
+      minStock: 10,
+      maxStock: 100,
+      reorderPoint: 20,
     },
   });
 
@@ -78,10 +82,29 @@ export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
 
         <FormField
           control={form.control}
-          name="price"
+          name="buyingPrice"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Price</FormLabel>
+              <FormLabel>Buying Price</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  step="0.01"
+                  {...field}
+                  onChange={(e) => field.onChange(e.target.value)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="sellingPrice"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Selling Price</FormLabel>
               <FormControl>
                 <Input
                   type="number"
