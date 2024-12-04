@@ -15,7 +15,23 @@ interface CustomerListProps {
 }
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
-  console.error("[CustomerList] Error:", error);
+  React.useEffect(() => {
+    console.error("[CustomerList] Error:", error);
+    
+    // Report error to health monitoring system
+    fetch('/api/client-error', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        error: error.message,
+        component: 'CustomerList',
+        stack: error.stack
+      })
+    }).catch(err => {
+      console.error('Failed to report error:', err);
+    });
+  }, [error]);
+
   return (
     <div className="text-center py-8 text-red-500">
       <p>Something went wrong:</p>
