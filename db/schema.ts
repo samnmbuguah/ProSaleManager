@@ -117,6 +117,7 @@ export const insertProductSupplierSchema = createInsertSchema(productSuppliers);
 export const purchaseOrders = pgTable("purchase_orders", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   supplierId: integer("supplier_id").references(() => suppliers.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),  // Add this
   status: text("status").notNull().default("pending"), // pending, approved, received
   orderDate: timestamp("order_date").defaultNow(),
   receivedDate: timestamp("received_date"),
