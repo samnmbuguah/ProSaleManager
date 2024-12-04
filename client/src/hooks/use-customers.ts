@@ -6,9 +6,20 @@ export function useCustomers() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: customers, isLoading } = useQuery<Customer[]>({
+  const { data: customers, isLoading, error } = useQuery<Customer[]>({
     queryKey: ['customers'],
-    queryFn: () => fetch('/api/customers').then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch('/api/customers');
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error('Please login to view customers');
+        }
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to fetch customers');
+      }
+      return res.json();
+    },
+    initialData: [],
   });
 
   const createCustomerMutation = useMutation<Customer, Error, InsertCustomer>({

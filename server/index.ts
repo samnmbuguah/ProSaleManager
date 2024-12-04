@@ -9,6 +9,13 @@ import { db } from "../db";
 import { sql } from 'drizzle-orm';
 import { setupAuth } from "./auth";
 
+// Monitoring metrics
+const metrics = {
+  requestCount: 0,
+  responseTimeTotal: 0,
+  errors: 0
+};
+
 function log(message: string) {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "2-digit",
@@ -47,6 +54,10 @@ app.get("/api/health", async (req, res) => {
     // Check database connection
     await db.execute(sql`SELECT 1`);
     
+    const averageResponseTime = metrics.requestCount > 0 
+      ? metrics.responseTimeTotal / metrics.requestCount 
+      : 0;
+
     const health = {
       status: "healthy",
       timestamp: new Date().toISOString(),
@@ -54,6 +65,11 @@ app.get("/api/health", async (req, res) => {
         database: "connected",
         auth: "operational",
         api: "operational"
+      },
+      metrics: {
+        requestCount: metrics.requestCount,
+        averageResponseTime: Math.round(averageResponseTime),
+        errorCount: metrics.errors,
       },
       uptime: process.uptime(),
       memory: process.memoryUsage()
@@ -64,18 +80,15 @@ app.get("/api/health", async (req, res) => {
     const unhealthy = {
       status: "unhealthy",
       timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
+      metrics: {
+        requestCount: metrics.requestCount,
+        errorCount: metrics.errors,
+      }
     };
     res.status(503).json(unhealthy);
   }
 });
-
-// Monitoring metrics
-const metrics = {
-  requestCount: 0,
-  responseTimeTotal: 0,
-  errors: 0
-};
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -128,6 +141,10 @@ app.get("/api/metrics", (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// Register API routes
+// Setup authentication before routes
+setupAuth(app);
 
 // Register API routes
 app.use("/api/customers", customersRouter);

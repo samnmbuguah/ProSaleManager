@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../../db";
 import { customers } from "../../db/schema";
-import { eq, or, ilike, desc } from "drizzle-orm";
+import { eq, or, ilike, desc, sql } from "drizzle-orm";
 
 const router = Router();
 
@@ -92,21 +92,24 @@ const requireAuth = (req: any, res: any, next: any) => {
 };
 
 // Get all customers
-router.get("/", requireAuth, (req, res, next) => {
-  db.select({
-    id: customers.id,
-    name: customers.name,
-    email: customers.email,
-    phone: customers.phone,
-    createdAt: customers.createdAt,
-    updatedAt: customers.updatedAt
-  })
-    .from(customers)
-    .orderBy(desc(customers.createdAt))
-    .then(allCustomers => {
-      res.json(allCustomers || []);
+router.get("/", requireAuth, async (req, res) => {
+  try {
+    const allCustomers = await db.select({
+      id: customers.id,
+      name: customers.name,
+      email: customers.email,
+      phone: customers.phone,
+      createdAt: customers.createdAt,
+      updatedAt: customers.updatedAt
     })
-    .catch(next);
+      .from(customers)
+      .orderBy(desc(customers.createdAt));
+    
+    res.json(allCustomers || []);
+  } catch (error) {
+    console.error("Error fetching customers:", error);
+    res.status(500).json({ error: "Failed to fetch customers" });
+  }
 });
 
 // Apply error handling middleware
