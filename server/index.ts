@@ -89,7 +89,7 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 
   // Start server
   const PORT = process.env.PORT || 5000;
-  server.listen(PORT, "0.0.0.0", () => {
+  server.listen(Number(PORT), "0.0.0.0", () => {
     log(`serving on port ${PORT}`);
   }).on('error', (error) => {
     console.error('Error starting server:', error);
