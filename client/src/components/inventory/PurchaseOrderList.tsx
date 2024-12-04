@@ -12,6 +12,17 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { usePurchaseOrders } from "@/hooks/use-purchase-orders";
 
+import type { Supplier } from "@db/schema";
+
+interface PurchaseOrderWithSupplier extends PurchaseOrder {
+  supplier?: {
+    id: number;
+    name: string;
+    email: string | null;
+    phone: string | null;
+  };
+}
+
 interface PurchaseOrderListProps {
   onCreateOrder: () => void;
 }

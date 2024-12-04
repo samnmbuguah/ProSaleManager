@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { useCustomers } from "@/hooks/use-customers";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { CreditCard, Mail, Phone, Receipt, User } from "lucide-react";
+import { LoyaltyPointsSection } from "./LoyaltyPointsSection";
 
 interface PaymentDialogProps {
   open: boolean;
   onClose: () => void;
-  onComplete: (paymentMethod: string, customerId?: number) => void;
+  onComplete: (paymentMethod: string, customerId?: number, usePoints?: number) => void;
   total: number;
   isProcessing: boolean;
 }
@@ -21,12 +22,17 @@ export function PaymentDialog({
   isProcessing
 }: PaymentDialogProps) {
   const [selectedCustomerId, setSelectedCustomerId] = useState<number>();
+  const [pointsToUse, setPointsToUse] = useState(0);
   const { customers, searchCustomers } = useCustomers();
   const [query, setQuery] = useState("");
   const selectedCustomer = customers?.find(c => c.id === selectedCustomerId);
 
   const handlePayment = (method: string) => {
-    onComplete(method, selectedCustomerId);
+    onComplete(method, selectedCustomerId, pointsToUse);
+  };
+
+  const handlePointsUse = (points: number) => {
+    setPointsToUse(points);
   };
 
   return (
@@ -38,7 +44,12 @@ export function PaymentDialog({
 
         <div className="space-y-4">
           <div className="text-2xl font-bold text-center">
-            KSh {total.toFixed(2)}
+            KSh {(total - pointsToUse).toFixed(2)}
+            {pointsToUse > 0 && (
+              <div className="text-sm text-muted-foreground">
+                Original: KSh {total.toFixed(2)}
+              </div>
+            )}
           </div>
 
           <div className="space-y-4">
@@ -81,6 +92,12 @@ export function PaymentDialog({
                 </div>
               </div>
             )}
+
+            <LoyaltyPointsSection 
+              customerId={selectedCustomerId}
+              total={total}
+              onPointsUse={handlePointsUse}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">

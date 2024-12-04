@@ -1,6 +1,55 @@
-node_modules
+node_modules/
 dist
 .DS_Store
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Dependencies
+node_modules/
+/vendor/
+/.pnp
+.pnp.js
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+/build/
+/dist/
+/out/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+debug.log
+
+# Testing
+/coverage/
+
+# Cache directories
+.cache/
+.next/
+.nuxt/
+.temp/
+
+# System files
+Thumbs.db
+.DS_Store
+*.log
+
+# Optional: Project specific
+# Add any project-specific files/directories you want to ignore
+
+# Replit specific
+.agent_state*
