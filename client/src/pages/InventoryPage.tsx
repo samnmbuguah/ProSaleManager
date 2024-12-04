@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { useInventory } from "../hooks/use-inventory";
 import { usePurchaseOrders } from "../hooks/use-purchase-orders";
+import { useSuppliers } from "@/hooks/use-suppliers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function InventoryPage() {
@@ -83,7 +84,11 @@ export default function InventoryPage() {
           </DialogHeader>
           <PurchaseOrderForm
             onSubmit={async (data) => {
-              await createPurchaseOrder(data);
+              await createPurchaseOrder({
+                supplierId: parseInt(data.supplierId),
+                total: data.total,
+                items: data.items,
+              });
               setIsPurchaseOrderFormOpen(false);
             }}
             isSubmitting={isCreatingPO}

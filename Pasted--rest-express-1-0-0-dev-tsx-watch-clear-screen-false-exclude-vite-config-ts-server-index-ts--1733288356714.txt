@@ -1,0 +1,151 @@
+ rest-express@1.0.0 dev
+> tsx watch --clear-screen=false --exclude vite.config.ts.* server/index.ts
+
+04:52:52 AM [express] serving on port 5000
+04:52:56 AM [express] GET /api/user 401 in 3ms
+
+ ERROR(TypeScript)  Type '{ productId: number; quantity: number; unitPrice: number; buyingPrice: number; sellingPrice: number; name: string; }[]' is not assignable to type 'PurchaseOrderItem[]'.
+  Type '{ productId: number; quantity: number; unitPrice: number; buyingPrice: number; sellingPrice: number; name: string; }' is not assignable to type 'PurchaseOrderItem'.
+    Types of property 'productId' are incompatible.
+      Type 'number' is not assignable to type 'string'.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/PurchaseOrderForm.tsx:85:9
+
+    83 |       <form onSubmit={form.handleSubmit((data) => onSubmit({ 
+    84 |         ...data, 
+  > 85 |         items: items.map(item => ({
+       |         ^^^^^
+    86 |           productId: parseInt(item.productId),
+    87 |           quantity: item.quantity,
+    88 |           unitPrice: Number(item.buyingPrice),
+
+ ERROR(TypeScript)  Type 'number' is not assignable to type 'string'.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/PurchaseOrderForm.tsx:93:9
+
+    91 |           name: item.name
+    92 |         })),
+  > 93 |         supplierId: Number(data.supplierId),
+       |         ^^^^^^^^^^
+    94 |         total: calculateTotal(),
+    95 |       }))} className="space-y-4">
+    96 |         <FormField
+
+ ERROR(TypeScript)  Property 'supplier' does not exist on type '{ id: number; createdAt: Date | null; updatedAt: Date | null; supplierId: number; userId: number; status: string; orderDate: Date | null; receivedDate: Date | null; total: string; }'. Did you mean 'supplierId'?
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/PurchaseOrderList.tsx:72:35
+
+    70 |                   {formatDate(order.orderDate)}
+    71 |                 </TableCell>
+  > 72 |                 <TableCell>{order.supplier?.name || "Unknown Supplier"}</TableCell>
+       |                                   ^^^^^^^^
+    73 |                 <TableCell>
+    74 |                   KSh {Number(order.total).toLocaleString("en-KE", {
+    75 |                     minimumFractionDigits: 2,
+
+ ERROR(TypeScript)  Type '{ onChange: (...event: any[]) => void; onBlur: Noop; value: string | null | undefined; disabled?: boolean | undefined; name: "email"; ref: RefCallBack; type: "email"; }' is not assignable to type 'InputProps'.
+  Types of property 'value' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+      Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/SupplierForm.tsx:54:18
+
+    52 |               <FormLabel>Email</FormLabel>
+    53 |               <FormControl>
+  > 54 |                 <Input type="email" {...field} />
+       |                  ^^^^^
+    55 |               </FormControl>
+    56 |               <FormMessage />
+    57 |             </FormItem>
+
+ ERROR(TypeScript)  Type '{ onChange: (...event: any[]) => void; onBlur: Noop; value: string | null | undefined; disabled?: boolean | undefined; name: "phone"; ref: RefCallBack; type: "tel"; }' is not assignable to type 'InputProps'.
+  Types of property 'value' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+      Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/SupplierForm.tsx:68:18
+
+    66 |               <FormLabel>Phone Number</FormLabel>
+    67 |               <FormControl>
+  > 68 |                 <Input type="tel" {...field} />
+       |                  ^^^^^
+    69 |               </FormControl>
+    70 |               <FormMessage />
+    71 |             </FormItem>
+
+ ERROR(TypeScript)  Type '{ onChange: (...event: any[]) => void; onBlur: Noop; value: string | null | undefined; disabled?: boolean | undefined; name: "address"; ref: RefCallBack; }' is not assignable to type 'InputProps'.
+  Types of property 'value' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+      Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/SupplierForm.tsx:82:18
+
+    80 |               <FormLabel>Address</FormLabel>
+    81 |               <FormControl>
+  > 82 |                 <Input {...field} />
+       |                  ^^^^^
+    83 |               </FormControl>
+    84 |               <FormMessage />
+    85 |             </FormItem>
+
+ ERROR(TypeScript)  Property 'supplier' does not exist on type '{ id: number; createdAt: Date | null; updatedAt: Date | null; productId: number; supplierId: number; costPrice: string; isPreferred: boolean; lastSupplyDate: Date | null; }'. Did you mean 'supplierId'?
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/SupplierPricing.tsx:110:30
+
+    108 |           {productSuppliersList.map((ps) => (
+    109 |             <TableRow key={ps.id}>
+  > 110 |               <TableCell>{ps.supplier.name}</TableCell>
+        |                              ^^^^^^^^
+    111 |               <TableCell>KSh {Number(ps.costPrice).toFixed(2)}</TableCell>
+    112 |               <TableCell>{ps.isPreferred ? "Yes" : "No"}</TableCell>
+    113 |               <TableCell>
+
+ ERROR(TypeScript)  No overload matches this call.
+  Overload 1 of 2, '(props: Props): Area', gave the following error.
+    Type '{ type: "monotone"; dataKey: string; name: string; formatter: (value: number) => string; stroke: string; fillOpacity: number; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Area> & Pick<Readonly<Props>, "string" | "id" | "name" | ... 485 more ... | "baseLine"> & InexactPartial<...> & InexactPartial<...>'.
+      Property 'formatter' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Area> & Pick<Readonly<Props>, "string" | "id" | "name" | ... 485 more ... | "baseLine"> & InexactPartial<...> & InexactPartial<...>'. Did you mean 'format'?
+  Overload 2 of 2, '(props: Props, context: any): Area', gave the following error.
+    Type '{ type: "monotone"; dataKey: string; name: string; formatter: (value: number) => string; stroke: string; fillOpacity: number; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Area> & Pick<Readonly<Props>, "string" | "id" | "name" | ... 485 more ... | "baseLine"> & InexactPartial<...> & InexactPartial<...>'.
+      Property 'formatter' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Area> & Pick<Readonly<Props>, "string" | "id" | "name" | ... 485 more ... | "baseLine"> & InexactPartial<...> & InexactPartial<...>'. Did you mean 'format'?
+ FILE  /home/runner/ProSaleManager/client/src/components/reports/SalesChart.tsx:96:15
+
+    94 |               dataKey="amount"
+    95 |               name="Amount"
+  > 96 |               formatter={(value: number) => formatCurrency(value)}
+       |               ^^^^^^^^^
+    97 |               stroke="hsl(215 25% 27%)"
+    98 |               fillOpacity={1}
+    99 |               fill="url(#colorSales)"
+
+ ERROR(TypeScript)  Cannot find name 'useSuppliers'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/InventoryPage.tsx:26:62
+
+    24 |   const { products = [], isLoading, createProduct, isCreating } = useInventory();
+    25 |   const { createPurchaseOrder, isCreating: isCreatingPO } = usePurchaseOrders();
+  > 26 |   const { createSupplier, isCreating: isCreatingSupplier } = useSuppliers();
+       |                                                              ^^^^^^^^^^^^
+    27 |
+    28 |   return (
+    29 |     <div className="space-y-4">
+
+ ERROR(TypeScript)  Argument of type '{ supplierId: string; items: PurchaseOrderItem[]; total: number; }' is not assignable to parameter of type '{ supplierId: number; userId: number; total: string; id?: number | undefined; createdAt?: Date | null | undefined; updatedAt?: Date | null | undefined; status?: string | undefined; orderDate?: Date | ... 1 more ... | undefined; receivedDate?: Date | ... 1 more ... | undefined; }'.
+  Property 'userId' is missing in type '{ supplierId: string; items: PurchaseOrderItem[]; total: number; }' but required in type '{ supplierId: number; userId: number; total: string; id?: number | undefined; createdAt?: Date | null | undefined; updatedAt?: Date | null | undefined; status?: string | undefined; orderDate?: Date | ... 1 more ... | undefined; receivedDate?: Date | ... 1 more ... | undefined; }'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/InventoryPage.tsx:86:41
+
+    84 |           <PurchaseOrderForm
+    85 |             onSubmit={async (data) => {
+  > 86 |               await createPurchaseOrder(data);
+       |                                         ^^^^
+    87 |               setIsPurchaseOrderFormOpen(false);
+    88 |             }}
+    89 |             isSubmitting={isCreatingPO}
+
+[TypeScript] Found 10 errors. Watching for file changes.
+04:53:09 AM [express] GET /api/user 401 in 1ms
+04:53:12 AM [express] POST /api/login 200 in 338ms :: {"message":"Login successful","user":{"id":2,"u…
+04:53:12 AM [express] GET /api/user 304 in 72ms :: {"id":2,"username":"Newuser@gmail.com","password":…
+04:53:51 AM [express] GET /api/user 401 in 2ms
+04:54:21 AM [express] GET /api/user 401 in 2ms
+04:57:03 AM [express] GET /api/user 304 in 66ms :: {"id":2,"username":"Newuser@gmail.com","password":…
+04:57:04 AM [express] GET /api/customers 304 in 131ms :: [{"id":7,"name":"John Doe","email":"john@exa…
+04:58:18 AM [express] GET /api/user 304 in 66ms :: {"id":2,"username":"Newuser@gmail.com","password":…
+04:58:19 AM [express] GET /api/customers 304 in 131ms :: [{"id":7,"name":"John Doe","email":"john@exa…
+04:58:19 AM [express] GET /api/reports/low-stock 200 in 137ms :: [{"id":2,"name":"Samsung 4K TV","sku…
+04:58:19 AM [express] GET /api/reports/product-performance 200 in 182ms :: [{"productId":6,"name":"Co…
+04:58:25 AM [express] GET /api/user 304 in 67ms :: {"id":2,"username":"Newuser@gmail.com","password":…
+04:58:26 AM [express] GET /api/customers 304 in 132ms :: [{"id":7,"name":"John Doe","email":"john@exa…
+04:58:26 AM [express] GET /api/products 304 in 133ms :: [{"id":9,"name":"Chocolate Box","sku":"FOOD-0…
+04:58:46 AM [express] GET /api/user 304 in 67ms :: {"id":2,"username":"Newuser@gmail.com","password":…
