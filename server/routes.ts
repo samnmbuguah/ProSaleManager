@@ -22,9 +22,23 @@ export function registerRoutes(app: Express) {
   app.post("/api/suppliers", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const [supplier] = await db.insert(suppliers).values(req.body).returning();
+      // Validate the request body
+      const result = insertSupplierSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid supplier data",
+          details: result.error.issues 
+        });
+      }
+
+      const [supplier] = await db
+        .insert(suppliers)
+        .values(result.data)
+        .returning();
+
       res.json(supplier);
     } catch (error) {
+      console.error('Create supplier error:', error);
       res.status(500).json({ error: "Failed to create supplier" });
     }
   });
@@ -43,17 +57,8 @@ export function registerRoutes(app: Express) {
           lastSupplyDate: productSuppliersTable.lastSupplyDate,
           createdAt: productSuppliersTable.createdAt,
           updatedAt: productSuppliersTable.updatedAt,
-          supplier: {
-            id: suppliers.id,
-            name: suppliers.name,
-            email: suppliers.email,
-            phone: suppliers.phone,
-          },
-          product: {
-            id: products.id,
-            name: products.name,
-            sku: products.sku,
-          },
+          supplier: suppliers,
+          product: products,
         })
         .from(productSuppliersTable)
         .leftJoin(suppliers, eq(suppliers.id, productSuppliersTable.supplierId))
