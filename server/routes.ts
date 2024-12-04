@@ -184,10 +184,11 @@ export function registerRoutes(app: Express) {
     try {
       const { items, supplierId, total } = req.body;
       
-      // Create purchase order
+      // Create purchase order with userId
       const [order] = await db.insert(purchaseOrders)
         .values({
           supplierId,
+          userId: req.user!.id,  // Add the authenticated user's ID
           total,
           status: "pending",
         })
