@@ -16,6 +16,19 @@ import {
 
 type Period = 'today' | 'week' | 'month' | 'year';
 
+interface SalesSummary {
+  mpesa: number;
+  cash: number;
+  total: number;
+}
+
+function formatCurrency(amount: number): string {
+  return `KSh ${amount.toLocaleString('en-KE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 export default function ReportsPage() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>();
   const [period, setPeriod] = useState<Period>('today');
@@ -24,6 +37,16 @@ export default function ReportsPage() {
   const { data: salesData } = useQuery({
     queryKey: ['reports', 'sales-chart', period],
     queryFn: () => fetch(`/api/sales/chart?period=${period}`).then(res => res.json()),
+  });
+
+  const { data: todaySummary } = useQuery<SalesSummary>({
+    queryKey: ['reports', 'sales-summary', 'today'],
+    queryFn: () => fetch('/api/sales/summary?period=today').then(res => res.json()),
+  });
+
+  const { data: weekSummary } = useQuery<SalesSummary>({
+    queryKey: ['reports', 'sales-summary', 'week'],
+    queryFn: () => fetch('/api/sales/summary?period=week').then(res => res.json()),
   });
 
   const { data: productPerformance } = useQuery({
@@ -51,6 +74,52 @@ export default function ReportsPage() {
       <h1 className="text-2xl font-bold">Reports & Analytics</h1>
 
       <div className="grid gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Today's Sales</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="space-y-2">
+                <div className="flex justify-between">
+                  <dt className="font-medium text-muted-foreground">M-Pesa</dt>
+                  <dd className="font-mono">{formatCurrency(todaySummary?.mpesa || 0)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="font-medium text-muted-foreground">Cash</dt>
+                  <dd className="font-mono">{formatCurrency(todaySummary?.cash || 0)}</dd>
+                </div>
+                <div className="flex justify-between pt-2 border-t">
+                  <dt className="font-bold">Total</dt>
+                  <dd className="font-mono font-bold">{formatCurrency(todaySummary?.total || 0)}</dd>
+                </div>
+              </dl>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>This Week's Sales</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="space-y-2">
+                <div className="flex justify-between">
+                  <dt className="font-medium text-muted-foreground">M-Pesa</dt>
+                  <dd className="font-mono">{formatCurrency(weekSummary?.mpesa || 0)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="font-medium text-muted-foreground">Cash</dt>
+                  <dd className="font-mono">{formatCurrency(weekSummary?.cash || 0)}</dd>
+                </div>
+                <div className="flex justify-between pt-2 border-t">
+                  <dt className="font-bold">Total</dt>
+                  <dd className="font-mono font-bold">{formatCurrency(weekSummary?.total || 0)}</dd>
+                </div>
+              </dl>
+            </CardContent>
+          </Card>
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle>Sales Overview</CardTitle>
