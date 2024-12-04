@@ -220,7 +220,7 @@ router.get("/", requireAuth, async (req, res) => {
     
     res.status(500).json({ 
       error: "Failed to fetch customers",
-      details: app.get('env') === 'development' ? errorMessage : undefined
+      details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
     });
   }
 });
