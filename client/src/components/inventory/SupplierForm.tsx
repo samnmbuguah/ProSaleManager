@@ -24,6 +24,7 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
       phone: "",
       address: "",
     },
+    shouldUnregister: false,
   });
 
   return (

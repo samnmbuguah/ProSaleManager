@@ -36,10 +36,10 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
     await updatePurchaseOrderStatus({ id: orderId, status: newStatus });
   };
 
-  const formatDate = (date: string | null) => {
+  const formatDate = (date: Date | null) => {
     if (!date) return "-";
     try {
-      return format(new Date(date), "MMM d, yyyy");
+      return format(date, "MMM d, yyyy");
     } catch {
       return "-";
     }

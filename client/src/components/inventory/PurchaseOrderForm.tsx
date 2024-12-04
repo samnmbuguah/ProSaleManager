@@ -85,11 +85,13 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
         items: items.map(item => ({
           productId: parseInt(item.productId),
           quantity: item.quantity,
-          unitPrice: item.buyingPrice,  // Set unitPrice to buyingPrice for purchase orders
-          updatePrices: true
+          unitPrice: Number(item.buyingPrice),
+          buyingPrice: Number(item.buyingPrice),
+          sellingPrice: Number(item.sellingPrice),
+          name: item.name
         })),
-        supplierId: parseInt(data.supplierId),
-        total: calculateTotal().toString(),  // Convert to string for DB
+        supplierId: Number(data.supplierId),
+        total: calculateTotal(),
       }))} className="space-y-4">
         <FormField
           control={form.control}
