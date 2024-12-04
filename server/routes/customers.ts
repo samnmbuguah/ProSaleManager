@@ -54,6 +54,10 @@ router.post("/", async (req, res) => {
 // Get customer by ID
 router.get("/:id", async (req, res) => {
   try {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     const { id } = req.params;
 
     const customer = await db
@@ -70,6 +74,25 @@ router.get("/:id", async (req, res) => {
   } catch (error) {
     console.error("Error fetching customer:", error);
     res.status(500).json({ error: "Failed to fetch customer" });
+  }
+});
+
+// Get all customers
+router.get("/", async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const allCustomers = await db
+      .select()
+      .from(customers)
+      .orderBy(desc(customers.createdAt));
+
+    res.json(allCustomers);
+  } catch (error) {
+    console.error("Error fetching customers:", error);
+    res.status(500).json({ error: "Failed to fetch customers" });
   }
 });
 
