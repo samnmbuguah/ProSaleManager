@@ -143,10 +143,6 @@ app.get("/api/metrics", (req, res) => {
 });
 
 // Register API routes
-// Setup authentication before routes
-setupAuth(app);
-
-// Register API routes
 app.use("/api/customers", customersRouter);
 app.use("/api/sales", salesRouter);
 registerRoutes(app);
