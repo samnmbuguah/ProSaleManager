@@ -21,33 +21,63 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema, type InsertUser } from "@db/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
+import { z } from "zod";
+
+const loginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type FormData = {
+  username: string;
+  password: string;
+  email?: string;
+};
 
 export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
   const { login, register } = useUser();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
-  const form = useForm<InsertUser>({
-    resolver: zodResolver(insertUserSchema),
+  const form = useForm<FormData>({
+    resolver: zodResolver(isRegister ? insertUserSchema : loginSchema),
     defaultValues: {
       username: "",
       password: "",
+      ...(isRegister ? { email: "" } : {}),
     },
   });
 
-  const onSubmit = async (data: InsertUser) => {
+  const onSubmit = async (data: FormData) => {
+    if (isLoading) return;
+    
     setIsLoading(true);
     try {
-      const result = await (isRegister ? register(data) : login(data));
+      console.log('Submitting form:', data);
+      const result = await (isRegister 
+        ? register({ ...data, email: data.email! } as InsertUser)
+        : login({ username: data.username, password: data.password })
+      );
+      console.log('Got result:', result);
+      
       if (!result.ok) {
         toast({
           variant: "destructive",
           title: isRegister ? "Registration failed" : "Login failed",
           description: result.message,
         });
+      } else {
+        toast({
+          title: isRegister ? "Registration successful" : "Login successful",
+          description: result.data?.message,
+        });
+        setLocation("/inventory");
       }
     } catch (error: any) {
+      console.error('Auth error:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -56,6 +86,16 @@ export default function AuthPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Reset form when switching between login and register
+  const toggleMode = () => {
+    form.reset({
+      username: "",
+      password: "",
+      ...(isRegister ? {} : { email: "" }),
+    });
+    setIsRegister(!isRegister);
   };
 
   return (
@@ -86,6 +126,22 @@ export default function AuthPage() {
                 )}
               />
 
+              {isRegister && (
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <FormField
                 control={form.control}
                 name="password"
@@ -102,13 +158,13 @@ export default function AuthPage() {
 
               <div className="space-y-2">
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isRegister ? "Register" : "Login"}
+                  {isLoading ? "Loading..." : (isRegister ? "Register" : "Login")}
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   className="w-full"
-                  onClick={() => setIsRegister(!isRegister)}
+                  onClick={toggleMode}
                   disabled={isLoading}
                 >
                   {isRegister
