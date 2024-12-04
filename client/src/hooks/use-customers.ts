@@ -8,17 +8,42 @@ interface APIError {
 }
 
 async function fetchWithRetry(url: string, options?: RequestInit, retries = 3): Promise<Response> {
+  const reportError = async (error: Error, attempt: number) => {
+    try {
+      await fetch('/api/client-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          error: error.message,
+          stack: error.stack,
+          component: 'useCustomers',
+          context: { url, attempt }
+        })
+      });
+    } catch (e) {
+      console.error('Failed to report error:', e);
+    }
+  };
+
   for (let i = 0; i < retries; i++) {
     try {
       const response = await fetch(url, options);
       if (response.ok || response.status === 401) {
         return response;
       }
-      console.warn(`Attempt ${i + 1} failed for ${url}`);
-      await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, i), 5000)));
+      
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      const error = new Error(errorData.error || `HTTP ${response.status}`);
+      await reportError(error, i + 1);
+      
+      if (i < retries - 1) {
+        const delay = Math.min(1000 * Math.pow(2, i), 5000);
+        console.warn(`Attempt ${i + 1} failed for ${url}. Retrying in ${delay}ms`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     } catch (error) {
+      await reportError(error as Error, i + 1);
       if (i === retries - 1) throw error;
-      console.warn(`Attempt ${i + 1} failed for ${url}:`, error);
     }
   }
   throw new Error(`Failed after ${retries} retries`);
