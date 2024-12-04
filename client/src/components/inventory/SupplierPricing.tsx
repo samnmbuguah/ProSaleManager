@@ -107,7 +107,9 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
         <TableBody>
           {productSuppliersList.map((ps) => (
             <TableRow key={ps.id}>
-              <TableCell>{ps.supplier.name}</TableCell>
+              <TableCell>
+                {suppliers?.find(s => s.id === ps.supplierId)?.name || "Unknown Supplier"}
+              </TableCell>
               <TableCell>KSh {Number(ps.costPrice).toFixed(2)}</TableCell>
               <TableCell>{ps.isPreferred ? "Yes" : "No"}</TableCell>
               <TableCell>
@@ -240,7 +242,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                   <FormItem className="flex flex-row items-center space-x-2">
                     <FormControl>
                       <Checkbox
-                        checked={field.value}
+                        checked={field.value ?? false}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
