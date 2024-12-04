@@ -22,7 +22,8 @@ import {
 interface PurchaseOrderItem {
   productId: string;
   quantity: number;
-  unitPrice: number;
+  buyingPrice: number;
+  sellingPrice: number;
   name: string;
   updatePrices?: boolean;
 }
@@ -54,9 +55,10 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
     setItems([...items, {
       productId,
       quantity: 1,
-      unitPrice: Number(product.buyingPrice),
+      buyingPrice: Number(product.buyingPrice),
+      sellingPrice: Number(product.sellingPrice),
       name: product.name,
-      updatePrices: false
+      updatePrices: true
     }]);
   };
 
@@ -66,28 +68,20 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
     setItems(newItems);
   };
 
-  const updateItemPrice = (index: number, price: string) => {
+  const updateItemPrice = (index: number, field: 'buyingPrice' | 'sellingPrice', value: string) => {
     const newItems = [...items];
-    newItems[index].unitPrice = parseFloat(price) || 0;
+    newItems[index][field] = parseFloat(value) || 0;
     setItems(newItems);
-  };
-
-  const toggleUpdatePrice = (index: number) => {
-    const newItems = [...items];
-    newItems[index].updatePrices = !newItems[index].updatePrices;
-    setItems(newItems);
-  };
-
-  const calculateTotal = () => {
-    return items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit((data) => onSubmit({ 
         ...data, 
-        items, 
-        total: calculateTotal()
+        items: items.map(item => ({
+          ...item,
+          updatePrices: true // Always update prices
+        }))
       }))} className="space-y-4">
         <FormField
           control={form.control}
@@ -129,51 +123,55 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
 
         <div className="mt-4 space-y-4">
           {items.map((item, index) => (
-            <div key={index} className="flex gap-4 items-center">
-              <div className="flex-1">{item.name}</div>
-              <Input
-                type="number"
-                min="1"
-                value={item.quantity}
-                onChange={(e) => updateItemQuantity(index, e.target.value)}
-                className="w-24"
-                placeholder="Qty"
-              />
-              <Input
-                type="number"
-                step="0.01"
-                value={item.unitPrice}
-                onChange={(e) => updateItemPrice(index, e.target.value)}
-                className="w-32"
-                placeholder="Price"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => toggleUpdatePrice(index)}
-                className={item.updatePrices ? "bg-primary text-primary-foreground" : ""}
-              >
-                Update Price
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => {
-                  const newItems = [...items];
-                  newItems.splice(index, 1);
-                  setItems(newItems);
-                }}
-              >
-                Remove
-              </Button>
+            <div key={index} className="space-y-2">
+              <div className="flex gap-4 items-center">
+                <div className="flex-1">
+                  <div>{item.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    Current Stock: {products.find(p => p.id.toString() === item.productId)?.stock || 0}
+                    → New Stock: {(products.find(p => p.id.toString() === item.productId)?.stock || 0) + item.quantity}
+                  </div>
+                </div>
+                <Input
+                  type="number"
+                  min="1"
+                  value={item.quantity}
+                  onChange={(e) => updateItemQuantity(index, e.target.value)}
+                  className="w-24"
+                  placeholder="Qty"
+                />
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={item.buyingPrice}
+                    onChange={(e) => updateItemPrice(index, 'buyingPrice', e.target.value)}
+                    className="w-32"
+                    placeholder="Buying Price"
+                  />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={item.sellingPrice}
+                    onChange={(e) => updateItemPrice(index, 'sellingPrice', e.target.value)}
+                    className="w-32"
+                    placeholder="Selling Price"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => {
+                    const newItems = [...items];
+                    newItems.splice(index, 1);
+                    setItems(newItems);
+                  }}
+                >
+                  Remove
+                </Button>
+              </div>
             </div>
           ))}
-        </div>
-
-        <div className="mt-4 text-right">
-          <div className="text-lg font-bold">
-            Total: KSh {calculateTotal().toFixed(2)}
-          </div>
         </div>
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
