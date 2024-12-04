@@ -18,9 +18,17 @@ export function CustomerList({ customers, isLoading }: CustomerListProps) {
     return <div>Loading...</div>;
   }
 
+  if (!customers || customers.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        No customers found
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {customers.map((customer) => (
+      {Array.isArray(customers) && customers.map((customer) => (
         <Card key={customer.id}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
