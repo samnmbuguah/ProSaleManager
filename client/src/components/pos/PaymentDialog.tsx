@@ -78,6 +78,16 @@ export function PaymentDialog({
                       {selectedCustomer.phone}
                     </div>
                   )}
+                  <div className="mt-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span>Current Points: {selectedCustomer.loyaltyPoints}</span>
+                      <span>•</span>
+                      <span className="capitalize">Tier: {selectedCustomer.tier}</span>
+                    </div>
+                    <div className="text-green-600">
+                      Points to earn: +{Math.floor(total * 0.1)}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
