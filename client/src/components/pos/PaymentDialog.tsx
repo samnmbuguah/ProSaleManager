@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { useCustomers } from "@/hooks/use-customers";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { CreditCard, Mail, Phone, Receipt, User } from "lucide-react";
+import { Phone, Mail, Receipt, User } from "lucide-react";
 import { LoyaltyPointsSection } from "./LoyaltyPointsSection";
 
 interface PaymentDialogProps {
@@ -104,12 +104,12 @@ export function PaymentDialog({
             <Button
               size="lg"
               className="h-24"
-              onClick={() => handlePayment("card")}
+              onClick={() => handlePayment("mpesa")}
               disabled={isProcessing}
             >
               <div className="space-y-2">
-                <CreditCard className="h-6 w-6 mx-auto" />
-                <div>Card</div>
+                <Phone className="h-6 w-6 mx-auto" />
+                <div>M-Pesa</div>
               </div>
             </Button>
 
