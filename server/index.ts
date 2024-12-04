@@ -6,6 +6,7 @@ import customersRouter from "./routes/customers";
 import salesRouter from "./routes/sales";
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { db } from "../db";
+import { sql } from 'drizzle-orm';
 import { setupAuth } from "./auth";
 
 function log(message: string) {
