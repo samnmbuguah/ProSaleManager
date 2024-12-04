@@ -66,10 +66,35 @@ export function usePurchaseOrders() {
     },
   });
 
+  const createPurchaseOrderItemMutation = useMutation({
+    mutationFn: async (data: InsertPurchaseOrderItem) => {
+      const response = await fetch("/api/purchase-order-items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to create purchase order item");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    },
+  });
+
   return {
     purchaseOrders,
     isLoading,
     createPurchaseOrder: createPurchaseOrderMutation.mutateAsync,
+    createPurchaseOrderItem: createPurchaseOrderItemMutation.mutateAsync,
     isCreating: createPurchaseOrderMutation.isPending,
     updatePurchaseOrderStatus: updatePurchaseOrderStatusMutation.mutateAsync,
     isUpdating: updatePurchaseOrderStatusMutation.isPending,
