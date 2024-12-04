@@ -15,15 +15,16 @@ import { Input } from "@/components/ui/input";
 interface CustomerFormProps {
   onSubmit: (data: InsertCustomer) => Promise<void>;
   isSubmitting: boolean;
+  initialData?: Partial<Customer>;
 }
 
 export function CustomerForm({ onSubmit, isSubmitting }: CustomerFormProps) {
   const form = useForm<InsertCustomer>({
     resolver: zodResolver(insertCustomerSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
+      name: initialData?.name || "",
+      email: initialData?.email || "",
+      phone: initialData?.phone || "",
     },
   });
 
