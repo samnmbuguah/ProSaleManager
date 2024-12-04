@@ -92,8 +92,15 @@ const requireAuth = (req: any, res: any, next: any) => {
 };
 
 // Get all customers
-router.get("/", requireAuth, (req, res) => {
-  db.select()
+router.get("/", requireAuth, (req, res, next) => {
+  db.select({
+    id: customers.id,
+    name: customers.name,
+    email: customers.email,
+    phone: customers.phone,
+    createdAt: customers.createdAt,
+    updatedAt: customers.updatedAt
+  })
     .from(customers)
     .orderBy(desc(customers.createdAt))
     .then(allCustomers => {

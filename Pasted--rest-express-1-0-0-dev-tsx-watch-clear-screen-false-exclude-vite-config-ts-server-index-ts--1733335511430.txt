@@ -1,0 +1,93 @@
+ rest-express@1.0.0 dev
+> tsx watch --clear-screen=false --exclude vite.config.ts.* server/index.ts
+
+06:04:04 PM [express] serving on port 5000
+Database migrations completed successfully
+
+ ERROR(TypeScript)  Cannot find name 'sql'.
+ FILE  /home/runner/ProSaleManager/server/index.ts:47:22
+
+    45 |   try {
+    46 |     // Check database connection
+  > 47 |     await db.execute(sql`SELECT 1`);
+       |                      ^^^
+    48 |     
+    49 |     const health = {
+    50 |       status: "healthy",
+
+ ERROR(TypeScript)  Cannot find name 'next'.
+ FILE  /home/runner/ProSaleManager/server/routes/customers.ts:102:12
+
+    100 |       res.json(allCustomers || []);
+    101 |     })
+  > 102 |     .catch(next);
+        |            ^^^^
+    103 | });
+    104 |
+    105 | // Apply error handling middleware
+
+[TypeScript] Found 2 errors. Watching for file changes.
+06:04:20 PM [express] GET /api/products 304 in 175ms :: [{"id":1,"name":"Classic T-Shirt Bra","sku":"…
+06:04:21 PM [express] GET /api/suppliers 304 in 173ms :: []
+06:04:21 PM [express] GET /api/purchase-orders 304 in 175ms :: []
+06:04:21 PM [express] GET /api/product-suppliers 304 in 174ms :: []
+Error in customers route: ReferenceError: next is not defined
+    at <anonymous> (/home/runner/ProSaleManager/server/routes/customers.ts:102:12)
+    at Layer.handle [as handle_request] (/home/runner/ProSaleManager/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/runner/ProSaleManager/node_modules/express/lib/router/route.js:149:13)
+    at requireAuth (/home/runner/ProSaleManager/server/routes/customers.ts:91:3)
+    at Layer.handle [as handle_request] (/home/runner/ProSaleManager/node_modules/express/lib/router/layer.js:95:5)
+    at next (/home/runner/ProSaleManager/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/home/runner/ProSaleManager/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/home/runner/ProSaleManager/node_modules/express/lib/router/layer.js:95:5)
+    at /home/runner/ProSaleManager/node_modules/express/lib/router/index.js:284:15
+    at Function.process_params (/home/runner/ProSaleManager/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/ProSaleManager/node_modules/express/lib/router/index.js:280:10)
+    at Function.handle (/home/runner/ProSaleManager/node_modules/express/lib/router/index.js:175:3)
+    at router (/home/runner/ProSaleManager/node_modules/express/lib/router/index.js:47:12)
+    at Layer.handle [as handle_request] (/home/runner/ProSaleManager/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/ProSaleManager/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/ProSaleManager/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/ProSaleManager/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/ProSaleManager/node_modules/express/lib/router/index.js:280:10)
+    at <anonymous> (/home/runner/ProSaleManager/server/index.ts:114:3)
+    at Layer.handle [as handle_request] (/home/runner/ProSaleManager/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/ProSaleManager/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/ProSaleManager/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/ProSaleManager/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/ProSaleManager/node_modules/express/lib/router/index.js:280:10)
+    at strategy.pass (/home/runner/ProSaleManager/node_modules/passport/lib/middleware/authenticate.js:355:9)
+    at /home/runner/ProSaleManager/node_modules/passport/lib/strategies/session.js:120:12
+    at pass (/home/runner/ProSaleManager/node_modules/passport/lib/authenticator.js:352:31)
+    at deserialized (/home/runner/ProSaleManager/node_modules/passport/lib/authenticator.js:364:7)
+    at <anonymous> (/home/runner/ProSaleManager/server/auth.ts:130:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+06:04:21 PM [express] GET /api/customers 500 in 6ms :: {"error":"Internal server error"}
+/home/runner/ProSaleManager/node_modules/pg-pool/index.js:45
+    Error.captureStackTrace(err)
+          ^
+
+error: column "address" does not exist
+    at /home/runner/ProSaleManager/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at <anonymous> (/home/runner/ProSaleManager/node_modules/src/node-postgres/session.ts:104:19) {
+  length: 107,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '40',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3722',
+  routine: 'errorMissingColumn'
+}
+
+Node.js v20.16.0
