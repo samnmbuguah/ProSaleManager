@@ -1,0 +1,58 @@
+> rest-express@1.0.0 dev
+> tsx watch --clear-screen=false --exclude vite.config.ts.* server/index.ts
+
+05:45:42 PM [express] serving on port 5000
+Database migrations completed successfully
+
+[TypeScript] Found 0 errors. Watching for file changes.
+05:45:51 PM [express] GET /api/user 401 in 2ms
+error: column "username" does not exist
+    at /home/runner/ProSaleManager/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at <anonymous> (/home/runner/ProSaleManager/node_modules/src/node-postgres/session.ts:104:19)
+    at Strategy._verify (/home/runner/ProSaleManager/server/auth.ts:69:24) {
+  length: 108,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '23',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3722',
+  routine: 'errorMissingColumn'
+}
+05:46:03 PM [express] POST /api/login 500 in 475ms :: {"message":"column \"username\" does not exist"}
+error: column "username" does not exist
+    at /home/runner/ProSaleManager/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at <anonymous> (/home/runner/ProSaleManager/node_modules/src/node-postgres/session.ts:104:19)
+    at <anonymous> (/home/runner/ProSaleManager/server/auth.ts:148:30) {
+  length: 108,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '23',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3722',
+  routine: 'errorMissingColumn'
+}
+05:46:25 PM [express] POST /api/register 500 in 496ms :: {"message":"column \"username\" does not exi…
+05:46:37 PM [express] GET /api/user 401 in 1ms
+05:46:41 PM [express] GET /api/user 401 in 0ms
