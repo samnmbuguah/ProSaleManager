@@ -5,8 +5,20 @@ import { eq, or, ilike, desc, sql } from "drizzle-orm";
 
 const router = Router();
 
+// Types for metrics
+interface RequestMetrics {
+  totalRequests: number;
+  totalTime: number;
+  errors: number;
+  rateLimit: {
+    requests: Map<string, number[]>;
+    window: number;
+    limit: number;
+  };
+}
+
 // Request timing metrics
-const metrics = {
+const metrics: RequestMetrics = {
   totalRequests: 0,
   totalTime: 0,
   errors: 0,
@@ -20,12 +32,12 @@ const metrics = {
 // Middleware to track request timing and errors
 router.use((req, res, next) => {
   const start = Date.now();
-  const ip = req.ip;
+  const ip = req.ip || req.connection.remoteAddress || 'unknown';
   metrics.totalRequests++;
 
   // Rate limiting
   const now = Date.now();
-  const userRequests = metrics.rateLimit.requests.get(ip) || [];
+  const userRequests = metrics.rateLimit.requests.get(ip as string) || [];
   const recentRequests = userRequests.filter(time => now - time < metrics.rateLimit.window);
   
   if (recentRequests.length >= metrics.rateLimit.limit) {
@@ -33,13 +45,31 @@ router.use((req, res, next) => {
     const error = {
       status: 429,
       message: 'Too many requests',
-      retryAfter: Math.ceil((metrics.rateLimit.window - (now - recentRequests[0])) / 1000)
+      retryAfter: Math.ceil((metrics.rateLimit.window - (now - recentRequests[0])) / 1000),
+      rateLimitInfo: {
+        limit: metrics.rateLimit.limit,
+        remaining: metrics.rateLimit.limit - recentRequests.length,
+        reset: now + (metrics.rateLimit.window - (now - recentRequests[0]))
+      }
     };
-    console.error('[Customers API] Rate limit exceeded:', error);
+    console.error('[Customers API] Rate limit exceeded:', {
+      ip,
+      requestCount: recentRequests.length,
+      error
+    });
+    
+    // Set rate limit headers
+    res.set({
+      'X-RateLimit-Limit': metrics.rateLimit.limit.toString(),
+      'X-RateLimit-Remaining': '0',
+      'X-RateLimit-Reset': Math.ceil(error.rateLimitInfo.reset / 1000).toString(),
+      'Retry-After': error.retryAfter.toString()
+    });
+    
     return res.status(429).json(error);
   }
 
-  metrics.rateLimit.requests.set(ip, [...recentRequests, now]);
+  metrics.rateLimit.requests.set(ip as string, [...recentRequests, now]);
 
   res.on('finish', () => {
     const duration = Date.now() - start;
@@ -169,11 +199,29 @@ router.get("/", requireAuth, async (req, res) => {
       .from(customers)
       .orderBy(desc(customers.createdAt));
     
+    // Log success to health monitoring
+    console.log('[Customers API] Successfully fetched customers:', {
+      count: allCustomers.length,
+      timestamp: new Date().toISOString()
+    });
+    
     // Ensure we always return an array
-    res.json(Array.isArray(allCustomers) ? allCustomers : []);
+    res.json(allCustomers || []);
   } catch (error) {
-    console.error("Error fetching customers:", error);
-    res.status(500).json({ error: "Failed to fetch customers" });
+    metrics.errors++;
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // Log error to health monitoring
+    console.error('[Customers API] Error fetching customers:', {
+      error: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    
+    res.status(500).json({ 
+      error: "Failed to fetch customers",
+      details: app.get('env') === 'development' ? errorMessage : undefined
+    });
   }
 });
 
