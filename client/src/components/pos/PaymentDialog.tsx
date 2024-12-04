@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { useCustomers } from "@/hooks/use-customers";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { CreditCard, Mail, Phone, Receipt, User } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
 
 interface PaymentDialogProps {
   open: boolean;
@@ -55,8 +57,7 @@ export function PaymentDialog({
       }
     }
     
-    const finalTotal = total - (pointsToRedeem / 10);
-    onComplete(method, selectedCustomerId, finalTotal);
+    onComplete(method, selectedCustomerId);
   };
 
   return (
@@ -125,7 +126,7 @@ export function PaymentDialog({
                             max={loyaltyInfo.points}
                             step={100}
                             value={pointsToRedeem}
-                            onChange={(e) => setPointsToRedeem(Number(e.target.value))}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPointsToRedeem(Number(e.target.value))}
                           />
                           <div className="text-sm text-muted-foreground">
                             Discount: KSh {(pointsToRedeem / 10).toFixed(2)}

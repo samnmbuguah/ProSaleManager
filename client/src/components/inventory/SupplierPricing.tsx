@@ -31,6 +31,21 @@ import {
 import { Plus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
+interface ProductSupplierWithDetails {
+  id: number;
+  productId: number;
+  supplierId: number;
+  costPrice: string;
+  isPreferred: boolean;
+  lastSupplyDate: Date | null;
+  supplier: {
+    id: number;
+    name: string;
+  };
+}
+
+type ProductSuppliersList = Array<ProductSupplierWithDetails>;
+
 interface SupplierPricingProps {
   product: Product;
 }
@@ -38,7 +53,7 @@ interface SupplierPricingProps {
 export function SupplierPricing({ product }: SupplierPricingProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isLinkFormOpen, setIsLinkFormOpen] = useState(false);
-  const { suppliers, productSuppliers, createSupplier, linkProductToSupplier, isCreating, isLinking } = useSuppliers();
+  const { suppliers, productSuppliers, createSupplier, linkProductToSupplier, isCreating, isLinking } = useSuppliers<ProductSupplierWithDetails>();
 
   const form = useForm<InsertSupplier>({
     resolver: zodResolver(insertSupplierSchema),

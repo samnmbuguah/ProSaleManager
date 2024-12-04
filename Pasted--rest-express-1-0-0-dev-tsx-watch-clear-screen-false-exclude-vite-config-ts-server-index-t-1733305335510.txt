@@ -1,0 +1,221 @@
+
+> rest-express@1.0.0 dev
+> tsx watch --clear-screen=false --exclude vite.config.ts.* server/index.ts
+
+09:37:49 AM [express] serving on port 5000
+09:37:56 AM [express] GET /api/user 401 in 3ms
+
+ ERROR(TypeScript)  Property 'supplier' does not exist on type '{ id: number; createdAt: Date | null; updatedAt: Date | null; supplierId: number; userId: number; total: string; status: string; orderDate: Date | null; receivedDate: Date | null; }'. Did you mean 'supplierId'?
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/PurchaseOrderList.tsx:72:35
+
+    70 |                   {formatDate(order.orderDate)}
+    71 |                 </TableCell>
+  > 72 |                 <TableCell>{order.supplier?.name || "Unknown Supplier"}</TableCell>
+       |                                   ^^^^^^^^
+    73 |                 <TableCell>
+    74 |                   KSh {Number(order.total).toLocaleString("en-KE", {
+    75 |                     minimumFractionDigits: 2,
+
+ ERROR(TypeScript)  Type '{ type: "email"; placeholder: string; onChange: (...event: any[]) => void; onBlur: Noop; value: string | null | undefined; disabled?: boolean | undefined; name: "email"; ref: RefCallBack; }' is not assignable to type 'InputProps'.
+  Types of property 'value' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+      Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/SupplierForm.tsx:79:18
+
+    77 |               <FormLabel>Email</FormLabel>
+    78 |               <FormControl>
+  > 79 |                 <Input {...field} type="email" placeholder="Enter email address" />
+       |                  ^^^^^
+    80 |               </FormControl>
+    81 |               <FormMessage />
+    82 |             </FormItem>
+
+ ERROR(TypeScript)  Type '{ type: "tel"; placeholder: string; onChange: (...event: any[]) => void; onBlur: Noop; value: string | null | undefined; disabled?: boolean | undefined; name: "phone"; ref: RefCallBack; }' is not assignable to type 'InputProps'.
+  Types of property 'value' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+      Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/SupplierForm.tsx:93:18
+
+    91 |               <FormLabel>Phone Number</FormLabel>
+    92 |               <FormControl>
+  > 93 |                 <Input {...field} type="tel" placeholder="Enter phone number" />
+       |                  ^^^^^
+    94 |               </FormControl>
+    95 |               <FormMessage />
+    96 |             </FormItem>
+
+ ERROR(TypeScript)  Type '{ placeholder: string; onChange: (...event: any[]) => void; onBlur: Noop; value: string | null | undefined; disabled?: boolean | undefined; name: "address"; ref: RefCallBack; }' is not assignable to type 'InputProps'.
+  Types of property 'value' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+      Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/SupplierForm.tsx:107:18
+
+    105 |               <FormLabel>Address</FormLabel>
+    106 |               <FormControl>
+  > 107 |                 <Input {...field} placeholder="Enter address" />
+        |                  ^^^^^
+    108 |               </FormControl>
+    109 |               <FormMessage />
+    110 |             </FormItem>
+
+ ERROR(TypeScript)  Property 'supplier' does not exist on type '{ id: number; createdAt: Date | null; updatedAt: Date | null; productId: number; supplierId: number; costPrice: string; isPreferred: boolean; lastSupplyDate: Date | null; }'. Did you mean 'supplierId'?
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/SupplierPricing.tsx:110:30
+
+    108 |           {productSuppliersList.map((ps) => (
+    109 |             <TableRow key={ps.id}>
+  > 110 |               <TableCell>{ps.supplier.name}</TableCell>
+        |                              ^^^^^^^^
+    111 |               <TableCell>KSh {Number(ps.costPrice).toFixed(2)}</TableCell>
+    112 |               <TableCell>{ps.isPreferred ? "Yes" : "No"}</TableCell>
+    113 |               <TableCell>
+
+ ERROR(TypeScript)  Cannot find name 'useQuery'. Did you mean 'setQuery'?
+ FILE  /home/runner/ProSaleManager/client/src/components/pos/PaymentDialog.tsx:29:33
+
+    27 |   const selectedCustomer = customers?.find(c => c.id === selectedCustomerId);
+    28 |
+  > 29 |   const { data: loyaltyInfo } = useQuery({
+       |                                 ^^^^^^^^
+    30 |     queryKey: ["loyalty", selectedCustomerId],
+    31 |     queryFn: async () => {
+    32 |       if (!selectedCustomerId) return null;
+
+ ERROR(TypeScript)  Expected 1-2 arguments, but got 3.
+ FILE  /home/runner/ProSaleManager/client/src/components/pos/PaymentDialog.tsx:59:44
+
+    57 |     
+    58 |     const finalTotal = total - (pointsToRedeem / 10);
+  > 59 |     onComplete(method, selectedCustomerId, finalTotal);
+       |                                            ^^^^^^^^^^
+    60 |   };
+    61 |
+    62 |   return (
+
+ ERROR(TypeScript)  Cannot find name 'Input'. Did you mean 'oninput'?
+ FILE  /home/runner/ProSaleManager/client/src/components/pos/PaymentDialog.tsx:121:28
+
+    119 |                       {loyaltyInfo.points >= 100 && (
+    120 |                         <div className="space-y-2">
+  > 121 |                           <Input
+        |                            ^^^^^
+    122 |                             type="number"
+    123 |                             placeholder="Points to redeem"
+    124 |                             min={100}
+
+ ERROR(TypeScript)  Parameter 'e' implicitly has an 'any' type.
+ FILE  /home/runner/ProSaleManager/client/src/components/pos/PaymentDialog.tsx:128:40
+
+    126 |                             step={100}
+    127 |                             value={pointsToRedeem}
+  > 128 |                             onChange={(e) => setPointsToRedeem(Number(e.target.value))}
+        |                                        ^
+    129 |                           />
+    130 |                           <div className="text-sm text-muted-foreground">
+    131 |                             Discount: KSh {(pointsToRedeem / 10).toFixed(2)}
+
+ ERROR(TypeScript)  No overload matches this call.
+  Overload 1 of 2, '(props: Props): Area', gave the following error.
+    Type '{ type: "monotone"; dataKey: string; name: string; formatter: (value: number) => string; stroke: string; fillOpacity: number; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Area> & Pick<Readonly<Props>, "string" | "id" | "name" | ... 485 more ... | "baseLine"> & InexactPartial<...> & InexactPartial<...>'.
+      Property 'formatter' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Area> & Pick<Readonly<Props>, "string" | "id" | "name" | ... 485 more ... | "baseLine"> & InexactPartial<...> & InexactPartial<...>'. Did you mean 'format'?
+  Overload 2 of 2, '(props: Props, context: any): Area', gave the following error.
+    Type '{ type: "monotone"; dataKey: string; name: string; formatter: (value: number) => string; stroke: string; fillOpacity: number; fill: string; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<Area> & Pick<Readonly<Props>, "string" | "id" | "name" | ... 485 more ... | "baseLine"> & InexactPartial<...> & InexactPartial<...>'.
+      Property 'formatter' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<Area> & Pick<Readonly<Props>, "string" | "id" | "name" | ... 485 more ... | "baseLine"> & InexactPartial<...> & InexactPartial<...>'. Did you mean 'format'?
+ FILE  /home/runner/ProSaleManager/client/src/components/reports/SalesChart.tsx:96:15
+
+    94 |               dataKey="amount"
+    95 |               name="Amount"
+  > 96 |               formatter={(value: number) => formatCurrency(value)}
+       |               ^^^^^^^^^
+    97 |               stroke="hsl(215 25% 27%)"
+    98 |               fillOpacity={1}
+    99 |               fill="url(#colorSales)"
+
+ ERROR(TypeScript)  Argument of type 'number' is not assignable to parameter of type 'string'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/InventoryPage.tsx:88:38
+
+    86 |             onSubmit={async (data) => {
+    87 |               await createPurchaseOrder({
+  > 88 |                 supplierId: parseInt(data.supplierId),
+       |                                      ^^^^^^^^^^^^^^^
+    89 |                 total: data.total.toString(),
+    90 |                 items: data.items.map(item => ({
+    91 |                   productId: item.productId,
+
+ ERROR(TypeScript)  Object literal may only specify known properties, and 'items' does not exist in type '{ supplierId: number; userId: number; total: string; id?: number | undefined; createdAt?: Date | null | undefined; updatedAt?: Date | null | undefined; status?: string | undefined; orderDate?: Date | ... 1 more ... | undefined; receivedDate?: Date | ... 1 more ... | undefined; }'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/InventoryPage.tsx:90:17
+
+    88 |                 supplierId: parseInt(data.supplierId),
+    89 |                 total: data.total.toString(),
+  > 90 |                 items: data.items.map(item => ({
+       |                 ^^^^^
+    91 |                   productId: item.productId,
+    92 |                   quantity: item.quantity,
+    93 |                   buyingPrice: item.buyingPrice.toString(),
+
+ ERROR(TypeScript)  Argument of type '{ product: PgTableWithColumns<{ name: "products"; schema: undefined; columns: { id: PgColumn<{ name: "id"; tableName: "products"; dataType: "number"; columnType: "PgInteger"; data: number; driverParam: string | number; ... 8 more ...; generated: undefined; }, {}, {}>; ... 10 more ...; updatedAt: PgColumn<...>; }; di...' is not assignable to parameter of type 'SelectedFields'.
+  Property '_' is incompatible with index signature.
+    Type '{ readonly brand: "Table"; readonly config: { name: "purchase_order_items"; schema: undefined; columns: { id: PgColumn<{ name: "id"; tableName: "purchase_order_items"; dataType: "number"; columnType: "PgInteger"; ... 10 more ...; generated: undefined; }, {}, {}>; ... 4 more ...; sellingPrice: PgColumn<...>; }; diale...' is not assignable to type 'SQL<unknown> | Aliased<unknown> | PgColumn<ColumnBaseConfig<ColumnDataType, string>, {}, {}> | PgTable<TableConfig> | SelectedFieldsFlat<...>'.
+      Type '{ readonly brand: "Table"; readonly config: { name: "purchase_order_items"; schema: undefined; columns: { id: PgColumn<{ name: "id"; tableName: "purchase_order_items"; dataType: "number"; columnType: "PgInteger"; ... 10 more ...; generated: undefined; }, {}, {}>; ... 4 more ...; sellingPrice: PgColumn<...>; }; diale...' is not assignable to type 'SelectedFieldsFlat<PgColumn<ColumnBaseConfig<ColumnDataType, string>, {}, {}>>'.
+        Property 'brand' is incompatible with index signature.
+          Type 'string' is not assignable to type 'SQL<unknown> | Aliased<unknown> | PgColumn<ColumnBaseConfig<ColumnDataType, string>, {}, {}>'.
+ FILE  /home/runner/ProSaleManager/server/routes.ts:377:19
+
+    375 |       if (status === "received") {
+    376 |         const orderItems = await db
+  > 377 |           .select({
+        |                   ^
+  > 378 |             ...purchaseOrderItems,
+        | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 379 |             product: products,
+        | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 380 |           })
+        | ^^^^^^^^^^^^
+    381 |           .from(purchaseOrderItems)
+    382 |           .leftJoin(products, eq(products.id, purchaseOrderItems.productId))
+    383 |           .where(eq(purchaseOrderItems.purchaseOrderId, parseInt(id)));
+
+ ERROR(TypeScript)  Type 'unknown' is not assignable to type 'string | SQL<unknown> | PgColumn<ColumnBaseConfig<ColumnDataType, string>, {}, {}> | undefined'.
+ FILE  /home/runner/ProSaleManager/server/routes.ts:390:15
+
+    388 |             .set({ 
+    389 |               stock: sql`${products.stock} + ${item.quantity}`,
+  > 390 |               buyingPrice: item.buyingPrice, // Update buying price from purchase order
+        |               ^^^^^^^^^^^
+    391 |               updatedAt: new Date()
+    392 |             })
+    393 |             .where(eq(products.id, item.productId));
+
+ ERROR(TypeScript)  No overload matches this call.
+  Overload 1 of 3, '(left: PgColumn<{ name: "id"; tableName: "products"; dataType: "number"; columnType: "PgInteger"; data: number; driverParam: string | number; notNull: true; hasDefault: true; isPrimaryKey: true; isAutoincrement: false; ... 4 more ...; generated: undefined; }, {}, {}>, right: number | SQLWrapper): SQL<...>', gave the following error.
+    Argument of type 'unknown' is not assignable to parameter of type 'number | SQLWrapper'.
+  Overload 2 of 3, '(left: Aliased<unknown>, right: unknown): SQL<unknown>', gave the following error.
+    Argument of type 'PgColumn<{ name: "id"; tableName: "products"; dataType: "number"; columnType: "PgInteger"; data: number; driverParam: string | number; notNull: true; hasDefault: true; isPrimaryKey: true; isAutoincrement: false; ... 4 more ...; generated: undefined; }, {}, {}>' is not assignable to parameter of type 'Aliased<unknown>'.
+      Type 'PgColumn<{ name: "id"; tableName: "products"; dataType: "number"; columnType: "PgInteger"; data: number; driverParam: string | number; notNull: true; hasDefault: true; isPrimaryKey: true; isAutoincrement: false; ... 4 more ...; generated: undefined; }, {}, {}>' is missing the following properties from type 'Aliased<unknown>': sql, fieldAlias
+  Overload 3 of 3, '(left: never, right: unknown): SQL<unknown>', gave the following error.
+    Argument of type 'PgColumn<{ name: "id"; tableName: "products"; dataType: "number"; columnType: "PgInteger"; data: number; driverParam: string | number; notNull: true; hasDefault: true; isPrimaryKey: true; isAutoincrement: false; ... 4 more ...; generated: undefined; }, {}, {}>' is not assignable to parameter of type 'never'.
+ FILE  /home/runner/ProSaleManager/server/routes.ts:393:20
+
+    391 |               updatedAt: new Date()
+    392 |             })
+  > 393 |             .where(eq(products.id, item.productId));
+        |                    ^^
+    394 |         }
+    395 |       }
+    396 |
+
+ ERROR(TypeScript)  Property 'unitPrice' does not exist on type 'PgTableWithColumns<{ name: "purchase_order_items"; schema: undefined; columns: { id: PgColumn<{ name: "id"; tableName: "purchase_order_items"; dataType: "number"; columnType: "PgInteger"; data: number; driverParam: string | number; ... 8 more ...; generated: undefined; }, {}, {}>; ... 4 more ...; sellingPrice: PgCol...'.
+ FILE  /home/runner/ProSaleManager/server/routes.ts:414:41
+
+    412 |           purchaseOrderId: purchaseOrderItems.purchaseOrderId,
+    413 |           quantity: purchaseOrderItems.quantity,
+  > 414 |           unitPrice: purchaseOrderItems.unitPrice,
+        |                                         ^^^^^^^^^
+    415 |           product: {
+    416 |             id: products.id,
+    417 |             name: products.name,
+
+[TypeScript] Found 16 errors. Watching for file changes.
+09:40:56 AM [express] GET /api/user 401 in 1ms
+09:41:16 AM [express] GET /api/user 401 in 1ms
+09:41:27 AM [express] GET /api/user 401 in 1ms
+09:41:28 AM [express] GET /api/user 401 in 1ms
