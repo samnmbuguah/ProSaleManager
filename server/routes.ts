@@ -334,23 +334,6 @@ export function registerRoutes(app: Express) {
         paymentMethod,
       }).returning();
 
-      // Update customer loyalty points if customer is provided
-      if (customerId) {
-        const pointsEarned = Math.floor(Number(total) * 0.1); // 10% of total as points
-        await db.update(customers)
-          .set({ 
-            loyaltyPoints: sql`${customers.loyaltyPoints} + ${pointsEarned}`,
-            lastPointsEarned: new Date(),
-            // Update tier based on total points
-            tier: sql`CASE 
-              WHEN ${customers.loyaltyPoints} + ${pointsEarned} >= 1000 THEN 'gold'
-              WHEN ${customers.loyaltyPoints} + ${pointsEarned} >= 500 THEN 'silver'
-              ELSE 'bronze'
-            END`
-          })
-          .where(eq(customers.id, customerId));
-      }
-
       // Create sale items
       await db.insert(saleItems).values(
         items.map((item: any) => ({

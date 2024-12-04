@@ -32,18 +32,7 @@ export function CustomerHistory({ data, customer }: CustomerHistoryProps) {
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <div className="font-semibold">Purchase History for {customer.name}</div>
-        <div className="text-sm space-x-4">
-          <span className="inline-flex items-center gap-1">
-            <span className="font-medium">Loyalty Points:</span> {customer.loyaltyPoints}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="font-medium">Tier:</span> 
-            <span className="capitalize">{customer.tier}</span>
-          </span>
-        </div>
-      </div>
+      <div className="font-semibold">Purchase History for {customer.name}</div>
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
