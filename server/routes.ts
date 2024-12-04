@@ -375,8 +375,13 @@ export function registerRoutes(app: Express) {
       if (status === "received") {
         const orderItems = await db
           .select({
-            ...purchaseOrderItems,
-            product: products,
+            id: purchaseOrderItems.id,
+            purchaseOrderId: purchaseOrderItems.purchaseOrderId,
+            productId: purchaseOrderItems.productId,
+            quantity: purchaseOrderItems.quantity,
+            buyingPrice: purchaseOrderItems.buyingPrice,
+            sellingPrice: purchaseOrderItems.sellingPrice,
+            productName: products.name,
           })
           .from(purchaseOrderItems)
           .leftJoin(products, eq(products.id, purchaseOrderItems.productId))
@@ -387,7 +392,7 @@ export function registerRoutes(app: Express) {
             .update(products)
             .set({ 
               stock: sql`${products.stock} + ${item.quantity}`,
-              buyingPrice: item.buyingPrice, // Update buying price from purchase order
+              buyingPrice: item.buyingPrice.toString(), // Update buying price from purchase order
               updatedAt: new Date()
             })
             .where(eq(products.id, item.productId));
