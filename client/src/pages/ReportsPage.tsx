@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ProductPerformance } from "../components/reports/ProductPerformance";
 import { CustomerHistory } from "../components/reports/CustomerHistory";
 import { InventoryStatus } from "../components/reports/InventoryStatus";
+import { SalesChart } from "../components/reports/SalesChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCustomers } from "@/hooks/use-customers";
 import {
@@ -13,9 +14,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type Period = 'today' | 'week' | 'month' | 'year';
+
 export default function ReportsPage() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>();
+  const [period, setPeriod] = useState<Period>('today');
   const { customers } = useCustomers();
+
+  const { data: salesData } = useQuery({
+    queryKey: ['reports', 'sales-chart', period],
+    queryFn: () => fetch(`/api/sales/chart?period=${period}`).then(res => res.json()),
+  });
 
   const { data: productPerformance } = useQuery({
     queryKey: ['reports', 'product-performance'],
@@ -42,6 +51,19 @@ export default function ReportsPage() {
       <h1 className="text-2xl font-bold">Reports & Analytics</h1>
 
       <div className="grid gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Sales Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SalesChart 
+              data={salesData || []} 
+              period={period}
+              onPeriodChange={setPeriod}
+            />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Product Performance</CardTitle>
