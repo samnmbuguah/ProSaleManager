@@ -1,24 +1,55 @@
-import { Express } from "express";
-import { setupAuth } from "./auth";
-import { db } from "../db";
-import { 
-  products, customers, sales, saleItems, suppliers, 
-  productSuppliers as productSuppliersTable, 
-  purchaseOrders, purchaseOrderItems,
+import { Express, Request, Response } from "express";
+import { eq, and, desc, sql } from "drizzle-orm";
+import { db } from "db";
+import {
+  products,
+  suppliers,
+  customers,
+  sales,
+  saleItems,
+  productSuppliers,
+  purchaseOrders,
+  purchaseOrderItems,
   insertSupplierSchema,
   insertProductSupplierSchema,
 } from "@db/schema";
-import { eq, and, sql } from "drizzle-orm";
-import { desc } from "drizzle-orm";
+import { setupAuth } from "./auth";
+
+// Loyalty program helper functions
+function calculateLoyaltyTier(points: number): string {
+  if (points >= 10000) return "gold";
+  if (points >= 5000) return "silver";
+  return "bronze";
+}
+
+function getPointsMultiplier(tier: string): number {
+  switch (tier) {
+    case "gold": return 1.5;
+    case "silver": return 1.25;
+    case "bronze": return 1;
+    default: return 1;
+  }
+}
 
 export function registerRoutes(app: Express) {
   setupAuth(app);
 
-  // Suppliers API
-  app.get("/api/suppliers", async (req, res) => {
+  // Products API
+  app.get("/api/products", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const allSuppliers = await db.select().from(suppliers).orderBy(suppliers.name);
+      const allProducts = await db.select().from(products);
+      res.json(allProducts);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch products" });
+    }
+  });
+
+  // Suppliers API
+  app.get("/api/suppliers", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const allSuppliers = await db.select().from(suppliers);
       res.json(allSuppliers);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch suppliers" });
@@ -55,14 +86,14 @@ export function registerRoutes(app: Express) {
     try {
       const supplierProducts = await db
         .select({
-          id: productSuppliersTable.id,
-          productId: productSuppliersTable.productId,
-          supplierId: productSuppliersTable.supplierId,
-          costPrice: productSuppliersTable.costPrice,
-          isPreferred: productSuppliersTable.isPreferred,
-          lastSupplyDate: productSuppliersTable.lastSupplyDate,
-          createdAt: productSuppliersTable.createdAt,
-          updatedAt: productSuppliersTable.updatedAt,
+          id: productSuppliers.id,
+          productId: productSuppliers.productId,
+          supplierId: productSuppliers.supplierId,
+          costPrice: productSuppliers.costPrice,
+          isPreferred: productSuppliers.isPreferred,
+          lastSupplyDate: productSuppliers.lastSupplyDate,
+          createdAt: productSuppliers.createdAt,
+          updatedAt: productSuppliers.updatedAt,
           supplier: {
             id: suppliers.id,
             name: suppliers.name,
@@ -78,9 +109,9 @@ export function registerRoutes(app: Express) {
             sellingPrice: products.sellingPrice,
           },
         })
-        .from(productSuppliersTable)
-        .leftJoin(suppliers, eq(suppliers.id, productSuppliersTable.supplierId))
-        .leftJoin(products, eq(products.id, productSuppliersTable.productId));
+        .from(productSuppliers)
+        .leftJoin(suppliers, eq(suppliers.id, productSuppliers.supplierId))
+        .leftJoin(products, eq(products.id, productSuppliers.productId));
       res.json(supplierProducts);
     } catch (error) {
       console.error('Fetch product suppliers error:', error);
@@ -100,7 +131,7 @@ export function registerRoutes(app: Express) {
       }
 
       const [productSupplier] = await db
-        .insert(productSuppliersTable)
+        .insert(productSuppliers)
         .values(result.data)
         .returning();
       res.json(productSupplier);
@@ -110,46 +141,188 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Products API with correct column names
-  app.get("/api/products", async (req, res) => {
-    try {
-      const allProducts = await db
-        .select({
-          id: products.id,
-          name: products.name,
-          sku: products.sku,
-          buyingPrice: products.buyingPrice,
-          sellingPrice: products.sellingPrice,
-          stock: products.stock,
-          category: products.category,
-          minStock: products.minStock,
-          maxStock: products.maxStock,
-          reorderPoint: products.reorderPoint,
-          createdAt: products.createdAt,
-          updatedAt: products.updatedAt,
-        })
-        .from(products)
-        .orderBy(products.name);
-      
-      res.json(allProducts);
-    } catch (error) {
-      console.error('Fetch products error:', error);
-      res.status(500).json({ error: "Failed to fetch products" });
-    }
-  });
 
-  app.post("/api/products", async (req, res) => {
+  // Customers API with loyalty
+  app.get("/api/customers", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const [product] = await db.insert(products).values(req.body).returning();
-      res.json(product);
+      const allCustomers = await db.select().from(customers);
+      res.json(allCustomers);
     } catch (error) {
-      res.status(500).json({ error: "Failed to create product" });
+      res.status(500).json({ error: "Failed to fetch customers" });
     }
   });
 
-  // Purchase Orders endpoints
-  app.get("/api/purchase-orders", async (req, res) => {
+  app.post("/api/customers", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const [customer] = await db.insert(customers).values(req.body).returning();
+      res.json(customer);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create customer" });
+    }
+  });
+
+  // Sales API with loyalty points
+  app.post("/api/sales", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const { items, customerId, total, paymentMethod } = req.body;
+      
+      // Create sale
+      const [sale] = await db.insert(sales).values({
+        customerId,
+        userId: req.user!.id,
+        total: total.toString(),
+        paymentMethod,
+      }).returning();
+
+      // Create sale items
+      await Promise.all(items.map(async (item: any) => {
+        await db.insert(saleItems).values({
+          saleId: sale.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.price.toString(),
+        });
+
+        // Update product stock
+        await db
+          .update(products)
+          .set({
+            stock: sql`${products.stock} - ${item.quantity}`
+          })
+          .where(eq(products.id, item.productId));
+      }));
+
+      // Update customer loyalty points if customer exists
+      if (customerId) {
+        const [customer] = await db
+          .select()
+          .from(customers)
+          .where(eq(customers.id, customerId));
+
+        if (customer) {
+          const pointsEarned = Math.floor(Number(total) * getPointsMultiplier(customer.loyaltyTier));
+          const newPoints = customer.loyaltyPoints + pointsEarned;
+          const newTier = calculateLoyaltyTier(newPoints);
+
+          await db.update(customers)
+            .set({
+              loyaltyPoints: newPoints,
+              loyaltyTier: newTier,
+            })
+            .where(eq(customers.id, customerId));
+        }
+      }
+
+      res.json(sale);
+    } catch (error) {
+      console.error('Create sale error:', error);
+      res.status(500).json({ error: "Failed to create sale" });
+    }
+  });
+
+  // Loyalty points redemption
+  app.post("/api/customers/:id/redeem-points", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const customerId = parseInt(req.params.id);
+      const { pointsToRedeem } = req.body;
+
+      const [customer] = await db
+        .select()
+        .from(customers)
+        .where(eq(customers.id, customerId));
+
+      if (!customer) {
+        return res.status(404).json({ error: "Customer not found" });
+      }
+
+      if (customer.loyaltyPoints < pointsToRedeem) {
+        return res.status(400).json({ error: "Insufficient points" });
+      }
+
+      const discountAmount = pointsToRedeem / 10; // 10 points = 1 KSh discount
+
+      await db.update(customers)
+        .set({
+          loyaltyPoints: customer.loyaltyPoints - pointsToRedeem,
+        })
+        .where(eq(customers.id, customerId));
+
+      res.json({ 
+        pointsRedeemed: pointsToRedeem,
+        discountAmount,
+        remainingPoints: customer.loyaltyPoints - pointsToRedeem 
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to redeem points" });
+    }
+  });
+
+  // Get customer loyalty info
+  app.get("/api/customers/:id/loyalty", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const customerId = parseInt(req.params.id);
+      const [customer] = await db
+        .select()
+        .from(customers)
+        .where(eq(customers.id, customerId));
+
+      if (!customer) {
+        return res.status(404).json({ error: "Customer not found" });
+      }
+
+      const nextTier = customer.loyaltyTier === "bronze" 
+        ? { name: "silver", pointsNeeded: 5000 - customer.loyaltyPoints }
+        : customer.loyaltyTier === "silver"
+          ? { name: "gold", pointsNeeded: 10000 - customer.loyaltyPoints }
+          : null;
+
+      res.json({
+        points: customer.loyaltyPoints,
+        tier: customer.loyaltyTier,
+        multiplier: getPointsMultiplier(customer.loyaltyTier),
+        nextTier,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch loyalty info" });
+    }
+  });
+
+  // Purchase Orders API
+  app.post("/api/purchase-orders", async (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const { supplierId, items, total } = req.body;
+
+      const [order] = await db.insert(purchaseOrders).values({
+        supplierId,
+        userId: req.user!.id,
+        total: total.toString(),
+      }).returning();
+
+      await Promise.all(items.map((item: any) =>
+        db.insert(purchaseOrderItems).values({
+          purchaseOrderId: order.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          buyingPrice: item.buyingPrice.toString(),
+          sellingPrice: item.sellingPrice.toString(),
+        })
+      ));
+
+      res.json(order);
+    } catch (error) {
+      console.error('Create purchase order error:', error);
+      res.status(500).json({ error: "Failed to create purchase order" });
+    }
+  });
+
+  // Get purchase orders
+  app.get("/api/purchase-orders", async (req: Request, res: Response) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
       const orders = await db
@@ -179,49 +352,6 @@ export function registerRoutes(app: Express) {
     } catch (error) {
       console.error("Fetch purchase orders error:", error);
       res.status(500).json({ error: "Failed to fetch purchase orders" });
-    }
-  });
-
-  app.post("/api/purchase-orders", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    try {
-      const { items, supplierId, total } = req.body;
-      
-      // Create purchase order
-      const [order] = await db.insert(purchaseOrders)
-        .values({
-          supplierId,
-          userId: req.user!.id,
-          total,
-          status: "pending",
-        })
-        .returning();
-
-      // Create purchase order items and update product prices
-      for (const item of items) {
-        await db.insert(purchaseOrderItems)
-          .values({
-            purchaseOrderId: order.id,
-            productId: item.productId,
-            quantity: item.quantity,
-            buyingPrice: item.buyingPrice,
-            sellingPrice: item.sellingPrice,
-          });
-
-        // Update product prices
-        await db.update(products)
-          .set({
-            buyingPrice: item.buyingPrice.toString(),
-            sellingPrice: item.sellingPrice.toString(),
-            updatedAt: new Date()
-          })
-          .where(eq(products.id, item.productId));
-      }
-
-      res.json(order);
-    } catch (error) {
-      console.error("Create purchase order error:", error);
-      res.status(500).json({ error: "Failed to create purchase order" });
     }
   });
 
@@ -257,7 +387,7 @@ export function registerRoutes(app: Express) {
             .update(products)
             .set({ 
               stock: sql`${products.stock} + ${item.quantity}`,
-              buyingPrice: item.unitPrice, // Update buying price from purchase order
+              buyingPrice: item.buyingPrice, // Update buying price from purchase order
               updatedAt: new Date()
             })
             .where(eq(products.id, item.productId));
@@ -296,66 +426,6 @@ export function registerRoutes(app: Express) {
     } catch (error) {
       console.error("Fetch purchase order items error:", error);
       res.status(500).json({ error: "Failed to fetch purchase order items" });
-    }
-  });
-
-  // Customers API
-  app.get("/api/customers", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    try {
-      const allCustomers = await db.select().from(customers).orderBy(desc(customers.createdAt));
-      res.json(allCustomers);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch customers" });
-    }
-  });
-
-  app.post("/api/customers", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    try {
-      const [customer] = await db.insert(customers).values(req.body).returning();
-      res.json(customer);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to create customer" });
-    }
-  });
-
-  // Sales API
-  app.post("/api/sales", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-    try {
-      const { items, customerId, total, paymentMethod } = req.body;
-      
-      // Create sale record
-      const [sale] = await db.insert(sales).values({
-        customerId,
-        userId: req.user!.id,
-        total,
-        paymentMethod,
-      }).returning();
-
-      // Create sale items
-      await db.insert(saleItems).values(
-        items.map((item: any) => ({
-          saleId: sale.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          price: item.price,
-        }))
-      );
-
-      // Update product stock
-      for (const item of items) {
-        await db.update(products)
-          .set({ 
-            stock: sql`${products.stock} - ${item.quantity}`
-          })
-          .where(eq(products.id, item.productId));
-      }
-
-      res.json(sale);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to create sale" });
     }
   });
 
