@@ -6,6 +6,7 @@ import customersRouter from "./routes/customers";
 import salesRouter from "./routes/sales";
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { db } from "../db";
+import { setupAuth } from "./auth";
 
 function log(message: string) {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -19,8 +20,6 @@ function log(message: string) {
 }
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
 // Initialize database tables
 (async () => {
@@ -34,10 +33,55 @@ app.use(express.urlencoded({ extended: false }));
   }
 })();
 
+// Setup middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// Setup authentication before routes
+setupAuth(app);
+
+// Health monitoring endpoint
+app.get("/api/health", async (req, res) => {
+  try {
+    // Check database connection
+    await db.execute(sql`SELECT 1`);
+    
+    const health = {
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      services: {
+        database: "connected",
+        auth: "operational",
+        api: "operational"
+      },
+      uptime: process.uptime(),
+      memory: process.memoryUsage()
+    };
+    
+    res.json(health);
+  } catch (error) {
+    const unhealthy = {
+      status: "unhealthy",
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
+    res.status(503).json(unhealthy);
+  }
+});
+
+// Monitoring metrics
+const metrics = {
+  requestCount: 0,
+  responseTimeTotal: 0,
+  errors: 0
+};
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
+
+  metrics.requestCount++;
 
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
@@ -47,6 +91,12 @@ app.use((req, res, next) => {
 
   res.on("finish", () => {
     const duration = Date.now() - start;
+    metrics.responseTimeTotal += duration;
+    
+    if (res.statusCode >= 400) {
+      metrics.errors++;
+    }
+
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
@@ -62,6 +112,20 @@ app.use((req, res, next) => {
   });
 
   next();
+});
+
+// Metrics endpoint
+app.get("/api/metrics", (req, res) => {
+  const averageResponseTime = metrics.requestCount > 0 
+    ? metrics.responseTimeTotal / metrics.requestCount 
+    : 0;
+
+  res.json({
+    requestCount: metrics.requestCount,
+    averageResponseTime: Math.round(averageResponseTime),
+    errorCount: metrics.errors,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Register API routes
