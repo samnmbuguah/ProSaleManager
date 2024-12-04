@@ -48,6 +48,7 @@ export const sales = pgTable("sales", {
   userId: integer("user_id").references(() => users.id).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: text("payment_method").notNull(),
+  paymentStatus: text("payment_status").notNull().default("paid"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
