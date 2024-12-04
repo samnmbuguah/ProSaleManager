@@ -5,7 +5,12 @@ import { PurchaseOrderList } from "../components/inventory/PurchaseOrderList";
 import { PurchaseOrderForm } from "../components/inventory/PurchaseOrderForm";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useInventory } from "../hooks/use-inventory";
 import { usePurchaseOrders } from "../hooks/use-purchase-orders";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
