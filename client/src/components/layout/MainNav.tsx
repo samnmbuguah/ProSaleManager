@@ -6,7 +6,8 @@ import {
   Users,
   BarChart3,
   LogOut,
-  User
+  User,
+  Receipt
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -32,6 +33,7 @@ export default function MainNav() {
     { href: "/", icon: Store, label: "POS" },
     { href: "/inventory", icon: PackageSearch, label: "Inventory" },
     { href: "/customers", icon: Users, label: "Customers" },
+    { href: "/sales", icon: Receipt, label: "Sales" },
     { href: "/reports", icon: BarChart3, label: "Reports" },
   ];
 
