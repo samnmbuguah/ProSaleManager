@@ -170,7 +170,7 @@ export function registerRoutes(app: Express) {
 
       const result = orders.map(order => ({
         ...order,
-        supplier: order.supplier.id ? order.supplier : null
+        supplier: order.supplier?.id ? order.supplier : null
       }));
       
       res.json(result);
@@ -183,43 +183,54 @@ export function registerRoutes(app: Express) {
   app.post("/api/purchase-orders", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const { items, supplierId, total } = req.body;
+      const { supplierId, userId, total, status } = req.body;
       
       // Create purchase order
       const [order] = await db.insert(purchaseOrders)
         .values({
           supplierId,
-          userId: req.user!.id,
+          userId,
           total,
-          status: "pending",
+          status: status || "pending",
         })
         .returning();
-
-      // Create purchase order items and update product prices
-      for (const item of items) {
-        await db.insert(purchaseOrderItems)
-          .values({
-            purchaseOrderId: order.id,
-            productId: item.productId,
-            quantity: item.quantity,
-            buyingPrice: item.buyingPrice,
-            sellingPrice: item.sellingPrice,
-          });
-
-        // Update product prices
-        await db.update(products)
-          .set({
-            buyingPrice: item.buyingPrice.toString(),
-            sellingPrice: item.sellingPrice.toString(),
-            updatedAt: new Date()
-          })
-          .where(eq(products.id, item.productId));
-      }
 
       res.json(order);
     } catch (error) {
       console.error("Create purchase order error:", error);
       res.status(500).json({ error: "Failed to create purchase order" });
+    }
+  });
+
+  app.post("/api/purchase-order-items", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const { purchaseOrderId, productId, quantity, buyingPrice, sellingPrice } = req.body;
+      
+      // Create purchase order item
+      const [item] = await db.insert(purchaseOrderItems)
+        .values({
+          purchaseOrderId,
+          productId,
+          quantity,
+          buyingPrice,
+          sellingPrice,
+        })
+        .returning();
+
+      // Update product prices
+      await db.update(products)
+        .set({
+          buyingPrice: buyingPrice.toString(),
+          sellingPrice: sellingPrice.toString(),
+          updatedAt: new Date()
+        })
+        .where(eq(products.id, productId));
+
+      res.json(item);
+    } catch (error) {
+      console.error("Create purchase order item error:", error);
+      res.status(500).json({ error: "Failed to create purchase order item" });
     }
   });
 
@@ -334,6 +345,7 @@ export function registerRoutes(app: Express) {
         userId: req.user!.id,
         total,
         paymentMethod,
+        paymentStatus: 'paid',
       }).returning();
 
       // Create sale items
