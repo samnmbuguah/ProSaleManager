@@ -187,24 +187,35 @@ export function registerRoutes(app: Express) {
     try {
       const { items, supplierId, total } = req.body;
       
-      // Create purchase order with userId
+      // Create purchase order
       const [order] = await db.insert(purchaseOrders)
         .values({
           supplierId,
-          userId: req.user!.id,  // Add the authenticated user's ID
+          userId: req.user!.id,
           total,
           status: "pending",
         })
         .returning();
 
-      // Create purchase order items
-      await db.insert(purchaseOrderItems)
-        .values(items.map((item: any) => ({
-          purchaseOrderId: order.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-        })));
+      // Create purchase order items and update product prices
+      for (const item of items) {
+        await db.insert(purchaseOrderItems)
+          .values({
+            purchaseOrderId: order.id,
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.buyingPrice, // Use buying price as unit price
+          });
+
+        // Update product prices
+        await db.update(products)
+          .set({
+            buyingPrice: item.buyingPrice,
+            sellingPrice: item.sellingPrice,
+            updatedAt: new Date()
+          })
+          .where(eq(products.id, item.productId));
+      }
 
       res.json(order);
     } catch (error) {

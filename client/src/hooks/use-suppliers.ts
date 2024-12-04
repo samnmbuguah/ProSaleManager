@@ -25,7 +25,11 @@ export function useSuppliers() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error("Failed to create supplier");
+        const error = await response.json();
+        if (error.code === '23505') { // Unique violation
+          throw new Error("A supplier with this email already exists");
+        }
+        throw new Error(error.message || "Failed to create supplier");
       }
       return response.json();
     },
