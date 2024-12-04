@@ -50,3 +50,6 @@ Thumbs.db
 
 # Optional: Project specific
 # Add any project-specific files/directories you want to ignore
+
+# Replit specific
+.agent_state*
