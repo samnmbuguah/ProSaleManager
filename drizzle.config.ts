@@ -1,5 +1,6 @@
 import type { Config } from "drizzle-kit";
 
+// DATABASE_URL is provided by Replit environment
 export default {
   schema: "./db/schema.ts",
   out: "./migrations",
