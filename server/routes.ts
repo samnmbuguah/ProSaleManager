@@ -1,7 +1,13 @@
 import { Express } from "express";
 import { setupAuth } from "./auth";
 import { db } from "../db";
-import { products, customers, sales, saleItems, suppliers, productSuppliers as productSuppliersTable, purchaseOrders, purchaseOrderItems } from "@db/schema";
+import { 
+  products, customers, sales, saleItems, suppliers, 
+  productSuppliers as productSuppliersTable, 
+  purchaseOrders, purchaseOrderItems,
+  insertSupplierSchema,
+  insertProductSupplierSchema,
+} from "@db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { desc } from "drizzle-orm";
 
@@ -57,8 +63,20 @@ export function registerRoutes(app: Express) {
           lastSupplyDate: productSuppliersTable.lastSupplyDate,
           createdAt: productSuppliersTable.createdAt,
           updatedAt: productSuppliersTable.updatedAt,
-          supplier: suppliers,
-          product: products,
+          supplier: {
+            id: suppliers.id,
+            name: suppliers.name,
+            email: suppliers.email,
+            phone: suppliers.phone,
+            address: suppliers.address,
+          },
+          product: {
+            id: products.id,
+            name: products.name,
+            sku: products.sku,
+            buyingPrice: products.buyingPrice,
+            sellingPrice: products.sellingPrice,
+          },
         })
         .from(productSuppliersTable)
         .leftJoin(suppliers, eq(suppliers.id, productSuppliersTable.supplierId))
@@ -73,12 +91,21 @@ export function registerRoutes(app: Express) {
   app.post("/api/product-suppliers", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
+      const result = insertProductSupplierSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Invalid product-supplier data",
+          details: result.error.issues 
+        });
+      }
+
       const [productSupplier] = await db
         .insert(productSuppliersTable)
-        .values(req.body)
+        .values(result.data)
         .returning();
       res.json(productSupplier);
     } catch (error) {
+      console.error('Link product to supplier error:', error);
       res.status(500).json({ error: "Failed to link product to supplier" });
     }
   });
