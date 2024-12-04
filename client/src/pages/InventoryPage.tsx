@@ -87,7 +87,11 @@ export default function InventoryPage() {
               await createPurchaseOrder({
                 supplierId: parseInt(data.supplierId),
                 total: data.total,
-                items: data.items,
+                items: data.items.map(item => ({
+                  productId: item.productId,
+                  quantity: item.quantity,
+                  unitPrice: item.unitPrice,
+                })),
               });
               setIsPurchaseOrderFormOpen(false);
             }}

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useSuppliers } from "@/hooks/use-suppliers";
 import { useInventory } from "@/hooks/use-inventory";
 import {
@@ -8,6 +10,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,18 +21,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { InsertPurchaseOrderItem } from "@db/schema";
 
-interface PurchaseOrderItem {
-  productId: number;
-  quantity: number;
-  buyingPrice: number;
-  sellingPrice: number;
+interface PurchaseOrderItem extends Omit<InsertPurchaseOrderItem, 'purchaseOrderId'> {
   name?: string;
 }
 
-interface FormData {
-  supplierId: string;
-}
+const purchaseOrderSchema = z.object({
+  supplierId: z.string().min(1, "Please select a supplier"),
+});
+
+type FormData = z.infer<typeof purchaseOrderSchema>;
 
 interface PurchaseOrderFormProps {
   onSubmit: (data: {
@@ -41,11 +43,12 @@ interface PurchaseOrderFormProps {
 }
 
 export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormProps) {
-  const { suppliers = [] } = useSuppliers();
+  const { suppliers = [], productSuppliers = [] } = useSuppliers();
   const { products = [] } = useInventory();
   const [items, setItems] = useState<PurchaseOrderItem[]>([]);
   
   const form = useForm<FormData>({
+    resolver: zodResolver(purchaseOrderSchema),
     defaultValues: {
       supplierId: "",
     },
@@ -55,11 +58,15 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
     const product = products.find(p => p.id === parseInt(productId));
     if (!product) return;
     
+    // Find preferred supplier price if available
+    const supplierPricing = productSuppliers.find(
+      ps => ps.productId === parseInt(productId) && ps.supplierId === parseInt(form.getValues("supplierId"))
+    );
+    
     setItems([...items, {
       productId: parseInt(productId),
       quantity: 1,
-      buyingPrice: Number(product.buyingPrice),
-      sellingPrice: Number(product.sellingPrice),
+      unitPrice: supplierPricing ? Number(supplierPricing.costPrice) : Number(product.buyingPrice),
       name: product.name,
     }]);
   };
@@ -70,21 +77,35 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
     setItems(newItems);
   };
 
-  const updateItemPrice = (index: number, field: 'buyingPrice' | 'sellingPrice', value: string) => {
+  const updateItemPrice = (index: number, value: string) => {
     const newItems = [...items];
-    newItems[index][field] = parseFloat(value) || 0;
+    newItems[index].unitPrice = parseFloat(value) || 0;
     setItems(newItems);
   };
 
   const calculateTotal = (): string => {
-    return items.reduce((sum, item) => sum + (item.quantity * item.buyingPrice), 0).toFixed(2);
+    return items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0).toFixed(2);
+  };
+
+  const handleSupplierChange = (supplierId: string) => {
+    form.setValue("supplierId", supplierId);
+    // Update prices based on selected supplier
+    setItems(items.map(item => {
+      const supplierPricing = productSuppliers.find(
+        ps => ps.productId === item.productId && ps.supplierId === parseInt(supplierId)
+      );
+      return {
+        ...item,
+        unitPrice: supplierPricing ? Number(supplierPricing.costPrice) : item.unitPrice,
+      };
+    }));
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit((data) => onSubmit({
         supplierId: parseInt(data.supplierId),
-        items: items.map(({ name, ...item }) => item),
+        items,
         total: calculateTotal(),
       }))} className="space-y-4">
         <FormField
@@ -93,7 +114,7 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
           render={({ field }) => (
             <FormItem>
               <FormLabel>Supplier</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select onValueChange={handleSupplierChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select supplier" />
@@ -107,6 +128,7 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
                   ))}
                 </SelectContent>
               </Select>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -152,22 +174,12 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
                     />
                   </div>
                   <div>
-                    <FormLabel>Buying Price (KSh)</FormLabel>
+                    <FormLabel>Unit Price (KSh)</FormLabel>
                     <Input
                       type="number"
                       step="0.01"
-                      value={item.buyingPrice}
-                      onChange={(e) => updateItemPrice(index, 'buyingPrice', e.target.value)}
-                      className="w-full md:w-32"
-                    />
-                  </div>
-                  <div>
-                    <FormLabel>Selling Price (KSh)</FormLabel>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={item.sellingPrice}
-                      onChange={(e) => updateItemPrice(index, 'sellingPrice', e.target.value)}
+                      value={item.unitPrice}
+                      onChange={(e) => updateItemPrice(index, e.target.value)}
                       className="w-full md:w-32"
                     />
                   </div>

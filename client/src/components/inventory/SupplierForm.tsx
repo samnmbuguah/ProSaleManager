@@ -1,4 +1,6 @@
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import type { InsertSupplier } from "@db/schema";
 import {
   Form,
@@ -11,6 +13,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+const supplierSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+});
+
 interface SupplierFormProps {
   onSubmit: (data: InsertSupplier) => Promise<void>;
   isSubmitting: boolean;
@@ -18,6 +27,7 @@ interface SupplierFormProps {
 
 export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
   const form = useForm<InsertSupplier>({
+    resolver: zodResolver(supplierSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -26,9 +36,25 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
     },
   });
 
+  const handleSubmit = async (data: InsertSupplier) => {
+    try {
+      await onSubmit(data);
+    } catch (error) {
+      // Don't reset form or close dialog on error
+      if (error instanceof Error) {
+        form.setError("email", { 
+          type: "manual",
+          message: error.message.includes("email already exists") 
+            ? "This email is already registered" 
+            : "Failed to create supplier"
+        });
+      }
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="name"
