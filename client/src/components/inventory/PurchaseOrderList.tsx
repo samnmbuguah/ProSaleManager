@@ -11,17 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { usePurchaseOrders } from "@/hooks/use-purchase-orders";
-
-import type { Supplier } from "@db/schema";
-
-interface PurchaseOrderWithSupplier extends PurchaseOrder {
-  supplier?: {
-    id: number;
-    name: string;
-    email: string | null;
-    phone: string | null;
-  };
-}
+import { useSuppliers } from "@/hooks/use-suppliers";
+import { useState } from "react";
+import { PurchaseOrderDetails } from "./PurchaseOrderDetails";
 
 interface PurchaseOrderListProps {
   onCreateOrder: () => void;
@@ -29,6 +21,8 @@ interface PurchaseOrderListProps {
 
 export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
   const { purchaseOrders, updatePurchaseOrderStatus, isUpdating } = usePurchaseOrders();
+  const { suppliers } = useSuppliers();
+  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -56,6 +50,10 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
     }
   };
 
+  const getSupplier = (supplierId: number) => {
+    return suppliers?.find(s => s.id === supplierId);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -76,11 +74,21 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
           </TableHeader>
           <TableBody>
             {purchaseOrders?.map((order) => (
-              <TableRow key={order.id}>
+              <TableRow 
+                key={order.id} 
+                className="cursor-pointer hover:bg-muted/50"
+                onClick={(e) => {
+                  // Don't open details if clicking on action buttons
+                  if ((e.target as HTMLElement).closest('button')) return;
+                  setSelectedOrder(order);
+                }}
+              >
                 <TableCell>
                   {formatDate(order.orderDate)}
                 </TableCell>
-                <TableCell>{order.supplier?.name || "Unknown Supplier"}</TableCell>
+                <TableCell>
+                  {getSupplier(order.supplierId)?.name || "Unknown Supplier"}
+                </TableCell>
                 <TableCell>
                   KSh {Number(order.total).toLocaleString("en-KE", {
                     minimumFractionDigits: 2,
@@ -119,6 +127,13 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
           </TableBody>
         </Table>
       </div>
+
+      <PurchaseOrderDetails
+        orderId={selectedOrder?.id ?? null}
+        isOpen={!!selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+        supplier={selectedOrder ? getSupplier(selectedOrder.supplierId) : undefined}
+      />
     </div>
   );
 }
