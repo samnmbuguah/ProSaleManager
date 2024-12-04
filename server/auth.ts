@@ -163,6 +163,7 @@ export function setupAuth(app: Express) {
         .insert(users)
         .values({
           username,
+          email: `${username}@prosale.com`,
           password: hashedPassword,
           role: "cashier",
         })
@@ -197,11 +198,10 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    const result = insertUserSchema.safeParse(req.body);
-    if (!result.success) {
-      return res
-        .status(400)
-        .send("Invalid input: " + result.error.issues.map(i => i.message).join(", "));
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+      return res.status(400).send("Username and password are required");
     }
 
     passport.authenticate("local", (err: any, user: Express.User | false, info: IVerifyOptions) => {
