@@ -83,10 +83,13 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
       <form onSubmit={form.handleSubmit((data) => onSubmit({ 
         ...data, 
         items: items.map(item => ({
-          ...item,
-          updatePrices: true // Always update prices
+          productId: parseInt(item.productId),
+          quantity: item.quantity,
+          unitPrice: item.buyingPrice,  // Set unitPrice to buyingPrice for purchase orders
+          updatePrices: true
         })),
-        total: calculateTotal()
+        supplierId: parseInt(data.supplierId),
+        total: calculateTotal().toString(),  // Convert to string for DB
       }))} className="space-y-4">
         <FormField
           control={form.control}
@@ -137,31 +140,37 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
                     → New Stock: {(products.find(p => p.id.toString() === item.productId)?.stock || 0) + item.quantity}
                   </div>
                 </div>
-                <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-                  <Input
-                    type="number"
-                    min="1"
-                    value={item.quantity}
-                    onChange={(e) => updateItemQuantity(index, e.target.value)}
-                    className="w-full md:w-24"
-                    placeholder="Qty"
-                  />
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={item.buyingPrice}
-                    onChange={(e) => updateItemPrice(index, 'buyingPrice', e.target.value)}
-                    className="w-full md:w-32"
-                    placeholder="Buying Price"
-                  />
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={item.sellingPrice}
-                    onChange={(e) => updateItemPrice(index, 'sellingPrice', e.target.value)}
-                    className="w-full md:w-32"
-                    placeholder="Selling Price"
-                  />
+                <div className="flex flex-col gap-2 w-full md:w-auto">
+                  <div>
+                    <FormLabel>Quantity</FormLabel>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={item.quantity}
+                      onChange={(e) => updateItemQuantity(index, e.target.value)}
+                      className="w-full md:w-24"
+                    />
+                  </div>
+                  <div>
+                    <FormLabel>Buying Price (KSh)</FormLabel>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={item.buyingPrice}
+                      onChange={(e) => updateItemPrice(index, 'buyingPrice', e.target.value)}
+                      className="w-full md:w-32"
+                    />
+                  </div>
+                  <div>
+                    <FormLabel>Selling Price (KSh)</FormLabel>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={item.sellingPrice}
+                      onChange={(e) => updateItemPrice(index, 'sellingPrice', e.target.value)}
+                      className="w-full md:w-32"
+                    />
+                  </div>
                   <Button
                     type="button"
                     variant="destructive"

@@ -19,7 +19,7 @@ interface PurchaseOrderListProps {
 export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
   const { purchaseOrders, updatePurchaseOrderStatus, isUpdating } = usePurchaseOrders();
 
-  const getStatusColor = (status: string): "default" | "destructive" | "outline" | "secondary" => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
         return "secondary";
@@ -34,6 +34,15 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
 
   const handleStatusChange = async (orderId: number, newStatus: string) => {
     await updatePurchaseOrderStatus({ id: orderId, status: newStatus });
+  };
+
+  const formatDate = (date: string | null) => {
+    if (!date) return "-";
+    try {
+      return format(new Date(date), "MMM d, yyyy");
+    } catch {
+      return "-";
+    }
   };
 
   return (
@@ -58,7 +67,7 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
             {purchaseOrders?.map((order) => (
               <TableRow key={order.id}>
                 <TableCell>
-                  {order.orderDate ? format(new Date(order.orderDate), "MMM d, yyyy") : "-"}
+                  {formatDate(order.orderDate)}
                 </TableCell>
                 <TableCell>{order.supplier?.name || "Unknown Supplier"}</TableCell>
                 <TableCell>

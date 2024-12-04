@@ -152,25 +152,28 @@ export function registerRoutes(app: Express) {
   app.get("/api/purchase-orders", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const result = await db.select({
-        id: purchaseOrders.id,
-        supplierId: purchaseOrders.supplierId,
-        status: purchaseOrders.status,
-        orderDate: purchaseOrders.orderDate,
-        receivedDate: purchaseOrders.receivedDate,
-        total: purchaseOrders.total,
-        createdAt: purchaseOrders.createdAt,
-        updatedAt: purchaseOrders.updatedAt,
-        supplier: {
-          id: suppliers.id,
-          name: suppliers.name,
-          email: suppliers.email,
-          phone: suppliers.phone,
-        }
-      })
-      .from(purchaseOrders)
-      .leftJoin(suppliers, eq(purchaseOrders.supplierId, suppliers.id))
-      .orderBy(desc(purchaseOrders.createdAt));
+      const orders = await db
+        .select()
+        .from(purchaseOrders)
+        .leftJoin(suppliers, eq(purchaseOrders.supplierId, suppliers.id))
+        .orderBy(desc(purchaseOrders.createdAt));
+
+      const result = orders.map(order => ({
+        id: order.purchase_orders.id,
+        supplierId: order.purchase_orders.supplierId,
+        status: order.purchase_orders.status,
+        orderDate: order.purchase_orders.orderDate,
+        receivedDate: order.purchase_orders.receivedDate,
+        total: order.purchase_orders.total,
+        createdAt: order.purchase_orders.createdAt,
+        updatedAt: order.purchase_orders.updatedAt,
+        supplier: order.suppliers ? {
+          id: order.suppliers.id,
+          name: order.suppliers.name,
+          email: order.suppliers.email,
+          phone: order.suppliers.phone,
+        } : null
+      }));
       
       res.json(result);
     } catch (error) {
