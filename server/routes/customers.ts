@@ -5,6 +5,32 @@ import { eq, or, ilike, desc, sql } from "drizzle-orm";
 
 const router = Router();
 
+// Request timing metrics
+const metrics = {
+  totalRequests: 0,
+  totalTime: 0,
+  errors: 0,
+};
+
+// Middleware to track request timing and errors
+router.use((req, res, next) => {
+  const start = Date.now();
+  metrics.totalRequests++;
+
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    metrics.totalTime += duration;
+    
+    if (res.statusCode >= 400) {
+      metrics.errors++;
+    }
+
+    console.log(`[Customers API] ${req.method} ${req.path} ${res.statusCode} - ${duration}ms`);
+  });
+
+  next();
+});
+
 // Search customers
 router.get("/search", async (req, res) => {
   try {

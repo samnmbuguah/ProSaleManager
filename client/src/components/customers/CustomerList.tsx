@@ -7,18 +7,25 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Mail, Phone, User } from "lucide-react";
-import { ErrorBoundary } from "react-error-boundary";
+import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
 interface CustomerListProps {
   customers: Customer[] | null | undefined;
   isLoading: boolean;
 }
 
-function ErrorFallback({ error }: { error: Error }) {
+function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+  console.error("[CustomerList] Error:", error);
   return (
     <div className="text-center py-8 text-red-500">
       <p>Something went wrong:</p>
       <pre>{error.message}</pre>
+      <button 
+        onClick={resetErrorBoundary}
+        className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+      >
+        Try again
+      </button>
     </div>
   );
 }
@@ -37,35 +44,41 @@ export function CustomerList({ customers, isLoading }: CustomerListProps) {
   }
 
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
+    <ErrorBoundary 
+      FallbackComponent={ErrorFallback}
+      onError={(error) => {
+        console.error("[CustomerList] Error boundary caught:", error);
+      }}
+    >
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {customers.map((customer) => (
-        <Card key={customer.id}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              {customer.name}
-            </CardTitle>
-            <CardDescription>Customer ID: #{customer.id}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {customer.email && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  {customer.email}
-                </div>
-              )}
-              {customer.phone && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  {customer.phone}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+          <Card key={customer.id}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                {customer.name}
+              </CardTitle>
+              <CardDescription>Customer ID: #{customer.id}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {customer.email && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    {customer.email}
+                  </div>
+                )}
+                {customer.phone && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    {customer.phone}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </ErrorBoundary>
   );
 }
