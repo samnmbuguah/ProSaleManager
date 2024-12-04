@@ -24,14 +24,15 @@ interface ProductFormProps {
   isSubmitting: boolean;
 }
 
-const categories = [
-  "Dairy",
-  "Bakery",
-  "Grocery",
-  "Beverages",
-  "Snacks",
-  "Other",
-];
+const PRODUCT_CATEGORIES = [
+  { value: "bra", label: "Bra" },
+  { value: "shoes", label: "Shoes" },
+  { value: "panties", label: "Panties" },
+  { value: "oil", label: "Oil" },
+  { value: "boxers", label: "Boxers" },
+] as const;
+
+type ProductCategory = typeof PRODUCT_CATEGORIES[number]["value"];
 
 export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
   const form = useForm<InsertProduct>({
@@ -142,16 +143,16 @@ export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value ?? undefined}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
+                  {PRODUCT_CATEGORIES.map(category => (
+                    <SelectItem key={category.value} value={category.value}>
+                      {category.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
