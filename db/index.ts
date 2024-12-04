@@ -1,6 +1,11 @@
-import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
+import { config } from "dotenv";
+import { drizzle } from "drizzle-orm/node-postgres";
+import pkg from 'pg';
+const { Pool } = pkg;
 import * as schema from "@db/schema";
+
+// Load environment variables from .env file
+config();
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -8,8 +13,8 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const db = drizzle({
-  connection: process.env.DATABASE_URL,
-  schema,
-  ws: ws,
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
 });
+
+export const db = drizzle(pool, { schema });
