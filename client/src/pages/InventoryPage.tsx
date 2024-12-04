@@ -85,14 +85,14 @@ export default function InventoryPage() {
           <PurchaseOrderForm
             onSubmit={async (data) => {
               await createPurchaseOrder({
-                supplierId: parseInt(data.supplierId),
+                supplierId: Number(data.supplierId),
                 total: data.total.toString(),
-                items: data.items.map(item => ({
+                orderItems: data.items.map(item => ({
                   productId: item.productId,
                   quantity: item.quantity,
                   buyingPrice: item.buyingPrice.toString(),
                   sellingPrice: item.sellingPrice.toString(),
-                })),
+                }))
               });
               setIsPurchaseOrderFormOpen(false);
             }}

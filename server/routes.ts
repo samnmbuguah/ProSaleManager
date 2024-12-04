@@ -5,6 +5,7 @@ import {
   products, customers, sales, saleItems, suppliers, 
   productSuppliers as productSuppliersTable, 
   purchaseOrders, purchaseOrderItems,
+  loyaltyPoints, loyaltyTransactions,
   insertSupplierSchema,
   insertProductSupplierSchema,
 } from "@db/schema";
@@ -63,13 +64,7 @@ export function registerRoutes(app: Express) {
           lastSupplyDate: productSuppliersTable.lastSupplyDate,
           createdAt: productSuppliersTable.createdAt,
           updatedAt: productSuppliersTable.updatedAt,
-          supplier: {
-            id: suppliers.id,
-            name: suppliers.name,
-            email: suppliers.email,
-            phone: suppliers.phone,
-            address: suppliers.address,
-          },
+          supplier: suppliers,
           product: {
             id: products.id,
             name: products.name,
@@ -153,26 +148,29 @@ export function registerRoutes(app: Express) {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
       const orders = await db
-        .select()
+        .select({
+          id: purchaseOrders.id,
+          supplierId: purchaseOrders.supplierId,
+          status: purchaseOrders.status,
+          orderDate: purchaseOrders.orderDate,
+          receivedDate: purchaseOrders.receivedDate,
+          total: purchaseOrders.total,
+          createdAt: purchaseOrders.createdAt,
+          updatedAt: purchaseOrders.updatedAt,
+          supplier: {
+            id: suppliers.id,
+            name: suppliers.name,
+            email: suppliers.email,
+            phone: suppliers.phone,
+          }
+        })
         .from(purchaseOrders)
         .leftJoin(suppliers, eq(purchaseOrders.supplierId, suppliers.id))
         .orderBy(desc(purchaseOrders.createdAt));
 
       const result = orders.map(order => ({
-        id: order.purchase_orders.id,
-        supplierId: order.purchase_orders.supplierId,
-        status: order.purchase_orders.status,
-        orderDate: order.purchase_orders.orderDate,
-        receivedDate: order.purchase_orders.receivedDate,
-        total: order.purchase_orders.total,
-        createdAt: order.purchase_orders.createdAt,
-        updatedAt: order.purchase_orders.updatedAt,
-        supplier: order.suppliers ? {
-          id: order.suppliers.id,
-          name: order.suppliers.name,
-          email: order.suppliers.email,
-          phone: order.suppliers.phone,
-        } : null
+        ...order,
+        supplier: order.supplier.id ? order.supplier : null
       }));
       
       res.json(result);
@@ -245,11 +243,13 @@ export function registerRoutes(app: Express) {
       if (status === "received") {
         const orderItems = await db
           .select({
-            ...purchaseOrderItems,
-            product: products,
+            id: purchaseOrderItems.id,
+            productId: purchaseOrderItems.productId,
+            quantity: purchaseOrderItems.quantity,
+            buyingPrice: purchaseOrderItems.buyingPrice,
+            sellingPrice: purchaseOrderItems.sellingPrice,
           })
           .from(purchaseOrderItems)
-          .leftJoin(products, eq(products.id, purchaseOrderItems.productId))
           .where(eq(purchaseOrderItems.purchaseOrderId, parseInt(id)));
 
         for (const item of orderItems) {
@@ -257,7 +257,8 @@ export function registerRoutes(app: Express) {
             .update(products)
             .set({ 
               stock: sql`${products.stock} + ${item.quantity}`,
-              buyingPrice: item.unitPrice, // Update buying price from purchase order
+              buyingPrice: item.buyingPrice,
+              sellingPrice: item.sellingPrice,
               updatedAt: new Date()
             })
             .where(eq(products.id, item.productId));
@@ -281,7 +282,8 @@ export function registerRoutes(app: Express) {
           id: purchaseOrderItems.id,
           purchaseOrderId: purchaseOrderItems.purchaseOrderId,
           quantity: purchaseOrderItems.quantity,
-          unitPrice: purchaseOrderItems.unitPrice,
+          buyingPrice: purchaseOrderItems.buyingPrice,
+          sellingPrice: purchaseOrderItems.sellingPrice,
           product: {
             id: products.id,
             name: products.name,
@@ -289,7 +291,7 @@ export function registerRoutes(app: Express) {
           }
         })
         .from(purchaseOrderItems)
-        .leftJoin(products, eq(purchaseOrderItems.productId, products.id))
+        .leftJoin(products, eq(products.id, purchaseOrderItems.productId))
         .where(eq(purchaseOrderItems.purchaseOrderId, orderId));
 
       res.json(items);
@@ -324,7 +326,7 @@ export function registerRoutes(app: Express) {
   app.post("/api/sales", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const { items, customerId, total, paymentMethod } = req.body;
+      const { items, customerId, total, paymentMethod, usePoints = 0 } = req.body;
       
       // Create sale record
       const [sale] = await db.insert(sales).values({
@@ -353,8 +355,57 @@ export function registerRoutes(app: Express) {
           .where(eq(products.id, item.productId));
       }
 
+      // Handle loyalty points
+      if (customerId) {
+        // Calculate points to award (1 point per 100 spent)
+        const pointsToAward = Math.floor(Number(total) / 100);
+
+        // Get existing points
+        const [existingPoints] = await db
+          .select()
+          .from(loyaltyPoints)
+          .where(eq(loyaltyPoints.customerId, customerId));
+
+        if (existingPoints) {
+          // Update existing points
+          await db
+            .update(loyaltyPoints)
+            .set({ 
+              points: sql`${loyaltyPoints.points} + ${pointsToAward} - ${usePoints}`,
+              updatedAt: new Date()
+            })
+            .where(eq(loyaltyPoints.customerId, customerId));
+        } else {
+          // Create new points record
+          await db
+            .insert(loyaltyPoints)
+            .values({
+              customerId,
+              points: pointsToAward,
+            });
+        }
+
+        // Record the transaction
+        await db.insert(loyaltyTransactions).values({
+          customerId,
+          saleId: sale.id,
+          points: pointsToAward,
+          type: 'earn',
+        });
+
+        if (usePoints > 0) {
+          await db.insert(loyaltyTransactions).values({
+            customerId,
+            saleId: sale.id,
+            points: -usePoints,
+            type: 'redeem',
+          });
+        }
+      }
+
       res.json(sale);
     } catch (error) {
+      console.error('Sale error:', error);
       res.status(500).json({ error: "Failed to create sale" });
     }
   });
@@ -417,6 +468,42 @@ export function registerRoutes(app: Express) {
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch low stock report" });
     }
+  // Loyalty Program endpoints
+  app.get("/api/customers/:customerId/loyalty", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const customerId = parseInt(req.params.customerId);
+      const points = await db
+        .select()
+        .from(loyaltyPoints)
+        .where(eq(loyaltyPoints.customerId, customerId))
+        .limit(1);
+      
+      res.json(points[0] || { customerId, points: 0 });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch loyalty points" });
+    }
+  });
+
+  app.get("/api/customers/:customerId/loyalty/transactions", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const customerId = parseInt(req.params.customerId);
+      const transactions = await db
+        .select()
+        .from(loyaltyTransactions)
+        .where(eq(loyaltyTransactions.customerId, customerId))
+        .orderBy(desc(loyaltyTransactions.createdAt));
+      
+      res.json(transactions);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch loyalty transactions" });
+    }
+  });
+
+  // Update sales endpoint to handle loyalty points
+  const calculateLoyaltyPoints = (total: number) => Math.floor(total / 100); // 1 point per 100 spent
+
   });
 
   // Demo data seeding endpoint

@@ -14,9 +14,24 @@ function log(message: string) {
   console.log(`${formattedTime} [express] ${message}`);
 }
 
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+import { db } from "../db";
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Initialize database tables
+(async () => {
+  try {
+    await migrate(db, {
+      migrationsFolder: './drizzle',
+    });
+    console.log('Database migrations completed successfully');
+  } catch (error) {
+    console.error('Error running migrations:', error);
+  }
+})();
 
 app.use((req, res, next) => {
   const start = Date.now();

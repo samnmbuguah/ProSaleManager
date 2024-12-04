@@ -1,89 +1,143 @@
-import { pgTable, text, integer, timestamp, decimal, foreignKey, boolean } from "drizzle-orm/pg-core";
+import { integer, text, timestamp, pgTable, decimal, boolean } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Suppliers table
-export const suppliers = pgTable("suppliers", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+// User schema
+export const users = pgTable("users", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  email: text("email").notNull().unique(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  role: text("role").notNull().default("cashier"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Product schema
+export const products = pgTable("products", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull(),
-  email: text("email").unique(),
+  sku: text("sku").notNull().unique(),
+  buyingPrice: decimal("buying_price", { precision: 10, scale: 2 }).notNull(),
+  sellingPrice: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
+  stock: integer("stock").notNull().default(0),
+  category: text("category"),
+  minStock: integer("min_stock"),
+  maxStock: integer("max_stock"),
+  reorderPoint: integer("reorder_point"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Customer schema
+export const customers = pgTable("customers", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  name: text("name").notNull(),
+  email: text("email"),
   phone: text("phone"),
   address: text("address"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Product-Supplier relationship table
-export const productSuppliers = pgTable("product_suppliers", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  productId: integer("product_id").references(() => products.id).notNull(),
-  supplierId: integer("supplier_id").references(() => suppliers.id).notNull(),
-  costPrice: decimal("cost_price", { precision: 10, scale: 2 }).notNull(),
-  isPreferred: boolean("is_preferred").default(false).notNull(),
-  lastSupplyDate: timestamp("last_supply_date"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Users table with role
-export const users = pgTable("users", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  username: text("username").unique().notNull(),
-  password: text("password").notNull(),
-  role: text("role").notNull().default("cashier"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-// Products table
-export const products = pgTable("products", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  name: text("name").notNull(),
-  sku: text("sku").unique().notNull(),
-  buyingPrice: decimal("buying_price", { precision: 10, scale: 2 }).notNull(),
-  sellingPrice: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
-  stock: integer("stock").notNull().default(0),
-  category: text("category").notNull(),
-  minStock: integer("min_stock").notNull().default(10),
-  maxStock: integer("max_stock").notNull().default(100),
-  reorderPoint: integer("reorder_point").notNull().default(20),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// Customers table
-export const customers = pgTable("customers", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  name: text("name").notNull(),
-  email: text("email").unique(),
-  phone: text("phone"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-// Sales table
+// Sale schema
 export const sales = pgTable("sales", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   customerId: integer("customer_id").references(() => customers.id),
   userId: integer("user_id").references(() => users.id).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: text("payment_method").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Sale items table
+// Sale Item schema
 export const saleItems = pgTable("sale_items", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   saleId: integer("sale_id").references(() => sales.id).notNull(),
   productId: integer("product_id").references(() => products.id).notNull(),
   quantity: integer("quantity").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Supplier schema
+export const suppliers = pgTable("suppliers", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  address: text("address"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Product Supplier schema
+export const productSuppliers = pgTable("product_suppliers", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  productId: integer("product_id").references(() => products.id).notNull(),
+  supplierId: integer("supplier_id").references(() => suppliers.id).notNull(),
+  costPrice: decimal("cost_price", { precision: 10, scale: 2 }).notNull(),
+  isPreferred: boolean("is_preferred").default(false),
+  lastSupplyDate: timestamp("last_supply_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Purchase Order schema
+export const purchaseOrders = pgTable("purchase_orders", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  supplierId: integer("supplier_id").references(() => suppliers.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  status: text("status").notNull().default("pending"),
+  orderDate: timestamp("order_date").defaultNow(),
+  receivedDate: timestamp("received_date"),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Purchase Order Items schema
+export const purchaseOrderItems = pgTable("purchase_order_items", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  purchaseOrderId: integer("purchase_order_id").references(() => purchaseOrders.id).notNull(),
+  productId: integer("product_id").references(() => products.id).notNull(),
+  quantity: integer("quantity").notNull(),
+  buyingPrice: decimal("buying_price", { precision: 10, scale: 2 }).notNull(),
+  sellingPrice: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
+});
+
+// Loyalty Points schema
+export const loyaltyPoints = pgTable("loyalty_points", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  customerId: integer("customer_id").references(() => customers.id).notNull(),
+  points: integer("points").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Loyalty Transactions schema
+export const loyaltyTransactions = pgTable("loyalty_transactions", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  customerId: integer("customer_id").references(() => customers.id).notNull(),
+  saleId: integer("sale_id").references(() => sales.id).notNull(),
+  points: integer("points").notNull(),
+  type: text("type").notNull(), // 'earn' or 'redeem'
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Schema validation
-export const insertUserSchema = createInsertSchema(users);
+export const insertUserSchema = createInsertSchema(users, {
+  email: z.string().email(),
+  username: z.string().min(3),
+  password: z.string().min(6),
+  role: z.enum(["admin", "cashier"]).default("cashier"),
+});
 export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = z.infer<typeof selectUserSchema>;
-export type SelectUser = z.infer<typeof selectUserSchema>;
 
 export const insertProductSchema = createInsertSchema(products);
 export const selectProductSchema = createSelectSchema(products);
@@ -105,38 +159,16 @@ export const selectSaleItemSchema = createSelectSchema(saleItems);
 export type InsertSaleItem = z.infer<typeof insertSaleItemSchema>;
 export type SaleItem = z.infer<typeof selectSaleItemSchema>;
 
-// Supplier schemas
 export const insertSupplierSchema = createInsertSchema(suppliers);
 export const selectSupplierSchema = createSelectSchema(suppliers);
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type Supplier = z.infer<typeof selectSupplierSchema>;
 
-// ProductSupplier schemas
 export const insertProductSupplierSchema = createInsertSchema(productSuppliers);
-// Purchase Orders table
-export const purchaseOrders = pgTable("purchase_orders", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  supplierId: integer("supplier_id").references(() => suppliers.id).notNull(),
-  userId: integer("user_id").references(() => users.id).notNull(),  // Add this
-  status: text("status").notNull().default("pending"), // pending, approved, received
-  orderDate: timestamp("order_date").defaultNow(),
-  receivedDate: timestamp("received_date"),
-  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+export const selectProductSupplierSchema = createSelectSchema(productSuppliers);
+export type InsertProductSupplier = z.infer<typeof insertProductSupplierSchema>;
+export type ProductSupplier = z.infer<typeof selectProductSupplierSchema>;
 
-// Purchase Order Items table
-export const purchaseOrderItems = pgTable("purchase_order_items", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  purchaseOrderId: integer("purchase_order_id").references(() => purchaseOrders.id).notNull(),
-  productId: integer("product_id").references(() => products.id).notNull(),
-  quantity: integer("quantity").notNull(),
-  buyingPrice: decimal("buying_price", { precision: 10, scale: 2 }).notNull(),
-  sellingPrice: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
-});
-
-// Schema validation for purchase orders
 export const insertPurchaseOrderSchema = createInsertSchema(purchaseOrders);
 export const selectPurchaseOrderSchema = createSelectSchema(purchaseOrders);
 export type InsertPurchaseOrder = z.infer<typeof insertPurchaseOrderSchema>;
@@ -146,6 +178,14 @@ export const insertPurchaseOrderItemSchema = createInsertSchema(purchaseOrderIte
 export const selectPurchaseOrderItemSchema = createSelectSchema(purchaseOrderItems);
 export type InsertPurchaseOrderItem = z.infer<typeof insertPurchaseOrderItemSchema>;
 export type PurchaseOrderItem = z.infer<typeof selectPurchaseOrderItemSchema>;
-export const selectProductSupplierSchema = createSelectSchema(productSuppliers);
-export type InsertProductSupplier = z.infer<typeof insertProductSupplierSchema>;
-export type ProductSupplier = z.infer<typeof selectProductSupplierSchema>;
+
+// Loyalty related schemas
+export const insertLoyaltyPointsSchema = createInsertSchema(loyaltyPoints);
+export const selectLoyaltyPointsSchema = createSelectSchema(loyaltyPoints);
+export type InsertLoyaltyPoints = z.infer<typeof insertLoyaltyPointsSchema>;
+export type LoyaltyPoints = z.infer<typeof selectLoyaltyPointsSchema>;
+
+export const insertLoyaltyTransactionSchema = createInsertSchema(loyaltyTransactions);
+export const selectLoyaltyTransactionSchema = createSelectSchema(loyaltyTransactions);
+export type InsertLoyaltyTransaction = z.infer<typeof insertLoyaltyTransactionSchema>;
+export type LoyaltyTransaction = z.infer<typeof selectLoyaltyTransactionSchema>;
