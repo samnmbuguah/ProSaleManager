@@ -10,12 +10,36 @@ const metrics = {
   totalRequests: 0,
   totalTime: 0,
   errors: 0,
+  rateLimit: {
+    requests: new Map<string, number[]>(),
+    window: 60000, // 1 minute
+    limit: 100 // requests per window
+  }
 };
 
 // Middleware to track request timing and errors
 router.use((req, res, next) => {
   const start = Date.now();
+  const ip = req.ip;
   metrics.totalRequests++;
+
+  // Rate limiting
+  const now = Date.now();
+  const userRequests = metrics.rateLimit.requests.get(ip) || [];
+  const recentRequests = userRequests.filter(time => now - time < metrics.rateLimit.window);
+  
+  if (recentRequests.length >= metrics.rateLimit.limit) {
+    metrics.errors++;
+    const error = {
+      status: 429,
+      message: 'Too many requests',
+      retryAfter: Math.ceil((metrics.rateLimit.window - (now - recentRequests[0])) / 1000)
+    };
+    console.error('[Customers API] Rate limit exceeded:', error);
+    return res.status(429).json(error);
+  }
+
+  metrics.rateLimit.requests.set(ip, [...recentRequests, now]);
 
   res.on('finish', () => {
     const duration = Date.now() - start;
@@ -25,7 +49,16 @@ router.use((req, res, next) => {
       metrics.errors++;
     }
 
-    console.log(`[Customers API] ${req.method} ${req.path} ${res.statusCode} - ${duration}ms`);
+    // Send metrics to health monitoring
+    const requestMetrics = {
+      path: req.path,
+      method: req.method,
+      statusCode: res.statusCode,
+      duration,
+      timestamp: new Date().toISOString()
+    };
+
+    console.log(`[Customers API] ${JSON.stringify(requestMetrics)}`);
   });
 
   next();

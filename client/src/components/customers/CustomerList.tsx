@@ -1,3 +1,4 @@
+import React from 'react';
 import { type Customer } from "@db/schema";
 import {
   Card,
@@ -10,7 +11,7 @@ import { Mail, Phone, User } from "lucide-react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
 interface CustomerListProps {
-  customers: Customer[] | null | undefined;
+  customers: Customer[];
   isLoading: boolean;
 }
 
