@@ -56,6 +56,8 @@ export const customers = pgTable("customers", {
   name: text("name").notNull(),
   email: text("email").unique(),
   phone: text("phone"),
+  loyaltyPoints: integer("loyalty_points").notNull().default(0),
+  loyaltyTier: text("loyalty_tier").notNull().default("bronze"), // bronze, silver, gold
   createdAt: timestamp("created_at").defaultNow(),
 });
 
