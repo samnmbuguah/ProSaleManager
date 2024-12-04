@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../../db";
 import { customers } from "../../db/schema";
-import { eq, or, ilike } from "drizzle-orm";
+import { eq, or, ilike, desc } from "drizzle-orm";
 
 const router = Router();
 
