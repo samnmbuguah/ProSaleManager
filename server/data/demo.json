@@ -38,9 +38,7 @@
     {
       "email": "admin@example.com",
       "password": "admin123",
-      "role": "admin",
-      "created_at": "2024-12-04T00:00:00Z",
-      "updated_at": "2024-12-04T00:00:00Z"
+      "role": "admin"
     }
   ]
 }
