@@ -21,9 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { InsertPurchaseOrderItem } from "@db/schema";
 
-interface PurchaseOrderItem extends Omit<InsertPurchaseOrderItem, 'purchaseOrderId'> {
+interface PurchaseOrderItem {
+  productId: number;
+  quantity: number;
+  buyingPrice: number;
+  sellingPrice: number;
   name?: string;
 }
 
@@ -66,7 +69,8 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
     setItems([...items, {
       productId: parseInt(productId),
       quantity: 1,
-      unitPrice: supplierPricing ? Number(supplierPricing.costPrice) : Number(product.buyingPrice),
+      buyingPrice: supplierPricing ? Number(supplierPricing.costPrice) : Number(product.buyingPrice),
+      sellingPrice: Number(product.sellingPrice),
       name: product.name,
     }]);
   };
@@ -77,14 +81,14 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
     setItems(newItems);
   };
 
-  const updateItemPrice = (index: number, value: string) => {
+  const updateItemPrice = (index: number, field: 'buyingPrice' | 'sellingPrice', value: string) => {
     const newItems = [...items];
-    newItems[index].unitPrice = parseFloat(value) || 0;
+    newItems[index][field] = parseFloat(value) || 0;
     setItems(newItems);
   };
 
   const calculateTotal = (): string => {
-    return items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0).toFixed(2);
+    return items.reduce((sum, item) => sum + (item.quantity * item.buyingPrice), 0).toFixed(2);
   };
 
   const handleSupplierChange = (supplierId: string) => {
@@ -96,7 +100,7 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
       );
       return {
         ...item,
-        unitPrice: supplierPricing ? Number(supplierPricing.costPrice) : item.unitPrice,
+        buyingPrice: supplierPricing ? Number(supplierPricing.costPrice) : item.buyingPrice,
       };
     }));
   };
@@ -174,12 +178,22 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
                     />
                   </div>
                   <div>
-                    <FormLabel>Unit Price (KSh)</FormLabel>
+                    <FormLabel>Buying Price (KSh)</FormLabel>
                     <Input
                       type="number"
                       step="0.01"
-                      value={item.unitPrice}
-                      onChange={(e) => updateItemPrice(index, e.target.value)}
+                      value={item.buyingPrice}
+                      onChange={(e) => updateItemPrice(index, 'buyingPrice', e.target.value)}
+                      className="w-full md:w-32"
+                    />
+                  </div>
+                  <div>
+                    <FormLabel>Selling Price (KSh)</FormLabel>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={item.sellingPrice}
+                      onChange={(e) => updateItemPrice(index, 'sellingPrice', e.target.value)}
                       className="w-full md:w-32"
                     />
                   </div>
