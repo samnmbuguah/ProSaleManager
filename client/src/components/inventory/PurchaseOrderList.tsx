@@ -19,14 +19,14 @@ interface PurchaseOrderListProps {
 export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
   const { purchaseOrders, updatePurchaseOrderStatus, isUpdating } = usePurchaseOrders();
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): "default" | "destructive" | "outline" | "secondary" => {
     switch (status) {
       case "pending":
-        return "warning";
+        return "secondary";
       case "approved":
         return "default";
       case "received":
-        return "success";
+        return "outline";
       default:
         return "secondary";
     }
@@ -58,9 +58,9 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
             {purchaseOrders?.map((order) => (
               <TableRow key={order.id}>
                 <TableCell>
-                  {format(new Date(order.orderDate), "MMM d, yyyy")}
+                  {order.orderDate ? format(new Date(order.orderDate), "MMM d, yyyy") : "-"}
                 </TableCell>
-                <TableCell>{order.supplier.name}</TableCell>
+                <TableCell>{order.supplier?.name || "Unknown Supplier"}</TableCell>
                 <TableCell>
                   KSh {Number(order.total).toLocaleString("en-KE", {
                     minimumFractionDigits: 2,

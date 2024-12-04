@@ -74,6 +74,10 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
     setItems(newItems);
   };
 
+  const calculateTotal = () => {
+    return items.reduce((sum, item) => sum + (item.quantity * item.buyingPrice), 0);
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit((data) => onSubmit({ 
@@ -81,7 +85,8 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
         items: items.map(item => ({
           ...item,
           updatePrices: true // Always update prices
-        }))
+        })),
+        total: calculateTotal()
       }))} className="space-y-4">
         <FormField
           control={form.control}
@@ -121,32 +126,32 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
           </Select>
         </div>
 
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 space-y-4 max-h-[50vh] overflow-y-auto">
           {items.map((item, index) => (
-            <div key={index} className="space-y-2">
-              <div className="flex gap-4 items-center">
+            <div key={index} className="space-y-2 p-4 border rounded-lg">
+              <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
                 <div className="flex-1">
-                  <div>{item.name}</div>
+                  <div className="font-medium">{item.name}</div>
                   <div className="text-sm text-muted-foreground">
                     Current Stock: {products.find(p => p.id.toString() === item.productId)?.stock || 0}
                     → New Stock: {(products.find(p => p.id.toString() === item.productId)?.stock || 0) + item.quantity}
                   </div>
                 </div>
-                <Input
-                  type="number"
-                  min="1"
-                  value={item.quantity}
-                  onChange={(e) => updateItemQuantity(index, e.target.value)}
-                  className="w-24"
-                  placeholder="Qty"
-                />
-                <div className="flex gap-2">
+                <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                  <Input
+                    type="number"
+                    min="1"
+                    value={item.quantity}
+                    onChange={(e) => updateItemQuantity(index, e.target.value)}
+                    className="w-full md:w-24"
+                    placeholder="Qty"
+                  />
                   <Input
                     type="number"
                     step="0.01"
                     value={item.buyingPrice}
                     onChange={(e) => updateItemPrice(index, 'buyingPrice', e.target.value)}
-                    className="w-32"
+                    className="w-full md:w-32"
                     placeholder="Buying Price"
                   />
                   <Input
@@ -154,21 +159,21 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
                     step="0.01"
                     value={item.sellingPrice}
                     onChange={(e) => updateItemPrice(index, 'sellingPrice', e.target.value)}
-                    className="w-32"
+                    className="w-full md:w-32"
                     placeholder="Selling Price"
                   />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => {
+                      const newItems = [...items];
+                      newItems.splice(index, 1);
+                      setItems(newItems);
+                    }}
+                  >
+                    Remove
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() => {
-                    const newItems = [...items];
-                    newItems.splice(index, 1);
-                    setItems(newItems);
-                  }}
-                >
-                  Remove
-                </Button>
               </div>
             </div>
           ))}
