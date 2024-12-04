@@ -132,7 +132,8 @@ export const purchaseOrderItems = pgTable("purchase_order_items", {
   purchaseOrderId: integer("purchase_order_id").references(() => purchaseOrders.id).notNull(),
   productId: integer("product_id").references(() => products.id).notNull(),
   quantity: integer("quantity").notNull(),
-  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  buyingPrice: decimal("buying_price", { precision: 10, scale: 2 }).notNull(),
+  sellingPrice: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
 });
 
 // Schema validation for purchase orders

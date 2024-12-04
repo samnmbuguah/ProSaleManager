@@ -90,7 +90,8 @@ export default function InventoryPage() {
                 items: data.items.map(item => ({
                   productId: item.productId,
                   quantity: item.quantity,
-                  unitPrice: item.buyingPrice.toString(),
+                  buyingPrice: item.buyingPrice.toString(),
+                  sellingPrice: item.sellingPrice.toString(),
                 })),
               });
               setIsPurchaseOrderFormOpen(false);

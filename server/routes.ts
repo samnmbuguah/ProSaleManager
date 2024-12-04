@@ -204,7 +204,8 @@ export function registerRoutes(app: Express) {
             purchaseOrderId: order.id,
             productId: item.productId,
             quantity: item.quantity,
-            unitPrice: item.buyingPrice, // Use buying price as unit price
+            buyingPrice: item.buyingPrice,
+            sellingPrice: item.sellingPrice,
           });
 
         // Update product prices
