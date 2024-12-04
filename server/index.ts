@@ -6,6 +6,7 @@ import customersRouter from "./routes/customers";
 import salesRouter from "./routes/sales";
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { db } from "../db";
+import { setupHealthMonitoring, responseTimeMiddleware } from "./health";
 
 function log(message: string) {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -21,6 +22,7 @@ function log(message: string) {
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(responseTimeMiddleware);
 
 // Initialize database tables
 (async () => {
@@ -64,6 +66,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Setup health monitoring
+setupHealthMonitoring(app);
+
 // Register API routes
 app.use("/api/customers", customersRouter);
 app.use("/api/sales", salesRouter);
@@ -89,7 +94,7 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 
   // Start server
   const PORT = process.env.PORT || 5000;
-  server.listen(PORT, "0.0.0.0", () => {
+  server.listen(Number(PORT), "0.0.0.0", () => {
     log(`serving on port ${PORT}`);
   }).on('error', (error) => {
     console.error('Error starting server:', error);
