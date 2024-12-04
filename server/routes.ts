@@ -210,8 +210,8 @@ export function registerRoutes(app: Express) {
         // Update product prices
         await db.update(products)
           .set({
-            buyingPrice: item.buyingPrice,
-            sellingPrice: item.sellingPrice,
+            buyingPrice: item.buyingPrice.toString(),
+            sellingPrice: item.sellingPrice.toString(),
             updatedAt: new Date()
           })
           .where(eq(products.id, item.productId));
