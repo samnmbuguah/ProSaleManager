@@ -86,11 +86,11 @@ export default function InventoryPage() {
             onSubmit={async (data) => {
               await createPurchaseOrder({
                 supplierId: parseInt(data.supplierId),
-                total: data.total,
+                total: data.total.toString(),
                 items: data.items.map(item => ({
                   productId: item.productId,
                   quantity: item.quantity,
-                  unitPrice: item.buyingPrice,
+                  unitPrice: item.buyingPrice.toString(),
                 })),
               });
               setIsPurchaseOrderFormOpen(false);

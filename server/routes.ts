@@ -240,11 +240,15 @@ export function registerRoutes(app: Express) {
         .where(eq(purchaseOrders.id, parseInt(id)))
         .returning();
 
-      // If order is received, update product stock levels
+      // If order is received, update product stock levels and prices
       if (status === "received") {
         const orderItems = await db
-          .select()
+          .select({
+            ...purchaseOrderItems,
+            product: products,
+          })
           .from(purchaseOrderItems)
+          .leftJoin(products, eq(products.id, purchaseOrderItems.productId))
           .where(eq(purchaseOrderItems.purchaseOrderId, parseInt(id)));
 
         for (const item of orderItems) {
@@ -252,6 +256,7 @@ export function registerRoutes(app: Express) {
             .update(products)
             .set({ 
               stock: sql`${products.stock} + ${item.quantity}`,
+              buyingPrice: item.unitPrice, // Update buying price from purchase order
               updatedAt: new Date()
             })
             .where(eq(products.id, item.productId));
