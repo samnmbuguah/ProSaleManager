@@ -1,40 +1,35 @@
 import { useState } from "react";
-import { ProductTable } from "../components/inventory/ProductTable";
-import { ProductForm } from "../components/inventory/ProductForm";
-import { PurchaseOrderList } from "../components/inventory/PurchaseOrderList";
-import { PurchaseOrderForm } from "../components/inventory/PurchaseOrderForm";
-import { SupplierForm } from "../components/inventory/SupplierForm";
-import { SupplierList } from "../components/inventory/SupplierList";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { useInventory } from "../hooks/use-inventory";
-import { usePurchaseOrders } from "../hooks/use-purchase-orders";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ProductForm } from "@/components/inventory/ProductForm";
+import { ProductTable } from "@/components/inventory/ProductTable";
+import { PurchaseOrderForm } from "@/components/inventory/PurchaseOrderForm";
+import { PurchaseOrderList } from "@/components/inventory/PurchaseOrderList";
+import { SupplierForm } from "@/components/inventory/SupplierForm";
+import { SupplierList } from "@/components/inventory/SupplierList";
+import { useProducts } from "@/hooks/use-products";
+import { usePurchaseOrders } from "@/hooks/use-purchase-orders";
 import { useSuppliers } from "@/hooks/use-suppliers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUser } from "@/hooks/use-user";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 export default function InventoryPage() {
+  const { user } = useUser();
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
   const [isPurchaseOrderFormOpen, setIsPurchaseOrderFormOpen] = useState(false);
   const [isSupplierFormOpen, setIsSupplierFormOpen] = useState(false);
-  const { products = [], isLoading, createProduct, isCreating } = useInventory();
-  const { createPurchaseOrder, isCreating: isCreatingPO } = usePurchaseOrders();
+  const { products, isLoading: isLoadingProducts, createProduct, isCreating: isCreatingProduct } = useProducts();
+  const { createPurchaseOrder, createPurchaseOrderItem, isCreating: isCreatingPO } = usePurchaseOrders();
   const { createSupplier, isCreating: isCreatingSupplier } = useSuppliers();
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Inventory Management</h1>
-
+    <div className="container py-6 space-y-6">
       <Tabs defaultValue="products">
         <TabsList>
           <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
           <TabsTrigger value="purchase-orders">Purchase Orders</TabsTrigger>
+          <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
         </TabsList>
 
         <TabsContent value="products" className="space-y-4">
@@ -44,8 +39,11 @@ export default function InventoryPage() {
               Add Product
             </Button>
           </div>
+          <ProductTable products={products || []} isLoading={isLoadingProducts} />
+        </TabsContent>
 
-          <ProductTable products={products || []} isLoading={isLoading} />
+        <TabsContent value="purchase-orders" className="space-y-4">
+          <PurchaseOrderList onCreateOrder={() => setIsPurchaseOrderFormOpen(true)} />
         </TabsContent>
 
         <TabsContent value="suppliers" className="space-y-4">
@@ -57,22 +55,19 @@ export default function InventoryPage() {
           </div>
           <SupplierList />
         </TabsContent>
-
-        <TabsContent value="purchase-orders">
-          <PurchaseOrderList
-            onCreateOrder={() => setIsPurchaseOrderFormOpen(true)}
-          />
-        </TabsContent>
       </Tabs>
 
       <Dialog open={isProductFormOpen} onOpenChange={setIsProductFormOpen}>
         <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add Product</DialogTitle>
+          </DialogHeader>
           <ProductForm
             onSubmit={async (data) => {
               await createProduct(data);
               setIsProductFormOpen(false);
             }}
-            isSubmitting={isCreating}
+            isSubmitting={isCreatingProduct}
           />
         </DialogContent>
       </Dialog>
@@ -84,17 +79,29 @@ export default function InventoryPage() {
           </DialogHeader>
           <PurchaseOrderForm
             onSubmit={async (data) => {
-              await createPurchaseOrder({
-                supplierId: Number(data.supplierId),
-                total: data.total.toString(),
-                orderItems: data.items.map(item => ({
-                  productId: item.productId,
-                  quantity: item.quantity,
-                  buyingPrice: item.buyingPrice.toString(),
-                  sellingPrice: item.sellingPrice.toString(),
-                }))
-              });
-              setIsPurchaseOrderFormOpen(false);
+              try {
+                const purchaseOrder = await createPurchaseOrder({
+                  supplierId: Number(data.supplierId),
+                  userId: user?.id ?? 0,
+                  total: data.total.toString(),
+                  status: "pending",
+                });
+
+                if (purchaseOrder && data.items) {
+                  await Promise.all(data.items.map(item => 
+                    createPurchaseOrderItem({
+                      purchaseOrderId: purchaseOrder.id,
+                      productId: item.productId,
+                      quantity: item.quantity,
+                      buyingPrice: item.buyingPrice.toString(),
+                      sellingPrice: item.sellingPrice.toString(),
+                    })
+                  ));
+                }
+                setIsPurchaseOrderFormOpen(false);
+              } catch (error) {
+                console.error('Error creating purchase order:', error);
+              }
             }}
             isSubmitting={isCreatingPO}
           />
@@ -104,7 +111,7 @@ export default function InventoryPage() {
       <Dialog open={isSupplierFormOpen} onOpenChange={setIsSupplierFormOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Add New Supplier</DialogTitle>
+            <DialogTitle>Add Supplier</DialogTitle>
           </DialogHeader>
           <SupplierForm
             onSubmit={async (data) => {
