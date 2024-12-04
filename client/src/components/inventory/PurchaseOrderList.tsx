@@ -1,14 +1,4 @@
 import type { PurchaseOrder } from "@db/schema";
-
-interface PurchaseOrderWithSupplier extends PurchaseOrder {
-  supplier?: {
-    id: number;
-    name: string;
-    email: string;
-    phone: string;
-  };
-}
-
 import {
   Table,
   TableBody,
@@ -27,7 +17,7 @@ interface PurchaseOrderListProps {
 }
 
 export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
-  const { purchaseOrders, updatePurchaseOrderStatus, isUpdating } = usePurchaseOrders<PurchaseOrderWithSupplier>();
+  const { purchaseOrders, updatePurchaseOrderStatus, isUpdating } = usePurchaseOrders();
 
   const getStatusColor = (status: string) => {
     switch (status) {
