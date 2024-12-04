@@ -26,8 +26,8 @@ export function useSuppliers() {
       });
       if (!response.ok) {
         const error = await response.json();
-        if (error.code === '23505') { // Unique violation
-          throw new Error("A supplier with this email already exists");
+        if (error.code === '23505') {
+          throw new Error("This email is already registered");
         }
         throw new Error(error.message || "Failed to create supplier");
       }
@@ -46,6 +46,8 @@ export function useSuppliers() {
         title: "Error",
         description: error.message,
       });
+      // Let the error propagate to the form for field-level handling
+      throw error;
     },
   });
 
