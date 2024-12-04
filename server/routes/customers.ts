@@ -77,23 +77,32 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Get all customers
-router.get("/", async (req, res) => {
-  try {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+// Error handling middleware
+const handleErrors = (err: any, req: any, res: any, next: any) => {
+  console.error("Error in customers route:", err);
+  res.status(500).json({ error: "Internal server error" });
+};
 
-    const allCustomers = await db
-      .select()
-      .from(customers)
-      .orderBy(desc(customers.createdAt));
-
-    res.json(allCustomers);
-  } catch (error) {
-    console.error("Error fetching customers:", error);
-    res.status(500).json({ error: "Failed to fetch customers" });
+// Authentication middleware
+const requireAuth = (req: any, res: any, next: any) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Unauthorized" });
   }
+  next();
+};
+
+// Get all customers
+router.get("/", requireAuth, (req, res) => {
+  db.select()
+    .from(customers)
+    .orderBy(desc(customers.createdAt))
+    .then(allCustomers => {
+      res.json(allCustomers || []);
+    })
+    .catch(next);
 });
+
+// Apply error handling middleware
+router.use(handleErrors);
 
 export default router; 
