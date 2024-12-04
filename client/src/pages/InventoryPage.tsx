@@ -57,14 +57,16 @@ export default function InventoryPage() {
       </Dialog>
 
       <Dialog open={isPurchaseOrderFormOpen} onOpenChange={setIsPurchaseOrderFormOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Purchase Order</DialogTitle>
+          </DialogHeader>
           <PurchaseOrderForm
             onSubmit={async (data) => {
               await createPurchaseOrder(data);
               setIsPurchaseOrderFormOpen(false);
             }}
             isSubmitting={isCreatingPO}
-            product={null}
           />
         </DialogContent>
       </Dialog>
