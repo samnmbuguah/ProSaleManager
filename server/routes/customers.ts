@@ -31,9 +31,14 @@ router.get("/search", async (req, res) => {
 });
 
 // Create new customer
-router.post("/", async (req, res) => {
+router.post("/", requireAuth, async (req, res) => {
   try {
     const { name, email, phone } = req.body;
+    
+    // Validate required fields
+    if (!name) {
+      return res.status(400).json({ error: "Name is required" });
+    }
 
     const [customer] = await db
       .insert(customers)
@@ -41,6 +46,7 @@ router.post("/", async (req, res) => {
         name,
         email: email || null,
         phone: phone || null,
+        createdAt: new Date(),
       })
       .returning();
 
@@ -84,12 +90,12 @@ const handleErrors = (err: any, req: any, res: any, next: any) => {
 };
 
 // Authentication middleware
-const requireAuth = (req: any, res: any, next: any) => {
+function requireAuth(req: any, res: any, next: any) {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: "Unauthorized" });
   }
   next();
-};
+}
 
 // Get all customers
 router.get("/", requireAuth, async (req, res) => {
@@ -100,12 +106,12 @@ router.get("/", requireAuth, async (req, res) => {
       email: customers.email,
       phone: customers.phone,
       createdAt: customers.createdAt,
-      updatedAt: customers.updatedAt
     })
       .from(customers)
       .orderBy(desc(customers.createdAt));
     
-    res.json(allCustomers || []);
+    // Ensure we always return an array
+    res.json(Array.isArray(allCustomers) ? allCustomers : []);
   } catch (error) {
     console.error("Error fetching customers:", error);
     res.status(500).json({ error: "Failed to fetch customers" });

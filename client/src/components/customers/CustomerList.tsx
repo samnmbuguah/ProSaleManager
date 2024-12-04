@@ -1,4 +1,4 @@
-import type { Customer } from "@db/schema";
+import { type Customer } from "@db/schema";
 import {
   Card,
   CardContent,
@@ -7,18 +7,28 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Mail, Phone, User } from "lucide-react";
+import { ErrorBoundary } from "react-error-boundary";
 
 interface CustomerListProps {
-  customers: Customer[];
+  customers: Customer[] | null | undefined;
   isLoading: boolean;
+}
+
+function ErrorFallback({ error }: { error: Error }) {
+  return (
+    <div className="text-center py-8 text-red-500">
+      <p>Something went wrong:</p>
+      <pre>{error.message}</pre>
+    </div>
+  );
 }
 
 export function CustomerList({ customers, isLoading }: CustomerListProps) {
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="text-center py-8">Loading customers...</div>;
   }
 
-  if (!customers || customers.length === 0) {
+  if (!Array.isArray(customers) || customers.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         No customers found
@@ -27,8 +37,9 @@ export function CustomerList({ customers, isLoading }: CustomerListProps) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {Array.isArray(customers) && customers.map((customer) => (
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {customers.map((customer) => (
         <Card key={customer.id}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
