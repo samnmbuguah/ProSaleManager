@@ -20,19 +20,21 @@ import {
 } from "@/components/ui/select";
 
 interface PurchaseOrderItem {
-  productId: string;
+  productId: number;
   quantity: number;
-  buyingPrice: number;
-  sellingPrice: number;
-  name: string;
-  updatePrices?: boolean;
+  unitPrice: number;
+  name?: string;
+}
+
+interface FormData {
+  supplierId: string;
 }
 
 interface PurchaseOrderFormProps {
   onSubmit: (data: {
-    supplierId: string;
+    supplierId: number;
     items: PurchaseOrderItem[];
-    total: number;
+    total: string;
   }) => Promise<void>;
   isSubmitting: boolean;
 }
@@ -42,7 +44,7 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
   const { products = [] } = useInventory();
   const [items, setItems] = useState<PurchaseOrderItem[]>([]);
   
-  const form = useForm({
+  const form = useForm<FormData>({
     defaultValues: {
       supplierId: "",
     },
@@ -53,12 +55,10 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
     if (!product) return;
     
     setItems([...items, {
-      productId,
+      productId: parseInt(productId),
       quantity: 1,
-      buyingPrice: Number(product.buyingPrice),
-      sellingPrice: Number(product.sellingPrice),
+      unitPrice: Number(product.buyingPrice),
       name: product.name,
-      updatePrices: true
     }]);
   };
 
@@ -68,29 +68,21 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
     setItems(newItems);
   };
 
-  const updateItemPrice = (index: number, field: 'buyingPrice' | 'sellingPrice', value: string) => {
+  const updateItemPrice = (index: number, value: string) => {
     const newItems = [...items];
-    newItems[index][field] = parseFloat(value) || 0;
+    newItems[index].unitPrice = parseFloat(value) || 0;
     setItems(newItems);
   };
 
-  const calculateTotal = () => {
-    return items.reduce((sum, item) => sum + (item.quantity * item.buyingPrice), 0);
+  const calculateTotal = (): string => {
+    return items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0).toFixed(2);
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit((data) => onSubmit({ 
-        ...data, 
-        items: items.map(item => ({
-          productId: parseInt(item.productId),
-          quantity: item.quantity,
-          unitPrice: Number(item.buyingPrice),
-          buyingPrice: Number(item.buyingPrice),
-          sellingPrice: Number(item.sellingPrice),
-          name: item.name
-        })),
-        supplierId: Number(data.supplierId),
+      <form onSubmit={form.handleSubmit((data) => onSubmit({
+        supplierId: parseInt(data.supplierId),
+        items: items.map(({ name, ...item }) => item),
         total: calculateTotal(),
       }))} className="space-y-4">
         <FormField
@@ -99,13 +91,15 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
           render={({ field }) => (
             <FormItem>
               <FormLabel>Supplier</FormLabel>
-              <Select onValueChange={field.onChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select supplier" />
-                </SelectTrigger>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select supplier" />
+                  </SelectTrigger>
+                </FormControl>
                 <SelectContent>
                   {suppliers.map((supplier) => (
-                    <SelectItem key={supplier.id} value={supplier.id.toString()}>
+                    <SelectItem key={supplier.id} value={String(supplier.id)}>
                       {supplier.name}
                     </SelectItem>
                   ))}
@@ -118,12 +112,14 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
         <div className="mt-4">
           <FormLabel>Add Products</FormLabel>
           <Select onValueChange={addItem}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select product" />
-            </SelectTrigger>
+            <FormControl>
+              <SelectTrigger>
+                <SelectValue placeholder="Select product" />
+              </SelectTrigger>
+            </FormControl>
             <SelectContent>
               {products.map((product) => (
-                <SelectItem key={product.id} value={product.id.toString()}>
+                <SelectItem key={product.id} value={String(product.id)}>
                   {product.name}
                 </SelectItem>
               ))}
@@ -138,8 +134,8 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
                 <div className="flex-1">
                   <div className="font-medium">{item.name}</div>
                   <div className="text-sm text-muted-foreground">
-                    Current Stock: {products.find(p => p.id.toString() === item.productId)?.stock || 0}
-                    → New Stock: {(products.find(p => p.id.toString() === item.productId)?.stock || 0) + item.quantity}
+                    Current Stock: {products.find(p => p.id === item.productId)?.stock || 0}
+                    → New Stock: {(products.find(p => p.id === item.productId)?.stock || 0) + item.quantity}
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 w-full md:w-auto">
@@ -154,22 +150,12 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
                     />
                   </div>
                   <div>
-                    <FormLabel>Buying Price (KSh)</FormLabel>
+                    <FormLabel>Unit Price (KSh)</FormLabel>
                     <Input
                       type="number"
                       step="0.01"
-                      value={item.buyingPrice}
-                      onChange={(e) => updateItemPrice(index, 'buyingPrice', e.target.value)}
-                      className="w-full md:w-32"
-                    />
-                  </div>
-                  <div>
-                    <FormLabel>Selling Price (KSh)</FormLabel>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={item.sellingPrice}
-                      onChange={(e) => updateItemPrice(index, 'sellingPrice', e.target.value)}
+                      value={item.unitPrice}
+                      onChange={(e) => updateItemPrice(index, e.target.value)}
                       className="w-full md:w-32"
                     />
                   </div>
@@ -190,8 +176,12 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
           ))}
         </div>
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          Create Purchase Order
+        <div className="mt-4 text-right text-lg font-semibold">
+          Total: KSh {calculateTotal()}
+        </div>
+
+        <Button type="submit" className="w-full" disabled={isSubmitting || items.length === 0}>
+          {isSubmitting ? "Creating..." : "Create Purchase Order"}
         </Button>
       </form>
     </Form>

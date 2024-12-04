@@ -24,7 +24,6 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
       phone: "",
       address: "",
     },
-    shouldUnregister: false,
   });
 
   return (
@@ -37,7 +36,7 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
             <FormItem>
               <FormLabel>Supplier Name</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} placeholder="Enter supplier name" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -51,7 +50,7 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" {...field} />
+                <Input {...field} type="email" placeholder="Enter email address" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -65,7 +64,7 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
             <FormItem>
               <FormLabel>Phone Number</FormLabel>
               <FormControl>
-                <Input type="tel" {...field} />
+                <Input {...field} type="tel" placeholder="Enter phone number" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -79,7 +78,7 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
             <FormItem>
               <FormLabel>Address</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} placeholder="Enter address" />
               </FormControl>
               <FormMessage />
             </FormItem>
