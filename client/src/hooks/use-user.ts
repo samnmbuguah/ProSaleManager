@@ -2,17 +2,28 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { User, InsertUser } from "@db/schema";
 import { useToast } from '@/hooks/use-toast';
 
+type AuthResponse = {
+  message: string;
+  user: User;
+};
+
 type RequestResult = {
   ok: true;
+  data?: AuthResponse;
 } | {
   ok: false;
   message: string;
 };
 
+type LoginData = {
+  username: string;
+  password: string;
+};
+
 async function handleRequest(
   url: string,
   method: string,
-  body?: InsertUser
+  body?: LoginData | InsertUser
 ): Promise<RequestResult> {
   try {
     const response = await fetch(url, {
@@ -31,7 +42,8 @@ async function handleRequest(
       return { ok: false, message };
     }
 
-    return { ok: true };
+    const data = await response.json();
+    return { ok: true, data };
   } catch (e: any) {
     return { ok: false, message: e.toString() };
   }
@@ -69,16 +81,18 @@ export function useUser() {
   });
 
   const loginMutation = useMutation({
-    mutationFn: (userData: InsertUser) => handleRequest('/api/login', 'POST', userData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+    mutationFn: (userData: LoginData) => handleRequest('/api/login', 'POST', userData),
+    onSuccess: (result) => {
+      if (result.ok && result.data) {
+        queryClient.setQueryData(['user'], result.data.user);
+      }
     },
   });
 
   const logoutMutation = useMutation({
     mutationFn: () => handleRequest('/api/logout', 'POST'),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+      queryClient.setQueryData(['user'], null);
       toast({
         title: "Logged out",
         description: "You have been logged out successfully",
@@ -88,8 +102,10 @@ export function useUser() {
 
   const registerMutation = useMutation({
     mutationFn: (userData: InsertUser) => handleRequest('/api/register', 'POST', userData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] });
+    onSuccess: (result) => {
+      if (result.ok && result.data) {
+        queryClient.setQueryData(['user'], result.data.user);
+      }
     },
   });
 
