@@ -2,24 +2,58 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Customer, InsertCustomer } from '@db/schema';
 import { useToast } from '@/hooks/use-toast';
 
+interface APIError {
+  error: string;
+  details?: string;
+}
+
+async function fetchWithRetry(url: string, options?: RequestInit, retries = 3): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok || response.status === 401) {
+        return response;
+      }
+      console.warn(`Attempt ${i + 1} failed for ${url}`);
+      await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(2, i), 5000)));
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      console.warn(`Attempt ${i + 1} failed for ${url}:`, error);
+    }
+  }
+  throw new Error(`Failed after ${retries} retries`);
+}
+
 export function useCustomers() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: customers, isLoading, error } = useQuery<Customer[]>({
+  const { data: customers, isLoading, error } = useQuery<Customer[], Error>({
     queryKey: ['customers'],
     queryFn: async () => {
-      const res = await fetch('/api/customers');
-      if (!res.ok) {
-        if (res.status === 401) {
-          throw new Error('Please login to view customers');
+      try {
+        console.log('[Customers] Fetching customers data');
+        const res = await fetchWithRetry('/api/customers');
+        
+        if (!res.ok) {
+          if (res.status === 401) {
+            throw new Error('Please login to view customers');
+          }
+          const errorData: APIError = await res.json();
+          throw new Error(errorData.error || 'Failed to fetch customers');
         }
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to fetch customers');
+        
+        const data = await res.json();
+        console.log('[Customers] Successfully fetched customers:', data.length);
+        return data;
+      } catch (error) {
+        console.error('[Customers] Error fetching customers:', error);
+        throw error;
       }
-      return res.json();
     },
     initialData: [],
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 5000),
   });
 
   const createCustomerMutation = useMutation<Customer, Error, InsertCustomer>({
