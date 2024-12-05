@@ -60,17 +60,40 @@ export async function createDatabaseBackup(): Promise<BackupResult> {
 
 // Initialize backup schedule
 export function initializeBackupSchedule() {
-  // Schedule backup every 24 hours
   const BACKUP_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+  const RETRY_INTERVAL = 30 * 60 * 1000; // 30 minutes in milliseconds
+  let retryCount = 0;
+  let lastBackupAttempt = 0;
   
   async function scheduleBackup() {
     try {
+      console.log('[Backup] Starting scheduled backup...');
       const result = await createDatabaseBackup();
-      if (!result.success) {
+      
+      if (result.success) {
+        console.log('[Backup] Scheduled backup completed successfully:', result.filename);
+        retryCount = 0;
+        lastBackupAttempt = Date.now();
+      } else {
         console.error('[Backup] Scheduled backup failed:', result.error);
+        // Implement retry logic
+        if (retryCount < 3) {
+          retryCount++;
+          console.log(`[Backup] Scheduling retry attempt ${retryCount} in 30 minutes...`);
+          setTimeout(scheduleBackup, RETRY_INTERVAL);
+        } else {
+          console.error('[Backup] Maximum retry attempts reached. Will try again in next scheduled backup.');
+          retryCount = 0;
+        }
       }
     } catch (error) {
       console.error('[Backup] Error in backup schedule:', error);
+      // Implement retry logic for unexpected errors
+      if (retryCount < 3) {
+        retryCount++;
+        console.log(`[Backup] Scheduling retry attempt ${retryCount} in 30 minutes due to error...`);
+        setTimeout(scheduleBackup, RETRY_INTERVAL);
+      }
     }
   }
 
@@ -78,5 +101,11 @@ export function initializeBackupSchedule() {
   scheduleBackup();
   
   // Schedule subsequent backups
-  setInterval(scheduleBackup, BACKUP_INTERVAL);
+  setInterval(() => {
+    const timeSinceLastBackup = Date.now() - lastBackupAttempt;
+    // Only attempt new backup if at least 12 hours have passed since last attempt
+    if (timeSinceLastBackup >= BACKUP_INTERVAL / 2) {
+      scheduleBackup();
+    }
+  }, BACKUP_INTERVAL);
 }
