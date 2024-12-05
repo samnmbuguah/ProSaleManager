@@ -19,32 +19,84 @@ const metrics = {
     totalTime: number,
     errors: number,
     lastMinuteCalls: number[],
+    statusCodes: Record<number, number>,
   }>(),
-  clientErrors: [] as { timestamp: Date, error: string, component: string }[]
+  clientErrors: [] as { timestamp: Date, error: string, component: string }[],
+  systemMetrics: {
+    lastCheck: Date.now(),
+    cpuUsage: process.cpuUsage(),
+    memoryUsage: process.memoryUsage(),
+    uptime: process.uptime(),
+  },
+  databaseStatus: {
+    isConnected: true,
+    lastCheck: Date.now(),
+    responseTime: 0,
+  }
 };
+
+// Update system metrics every minute
+setInterval(() => {
+  metrics.systemMetrics = {
+    lastCheck: Date.now(),
+    cpuUsage: process.cpuUsage(),
+    memoryUsage: process.memoryUsage(),
+    uptime: process.uptime(),
+  };
+}, 60000);
+
+// Check database connection every 30 seconds
+setInterval(async () => {
+  const start = Date.now();
+  try {
+    await db.execute(sql`SELECT 1`);
+    metrics.databaseStatus = {
+      isConnected: true,
+      lastCheck: Date.now(),
+      responseTime: Date.now() - start,
+    };
+  } catch (error) {
+    metrics.databaseStatus = {
+      isConnected: false,
+      lastCheck: Date.now(),
+      responseTime: Date.now() - start,
+    };
+    console.error('Database connection check failed:', error);
+  }
+}, 30000);
 
 // Initialize rate limiting
 const RATE_LIMIT_WINDOW = 60000; // 1 minute
 const RATE_LIMIT_MAX_CALLS = 100; // Max calls per minute
 
-function updateEndpointMetrics(path: string, duration: number, isError: boolean) {
+function updateEndpointMetrics(path: string, duration: number, isError: boolean, statusCode: number) {
   const now = Date.now();
   const metric = metrics.endpointMetrics.get(path) || {
     count: 0,
     totalTime: 0,
     errors: 0,
     lastMinuteCalls: [],
+    statusCodes: {},
   };
 
   metric.count++;
   metric.totalTime += duration;
   if (isError) metric.errors++;
 
+  // Update status code counts
+  metric.statusCodes[statusCode] = (metric.statusCodes[statusCode] || 0) + 1;
+
   // Update rate limiting data
   metric.lastMinuteCalls = [
     ...metric.lastMinuteCalls.filter(time => now - time < RATE_LIMIT_WINDOW),
     now
   ];
+
+  // Calculate and log if response time is too high
+  const avgResponseTime = metric.totalTime / metric.count;
+  if (duration > avgResponseTime * 2) {
+    console.warn(`[Health Monitor] Slow response detected for ${path}: ${duration}ms (avg: ${avgResponseTime.toFixed(2)}ms)`);
+  }
 
   metrics.endpointMetrics.set(path, metric);
 }
@@ -84,8 +136,10 @@ setupAuth(app);
 // Health monitoring endpoint
 app.get("/api/health", async (req, res) => {
   try {
-    // Check database connection
+    // Quick database connection check
+    const dbCheckStart = Date.now();
     await db.execute(sql`SELECT 1`);
+    const dbCheckDuration = Date.now() - dbCheckStart;
     
     const averageResponseTime = metrics.requestCount > 0 
       ? metrics.responseTimeTotal / metrics.requestCount 
@@ -99,6 +153,8 @@ app.get("/api/health", async (req, res) => {
           requests: metric.count,
           averageResponseTime: metric.count > 0 ? metric.totalTime / metric.count : 0,
           errors: metric.errors,
+          errorRate: metric.count > 0 ? (metric.errors / metric.count * 100).toFixed(2) + '%' : '0%',
+          statusCodes: metric.statusCodes,
           rateLimit: {
             currentRate: metric.lastMinuteCalls.length,
             limit: RATE_LIMIT_MAX_CALLS,
@@ -108,11 +164,22 @@ app.get("/api/health", async (req, res) => {
       ])
     );
 
+    // Calculate memory usage percentages
+    const memoryUsage = process.memoryUsage();
+    const totalMemory = memoryUsage.heapTotal;
+    const usedMemory = memoryUsage.heapUsed;
+    const memoryUsagePercent = ((usedMemory / totalMemory) * 100).toFixed(2);
+
     const health = {
       status: "healthy",
       timestamp: new Date().toISOString(),
       services: {
-        database: "connected",
+        database: {
+          status: metrics.databaseStatus.isConnected ? "connected" : "error",
+          responseTime: `${metrics.databaseStatus.responseTime}ms`,
+          lastCheck: new Date(metrics.databaseStatus.lastCheck).toISOString(),
+          currentCheckTime: `${dbCheckDuration}ms`
+        },
         auth: "operational",
         api: "operational"
       },
@@ -120,19 +187,40 @@ app.get("/api/health", async (req, res) => {
         requestCount: metrics.requestCount,
         averageResponseTime: Math.round(averageResponseTime),
         errorCount: metrics.errors,
+        errorRate: metrics.requestCount > 0 ? 
+          (metrics.errors / metrics.requestCount * 100).toFixed(2) + '%' : '0%',
         endpoints: endpointStats
       },
-      performance: {
-        memory: process.memoryUsage(),
-        cpu: process.cpuUsage(),
-        uptime: process.uptime(),
-        heap: process.memoryUsage().heapUsed / 1024 / 1024
+      system: {
+        memory: {
+          used: Math.round(usedMemory / 1024 / 1024) + 'MB',
+          total: Math.round(totalMemory / 1024 / 1024) + 'MB',
+          usagePercentage: memoryUsagePercent + '%',
+          rss: Math.round(memoryUsage.rss / 1024 / 1024) + 'MB'
+        },
+        cpu: {
+          user: metrics.systemMetrics.cpuUsage.user,
+          system: metrics.systemMetrics.cpuUsage.system
+        },
+        uptime: {
+          seconds: Math.floor(metrics.systemMetrics.uptime),
+          formatted: `${Math.floor(metrics.systemMetrics.uptime / 3600)}h ${Math.floor((metrics.systemMetrics.uptime % 3600) / 60)}m ${Math.floor(metrics.systemMetrics.uptime % 60)}s`
+        },
+        lastUpdate: new Date(metrics.systemMetrics.lastCheck).toISOString()
       },
       clientErrors: metrics.clientErrors.slice(-10) // Keep last 10 errors
     };
+
+    // Set response headers for monitoring
+    res.set({
+      'X-Health-Check-Time': dbCheckDuration.toString(),
+      'X-Memory-Usage': memoryUsagePercent,
+      'X-Uptime': metrics.systemMetrics.uptime.toString()
+    });
     
     res.json(health);
   } catch (error) {
+    metrics.errors++;
     const unhealthy = {
       status: "unhealthy",
       timestamp: new Date().toISOString(),
@@ -140,6 +228,11 @@ app.get("/api/health", async (req, res) => {
       metrics: {
         requestCount: metrics.requestCount,
         errorCount: metrics.errors,
+        errorRate: (metrics.errors / metrics.requestCount * 100).toFixed(2) + '%'
+      },
+      lastKnownStatus: {
+        database: metrics.databaseStatus,
+        system: metrics.systemMetrics
       }
     };
     res.status(503).json(unhealthy);
