@@ -2,6 +2,8 @@ import { Express } from "express";
 import { setupAuth } from "./auth";
 import { createDatabaseBackup } from "./db/backup";
 import { db } from "../db";
+import * as path from "path";
+import * as fs from "fs/promises";
 import { 
   products, customers, sales, saleItems, suppliers, 
   productSuppliers as productSuppliersTable, 
@@ -538,14 +540,20 @@ export function registerRoutes(app: Express) {
     try {
       const backupDir = path.join(process.cwd(), 'backups');
       const files = await fs.readdir(backupDir);
-      const backups = files
-        .filter(f => f.startsWith('backup-'))
-        .map(f => ({
+      interface BackupFile {
+        filename: string;
+        timestamp: Date;
+        size: number;
+      }
+
+      const backups: BackupFile[] = files
+        .filter((f: string) => f.startsWith('backup-'))
+        .map((f: string) => ({
           filename: f,
           timestamp: new Date(f.replace('backup-', '').replace('.sql', '').replace(/-/g, ':')),
           size: fs.statSync(path.join(backupDir, f)).size
         }))
-        .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+        .sort((a: BackupFile, b: BackupFile) => b.timestamp.getTime() - a.timestamp.getTime());
 
       res.json({
         totalBackups: backups.length,
