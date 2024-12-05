@@ -8,6 +8,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { db } from "../db";
 import { sql } from 'drizzle-orm';
 import { setupAuth } from "./auth";
+import { initializeBackupSchedule } from "./db/backup";
 
 // Monitoring metrics
 const metrics = {
@@ -419,6 +420,8 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   const PORT = process.env.PORT || 5000;
   server.listen(Number(PORT), "0.0.0.0", () => {
     log(`serving on port ${PORT}`);
+    // Initialize database backup schedule
+    initializeBackupSchedule();
   }).on('error', (error) => {
     console.error('Error starting server:', error);
     process.exit(1);
