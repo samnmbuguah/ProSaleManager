@@ -33,7 +33,7 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
         )}
         
         <div className="space-y-2">
-          {receipt.items.map((item, index) => (
+          {receipt.items.map((item: { name: string; quantity: number; unitPrice: number; total: number }, index: number) => (
             <div key={index} className="flex justify-between text-sm">
               <div>
                 <span>{item.quantity}x </span>
@@ -65,7 +65,7 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
             size="sm"
             onClick={() => onSend('whatsapp')}
           >
-            <WhatsappIcon className="w-4 h-4 mr-2" />
+            <FaWhatsapp className="w-4 h-4 mr-2" />
             WhatsApp
           </Button>
           <Button
