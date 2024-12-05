@@ -26,6 +26,12 @@ const metrics = {
     lastCheck: Date.now(),
     cpuUsage: process.cpuUsage(),
     memoryUsage: process.memoryUsage(),
+    memoryLeakMetrics: {
+      lastHeapUsed: 0,
+      heapGrowthRate: 0,
+      consecutiveIncreases: 0,
+    },
+    cpuLoadHistory: [] as Array<{timestamp: number, load: number}>,
     uptime: process.uptime(),
   },
   databaseStatus: {
@@ -37,10 +43,55 @@ const metrics = {
 
 // Update system metrics every minute
 setInterval(() => {
+  const currentMemory = process.memoryUsage();
+  const lastHeapUsed = metrics.systemMetrics.memoryLeakMetrics.lastHeapUsed;
+  const heapUsed = currentMemory.heapUsed;
+  
+  // Calculate heap growth rate
+  const heapGrowthRate = lastHeapUsed ? ((heapUsed - lastHeapUsed) / lastHeapUsed) * 100 : 0;
+  
+  // Track consecutive heap increases for memory leak detection
+  const consecutiveIncreases = heapGrowthRate > 5 ? 
+    metrics.systemMetrics.memoryLeakMetrics.consecutiveIncreases + 1 : 0;
+
+  // CPU load tracking
+  const cpuUsage = process.cpuUsage();
+  const totalCPUTime = cpuUsage.user + cpuUsage.system;
+  const cpuLoad = totalCPUTime / (60 * 1000 * 1000); // Convert to percentage of the last minute
+
+  // Keep last 60 minutes of CPU history
+  const cpuLoadHistory = [
+    ...metrics.systemMetrics.cpuLoadHistory.slice(-59),
+    { timestamp: Date.now(), load: cpuLoad }
+  ];
+
+  // Alert on potential memory leak
+  if (consecutiveIncreases >= 5) {
+    console.warn('[Health Monitor] Potential memory leak detected:', {
+      heapGrowthRate: `${heapGrowthRate.toFixed(2)}%`,
+      consecutiveIncreases,
+      heapUsed: `${(heapUsed / 1024 / 1024).toFixed(2)}MB`
+    });
+  }
+
+  // Alert on high CPU usage
+  if (cpuLoad > 80) {
+    console.warn('[Health Monitor] High CPU usage detected:', {
+      cpuLoad: `${cpuLoad.toFixed(2)}%`,
+      timestamp: new Date().toISOString()
+    });
+  }
+
   metrics.systemMetrics = {
     lastCheck: Date.now(),
-    cpuUsage: process.cpuUsage(),
-    memoryUsage: process.memoryUsage(),
+    cpuUsage,
+    memoryUsage: currentMemory,
+    memoryLeakMetrics: {
+      lastHeapUsed: heapUsed,
+      heapGrowthRate,
+      consecutiveIncreases,
+    },
+    cpuLoadHistory,
     uptime: process.uptime(),
   };
 }, 60000);
@@ -92,10 +143,29 @@ function updateEndpointMetrics(path: string, duration: number, isError: boolean,
     now
   ];
 
-  // Calculate and log if response time is too high
+  // Enhanced response time monitoring
   const avgResponseTime = metric.totalTime / metric.count;
-  if (duration > avgResponseTime * 2) {
-    console.warn(`[Health Monitor] Slow response detected for ${path}: ${duration}ms (avg: ${avgResponseTime.toFixed(2)}ms)`);
+  const responseTimeThreshold = Math.max(avgResponseTime * 2, 1000); // At least 1 second
+  
+  if (duration > responseTimeThreshold) {
+    console.warn('[Health Monitor] Slow response detected:', {
+      path,
+      duration: `${duration}ms`,
+      average: `${avgResponseTime.toFixed(2)}ms`,
+      threshold: `${responseTimeThreshold}ms`,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Add extra monitoring for very slow responses
+    if (duration > responseTimeThreshold * 2) {
+      console.error('[Health Monitor] Critical response time:', {
+        path,
+        duration: `${duration}ms`,
+        average: `${avgResponseTime.toFixed(2)}ms`,
+        impact: `${((duration - avgResponseTime) / avgResponseTime * 100).toFixed(2)}% slower than average`,
+        timestamp: new Date().toISOString()
+      });
+    }
   }
 
   metrics.endpointMetrics.set(path, metric);
@@ -279,7 +349,7 @@ app.use((req, res, next) => {
     }
 
     if (path.startsWith("/api")) {
-      updateEndpointMetrics(path, duration, isError);
+      updateEndpointMetrics(path, duration, isError, res.statusCode);
       
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
