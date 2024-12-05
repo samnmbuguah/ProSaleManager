@@ -546,14 +546,18 @@ export function registerRoutes(app: Express) {
         size: number;
       }
 
-      const backups: BackupFile[] = files
-        .filter((f: string) => f.startsWith('backup-'))
-        .map((f: string) => ({
-          filename: f,
-          timestamp: new Date(f.replace('backup-', '').replace('.sql', '').replace(/-/g, ':')),
-          size: fs.statSync(path.join(backupDir, f)).size
-        }))
-        .sort((a: BackupFile, b: BackupFile) => b.timestamp.getTime() - a.timestamp.getTime());
+      const backupFiles = files.filter((f: string) => f.startsWith('backup-'));
+      const backups: BackupFile[] = await Promise.all(
+        backupFiles.map(async (f: string) => {
+          const stats = await fs.stat(path.join(backupDir, f));
+          return {
+            filename: f,
+            timestamp: new Date(f.replace('backup-', '').replace('.sql', '').replace(/-/g, ':')),
+            size: stats.size
+          };
+        })
+      );
+      backups.sort((a: BackupFile, b: BackupFile) => b.timestamp.getTime() - a.timestamp.getTime());
 
       res.json({
         totalBackups: backups.length,

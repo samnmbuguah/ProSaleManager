@@ -18,7 +18,7 @@ interface SalePayload {
   paymentMethod: string;
 }
 
-interface ReceiptData {
+export interface ReceiptData {
   id: number;
   items: {
     name: string;
