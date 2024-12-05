@@ -1,5 +1,6 @@
 import { Express } from "express";
 import { setupAuth } from "./auth";
+import { createDatabaseBackup } from "./db/backup";
 import { db } from "../db";
 import { 
   products, customers, sales, saleItems, suppliers, 
@@ -516,6 +517,46 @@ export function registerRoutes(app: Express) {
   // Update sales endpoint to handle loyalty points
   const calculateLoyaltyPoints = (total: number) => Math.floor(total / 100); // 1 point per 100 spent
 
+  // Backup endpoints
+  app.post("/api/backup", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const result = await createDatabaseBackup();
+      if (result.success) {
+        res.json({ message: "Backup created successfully", ...result });
+      } else {
+        res.status(500).json({ error: "Backup failed", ...result });
+      }
+    } catch (error) {
+      console.error('Manual backup error:', error);
+      res.status(500).json({ error: "Failed to create backup" });
+    }
+  });
+
+  app.get("/api/backup/status", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const backupDir = path.join(process.cwd(), 'backups');
+      const files = await fs.readdir(backupDir);
+      const backups = files
+        .filter(f => f.startsWith('backup-'))
+        .map(f => ({
+          filename: f,
+          timestamp: new Date(f.replace('backup-', '').replace('.sql', '').replace(/-/g, ':')),
+          size: fs.statSync(path.join(backupDir, f)).size
+        }))
+        .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
+      res.json({
+        totalBackups: backups.length,
+        latestBackup: backups[0] || null,
+        backups: backups
+      });
+    } catch (error) {
+      console.error('Backup status check error:', error);
+      res.status(500).json({ error: "Failed to get backup status" });
+    }
+  });
   });
 
   // Demo data seeding endpoint
