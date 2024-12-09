@@ -31,7 +31,7 @@ export function Cart({ items, onUpdateQuantity, onCheckout, total }: CartProps) 
             <div>
               <div className="font-medium">{item.name}</div>
               <div className="text-sm text-muted-foreground">
-                KSh {Number(item.sellingPrice).toFixed(2)} each
+                KSh {Number(item.selectedUnitPrice.sellingPrice).toFixed(2)} per {item.selectedUnitPrice.quantity} {item.selectedUnitPrice.unitType}
               </div>
             </div>
             
