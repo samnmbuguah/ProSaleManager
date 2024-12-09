@@ -85,10 +85,16 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
           </div>
           <div className="text-sm text-muted-foreground">
             Paid via {receipt.paymentMethod}
-            {receipt.paymentMethod.toLowerCase() === "cash" && typeof receipt.cashAmount === 'number' && (
+            {receipt.paymentMethod.toLowerCase() === "cash" && receipt.cashAmount && (
               <div className="space-y-1 mt-1">
-                <div>Amount Received: {formatCurrency(receipt.cashAmount)}</div>
-                <div>Change: {formatCurrency(receipt.cashAmount - receipt.total)}</div>
+                <div className="flex justify-between">
+                  <span>Amount Received:</span>
+                  <span>{formatCurrency(receipt.cashAmount)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Change:</span>
+                  <span>{formatCurrency(Number(receipt.cashAmount) - receipt.total)}</span>
+                </div>
               </div>
             )}
           </div>
