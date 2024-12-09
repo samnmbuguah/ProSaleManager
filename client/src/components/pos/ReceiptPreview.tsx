@@ -5,7 +5,6 @@ import { MessageSquare } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import type { ReceiptData } from "@/hooks/use-pos";
 import { useReceiptSettings } from "@/lib/receipt-settings";
-import { QRCodeSVG } from "qrcode.react";
 
 interface ReceiptPreviewProps {
   receipt: ReceiptData;
@@ -106,16 +105,6 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
 
         <div className="text-center mt-4 text-muted-foreground">
           {settings.thankYouMessage}
-        </div>
-        
-        <div className="flex justify-center mt-4">
-          <QRCodeSVG
-            value={`${window.location.origin}/receipts/${receipt.transactionId}`}
-            size={128}
-            level="H"
-            includeMargin
-            className="bg-white p-2 rounded"
-          />
         </div>
       </CardContent>
       
