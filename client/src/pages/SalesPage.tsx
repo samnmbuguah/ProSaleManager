@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ReceiptSettings } from "@/components/pos/ReceiptSettings";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import {
@@ -125,6 +126,20 @@ export function SalesPage() {
     <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Sales History</h1>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline">
+              <Receipt className="w-4 h-4 mr-2" />
+              Receipt Settings
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Customize Receipt</DialogTitle>
+            </DialogHeader>
+            <ReceiptSettings />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {isLoading ? (

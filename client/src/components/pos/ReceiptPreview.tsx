@@ -12,13 +12,31 @@ interface ReceiptPreviewProps {
 }
 
 export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps) {
-  const hasPhone = receipt.customer?.phone;
+  const { settings } = useReceiptSettings();
+  const fontSize = settings.fontSize === 'small' ? 'text-sm' : 
+                  settings.fontSize === 'large' ? 'text-lg' : 'text-base';
   
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className={`w-full ${settings.paperSize === 'thermal' ? 'max-w-[302px]' : 'max-w-md'} mx-auto ${fontSize}`}>
       <CardHeader>
-        <CardTitle className="text-center">Sales Receipt</CardTitle>
-        <div className="text-sm text-center text-muted-foreground">
+        <CardTitle className="text-center">{settings.businessName}</CardTitle>
+        {settings.address && (
+          <div className="text-center text-muted-foreground">
+            <p>{settings.address}</p>
+          </div>
+        )}
+        {(settings.phone || settings.email) && (
+          <div className="text-center text-muted-foreground">
+            {settings.phone && <p>Tel: {settings.phone}</p>}
+            {settings.email && <p>Email: {settings.email}</p>}
+          </div>
+        )}
+        {settings.website && (
+          <div className="text-center text-muted-foreground">
+            <p>{settings.website}</p>
+          </div>
+        )}
+        <div className="text-center text-muted-foreground mt-2">
           <p>Transaction ID: {receipt.transactionId}</p>
           <p>{new Date(receipt.timestamp).toLocaleString()}</p>
         </div>
@@ -55,6 +73,10 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
           <div className="text-sm text-muted-foreground">
             Paid via {receipt.paymentMethod}
           </div>
+        </div>
+
+        <div className="text-center mt-4 text-muted-foreground">
+          {settings.thankYouMessage}
         </div>
       </CardContent>
       
