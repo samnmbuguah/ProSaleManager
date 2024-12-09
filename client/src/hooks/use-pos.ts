@@ -35,6 +35,11 @@ export interface ReceiptData {
   paymentMethod: string;
   timestamp: string;
   transactionId: string;
+  receiptStatus?: {
+    sms?: boolean;
+    whatsapp?: boolean;
+    lastSentAt?: string;
+  };
 }
 
 export function usePos() {
@@ -76,6 +81,11 @@ export function usePos() {
           }
           
           receipt = await receiptResponse.json();
+          // Add receipt status tracking
+          receipt.receiptStatus = {
+            sms: false,
+            whatsapp: false,
+          };
           break;
         } catch (error) {
           lastError = error;
@@ -90,6 +100,10 @@ export function usePos() {
               paymentMethod: saleData.paymentMethod,
               timestamp: saleData.createdAt,
               transactionId: `TXN-${saleData.id}`,
+              receiptStatus: {
+                sms: false,
+                whatsapp: false,
+              },
             };
           } else {
             // Wait for 1 second before retrying
