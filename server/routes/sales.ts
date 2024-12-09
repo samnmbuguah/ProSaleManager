@@ -293,4 +293,69 @@ Transaction ID: ${sale[0].id}`;
   }
 });
 
+// Get sale receipt
+router.get("/:id/receipt", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get sale details with customer info
+    const [sale] = await db
+      .select({
+        id: sales.id,
+        total: sales.total,
+        paymentMethod: sales.paymentMethod,
+        createdAt: sales.createdAt,
+        customer: {
+          name: customers.name,
+          phone: customers.phone,
+          email: customers.email,
+        }
+      })
+      .from(sales)
+      .leftJoin(customers, eq(sales.customerId, customers.id))
+      .where(eq(sales.id, parseInt(id)))
+      .limit(1);
+
+    if (!sale) {
+      return res.status(404).json({ error: "Sale not found" });
+    }
+
+    // Get sale items with product details
+    const items = await db
+      .select({
+        name: products.name,
+        quantity: saleItems.quantity,
+        unitPrice: saleItems.price,
+        total: sql<string>`(${saleItems.quantity} * ${saleItems.price})::text`,
+      })
+      .from(saleItems)
+      .leftJoin(products, eq(saleItems.productId, products.id))
+      .where(eq(saleItems.saleId, parseInt(id)));
+
+    // Format receipt data
+    const receipt = {
+      id: sale.id,
+      items: items.map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        total: item.total,
+      })),
+      customer: sale.customer.name ? {
+        name: sale.customer.name,
+        phone: sale.customer.phone,
+        email: sale.customer.email,
+      } : undefined,
+      total: sale.total,
+      paymentMethod: sale.paymentMethod,
+      timestamp: sale.createdAt,
+      transactionId: `TXN-${sale.id}`,
+    };
+
+    res.json(receipt);
+  } catch (error) {
+    console.error("Error generating receipt:", error);
+    res.status(500).json({ error: "Failed to generate receipt" });
+  }
+});
 export default router; 

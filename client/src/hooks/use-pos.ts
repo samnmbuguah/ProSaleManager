@@ -56,19 +56,37 @@ export function usePos() {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to process sale');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to process sale');
       }
       
       const { id: saleId } = await response.json();
       
-      // Fetch receipt data
-      const receiptResponse = await fetch(`/api/sales/${saleId}/receipt`);
-      if (!receiptResponse.ok) {
-        throw new Error('Failed to generate receipt');
+      // Fetch receipt data with retries
+      let retries = 3;
+      let receipt;
+      
+      while (retries > 0) {
+        try {
+          const receiptResponse = await fetch(`/api/sales/${saleId}/receipt`);
+          if (!receiptResponse.ok) {
+            const errorData = await receiptResponse.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to generate receipt');
+          }
+          
+          receipt = await receiptResponse.json();
+          break;
+        } catch (error) {
+          retries--;
+          if (retries === 0) {
+            throw error;
+          }
+          // Wait for 1 second before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
       
-      const receipt = await receiptResponse.json();
-      return receipt;
+      return { sale: { id: saleId }, receipt };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
