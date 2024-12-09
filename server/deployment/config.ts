@@ -1,25 +1,156 @@
 import { db } from "../../db";
 import { sql } from "drizzle-orm";
 
+interface DeploymentMetrics {
+  duration: number;
+  successfulStages: number;
+  failedStages: number;
+}
+
 interface DeploymentStatus {
   status: 'success' | 'failed' | 'in_progress';
   timestamp: Date;
   error?: string;
   version: string;
+  metrics?: DeploymentMetrics;
 }
 
-// Track deployment status
+interface DeploymentConfig {
+  enableProgressiveRollout: boolean;
+  backupBeforeDeployment: boolean;
+  healthCheckTimeout: number;
+  requiredServices: string[];
+  minHealthyDuration: number;
+}
+
+const defaultConfig: DeploymentConfig = {
+  enableProgressiveRollout: true,
+  backupBeforeDeployment: true,
+  healthCheckTimeout: 30000,
+  requiredServices: ['database', 'api', 'auth'],
+  minHealthyDuration: 5000,
+};
+
+// Deployment metrics storage
+const deploymentHistory: {
+  version: string;
+  timestamp: Date;
+  duration: number;
+  status: string;
+  error?: string;
+}[] = [];
+
+// Environment validation rules
+const envValidationRules = {
+  DATABASE_URL: {
+    required: true,
+    validate: (value: string) => value.includes('postgresql://'),
+  },
+  PORT: {
+    required: true,
+    validate: (value: string) => !isNaN(Number(value)),
+    default: '5000',
+  },
+  NODE_ENV: {
+    required: false,
+    validate: (value: string) => ['development', 'production'].includes(value),
+    default: 'development',
+  },
+};
+
+// Track deployment status with enhanced logging and metrics
 export async function updateDeploymentStatus(status: DeploymentStatus) {
   try {
-    // Log deployment status
+    // Log deployment status with detailed information
     console.log(`[Deployment] Status: ${status.status}, Version: ${status.version}`);
     console.log(`[Deployment] Timestamp: ${status.timestamp}`);
+    
+    if (status.metrics) {
+      console.log(`[Deployment] Metrics:
+        Duration: ${status.metrics.duration}ms
+        Successful Stages: ${status.metrics.successfulStages}
+        Failed Stages: ${status.metrics.failedStages}
+      `);
+    }
+
     if (status.error) {
       console.error(`[Deployment] Error: ${status.error}`);
+    }
+
+    // Store deployment history
+    deploymentHistory.push({
+      version: status.version,
+      timestamp: status.timestamp,
+      duration: status.metrics?.duration || 0,
+      status: status.status,
+      error: status.error,
+    });
+
+    // Keep only last 10 deployments in history
+    if (deploymentHistory.length > 10) {
+      deploymentHistory.shift();
     }
   } catch (error) {
     console.error('Failed to update deployment status:', error);
   }
+}
+
+// Enhanced environment variable validation
+export function validateEnvironment() {
+  const issues: string[] = [];
+  const warnings: string[] = [];
+
+  for (const [key, rules] of Object.entries(envValidationRules)) {
+    const value = process.env[key];
+
+    if (!value && rules.required) {
+      if (rules.default) {
+        process.env[key] = rules.default;
+        warnings.push(`${key} not set, using default: ${rules.default}`);
+      } else {
+        issues.push(`Missing required environment variable: ${key}`);
+      }
+      continue;
+    }
+
+    if (value && rules.validate && !rules.validate(value)) {
+      issues.push(`Invalid value for ${key}`);
+    }
+  }
+
+  warnings.forEach(warning => console.warn('[Config] Warning:', warning));
+
+  if (issues.length > 0) {
+    throw new Error(`Environment validation failed:\n${issues.join('\n')}`);
+  }
+}
+
+// Get deployment configuration
+export function getDeploymentConfig(): DeploymentConfig {
+  // You could load this from a config file or environment variables
+  return defaultConfig;
+}
+
+// Get deployment metrics
+export function getDeploymentMetrics() {
+  return {
+    totalDeployments: deploymentHistory.length,
+    successRate: calculateSuccessRate(),
+    averageDuration: calculateAverageDuration(),
+    recentDeployments: deploymentHistory.slice(-5),
+  };
+}
+
+function calculateSuccessRate(): number {
+  if (deploymentHistory.length === 0) return 0;
+  const successful = deploymentHistory.filter(d => d.status === 'success').length;
+  return (successful / deploymentHistory.length) * 100;
+}
+
+function calculateAverageDuration(): number {
+  if (deploymentHistory.length === 0) return 0;
+  const total = deploymentHistory.reduce((sum, d) => sum + d.duration, 0);
+  return total / deploymentHistory.length;
 }
 
 // Pre-deployment checks
