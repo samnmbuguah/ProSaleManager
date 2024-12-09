@@ -4,7 +4,6 @@ import { useToast } from '@/hooks/use-toast';
 
 interface CartItem extends Product {
   quantity: number;
-  // Use sellingPrice for calculations
 }
 
 interface SalePayload {
@@ -16,6 +15,7 @@ interface SalePayload {
   customerId?: number;
   total: number;
   paymentMethod: string;
+  cashAmount?: number;
 }
 
 export interface ReceiptData {
@@ -35,6 +35,7 @@ export interface ReceiptData {
   paymentMethod: string;
   timestamp: string;
   transactionId: string;
+  cashAmount?: number;
   receiptStatus?: {
     sms?: boolean;
     whatsapp?: boolean;
@@ -94,6 +95,7 @@ export function usePos() {
         paymentMethod: data.sale.paymentMethod || 'cash',
         timestamp: data.sale.createdAt || new Date().toISOString(),
         transactionId: `TXN-${data.sale.id}`,
+        cashAmount: data.sale.cashAmount ? Number(data.sale.cashAmount) : undefined,
         receiptStatus: {
           sms: Boolean(data.receipt.receiptStatus?.sms),
           whatsapp: Boolean(data.receipt.receiptStatus?.whatsapp),
@@ -108,7 +110,6 @@ export function usePos() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      // Set receipt state for display
       if (window._setReceiptState) {
         window._setReceiptState(data.receipt);
       }
@@ -138,7 +139,6 @@ export function usePos() {
     return items.reduce((sum, item) => sum + Number(item.sellingPrice) * item.quantity, 0);
   };
 
-  // Function to send receipt via WhatsApp or SMS
   const sendReceipt = async (saleId: number, method: 'whatsapp' | 'sms', phoneNumber?: string) => {
     try {
       const response = await fetch(`/api/sales/${saleId}/receipt/send`, {
