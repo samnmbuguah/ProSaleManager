@@ -66,7 +66,6 @@ export default function InventoryPage() {
             onSubmit={async (data) => {
               const productData = {
                 name: data.name,
-                sku: data.sku,
                 buyingPrice: data.perPiece.buyingPrice,
                 sellingPrice: data.perPiece.sellingPrice,
                 stock: data.stock,
@@ -81,7 +80,7 @@ export default function InventoryPage() {
 
               if (product?.id) {
                 // Insert SKU pricing records
-                await fetch('/api/sku-pricing', {
+                await fetch('/api/unit-pricing', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
