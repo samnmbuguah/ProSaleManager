@@ -180,7 +180,7 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // SKU Pricing endpoint
+  // SKU Pricing endpoints
   app.post("/api/sku-pricing", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
@@ -198,11 +198,78 @@ export function registerRoutes(app: Express) {
         sellingPrice: (pricing as SkuPricing).sellingPrice,
       }));
 
+      // Delete existing prices for this product first
+      await db.delete(skuPricing).where(eq(skuPricing.productId, productId));
+      
+      // Insert new prices
       await db.insert(skuPricing).values(skuPrices);
       res.json({ success: true });
     } catch (error) {
       console.error('Create SKU pricing error:', error);
       res.status(500).json({ error: "Failed to create SKU pricing" });
+    }
+  });
+
+  // Bulk SKU Pricing update endpoint
+  app.post("/api/sku-pricing/bulk", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const { updates } = req.body;
+      
+      interface BulkSkuPricing {
+        productId: number;
+        prices: {
+          [key: string]: {
+            buyingPrice: string;
+            sellingPrice: string;
+          }
+        }
+      }
+
+      // Validate input structure
+      if (!Array.isArray(updates)) {
+        return res.status(400).json({ error: "Updates must be an array" });
+      }
+
+      // Process each product's pricing updates
+      for (const update of updates as BulkSkuPricing[]) {
+        const { productId, prices } = update;
+        
+        const skuPrices = Object.entries(prices).map(([skuType, pricing]) => ({
+          productId,
+          skuType,
+          buyingPrice: pricing.buyingPrice,
+          sellingPrice: pricing.sellingPrice,
+        }));
+
+        // Delete existing prices for this product
+        await db.delete(skuPricing).where(eq(skuPricing.productId, productId));
+        
+        // Insert new prices
+        await db.insert(skuPricing).values(skuPrices);
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Bulk SKU pricing update error:', error);
+      res.status(500).json({ error: "Failed to update SKU pricing" });
+    }
+  });
+
+  // Get SKU Pricing for a product
+  app.get("/api/sku-pricing/:productId", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const productId = parseInt(req.params.productId);
+      const prices = await db
+        .select()
+        .from(skuPricing)
+        .where(eq(skuPricing.productId, productId));
+      
+      res.json(prices);
+    } catch (error) {
+      console.error('Fetch SKU pricing error:', error);
+      res.status(500).json({ error: "Failed to fetch SKU pricing" });
     }
   });
 
