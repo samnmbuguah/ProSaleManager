@@ -27,6 +27,7 @@ export function SaleTerminal({ children, onSendReceipt }: SaleTerminalProps) {
 
   const handleSendReceipt = async (method: 'whatsapp' | 'sms') => {
     if (receipt && onSendReceipt) {
+      // Check if we need phone number
       if (!receipt.customer?.phone && !phoneNumber) {
         setShowPhoneInput(true);
         return;
@@ -34,14 +35,18 @@ export function SaleTerminal({ children, onSendReceipt }: SaleTerminalProps) {
       
       try {
         await onSendReceipt(receipt.id, method);
-        setReceipt(prev => prev ? {
-          ...prev,
-          receiptStatus: {
-            ...prev.receiptStatus,
-            [method]: true,
-            lastSentAt: new Date().toISOString(),
-          }
-        } : null);
+        // Update receipt status but don't close the dialog
+        setReceipt(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            receiptStatus: {
+              ...prev.receiptStatus,
+              [method]: true,
+              lastSentAt: new Date().toISOString(),
+            }
+          };
+        });
       } catch (error) {
         console.error('Failed to send receipt:', error);
       }
