@@ -191,7 +191,14 @@ export type User = z.infer<typeof selectUserSchema>;
 export const insertProductSchema = createInsertSchema(products);
 export const selectProductSchema = createSelectSchema(products);
 export type InsertProduct = z.infer<typeof insertProductSchema>;
-export type Product = z.infer<typeof selectProductSchema>;
+export type Product = z.infer<typeof selectProductSchema> & {
+  defaultUnitPricing?: {
+    buyingPrice: string;
+    sellingPrice: string;
+    unitType: string;
+    quantity: number;
+  };
+};
 
 export const insertUnitPricingSchema = createInsertSchema(unitPricing);
 export const selectUnitPricingSchema = createSelectSchema(unitPricing);

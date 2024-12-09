@@ -137,7 +137,19 @@ export function usePos() {
   };
 
   const calculateTotal = (items: CartItem[]) => {
-    return items.reduce((sum, item) => sum + Number(item.sellingPrice) * item.quantity, 0);
+    return items.reduce((sum, item) => {
+      const unitPrice = Number(item.selectedUnitPrice.sellingPrice);
+      const unitsPerPrice = item.selectedUnitPrice.quantity;
+      // Calculate how many complete units we're buying
+      const completeUnits = Math.floor(item.quantity / unitsPerPrice);
+      // Calculate remaining items that don't make a complete unit
+      const remainingItems = item.quantity % unitsPerPrice;
+      // Calculate price for complete units
+      const completeUnitsPrice = completeUnits * unitPrice;
+      // Calculate price for remaining items (proportional to the unit price)
+      const remainingItemsPrice = (remainingItems / unitsPerPrice) * unitPrice;
+      return sum + completeUnitsPrice + remainingItemsPrice;
+    }, 0);
   };
 
   const sendReceipt = async (saleId: number, method: 'whatsapp' | 'sms', phoneNumber?: string) => {
