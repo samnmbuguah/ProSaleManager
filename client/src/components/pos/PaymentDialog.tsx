@@ -23,18 +23,44 @@ export function PaymentDialog({
 }: PaymentDialogProps) {
   const [selectedCustomerId, setSelectedCustomerId] = useState<number>();
   const [pointsToUse, setPointsToUse] = useState(0);
+  const [cashAmount, setCashAmount] = useState("");
+  const [showCashDialog, setShowCashDialog] = useState(false);
   const { customers, searchCustomers } = useCustomers();
   const [query, setQuery] = useState("");
   const selectedCustomer = customers?.find(c => c.id === selectedCustomerId);
 
   const handlePayment = async (method: string) => {
+    if (method === "cash") {
+      setShowCashDialog(true);
+      return;
+    }
+    
     try {
       await onComplete(method, selectedCustomerId, pointsToUse);
-      // Keep dialog open for receipt display
-      // Dialog will only close when user clicks Close or clicks outside
     } catch (error) {
       console.error('Payment error:', error);
     }
+  };
+
+  const handleCashPayment = async () => {
+    const amountReceived = parseFloat(cashAmount);
+    if (isNaN(amountReceived) || amountReceived < total - pointsToUse) {
+      return; // Invalid amount
+    }
+
+    try {
+      await onComplete("cash", selectedCustomerId, pointsToUse);
+      setShowCashDialog(false);
+      setCashAmount("");
+    } catch (error) {
+      console.error('Payment error:', error);
+    }
+  };
+
+  const getChange = () => {
+    const amountReceived = parseFloat(cashAmount);
+    if (isNaN(amountReceived)) return 0;
+    return Math.max(0, amountReceived - (total - pointsToUse));
   };
 
   const handlePointsUse = (points: number) => {
@@ -132,6 +158,62 @@ export function PaymentDialog({
             </Button>
           </div>
         </div>
+
+        {/* Cash Payment Dialog */}
+        <Dialog open={showCashDialog} onOpenChange={setShowCashDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Cash Payment</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="text-2xl font-bold text-center">
+                Total: KSh {(total - pointsToUse).toFixed(2)}
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="cashAmount" className="text-sm font-medium">
+                  Amount Received
+                </label>
+                <input
+                  id="cashAmount"
+                  type="number"
+                  min={total - pointsToUse}
+                  step="0.01"
+                  value={cashAmount}
+                  onChange={(e) => setCashAmount(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="Enter amount received"
+                />
+              </div>
+
+              {parseFloat(cashAmount) > 0 && (
+                <div className="space-y-2 p-4 rounded-lg bg-accent">
+                  <div className="flex justify-between text-lg">
+                    <span>Amount Received:</span>
+                    <span>KSh {parseFloat(cashAmount).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold">
+                    <span>Change:</span>
+                    <span>KSh {getChange().toFixed(2)}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowCashDialog(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCashPayment}
+                  disabled={parseFloat(cashAmount) < (total - pointsToUse) || isProcessing}
+                >
+                  Complete Payment
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );
