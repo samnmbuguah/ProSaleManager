@@ -1,3 +1,4 @@
+import { Router } from "express";
 import { Express } from "express";
 import { setupAuth } from "./auth";
 import { createDatabaseBackup } from "./db/backup";
@@ -14,9 +15,39 @@ import {
 } from "@db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { desc } from "drizzle-orm";
+import { gte, lte } from "drizzle-orm";
+import { startOfDay, startOfWeek, startOfMonth, startOfYear, endOfDay } from "date-fns";
+
+interface SaleItemInput {
+  productId: number;
+  quantity: number;
+  price: string | number;
+  name?: string;
+}
 
 export function registerRoutes(app: Express) {
   setupAuth(app);
+
+  const router = Router();
+
+  // Development only - Delete all sales
+  router.delete("/all", async (req, res) => {
+    if (process.env.NODE_ENV === "production") {
+      return res.status(403).json({ error: "Not allowed in production" });
+    }
+
+    try {
+      // Delete in order of dependencies
+      await db.delete(loyaltyTransactions);
+      await db.delete(saleItems);
+      await db.delete(sales);
+
+      res.json({ message: "All sales and related records deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting sales:", error);
+      res.status(500).json({ error: "Failed to delete sales" });
+    }
+  });
 
   // Suppliers API
   app.get("/api/suppliers", async (req, res) => {
@@ -426,11 +457,11 @@ export function registerRoutes(app: Express) {
       // Prepare receipt data
       const receipt = {
         id: sale.id,
-        items: items.map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          unitPrice: item.price,
-          total: (Number(item.quantity) * Number(item.price)).toString(),
+        items: items.map((item: SaleItemInput) => ({
+          name: item.name || 'Unknown Product',
+          quantity: Number(item.quantity) || 0,
+          unitPrice: Number(item.price) || 0,
+          total: ((Number(item.quantity) || 0) * (Number(item.price) || 0)).toString(),
         })),
         customer: customerData ? {
           name: customerData.name,
@@ -524,6 +555,7 @@ export function registerRoutes(app: Express) {
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch low stock report" });
     }
+  });
   // Loyalty Program endpoints
   app.get("/api/customers/:customerId/loyalty", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
@@ -610,7 +642,6 @@ export function registerRoutes(app: Express) {
       res.status(500).json({ error: "Failed to get backup status" });
     }
   });
-  });
 
   // Demo data seeding endpoint
   app.post("/api/seed-demo-data", async (req, res) => {
@@ -659,4 +690,7 @@ export function registerRoutes(app: Express) {
       res.status(500).json({ error: "Failed to add demo data" });
     }
   });
+
+  app.use("/api/sales", router); // Mount the sales router
+
 }
