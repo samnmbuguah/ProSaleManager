@@ -17,6 +17,10 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
   const fontSize = settings.fontSize === 'small' ? 'text-sm' : 
                   settings.fontSize === 'large' ? 'text-lg' : 'text-base';
   
+  if (!receipt) {
+    return null;
+  }
+
   return (
     <Card className={`w-full ${settings.paperSize === 'thermal' ? 'max-w-[302px]' : 'max-w-md'} mx-auto ${fontSize}`}>
       <CardHeader>

@@ -10,18 +10,20 @@ export function formatCurrency(amount: string | number | null | undefined) {
     return 'KSh 0.00';
   }
   
-  let numAmount: number;
-  if (typeof amount === 'string') {
-    numAmount = parseFloat(amount) || 0;
-  } else {
-    numAmount = amount || 0;
-  }
-
+  let numAmount = 0;
   try {
-    return `KSh ${numAmount.toLocaleString('en-KE', {
+    if (typeof amount === 'string') {
+      numAmount = parseFloat(amount) || 0;
+    } else {
+      numAmount = amount;
+    }
+
+    return new Intl.NumberFormat('en-KE', {
+      style: 'currency',
+      currency: 'KES',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    })}`;
+    }).format(numAmount).replace('KES', 'KSh');
   } catch (error) {
     console.error('Currency formatting error:', error);
     return 'KSh 0.00';
