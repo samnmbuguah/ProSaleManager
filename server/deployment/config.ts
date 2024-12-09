@@ -41,21 +41,27 @@ const deploymentHistory: {
 }[] = [];
 
 // Environment validation rules
-const envValidationRules = {
+interface ValidationRule {
+  required: boolean;
+  validate: (value: string) => boolean;
+  default?: string;
+}
+
+const envValidationRules: Record<string, ValidationRule> = {
   DATABASE_URL: {
     required: true,
-    validate: (value: string) => value.includes('postgresql://'),
+    validate: (value: string) => value.includes('postgresql://')
   },
   PORT: {
     required: true,
     validate: (value: string) => !isNaN(Number(value)),
-    default: '5000',
+    default: '5000'
   },
   NODE_ENV: {
     required: false,
     validate: (value: string) => ['development', 'production'].includes(value),
-    default: 'development',
-  },
+    default: 'development'
+  }
 };
 
 // Track deployment status with enhanced logging and metrics
