@@ -58,26 +58,25 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
         </div>
       </CardContent>
       
-      {hasPhone && (
-        <CardFooter className="flex gap-2 justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onSend('whatsapp')}
-          >
-            <FaWhatsapp className="w-4 h-4 mr-2" />
-            WhatsApp
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onSend('sms')}
-          >
-            <MessageSquare className="w-4 h-4 mr-2" />
-            SMS
-          </Button>
-        </CardFooter>
-      )}
+      <CardFooter className="flex gap-2 justify-end">
+        <Button variant="outline" size="sm" onClick={() => onSend('whatsapp')}>
+          <FaWhatsapp className="w-4 h-4 mr-2" />
+          WhatsApp
+          {receipt.receiptStatus?.whatsapp && (
+            <span className="ml-2 text-green-500">✓</span>
+          )}
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => onSend('sms')}>
+          <MessageSquare className="w-4 h-4 mr-2" />
+          SMS
+          {receipt.receiptStatus?.sms && (
+            <span className="ml-2 text-green-500">✓</span>
+          )}
+        </Button>
+        <Button variant="outline" size="sm" onClick={onClose}>
+          Close
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
