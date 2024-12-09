@@ -29,8 +29,7 @@ export function SaleTerminal({ children, onSendReceipt }: SaleTerminalProps) {
 
   const handlePhoneSubmit = async (method: 'whatsapp' | 'sms') => {
     if (receipt && onSendReceipt) {
-      // Update receipt with phone number
-      const updatedReceipt = {
+      const updatedReceipt: ReceiptData = {
         ...receipt,
         customer: {
           ...receipt.customer,

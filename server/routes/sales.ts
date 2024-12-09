@@ -297,6 +297,10 @@ Transaction ID: ${sale[0].id}`;
 router.get("/:id/receipt", async (req, res) => {
   try {
     const { id } = req.params;
+    
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({ error: "Invalid sale ID" });
+    }
 
     // Get sale details with customer info
     const [sale] = await db
@@ -305,6 +309,7 @@ router.get("/:id/receipt", async (req, res) => {
         total: sales.total,
         paymentMethod: sales.paymentMethod,
         createdAt: sales.createdAt,
+        paymentStatus: sales.paymentStatus,
         customer: {
           name: customers.name,
           phone: customers.phone,
@@ -320,41 +325,70 @@ router.get("/:id/receipt", async (req, res) => {
       return res.status(404).json({ error: "Sale not found" });
     }
 
-    // Get sale items with product details
-    const items = await db
-      .select({
-        name: products.name,
-        quantity: saleItems.quantity,
-        unitPrice: saleItems.price,
-        total: sql<string>`(${saleItems.quantity} * ${saleItems.price})::text`,
-      })
-      .from(saleItems)
-      .leftJoin(products, eq(saleItems.productId, products.id))
-      .where(eq(saleItems.saleId, parseInt(id)));
+    if (sale.paymentStatus !== 'paid') {
+      return res.status(400).json({ error: "Cannot generate receipt for unpaid sale" });
+    }
 
-    // Format receipt data
-    const receipt = {
-      id: sale.id,
-      items: items.map(item => ({
-        name: item.name,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        total: item.total,
-      })),
-      customer: sale.customer?.name ? {
-        name: sale.customer.name,
-        phone: sale.customer.phone,
-        email: sale.customer.email,
-      } : undefined,
-      total: sale.total,
-      paymentMethod: sale.paymentMethod,
-      timestamp: sale.createdAt,
-      transactionId: `TXN-${sale.id}`,
-    };
+    try {
+      // Get sale items with product details
+      const items = await db
+        .select({
+          name: products.name,
+          quantity: saleItems.quantity,
+          unitPrice: saleItems.price,
+          total: sql<string>`(${saleItems.quantity} * ${saleItems.price})::text`,
+        })
+        .from(saleItems)
+        .leftJoin(products, eq(saleItems.productId, products.id))
+        .where(eq(saleItems.saleId, parseInt(id)));
 
-    res.json(receipt);
+      if (!items.length) {
+        return res.status(400).json({ error: "No items found for this sale" });
+      }
+
+      // Validate required fields
+      for (const item of items) {
+        if (!item.name || !item.quantity || !item.unitPrice) {
+          throw new Error("Missing required item details");
+        }
+      }
+
+      // Format receipt data
+      const receipt = {
+        id: sale.id,
+        items: items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          total: item.total,
+        })),
+        customer: sale.customer?.name ? {
+          name: sale.customer.name,
+          phone: sale.customer.phone,
+          email: sale.customer.email,
+        } : undefined,
+        total: sale.total,
+        paymentMethod: sale.paymentMethod,
+        timestamp: sale.createdAt,
+        transactionId: `TXN-${sale.id}`,
+      };
+
+      res.json(receipt);
+    } catch (itemsError) {
+      console.error("Error fetching sale items:", itemsError);
+      return res.status(500).json({ 
+        error: "Failed to generate receipt",
+        details: "Error processing sale items"
+      });
+    }
   } catch (error) {
     console.error("Error generating receipt:", error);
+    if (error instanceof Error) {
+      return res.status(500).json({ 
+        error: "Failed to generate receipt",
+        details: error.message
+      });
+    }
     res.status(500).json({ error: "Failed to generate receipt" });
   }
 });
