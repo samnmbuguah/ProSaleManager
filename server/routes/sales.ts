@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "../../db";
-import { sales, saleItems, products, customers, users, loyaltyTransactions } from "../../db/schema";
+import { sales, saleItems, products, customers, users, loyaltyTransactions, loyaltyPoints } from "../../db/schema";
 import { eq, desc, sql, and, gte, lte } from "drizzle-orm";
 import { startOfDay, startOfWeek, startOfMonth, startOfYear, endOfDay } from "date-fns";
 
@@ -85,8 +85,7 @@ router.get("/:id/items", async (req, res) => {
         id: saleItems.id,
         productId: saleItems.productId,
         quantity: saleItems.quantity,
-        unitPrice: saleItems.price,
-        total: saleItems.price,
+        price: saleItems.price,
         product: {
           name: products.name,
           sku: products.sku,
@@ -96,16 +95,166 @@ router.get("/:id/items", async (req, res) => {
       .leftJoin(products, eq(saleItems.productId, products.id))
       .where(eq(saleItems.saleId, parseInt(id)));
 
-    // Calculate total with quantity
+    // Calculate total for each item
     const itemsWithTotal = items.map(item => ({
       ...item,
-      total: (Number(item.unitPrice) * item.quantity).toString(),
+      total: (Number(item.price) * item.quantity).toString(),
     }));
 
     res.json(itemsWithTotal);
   } catch (error) {
     console.error("Error fetching sale items:", error);
     res.status(500).json({ error: "Failed to fetch sale items" });
+  }
+});
+
+// POST /api/sales - Create new sale
+router.post("/", async (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const { items, customerId, total, paymentMethod, usePoints = 0 } = req.body;
+    
+    // Create sale record
+    const [sale] = await db.insert(sales).values({
+      customerId,
+      userId: req.user!.id,
+      total,
+      paymentMethod,
+      paymentStatus: 'paid',
+    }).returning();
+
+    // Get product details for receipt
+    const productDetails = await Promise.all(
+      items.map(async (item: any) => {
+        const [product] = await db
+          .select({
+            id: products.id,
+            name: products.name,
+            sku: products.sku,
+          })
+          .from(products)
+          .where(eq(products.id, item.productId))
+          .limit(1);
+        return {
+          ...item,
+          name: product?.name || 'Unknown Product',
+          sku: product?.sku || 'N/A',
+        };
+      })
+    );
+
+    // Create sale items
+    await db.insert(saleItems).values(
+      items.map((item: any) => ({
+        saleId: sale.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+      }))
+    );
+
+    // Update product stock
+    for (const item of items) {
+      await db.update(products)
+        .set({ 
+          stock: sql`${products.stock} - ${item.quantity}`
+        })
+        .where(eq(products.id, item.productId));
+    }
+
+    // Handle loyalty points
+    if (customerId) {
+      const pointsToAward = Math.floor(Number(total) / 100);
+      const [existingPoints] = await db
+        .select()
+        .from(loyaltyPoints)
+        .where(eq(loyaltyPoints.customerId, customerId));
+
+      if (existingPoints) {
+        await db
+          .update(loyaltyPoints)
+          .set({ 
+            points: sql`${loyaltyPoints.points} + ${pointsToAward} - ${usePoints}`,
+            updatedAt: new Date()
+          })
+          .where(eq(loyaltyPoints.customerId, customerId));
+      } else {
+        await db
+          .insert(loyaltyPoints)
+          .values({
+            customerId,
+            points: pointsToAward,
+          });
+      }
+
+      await db.insert(loyaltyTransactions).values({
+        customerId,
+        saleId: sale.id,
+        points: pointsToAward,
+        type: 'earn',
+      });
+
+      if (usePoints > 0) {
+        await db.insert(loyaltyTransactions).values({
+          customerId,
+          saleId: sale.id,
+          points: -usePoints,
+          type: 'redeem',
+        });
+      }
+    }
+
+    // Fetch customer data if customerId exists
+    let customerData;
+    if (customerId) {
+      const [customer] = await db
+        .select()
+        .from(customers)
+        .where(eq(customers.id, customerId))
+        .limit(1);
+      customerData = customer;
+    }
+
+    // Prepare receipt data with proper type handling
+    const receipt = {
+      id: sale.id,
+      items: productDetails.map(item => ({
+        name: item.name,
+        quantity: Number(item.quantity),
+        unitPrice: parseFloat(item.price),
+        total: (Number(item.quantity) * parseFloat(item.price)),
+      })),
+      customer: customerData ? {
+        name: customerData.name,
+        phone: customerData.phone,
+        email: customerData.email,
+      } : undefined,
+      total: parseFloat(total),
+      paymentMethod,
+      timestamp: sale.createdAt.toISOString(),
+      transactionId: `TXN-${sale.id}`,
+      receiptStatus: {
+        sms: false,
+        whatsapp: false,
+      },
+    };
+
+    res.json({
+      sale: {
+        id: sale.id,
+        customerId: sale.customerId,
+        userId: sale.userId,
+        total: sale.total,
+        paymentMethod: sale.paymentMethod,
+        paymentStatus: sale.paymentStatus,
+        createdAt: sale.createdAt,
+        updatedAt: sale.updatedAt,
+      },
+      receipt
+    });
+  } catch (error) {
+    console.error('Sale error:', error);
+    res.status(500).json({ error: "Failed to create sale" });
   }
 });
 
@@ -168,206 +317,6 @@ router.get("/summary", async (req, res) => {
   } catch (error) {
     console.error("Error fetching sales summary:", error);
     res.status(500).json({ error: "Failed to fetch sales summary" });
-  }
-});
-
-// Get sales data by payment method and period
-router.get("/chart", async (req, res) => {
-  try {
-    const { period = 'today' } = req.query;
-    let startDate;
-    const now = new Date();
-
-    switch (period) {
-      case 'today':
-        startDate = startOfDay(now);
-        break;
-      case 'week':
-        startDate = startOfWeek(now);
-        break;
-      case 'month':
-        startDate = startOfMonth(now);
-        break;
-      case 'year':
-        startDate = startOfYear(now);
-        break;
-      default:
-        startDate = startOfDay(now);
-    }
-
-    const result = await db
-      .select({
-        date: sales.createdAt,
-        paymentMethod: sales.paymentMethod,
-        total: sql<string>`sum(${sales.total})::text`,
-      })
-      .from(sales)
-      .where(
-        and(
-          gte(sales.createdAt, startDate),
-          lte(sales.createdAt, endOfDay(now))
-        )
-      )
-      .groupBy(sales.createdAt, sales.paymentMethod)
-      .orderBy(sales.createdAt);
-
-    // Transform the data for the chart
-    const salesByDate = new Map();
-    
-    result.forEach((row) => {
-      if (!row.date) return; // Skip if date is null
-      const date = row.date.toISOString();
-      if (!salesByDate.has(date)) {
-        salesByDate.set(date, {
-          date,
-          mpesa: 0,
-          cash: 0,
-          total: 0,
-        });
-      }
-      
-      const entry = salesByDate.get(date);
-      const amount = Number(row.total) || 0;
-      
-      if (row.paymentMethod === 'mpesa') {
-        entry.mpesa = amount;
-      } else if (row.paymentMethod === 'cash') {
-        entry.cash = amount;
-      }
-      
-      entry.total = entry.mpesa + entry.cash;
-    });
-
-    res.json(Array.from(salesByDate.values()));
-  } catch (error) {
-    console.error("Error fetching sales chart data:", error);
-    res.status(500).json({ error: "Failed to fetch sales chart data" });
-  }
-});
-
-// Add receipt sending endpoint
-router.post("/:id/receipt/send", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { method } = req.body; // 'whatsapp' or 'sms'
-    
-    // Get sale details including customer phone
-    const sale = await db
-      .select({
-        id: sales.id,
-        total: sales.total,
-        customer: {
-          phone: customers.phone,
-          name: customers.name
-        }
-      })
-      .from(sales)
-      .leftJoin(customers, eq(sales.customerId, customers.id))
-      .where(eq(sales.id, parseInt(id)))
-      .limit(1);
-
-    if (!sale[0]?.customer?.phone) {
-      return res.status(400).json({ error: "Customer phone number not found" });
-    }
-
-    // Format receipt message
-    const receiptText = `Thank you for your purchase!
-Total: ${sale[0].total}
-Transaction ID: ${sale[0].id}`;
-
-    // Send via selected method
-    if (method === 'whatsapp') {
-      // TODO: Integrate with WhatsApp Business API
-      // For now, simulate success
-      console.log('Sending via WhatsApp:', receiptText);
-    } else if (method === 'sms') {
-      // TODO: Integrate with SMS API
-      // For now, simulate success
-      console.log('Sending via SMS:', receiptText);
-    }
-
-    res.json({ success: true, message: `Receipt sent via ${method}` });
-  } catch (error) {
-    console.error('Error sending receipt:', error);
-    res.status(500).json({ error: "Failed to send receipt" });
-  }
-});
-
-// Get sale receipt
-router.get("/:id/receipt", async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    if (!id || isNaN(parseInt(id))) {
-      return res.status(400).json({ error: "Invalid sale ID" });
-    }
-
-    // Get sale details with customer info
-    const [sale] = await db
-      .select({
-        id: sales.id,
-        total: sales.total,
-        paymentMethod: sales.paymentMethod,
-        createdAt: sales.createdAt,
-        paymentStatus: sales.paymentStatus,
-        customer: {
-          name: customers.name,
-          phone: customers.phone,
-          email: customers.email,
-        }
-      })
-      .from(sales)
-      .leftJoin(customers, eq(sales.customerId, customers.id))
-      .where(eq(sales.id, parseInt(id)))
-      .limit(1);
-
-    if (!sale) {
-      return res.status(404).json({ error: "Sale not found" });
-    }
-
-    // Get sale items with product details
-    const items = await db
-      .select({
-        name: products.name,
-        quantity: saleItems.quantity,
-        unitPrice: saleItems.price,
-        total: sql<string>`(${saleItems.quantity} * cast(${saleItems.price} as decimal))::text`,
-      })
-      .from(saleItems)
-      .leftJoin(products, eq(saleItems.productId, products.id))
-      .where(eq(saleItems.saleId, parseInt(id)));
-
-    // Format receipt data with proper type handling and error checks
-    const receipt = {
-      id: sale.id,
-      items: items.map(item => ({
-        name: item.name || 'Unknown Product',
-        quantity: Number(item.quantity) || 0,
-        unitPrice: parseFloat(item.unitPrice?.toString() || '0'),
-        total: parseFloat(item.total?.toString() || '0'),
-      })),
-      customer: sale.customer?.name ? {
-        name: sale.customer.name,
-        phone: sale.customer.phone,
-        email: sale.customer.email,
-      } : undefined,
-      total: parseFloat(sale.total?.toString() || '0'),
-      paymentMethod: sale.paymentMethod || 'cash',
-      timestamp: sale.createdAt?.toISOString() || new Date().toISOString(),
-      transactionId: `TXN-${sale.id}`,
-      receiptStatus: {
-        sms: false,
-        whatsapp: false,
-      },
-    };
-
-    res.json(receipt);
-  } catch (error) {
-    console.error("Error generating receipt:", error);
-    res.status(500).json({ 
-      error: "Failed to generate receipt",
-      details: error instanceof Error ? error.message : "Unknown error"
-    });
   }
 });
 
