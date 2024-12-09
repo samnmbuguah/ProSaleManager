@@ -25,13 +25,12 @@ export const users = pgTable("users", {
 export const products = pgTable("products", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull(),
-  buyingPrice: decimal("buying_price", { precision: 10, scale: 2 }).notNull(),
-  sellingPrice: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
   stock: integer("stock").default(0).notNull(),
   category: text("category"),
   minStock: integer("min_stock"),
   maxStock: integer("max_stock"),
   reorderPoint: integer("reorder_point"),
+  stockUnit: text("stock_unit").default("per_piece").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -40,13 +39,22 @@ export const products = pgTable("products", {
 export const unitPricing = pgTable("unit_pricing", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   productId: integer("product_id").references(() => products.id).notNull(),
-  unitType: text("unit_type").notNull(), // 'piece', 'dozen', 'box', etc.
+  unitType: text("unit_type").notNull(), // 'per_piece', 'three_piece', 'dozen'
   quantity: integer("quantity").notNull(),
   buyingPrice: decimal("buying_price", { precision: 10, scale: 2 }).notNull(),
   sellingPrice: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
+  isDefault: boolean("is_default").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+// Unit Pricing relations
+export const unitPricingRelations = relations(unitPricing, ({ one }) => ({
+  product: one(products, {
+    fields: [unitPricing.productId],
+    references: [products.id],
+  }),
+}));
 
 // Customer schema
 export const customers = pgTable("customers", {

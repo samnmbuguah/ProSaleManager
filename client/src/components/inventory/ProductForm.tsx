@@ -26,11 +26,23 @@ interface SkuPricing {
   sellingPrice: string;
 }
 
-interface ProductFormData extends Omit<InsertProduct, 'buyingPrice' | 'sellingPrice'> {
-  perPiece: SkuPricing;
-  threePiece: SkuPricing;
-  dozen: SkuPricing;
+interface UnitPricing {
+  buyingPrice: string;
+  sellingPrice: string;
+  quantity: number;
+}
+
+interface ProductFormData {
+  name: string;
+  stock: number;
+  category: string;
+  minStock: number;
+  maxStock: number;
+  reorderPoint: number;
   stockUnit: 'per_piece' | 'three_piece' | 'dozen';
+  perPiece: UnitPricing;
+  threePiece: UnitPricing;
+  dozen: UnitPricing;
 }
 
 interface ProductFormProps {
@@ -52,16 +64,15 @@ export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
   const form = useForm<ProductFormData>({
     defaultValues: {
       name: "",
-      sku: "",
       stock: 0,
       category: "Other",
       minStock: 10,
       maxStock: 100,
       reorderPoint: 20,
       stockUnit: 'per_piece',
-      perPiece: { buyingPrice: "0", sellingPrice: "0" },
-      threePiece: { buyingPrice: "0", sellingPrice: "0" },
-      dozen: { buyingPrice: "0", sellingPrice: "0" },
+      perPiece: { buyingPrice: "0", sellingPrice: "0", quantity: 1 },
+      threePiece: { buyingPrice: "0", sellingPrice: "0", quantity: 3 },
+      dozen: { buyingPrice: "0", sellingPrice: "0", quantity: 12 },
     },
   });
 
@@ -82,19 +93,7 @@ export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="sku"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>SKU</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        
 
         <FormField
           control={form.control}
