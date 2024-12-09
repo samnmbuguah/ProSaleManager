@@ -11,9 +11,16 @@ export function formatCurrency(amount: string | number | null | undefined) {
   }
   
   try {
+    // Convert string to number, removing any non-numeric characters except decimal point
     const numAmount = typeof amount === 'string' ? 
-      parseFloat(amount.replace(/[^\d.-]/g, '')) || 0 : 
-      Number(amount) || 0;
+      parseFloat(amount.replace(/[^\d.-]/g, '')) : 
+      Number(amount);
+
+    // Check if the conversion resulted in a valid number
+    if (isNaN(numAmount)) {
+      console.warn('Invalid amount for currency formatting:', amount);
+      return 'KSh 0.00';
+    }
 
     return `KSh ${numAmount.toLocaleString('en-KE', {
       minimumFractionDigits: 2,
