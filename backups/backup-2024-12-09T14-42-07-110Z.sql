@@ -549,10 +549,10 @@ COPY public.product_suppliers (id, product_id, supplier_id, cost_price, is_prefe
 --
 
 COPY public.products (id, name, sku, buying_price, selling_price, stock, category, min_stock, max_stock, reorder_point, created_at, updated_at, stock_unit) FROM stdin;
-1	New Product	44g55	57.00	78.00	-46	bra	10	100	20	2024-12-04 19:19:14.347645	2024-12-05 08:25:56.826	per_piece
-4	Ben 10 S	Pieces 	83.33	150.00	-42	boxers	10	100	20	2024-12-05 08:34:14.647455	2024-12-05 08:34:14.647455	per_piece
-3	boxers	45454	45.00	70.00	-19	boxers	10	100	20	2024-12-05 08:23:37.902187	2024-12-05 08:25:09.787	per_piece
-2	another one	ete	56.00	65.00	9	boxers	10	100	20	2024-12-04 19:20:05.897472	2024-12-04 19:20:05.897472	per_piece
+3	boxers	45454	45.00	70.00	-21	boxers	10	100	20	2024-12-05 08:23:37.902187	2024-12-05 08:25:09.787	per_piece
+4	Ben 10 S	Pieces 	83.33	150.00	-46	boxers	10	100	20	2024-12-05 08:34:14.647455	2024-12-05 08:34:14.647455	per_piece
+1	New Product	44g55	57.00	78.00	-50	bra	10	100	20	2024-12-04 19:19:14.347645	2024-12-05 08:25:56.826	per_piece
+2	another one	ete	56.00	65.00	5	boxers	10	100	20	2024-12-04 19:20:05.897472	2024-12-04 19:20:05.897472	per_piece
 \.
 
 
@@ -751,6 +751,20 @@ COPY public.sale_items (id, sale_id, product_id, quantity, price, created_at, up
 166	52	1	1	78.00	2024-12-09 13:42:47.646908	2024-12-09 13:42:47.646908
 167	52	4	1	150.00	2024-12-09 13:42:47.646908	2024-12-09 13:42:47.646908
 168	52	3	1	70.00	2024-12-09 13:42:47.646908	2024-12-09 13:42:47.646908
+169	53	4	1	150.00	2024-12-09 13:58:24.76224	2024-12-09 13:58:24.76224
+170	53	1	1	78.00	2024-12-09 13:58:24.76224	2024-12-09 13:58:24.76224
+171	53	2	1	65.00	2024-12-09 13:58:24.76224	2024-12-09 13:58:24.76224
+172	53	3	1	70.00	2024-12-09 13:58:24.76224	2024-12-09 13:58:24.76224
+173	54	4	1	150.00	2024-12-09 14:00:17.277501	2024-12-09 14:00:17.277501
+174	54	1	1	78.00	2024-12-09 14:00:17.277501	2024-12-09 14:00:17.277501
+175	54	2	1	65.00	2024-12-09 14:00:17.277501	2024-12-09 14:00:17.277501
+176	54	3	1	70.00	2024-12-09 14:00:17.277501	2024-12-09 14:00:17.277501
+177	55	4	1	150.00	2024-12-09 14:13:03.977699	2024-12-09 14:13:03.977699
+178	55	1	1	78.00	2024-12-09 14:13:03.977699	2024-12-09 14:13:03.977699
+179	55	2	1	65.00	2024-12-09 14:13:03.977699	2024-12-09 14:13:03.977699
+180	56	4	1	150.00	2024-12-09 14:13:24.640001	2024-12-09 14:13:24.640001
+181	56	1	1	78.00	2024-12-09 14:13:24.640001	2024-12-09 14:13:24.640001
+182	56	2	1	65.00	2024-12-09 14:13:24.640001	2024-12-09 14:13:24.640001
 \.
 
 
@@ -811,6 +825,11 @@ COPY public.sales (id, customer_id, user_id, total, payment_method, payment_stat
 50	\N	1	363.00	cash	paid	2024-12-09 13:35:49.654628	2024-12-09 13:35:49.654628
 51	\N	1	363.00	cash	paid	2024-12-09 13:40:16.282012	2024-12-09 13:40:16.282012
 52	\N	1	298.00	cash	paid	2024-12-09 13:42:47.427662	2024-12-09 13:42:47.427662
+53	\N	2	363.00	cash	paid	2024-12-09 13:58:24.683626	2024-12-09 13:58:24.683626
+54	\N	2	363.00	mpesa	paid	2024-12-09 14:00:17.199569	2024-12-09 14:00:17.199569
+55	\N	2	293.00	mpesa	paid	2024-12-09 14:13:03.942564	2024-12-09 14:13:03.942564
+56	\N	2	293.00	cash	paid	2024-12-09 14:13:24.56274	2024-12-09 14:13:24.56274
+57	\N	1	363.00	cash	paid	2024-12-09 14:39:28.372987	2024-12-09 14:39:28.372987
 \.
 
 
@@ -885,7 +904,7 @@ SELECT pg_catalog.setval('public.product_suppliers_id_seq', 2, true);
 -- Name: products_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.products_id_seq', 10, true);
+SELECT pg_catalog.setval('public.products_id_seq', 11, true);
 
 
 --
@@ -906,14 +925,14 @@ SELECT pg_catalog.setval('public.purchase_orders_id_seq', 3, true);
 -- Name: sale_items_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.sale_items_id_seq', 168, true);
+SELECT pg_catalog.setval('public.sale_items_id_seq', 182, true);
 
 
 --
 -- Name: sales_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.sales_id_seq', 52, true);
+SELECT pg_catalog.setval('public.sales_id_seq', 57, true);
 
 
 --
