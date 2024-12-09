@@ -43,7 +43,7 @@ export default function PosPage() {
     setIsPaymentOpen(true);
   };
 
-  const handlePaymentComplete = async (paymentMethod: string, customerId?: number) => {
+  const handlePaymentComplete = async (paymentMethod: string, customerId?: number, usePoints?: number, cashAmount?: string) => {
     await createSale({
       items: cartItems.map(item => ({
         productId: item.id,
@@ -53,6 +53,7 @@ export default function PosPage() {
       customerId,
       total: calculateTotal(cartItems),
       paymentMethod,
+      cashAmount: cashAmount ? parseFloat(cashAmount) : undefined,
     });
     setCartItems([]);
     setIsPaymentOpen(false);

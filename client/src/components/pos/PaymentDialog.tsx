@@ -9,7 +9,7 @@ import { LoyaltyPointsSection } from "./LoyaltyPointsSection";
 interface PaymentDialogProps {
   open: boolean;
   onClose: () => void;
-  onComplete: (paymentMethod: string, customerId?: number, usePoints?: number) => void;
+  onComplete: (paymentMethod: string, customerId?: number, usePoints?: number, cashAmount?: string) => void;
   total: number;
   isProcessing: boolean;
 }
@@ -49,7 +49,7 @@ export function PaymentDialog({
     }
 
     try {
-      await onComplete("cash", selectedCustomerId, pointsToUse);
+      await onComplete("cash", selectedCustomerId, pointsToUse, cashAmount);
       setShowCashDialog(false);
       setCashAmount("");
     } catch (error) {
