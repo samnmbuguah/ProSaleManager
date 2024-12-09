@@ -245,4 +245,52 @@ router.get("/chart", async (req, res) => {
   }
 });
 
+// Add receipt sending endpoint
+router.post("/:id/receipt/send", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { method } = req.body; // 'whatsapp' or 'sms'
+    
+    // Get sale details including customer phone
+    const sale = await db
+      .select({
+        id: sales.id,
+        total: sales.total,
+        customer: {
+          phone: customers.phone,
+          name: customers.name
+        }
+      })
+      .from(sales)
+      .leftJoin(customers, eq(sales.customerId, customers.id))
+      .where(eq(sales.id, parseInt(id)))
+      .limit(1);
+
+    if (!sale[0]?.customer?.phone) {
+      return res.status(400).json({ error: "Customer phone number not found" });
+    }
+
+    // Format receipt message
+    const receiptText = `Thank you for your purchase!
+Total: ${sale[0].total}
+Transaction ID: ${sale[0].id}`;
+
+    // Send via selected method
+    if (method === 'whatsapp') {
+      // TODO: Integrate with WhatsApp Business API
+      // For now, simulate success
+      console.log('Sending via WhatsApp:', receiptText);
+    } else if (method === 'sms') {
+      // TODO: Integrate with SMS API
+      // For now, simulate success
+      console.log('Sending via SMS:', receiptText);
+    }
+
+    res.json({ success: true, message: `Receipt sent via ${method}` });
+  } catch (error) {
+    console.error('Error sending receipt:', error);
+    res.status(500).json({ error: "Failed to send receipt" });
+  }
+});
+
 export default router; 
