@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,9 +7,21 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useReceiptSettings } from "@/lib/receipt-settings";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function ReceiptSettings() {
-  const { settings, updateSettings } = useReceiptSettings();
+  const { settings, updateSettings, templates, saveTemplate, deleteTemplate, loadTemplate, activeTemplateId } = useReceiptSettings();
+  const [newTemplateName, setNewTemplateName] = useState("");
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+
+  const handleSaveTemplate = () => {
+    if (newTemplateName.trim()) {
+      saveTemplate(newTemplateName.trim());
+      setNewTemplateName("");
+      setShowSaveDialog(false);
+    }
+  };
 
   return (
     <Card>
@@ -16,6 +29,61 @@ export function ReceiptSettings() {
         <CardTitle>Receipt Settings</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        <div className="flex items-center gap-4 mb-6">
+          <Select
+            value={activeTemplateId || ""}
+            onValueChange={(value) => value && loadTemplate(value)}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select template" />
+            </SelectTrigger>
+            <SelectContent>
+              {templates.map((template) => (
+                <SelectItem key={template.id} value={template.id}>
+                  {template.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline">Save as Template</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Save Template</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="name">Template Name</Label>
+                  <Input
+                    id="name"
+                    value={newTemplateName}
+                    onChange={(e) => setNewTemplateName(e.target.value)}
+                    placeholder="Enter template name"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveTemplate}>Save</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {activeTemplateId && (
+            <Button 
+              variant="destructive" 
+              onClick={() => deleteTemplate(activeTemplateId)}
+            >
+              Delete Template
+            </Button>
+          )}
+        </div>
+
         <div className="space-y-4">
           <div className="grid gap-2">
             <Label htmlFor="businessName">Business Name</Label>
