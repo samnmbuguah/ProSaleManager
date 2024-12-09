@@ -42,7 +42,6 @@ export const skuPricing = pgTable("sku_pricing", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   productId: integer("product_id").references(() => products.id).notNull(),
   skuType: text("sku_type").notNull(), // 'per_piece', 'three_piece', 'dozen'
-  quantity: integer("quantity").notNull(), // Number of pieces in this SKU type
   buyingPrice: decimal("buying_price", { precision: 10, scale: 2 }).notNull(),
   sellingPrice: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
