@@ -58,7 +58,7 @@ export default function InventoryPage() {
       </Tabs>
 
       <Dialog open={isProductFormOpen} onOpenChange={setIsProductFormOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add Product</DialogTitle>
           </DialogHeader>
@@ -77,23 +77,25 @@ export default function InventoryPage() {
                 stockUnit: data.stockUnit,
               };
               
-              await createProduct(productData);
+              const product = await createProduct(productData);
 
-              // Insert SKU pricing records
-              await fetch('/api/sku-pricing', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  productId: productData.id,
-                  prices: {
-                    per_piece: data.perPiece,
-                    three_piece: data.threePiece,
-                    dozen: data.dozen,
-                  }
-                }),
-              });
+              if (product?.id) {
+                // Insert SKU pricing records
+                await fetch('/api/sku-pricing', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    productId: product.id,
+                    prices: {
+                      per_piece: data.perPiece,
+                      three_piece: data.threePiece,
+                      dozen: data.dozen,
+                    }
+                  }),
+                });
+              }
 
               setIsProductFormOpen(false);
             }}
