@@ -64,7 +64,37 @@ export default function InventoryPage() {
           </DialogHeader>
           <ProductForm
             onSubmit={async (data) => {
-              await createProduct(data);
+              const productData = {
+                name: data.name,
+                sku: data.sku,
+                buyingPrice: data.perPiece.buyingPrice,
+                sellingPrice: data.perPiece.sellingPrice,
+                stock: data.stock,
+                category: data.category,
+                minStock: data.minStock,
+                maxStock: data.maxStock,
+                reorderPoint: data.reorderPoint,
+                stockUnit: data.stockUnit,
+              };
+              
+              await createProduct(productData);
+
+              // Insert SKU pricing records
+              await fetch('/api/sku-pricing', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  productId: productData.id,
+                  prices: {
+                    per_piece: data.perPiece,
+                    three_piece: data.threePiece,
+                    dozen: data.dozen,
+                  }
+                }),
+              });
+
               setIsProductFormOpen(false);
             }}
             isSubmitting={isCreatingProduct}

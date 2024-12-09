@@ -173,7 +173,29 @@ export function registerRoutes(app: Express) {
       const [product] = await db.insert(products).values(req.body).returning();
       res.json(product);
     } catch (error) {
+      console.error('Create product error:', error);
       res.status(500).json({ error: "Failed to create product" });
+    }
+  });
+
+  // SKU Pricing endpoint
+  app.post("/api/sku-pricing", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const { productId, prices } = req.body;
+      
+      const skuPrices = Object.entries(prices).map(([skuType, pricing]) => ({
+        productId,
+        skuType,
+        buyingPrice: pricing.buyingPrice,
+        sellingPrice: pricing.sellingPrice,
+      }));
+
+      await db.insert(skuPricing).values(skuPrices);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Create SKU pricing error:', error);
+      res.status(500).json({ error: "Failed to create SKU pricing" });
     }
   });
 
