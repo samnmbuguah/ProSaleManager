@@ -86,9 +86,10 @@ router.get("/:id/items", async (req, res) => {
         productId: saleItems.productId,
         quantity: saleItems.quantity,
         price: saleItems.price,
+        unitPricingId: saleItems.unitPricingId,
         product: {
           name: products.name,
-          sku: products.sku,
+          stockUnit: products.stockUnit,
         },
       })
       .from(saleItems)
@@ -130,7 +131,7 @@ router.post("/", async (req, res) => {
           .select({
             id: products.id,
             name: products.name,
-            sku: products.sku,
+            stockUnit: products.stockUnit,
           })
           .from(products)
           .where(eq(products.id, item.productId))
