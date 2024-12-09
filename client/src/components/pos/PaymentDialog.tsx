@@ -30,7 +30,8 @@ export function PaymentDialog({
   const handlePayment = async (method: string) => {
     try {
       await onComplete(method, selectedCustomerId, pointsToUse);
-      // Do not close the dialog automatically - receipt will be shown
+      // Keep dialog open for receipt display
+      // Dialog will only close when user clicks Close or clicks outside
     } catch (error) {
       console.error('Payment error:', error);
     }

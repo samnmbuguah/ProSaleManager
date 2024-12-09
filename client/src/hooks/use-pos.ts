@@ -83,17 +83,21 @@ export function usePos() {
           name: item.name || 'Unknown Product',
           quantity: Number(item.quantity) || 0,
           unitPrice: Number(item.unitPrice || item.price) || 0,
-          total: (Number(item.quantity) || 0) * (Number(item.unitPrice || item.price) || 0),
+          total: Number(item.total) || (Number(item.quantity) || 0) * (Number(item.unitPrice || item.price) || 0),
         })),
-        customer: data.receipt.customer || undefined,
+        customer: data.receipt.customer ? {
+          name: data.receipt.customer.name || '',
+          phone: data.receipt.customer.phone || '',
+          email: data.receipt.customer.email || '',
+        } : undefined,
         total: Number(data.sale.total) || 0,
-        paymentMethod: data.sale.paymentMethod || 'Unknown',
+        paymentMethod: data.sale.paymentMethod || 'cash',
         timestamp: data.sale.createdAt || new Date().toISOString(),
-        transactionId: data.receipt.transactionId || `TXN-${data.sale.id}`,
+        transactionId: `TXN-${data.sale.id}`,
         receiptStatus: {
-          sms: false,
-          whatsapp: false,
-          ...(data.receipt.receiptStatus || {}),
+          sms: Boolean(data.receipt.receiptStatus?.sms),
+          whatsapp: Boolean(data.receipt.receiptStatus?.whatsapp),
+          lastSentAt: data.receipt.receiptStatus?.lastSentAt,
         },
       };
       
