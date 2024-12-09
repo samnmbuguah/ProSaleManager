@@ -9,6 +9,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormSection,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,9 +19,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+interface SkuPricing {
+  buyingPrice: string;
+  sellingPrice: string;
+}
+
+interface ProductFormData extends Omit<InsertProduct, 'buyingPrice' | 'sellingPrice'> {
+  perPiece: SkuPricing;
+  threePiece: SkuPricing;
+  dozen: SkuPricing;
+  stockUnit: 'per_piece' | 'three_piece' | 'dozen';
+}
 
 interface ProductFormProps {
-  onSubmit: (data: InsertProduct) => Promise<void>;
+  onSubmit: (data: ProductFormData) => Promise<void>;
   isSubmitting: boolean;
 }
 
@@ -35,18 +49,19 @@ const PRODUCT_CATEGORIES = [
 type ProductCategory = typeof PRODUCT_CATEGORIES[number]["value"];
 
 export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
-  const form = useForm<InsertProduct>({
-    resolver: zodResolver(insertProductSchema),
+  const form = useForm<ProductFormData>({
     defaultValues: {
       name: "",
       sku: "",
-      buyingPrice: "0",
-      sellingPrice: "0",
       stock: 0,
       category: "Other",
       minStock: 10,
       maxStock: 100,
       reorderPoint: 20,
+      stockUnit: 'per_piece',
+      perPiece: { buyingPrice: "0", sellingPrice: "0" },
+      threePiece: { buyingPrice: "0", sellingPrice: "0" },
+      dozen: { buyingPrice: "0", sellingPrice: "0" },
     },
   });
 
@@ -83,41 +98,158 @@ export function ProductForm({ onSubmit, isSubmitting }: ProductFormProps) {
 
         <FormField
           control={form.control}
-          name="buyingPrice"
+          name="stockUnit"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Buying Price</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step="0.01"
-                  {...field}
-                  onChange={(e) => field.onChange(e.target.value)}
-                />
-              </FormControl>
+              <FormLabel>Stock Unit</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select stock unit" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="per_piece">Per Piece</SelectItem>
+                  <SelectItem value="three_piece">3 Piece</SelectItem>
+                  <SelectItem value="dozen">Dozen</SelectItem>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="sellingPrice"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Selling Price</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step="0.01"
-                  {...field}
-                  onChange={(e) => field.onChange(e.target.value)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <Card>
+          <CardHeader>
+            <CardTitle>Per Piece Pricing</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <FormField
+              control={form.control}
+              name="perPiece.buyingPrice"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Buying Price</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="perPiece.sellingPrice"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Selling Price</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>3 Piece Pricing</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <FormField
+              control={form.control}
+              name="threePiece.buyingPrice"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Buying Price</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="threePiece.sellingPrice"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Selling Price</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Dozen Pricing</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <FormField
+              control={form.control}
+              name="dozen.buyingPrice"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Buying Price</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="dozen.sellingPrice"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Selling Price</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
 
         <FormField
           control={form.control}

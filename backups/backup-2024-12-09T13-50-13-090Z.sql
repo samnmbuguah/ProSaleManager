@@ -41,6 +41,19 @@ ALTER SCHEMA public OWNER TO neondb_owner;
 COMMENT ON SCHEMA public IS '';
 
 
+--
+-- Name: sku_type; Type: TYPE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TYPE public.sku_type AS ENUM (
+    'per_piece',
+    'three_piece',
+    'dozen'
+);
+
+
+ALTER TYPE public.sku_type OWNER TO neondb_owner;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -218,7 +231,8 @@ CREATE TABLE public.products (
     max_stock integer,
     reorder_point integer,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
-    updated_at timestamp without time zone DEFAULT now() NOT NULL
+    updated_at timestamp without time zone DEFAULT now() NOT NULL,
+    stock_unit public.sku_type DEFAULT 'per_piece'::public.sku_type NOT NULL
 );
 
 
@@ -367,6 +381,45 @@ ALTER TABLE public.sales ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 
 
 --
+-- Name: sku_pricing; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.sku_pricing (
+    id integer NOT NULL,
+    product_id integer NOT NULL,
+    sku_type public.sku_type NOT NULL,
+    buying_price numeric(10,2) NOT NULL,
+    selling_price numeric(10,2) NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    updated_at timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.sku_pricing OWNER TO neondb_owner;
+
+--
+-- Name: sku_pricing_id_seq; Type: SEQUENCE; Schema: public; Owner: neondb_owner
+--
+
+CREATE SEQUENCE public.sku_pricing_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.sku_pricing_id_seq OWNER TO neondb_owner;
+
+--
+-- Name: sku_pricing_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: neondb_owner
+--
+
+ALTER SEQUENCE public.sku_pricing_id_seq OWNED BY public.sku_pricing.id;
+
+
+--
 -- Name: suppliers; Type: TABLE; Schema: public; Owner: neondb_owner
 --
 
@@ -436,6 +489,13 @@ ALTER TABLE ONLY drizzle.__drizzle_migrations ALTER COLUMN id SET DEFAULT nextva
 
 
 --
+-- Name: sku_pricing id; Type: DEFAULT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.sku_pricing ALTER COLUMN id SET DEFAULT nextval('public.sku_pricing_id_seq'::regclass);
+
+
+--
 -- Data for Name: __drizzle_migrations; Type: TABLE DATA; Schema: drizzle; Owner: neondb_owner
 --
 
@@ -451,6 +511,8 @@ COPY drizzle.__drizzle_migrations (id, hash, created_at) FROM stdin;
 COPY public.customers (id, name, email, phone, address, created_at, updated_at) FROM stdin;
 1	Samuel Mbugua Nyambura	Samnmbuguah@gmail.com	0713087979	\N	2024-12-04 19:21:58.857	2024-12-04 19:21:58.873118
 2	Samuel Mbugua Nyambura	Samnmbuguah@gmail.com	0713087979	\N	2024-12-04 19:27:49.682	2024-12-04 19:27:49.698399
+3	Samuel Mbugua Nyambura	Samnmbuguah@gmail.com	0713087979	\N	2024-12-09 13:16:39.921	2024-12-09 13:16:39.957367
+4	Samuel Mbugua Nyambura	Samnmbuguah@gmail.com	0713087979	\N	2024-12-09 13:27:30.436	2024-12-09 13:27:30.470876
 \.
 
 
@@ -486,11 +548,11 @@ COPY public.product_suppliers (id, product_id, supplier_id, cost_price, is_prefe
 -- Data for Name: products; Type: TABLE DATA; Schema: public; Owner: neondb_owner
 --
 
-COPY public.products (id, name, sku, buying_price, selling_price, stock, category, min_stock, max_stock, reorder_point, created_at, updated_at) FROM stdin;
-2	another one	ete	56.00	65.00	25	boxers	10	100	20	2024-12-04 19:20:05.897472	2024-12-04 19:20:05.897472
-1	New Product	44g55	57.00	78.00	-28	bra	10	100	20	2024-12-04 19:19:14.347645	2024-12-05 08:25:56.826
-4	Ben 10 S	Pieces 	83.33	150.00	-29	boxers	10	100	20	2024-12-05 08:34:14.647455	2024-12-05 08:34:14.647455
-3	boxers	45454	45.00	70.00	-9	boxers	10	100	20	2024-12-05 08:23:37.902187	2024-12-05 08:25:09.787
+COPY public.products (id, name, sku, buying_price, selling_price, stock, category, min_stock, max_stock, reorder_point, created_at, updated_at, stock_unit) FROM stdin;
+1	New Product	44g55	57.00	78.00	-46	bra	10	100	20	2024-12-04 19:19:14.347645	2024-12-05 08:25:56.826	per_piece
+4	Ben 10 S	Pieces 	83.33	150.00	-42	boxers	10	100	20	2024-12-05 08:34:14.647455	2024-12-05 08:34:14.647455	per_piece
+3	boxers	45454	45.00	70.00	-19	boxers	10	100	20	2024-12-05 08:23:37.902187	2024-12-05 08:25:09.787	per_piece
+2	another one	ete	56.00	65.00	9	boxers	10	100	20	2024-12-04 19:20:05.897472	2024-12-04 19:20:05.897472	per_piece
 \.
 
 
@@ -635,6 +697,60 @@ COPY public.sale_items (id, sale_id, product_id, quantity, price, created_at, up
 112	35	2	1	65.00	2024-12-09 12:56:13.809801	2024-12-09 12:56:13.809801
 113	35	1	1	78.00	2024-12-09 12:56:13.809801	2024-12-09 12:56:13.809801
 114	35	4	1	150.00	2024-12-09 12:56:13.809801	2024-12-09 12:56:13.809801
+115	36	2	1	65.00	2024-12-09 13:16:49.531019	2024-12-09 13:16:49.531019
+116	36	1	1	78.00	2024-12-09 13:16:49.531019	2024-12-09 13:16:49.531019
+117	36	4	1	150.00	2024-12-09 13:16:49.531019	2024-12-09 13:16:49.531019
+118	37	3	1	70.00	2024-12-09 13:17:31.027056	2024-12-09 13:17:31.027056
+119	37	2	1	65.00	2024-12-09 13:17:31.027056	2024-12-09 13:17:31.027056
+120	37	1	1	78.00	2024-12-09 13:17:31.027056	2024-12-09 13:17:31.027056
+121	37	4	1	150.00	2024-12-09 13:17:31.027056	2024-12-09 13:17:31.027056
+122	38	3	1	70.00	2024-12-09 13:17:51.619063	2024-12-09 13:17:51.619063
+123	38	2	1	65.00	2024-12-09 13:17:51.619063	2024-12-09 13:17:51.619063
+124	38	1	1	78.00	2024-12-09 13:17:51.619063	2024-12-09 13:17:51.619063
+125	39	3	1	70.00	2024-12-09 13:20:22.698835	2024-12-09 13:20:22.698835
+126	39	2	2	65.00	2024-12-09 13:20:22.698835	2024-12-09 13:20:22.698835
+127	40	2	1	65.00	2024-12-09 13:23:04.847577	2024-12-09 13:23:04.847577
+128	40	1	2	78.00	2024-12-09 13:23:04.847577	2024-12-09 13:23:04.847577
+129	41	4	1	150.00	2024-12-09 13:23:44.912754	2024-12-09 13:23:44.912754
+130	41	1	1	78.00	2024-12-09 13:23:44.912754	2024-12-09 13:23:44.912754
+131	41	2	1	65.00	2024-12-09 13:23:44.912754	2024-12-09 13:23:44.912754
+132	42	3	1	70.00	2024-12-09 13:23:58.247339	2024-12-09 13:23:58.247339
+133	42	2	1	65.00	2024-12-09 13:23:58.247339	2024-12-09 13:23:58.247339
+134	42	1	1	78.00	2024-12-09 13:23:58.247339	2024-12-09 13:23:58.247339
+135	42	4	1	150.00	2024-12-09 13:23:58.247339	2024-12-09 13:23:58.247339
+136	43	2	1	65.00	2024-12-09 13:25:11.506484	2024-12-09 13:25:11.506484
+137	43	1	1	78.00	2024-12-09 13:25:11.506484	2024-12-09 13:25:11.506484
+138	43	4	1	150.00	2024-12-09 13:25:11.506484	2024-12-09 13:25:11.506484
+139	44	4	1	150.00	2024-12-09 13:25:28.067576	2024-12-09 13:25:28.067576
+140	44	1	1	78.00	2024-12-09 13:25:28.067576	2024-12-09 13:25:28.067576
+141	44	2	1	65.00	2024-12-09 13:25:28.067576	2024-12-09 13:25:28.067576
+142	44	3	1	70.00	2024-12-09 13:25:28.067576	2024-12-09 13:25:28.067576
+143	45	3	1	70.00	2024-12-09 13:25:55.598079	2024-12-09 13:25:55.598079
+144	45	2	1	65.00	2024-12-09 13:25:55.598079	2024-12-09 13:25:55.598079
+145	45	1	1	78.00	2024-12-09 13:25:55.598079	2024-12-09 13:25:55.598079
+146	45	4	1	150.00	2024-12-09 13:25:55.598079	2024-12-09 13:25:55.598079
+147	46	1	2	78.00	2024-12-09 13:26:05.173531	2024-12-09 13:26:05.173531
+148	46	2	1	65.00	2024-12-09 13:26:05.173531	2024-12-09 13:26:05.173531
+149	47	2	1	65.00	2024-12-09 13:26:14.953292	2024-12-09 13:26:14.953292
+150	47	1	1	78.00	2024-12-09 13:26:14.953292	2024-12-09 13:26:14.953292
+151	47	4	1	150.00	2024-12-09 13:26:14.953292	2024-12-09 13:26:14.953292
+152	48	4	1	150.00	2024-12-09 13:26:47.479414	2024-12-09 13:26:47.479414
+153	48	1	1	78.00	2024-12-09 13:26:47.479414	2024-12-09 13:26:47.479414
+154	48	3	1	70.00	2024-12-09 13:26:47.479414	2024-12-09 13:26:47.479414
+155	49	2	1	65.00	2024-12-09 13:32:09.574157	2024-12-09 13:32:09.574157
+156	49	1	1	78.00	2024-12-09 13:32:09.574157	2024-12-09 13:32:09.574157
+157	49	4	1	150.00	2024-12-09 13:32:09.574157	2024-12-09 13:32:09.574157
+158	50	4	1	150.00	2024-12-09 13:35:50.278416	2024-12-09 13:35:50.278416
+159	50	1	1	78.00	2024-12-09 13:35:50.278416	2024-12-09 13:35:50.278416
+160	50	2	1	65.00	2024-12-09 13:35:50.278416	2024-12-09 13:35:50.278416
+161	50	3	1	70.00	2024-12-09 13:35:50.278416	2024-12-09 13:35:50.278416
+162	51	4	1	150.00	2024-12-09 13:40:16.517741	2024-12-09 13:40:16.517741
+163	51	1	1	78.00	2024-12-09 13:40:16.517741	2024-12-09 13:40:16.517741
+164	51	2	1	65.00	2024-12-09 13:40:16.517741	2024-12-09 13:40:16.517741
+165	51	3	1	70.00	2024-12-09 13:40:16.517741	2024-12-09 13:40:16.517741
+166	52	1	1	78.00	2024-12-09 13:42:47.646908	2024-12-09 13:42:47.646908
+167	52	4	1	150.00	2024-12-09 13:42:47.646908	2024-12-09 13:42:47.646908
+168	52	3	1	70.00	2024-12-09 13:42:47.646908	2024-12-09 13:42:47.646908
 \.
 
 
@@ -678,6 +794,35 @@ COPY public.sales (id, customer_id, user_id, total, payment_method, payment_stat
 33	\N	2	363.00	mpesa	paid	2024-12-09 10:49:29.532145	2024-12-09 10:49:29.532145
 34	\N	2	363.00	mpesa	paid	2024-12-09 10:49:46.419118	2024-12-09 10:49:46.419118
 35	\N	1	293.00	cash	paid	2024-12-09 12:56:13.584167	2024-12-09 12:56:13.584167
+36	\N	1	293.00	cash	paid	2024-12-09 13:16:48.899332	2024-12-09 13:16:48.899332
+37	\N	1	363.00	cash	paid	2024-12-09 13:17:30.804059	2024-12-09 13:17:30.804059
+38	\N	1	213.00	cash	paid	2024-12-09 13:17:50.98601	2024-12-09 13:17:50.98601
+39	\N	1	200.00	cash	paid	2024-12-09 13:20:22.480724	2024-12-09 13:20:22.480724
+40	\N	1	221.00	cash	paid	2024-12-09 13:23:04.227938	2024-12-09 13:23:04.227938
+41	\N	1	293.00	cash	paid	2024-12-09 13:23:44.83535	2024-12-09 13:23:44.83535
+42	\N	1	363.00	cash	paid	2024-12-09 13:23:58.21136	2024-12-09 13:23:58.21136
+43	\N	1	293.00	cash	paid	2024-12-09 13:25:11.282492	2024-12-09 13:25:11.282492
+44	\N	1	363.00	mpesa	paid	2024-12-09 13:25:27.443137	2024-12-09 13:25:27.443137
+45	\N	1	363.00	mpesa	paid	2024-12-09 13:25:55.521025	2024-12-09 13:25:55.521025
+46	\N	1	221.00	cash	paid	2024-12-09 13:26:05.095038	2024-12-09 13:26:05.095038
+47	\N	1	293.00	cash	paid	2024-12-09 13:26:14.917935	2024-12-09 13:26:14.917935
+48	\N	1	298.00	cash	paid	2024-12-09 13:26:47.259475	2024-12-09 13:26:47.259475
+49	\N	1	293.00	cash	paid	2024-12-09 13:32:09.353986	2024-12-09 13:32:09.353986
+50	\N	1	363.00	cash	paid	2024-12-09 13:35:49.654628	2024-12-09 13:35:49.654628
+51	\N	1	363.00	cash	paid	2024-12-09 13:40:16.282012	2024-12-09 13:40:16.282012
+52	\N	1	298.00	cash	paid	2024-12-09 13:42:47.427662	2024-12-09 13:42:47.427662
+\.
+
+
+--
+-- Data for Name: sku_pricing; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.sku_pricing (id, product_id, sku_type, buying_price, selling_price, created_at, updated_at) FROM stdin;
+1	1	per_piece	57.00	78.00	2024-12-09 13:48:45.550492	2024-12-09 13:48:45.550492
+2	4	per_piece	83.33	150.00	2024-12-09 13:48:45.550492	2024-12-09 13:48:45.550492
+3	3	per_piece	45.00	70.00	2024-12-09 13:48:45.550492	2024-12-09 13:48:45.550492
+4	2	per_piece	56.00	65.00	2024-12-09 13:48:45.550492	2024-12-09 13:48:45.550492
 \.
 
 
@@ -712,7 +857,7 @@ SELECT pg_catalog.setval('drizzle.__drizzle_migrations_id_seq', 1, true);
 -- Name: customers_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.customers_id_seq', 2, true);
+SELECT pg_catalog.setval('public.customers_id_seq', 4, true);
 
 
 --
@@ -761,14 +906,21 @@ SELECT pg_catalog.setval('public.purchase_orders_id_seq', 3, true);
 -- Name: sale_items_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.sale_items_id_seq', 114, true);
+SELECT pg_catalog.setval('public.sale_items_id_seq', 168, true);
 
 
 --
 -- Name: sales_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.sales_id_seq', 35, true);
+SELECT pg_catalog.setval('public.sales_id_seq', 52, true);
+
+
+--
+-- Name: sku_pricing_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
+--
+
+SELECT pg_catalog.setval('public.sku_pricing_id_seq', 4, true);
 
 
 --
@@ -871,6 +1023,22 @@ ALTER TABLE ONLY public.sale_items
 
 ALTER TABLE ONLY public.sales
     ADD CONSTRAINT sales_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sku_pricing sku_pricing_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.sku_pricing
+    ADD CONSTRAINT sku_pricing_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: sku_pricing sku_pricing_product_id_sku_type_key; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.sku_pricing
+    ADD CONSTRAINT sku_pricing_product_id_sku_type_key UNIQUE (product_id, sku_type);
 
 
 --
@@ -1007,6 +1175,14 @@ ALTER TABLE ONLY public.sales
 
 ALTER TABLE ONLY public.sales
     ADD CONSTRAINT sales_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
+
+
+--
+-- Name: sku_pricing sku_pricing_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.sku_pricing
+    ADD CONSTRAINT sku_pricing_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id);
 
 
 --
