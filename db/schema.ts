@@ -142,9 +142,7 @@ export const saleItems = pgTable("sale_items", {
   productId: integer("product_id")
     .references(() => products.id)
     .notNull(),
-  skuPricingId: integer("sku_pricing_id")
-    .references(() => skuPricing.id)
-    .notNull(),
+  skuPricingId: integer("sku_pricing_id").references(() => skuPricing.id),
   quantity: integer("quantity").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
