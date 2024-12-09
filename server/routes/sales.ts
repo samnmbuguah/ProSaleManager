@@ -325,71 +325,49 @@ router.get("/:id/receipt", async (req, res) => {
       return res.status(404).json({ error: "Sale not found" });
     }
 
-    if (sale.paymentStatus !== 'paid') {
-      return res.status(400).json({ error: "Cannot generate receipt for unpaid sale" });
-    }
+    // Get sale items with product details
+    const items = await db
+      .select({
+        name: products.name,
+        quantity: saleItems.quantity,
+        unitPrice: saleItems.price,
+        total: sql<string>`(${saleItems.quantity} * ${saleItems.price})::text`,
+      })
+      .from(saleItems)
+      .leftJoin(products, eq(saleItems.productId, products.id))
+      .where(eq(saleItems.saleId, parseInt(id)));
 
-    try {
-      // Get sale items with product details
-      const items = await db
-        .select({
-          name: products.name,
-          quantity: saleItems.quantity,
-          unitPrice: saleItems.price,
-          total: sql<string>`(${saleItems.quantity} * ${saleItems.price})::text`,
-        })
-        .from(saleItems)
-        .leftJoin(products, eq(saleItems.productId, products.id))
-        .where(eq(saleItems.saleId, parseInt(id)));
+    // Format receipt data
+    const receipt = {
+      id: sale.id,
+      items: items.map(item => ({
+        name: item.name || 'Unknown Product',
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        total: item.total,
+      })),
+      customer: sale.customer?.name ? {
+        name: sale.customer.name,
+        phone: sale.customer.phone,
+        email: sale.customer.email,
+      } : undefined,
+      total: sale.total,
+      paymentMethod: sale.paymentMethod,
+      timestamp: sale.createdAt,
+      transactionId: `TXN-${sale.id}`,
+      receiptStatus: {
+        sms: false,
+        whatsapp: false,
+      },
+    };
 
-      if (!items.length) {
-        return res.status(400).json({ error: "No items found for this sale" });
-      }
-
-      // Validate required fields
-      for (const item of items) {
-        if (!item.name || !item.quantity || !item.unitPrice) {
-          throw new Error("Missing required item details");
-        }
-      }
-
-      // Format receipt data
-      const receipt = {
-        id: sale.id,
-        items: items.map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          total: item.total,
-        })),
-        customer: sale.customer?.name ? {
-          name: sale.customer.name,
-          phone: sale.customer.phone,
-          email: sale.customer.email,
-        } : undefined,
-        total: sale.total,
-        paymentMethod: sale.paymentMethod,
-        timestamp: sale.createdAt,
-        transactionId: `TXN-${sale.id}`,
-      };
-
-      res.json(receipt);
-    } catch (itemsError) {
-      console.error("Error fetching sale items:", itemsError);
-      return res.status(500).json({ 
-        error: "Failed to generate receipt",
-        details: "Error processing sale items"
-      });
-    }
+    res.json(receipt);
   } catch (error) {
     console.error("Error generating receipt:", error);
-    if (error instanceof Error) {
-      return res.status(500).json({ 
-        error: "Failed to generate receipt",
-        details: error.message
-      });
-    }
-    res.status(500).json({ error: "Failed to generate receipt" });
+    res.status(500).json({ 
+      error: "Failed to generate receipt",
+      details: error instanceof Error ? error.message : "Unknown error"
+    });
   }
 });
 export default router; 
