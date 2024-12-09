@@ -36,12 +36,26 @@ export async function runPreDeploymentChecks() {
       )
     `);
     
-    // Environment variables check
-    const requiredEnvVars = ['DATABASE_URL', 'PORT'];
+    // Environment variables check with defaults
+    const requiredEnvVars = ['DATABASE_URL'];
     const missingVars = requiredEnvVars.filter(v => !process.env[v]);
     
+    // Set default PORT if not provided
+    if (!process.env.PORT) {
+      process.env.PORT = '5000';
+      console.log('[Config] Using default PORT: 5000');
+    }
+
     if (missingVars.length > 0) {
-      throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
+      return {
+        success: false,
+        error: `Missing required environment variables: ${missingVars.join(', ')}`,
+        checks: {
+          database: true,
+          migrations: !!migrationCheck,
+          environment: false
+        }
+      };
     }
 
     return {
