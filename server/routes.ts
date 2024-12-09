@@ -338,7 +338,7 @@ export function registerRoutes(app: Express) {
 
   // Sales API
   app.post("/api/sales", async (req, res) => {
-    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
     try {
       const { items, customerId, total, paymentMethod, usePoints = 0 } = req.body;
       
@@ -372,17 +372,13 @@ export function registerRoutes(app: Express) {
 
       // Handle loyalty points
       if (customerId) {
-        // Calculate points to award (1 point per 100 spent)
         const pointsToAward = Math.floor(Number(total) / 100);
-
-        // Get existing points
         const [existingPoints] = await db
           .select()
           .from(loyaltyPoints)
           .where(eq(loyaltyPoints.customerId, customerId));
 
         if (existingPoints) {
-          // Update existing points
           await db
             .update(loyaltyPoints)
             .set({ 
@@ -391,7 +387,6 @@ export function registerRoutes(app: Express) {
             })
             .where(eq(loyaltyPoints.customerId, customerId));
         } else {
-          // Create new points record
           await db
             .insert(loyaltyPoints)
             .values({
@@ -400,7 +395,6 @@ export function registerRoutes(app: Express) {
             });
         }
 
-        // Record the transaction
         await db.insert(loyaltyTransactions).values({
           customerId,
           saleId: sale.id,
@@ -418,7 +412,54 @@ export function registerRoutes(app: Express) {
         }
       }
 
-      res.json(sale);
+      // Fetch customer data if customerId exists
+      let customerData;
+      if (customerId) {
+        const [customer] = await db
+          .select()
+          .from(customers)
+          .where(eq(customers.id, customerId))
+          .limit(1);
+        customerData = customer;
+      }
+
+      // Prepare receipt data
+      const receipt = {
+        id: sale.id,
+        items: items.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          total: (Number(item.quantity) * Number(item.price)).toString(),
+        })),
+        customer: customerData ? {
+          name: customerData.name,
+          phone: customerData.phone,
+          email: customerData.email,
+        } : undefined,
+        total: total,
+        paymentMethod: paymentMethod,
+        timestamp: sale.createdAt,
+        transactionId: `TXN-${sale.id}`,
+        receiptStatus: {
+          sms: false,
+          whatsapp: false,
+        },
+      };
+
+      res.json({
+        sale: {
+          id: sale.id,
+          customerId: sale.customerId,
+          userId: sale.userId,
+          total: sale.total,
+          paymentMethod: sale.paymentMethod,
+          paymentStatus: sale.paymentStatus,
+          createdAt: sale.createdAt,
+          updatedAt: sale.updatedAt,
+        },
+        receipt
+      });
     } catch (error) {
       console.error('Sale error:', error);
       res.status(500).json({ error: "Failed to create sale" });
