@@ -4,6 +4,7 @@ import { formatCurrency } from "@/lib/utils";
 import { MessageSquare } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import type { ReceiptData } from "@/hooks/use-pos";
+import { useReceiptSettings } from "@/lib/receipt-settings";
 
 interface ReceiptPreviewProps {
   receipt: ReceiptData;
