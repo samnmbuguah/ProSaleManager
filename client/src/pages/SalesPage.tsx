@@ -42,6 +42,11 @@ interface Sale {
   user: {
     username: string;
   };
+  receiptStatus?: {
+    sms?: boolean;
+    whatsapp?: boolean;
+    lastSentAt?: string;
+  };
 }
 
 interface SaleItem {
@@ -137,6 +142,7 @@ export function SalesPage() {
                   <TableHead>Cashier</TableHead>
                   <TableHead>Payment Method</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Receipt Status</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
@@ -160,6 +166,20 @@ export function SalesPage() {
                       >
                         {sale.paymentStatus}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {sale.receiptStatus ? (
+                        <div className="flex gap-2">
+                          <Badge variant={sale.receiptStatus.sms ? "default" : "outline"}>
+                            SMS
+                          </Badge>
+                          <Badge variant={sale.receiptStatus.whatsapp ? "default" : "outline"}>
+                            WhatsApp
+                          </Badge>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Not sent</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       {formatCurrency(sale.total)}

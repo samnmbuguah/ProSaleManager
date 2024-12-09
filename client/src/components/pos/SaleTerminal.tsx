@@ -23,7 +23,20 @@ export function SaleTerminal({ children, onSendReceipt }: SaleTerminalProps) {
         setShowPhoneInput(true);
         return;
       }
-      await onSendReceipt(receipt.id, method);
+      
+      try {
+        await onSendReceipt(receipt.id, method);
+        setReceipt(prev => prev ? {
+          ...prev,
+          receiptStatus: {
+            ...prev.receiptStatus,
+            [method]: true,
+            lastSentAt: new Date().toISOString(),
+          }
+        } : null);
+      } catch (error) {
+        console.error('Failed to send receipt:', error);
+      }
     }
   };
 
