@@ -142,29 +142,33 @@ export function usePos() {
   };
 
   // Function to send receipt via WhatsApp or SMS
-  const sendReceipt = async (saleId: number, method: 'whatsapp' | 'sms') => {
+  const sendReceipt = async (saleId: number, method: 'whatsapp' | 'sms', phoneNumber?: string) => {
     try {
       const response = await fetch(`/api/sales/${saleId}/receipt/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method }),
+        body: JSON.stringify({ method, phoneNumber }),
         credentials: 'include',
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to send receipt via ${method}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to send receipt via ${method}`);
       }
       
       toast({
         title: "Receipt sent",
         description: `Receipt has been sent via ${method}`,
       });
+
+      return true;
     } catch (error) {
       toast({
         variant: "destructive",
         title: `Failed to send receipt via ${method}`,
         description: error instanceof Error ? error.message : 'Unknown error',
       });
+      return false;
     }
   };
 
