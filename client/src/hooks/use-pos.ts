@@ -60,15 +60,16 @@ export function usePos() {
         throw new Error(errorData.error || 'Failed to process sale');
       }
       
-      const { id: saleId } = await response.json();
+      const saleData = await response.json();
       
       // Fetch receipt data with retries
       let retries = 3;
       let receipt;
+      let lastError;
       
       while (retries > 0) {
         try {
-          const receiptResponse = await fetch(`/api/sales/${saleId}/receipt`);
+          const receiptResponse = await fetch(`/api/sales/${saleData.id}/receipt`);
           if (!receiptResponse.ok) {
             const errorData = await receiptResponse.json().catch(() => ({}));
             throw new Error(errorData.error || 'Failed to generate receipt');
@@ -77,16 +78,39 @@ export function usePos() {
           receipt = await receiptResponse.json();
           break;
         } catch (error) {
+          lastError = error;
           retries--;
           if (retries === 0) {
-            throw error;
+            console.error('Failed to generate receipt after retries:', error);
+            // Return basic sale info even if receipt generation fails
+            receipt = {
+              id: saleData.id,
+              items: [],
+              total: saleData.total,
+              paymentMethod: saleData.paymentMethod,
+              timestamp: saleData.createdAt,
+              transactionId: `TXN-${saleData.id}`,
+            };
+          } else {
+            // Wait for 1 second before retrying
+            await new Promise(resolve => setTimeout(resolve, 1000));
           }
-          // Wait for 1 second before retrying
-          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
       
-      return { sale: { id: saleId }, receipt };
+      return {
+        sale: {
+          id: saleData.id,
+          customerId: saleData.customerId,
+          userId: saleData.userId,
+          total: saleData.total,
+          paymentMethod: saleData.paymentMethod,
+          paymentStatus: saleData.paymentStatus,
+          createdAt: saleData.createdAt,
+          updatedAt: saleData.updatedAt,
+        },
+        receipt,
+      };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });

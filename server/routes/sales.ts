@@ -341,7 +341,7 @@ router.get("/:id/receipt", async (req, res) => {
         unitPrice: item.unitPrice,
         total: item.total,
       })),
-      customer: sale.customer.name ? {
+      customer: sale.customer?.name ? {
         name: sale.customer.name,
         phone: sale.customer.phone,
         email: sale.customer.email,
