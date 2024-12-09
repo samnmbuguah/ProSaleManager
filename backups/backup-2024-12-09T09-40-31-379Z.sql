@@ -487,10 +487,10 @@ COPY public.product_suppliers (id, product_id, supplier_id, cost_price, is_prefe
 --
 
 COPY public.products (id, name, sku, buying_price, selling_price, stock, category, min_stock, max_stock, reorder_point, created_at, updated_at) FROM stdin;
-4	Ben 10 S	Pieces 	83.33	150.00	-15	boxers	10	100	20	2024-12-05 08:34:14.647455	2024-12-05 08:34:14.647455
-1	New Product	44g55	57.00	78.00	-10	bra	10	100	20	2024-12-04 19:19:14.347645	2024-12-05 08:25:56.826
-2	another one	ete	56.00	65.00	43	boxers	10	100	20	2024-12-04 19:20:05.897472	2024-12-04 19:20:05.897472
+4	Ben 10 S	Pieces 	83.33	150.00	-17	boxers	10	100	20	2024-12-05 08:34:14.647455	2024-12-05 08:34:14.647455
 3	boxers	45454	45.00	70.00	3	boxers	10	100	20	2024-12-05 08:23:37.902187	2024-12-05 08:25:09.787
+2	another one	ete	56.00	65.00	41	boxers	10	100	20	2024-12-04 19:20:05.897472	2024-12-04 19:20:05.897472
+1	New Product	44g55	57.00	78.00	-12	bra	10	100	20	2024-12-04 19:19:14.347645	2024-12-05 08:25:56.826
 \.
 
 
@@ -573,6 +573,12 @@ COPY public.sale_items (id, sale_id, product_id, quantity, price, created_at, up
 50	17	1	1	78.00	2024-12-09 07:36:16.926495	2024-12-09 07:36:16.926495
 51	17	2	1	65.00	2024-12-09 07:36:16.926495	2024-12-09 07:36:16.926495
 52	17	3	1	70.00	2024-12-09 07:36:16.926495	2024-12-09 07:36:16.926495
+53	18	2	1	65.00	2024-12-09 07:56:25.172102	2024-12-09 07:56:25.172102
+54	18	1	1	78.00	2024-12-09 07:56:25.172102	2024-12-09 07:56:25.172102
+55	18	4	1	150.00	2024-12-09 07:56:25.172102	2024-12-09 07:56:25.172102
+56	19	2	1	65.00	2024-12-09 07:56:39.136297	2024-12-09 07:56:39.136297
+57	19	1	1	78.00	2024-12-09 07:56:39.136297	2024-12-09 07:56:39.136297
+58	19	4	1	150.00	2024-12-09 07:56:39.136297	2024-12-09 07:56:39.136297
 \.
 
 
@@ -598,6 +604,8 @@ COPY public.sales (id, customer_id, user_id, total, payment_method, payment_stat
 15	\N	1	293.00	mpesa	paid	2024-12-09 07:18:31.868493	2024-12-09 07:18:31.868493
 16	\N	1	293.00	cash	paid	2024-12-09 07:35:17.638793	2024-12-09 07:35:17.638793
 17	\N	1	213.00	cash	paid	2024-12-09 07:36:16.811128	2024-12-09 07:36:16.811128
+18	\N	1	293.00	cash	paid	2024-12-09 07:56:25.058772	2024-12-09 07:56:25.058772
+19	\N	1	293.00	cash	paid	2024-12-09 07:56:39.02202	2024-12-09 07:56:39.02202
 \.
 
 
@@ -681,14 +689,14 @@ SELECT pg_catalog.setval('public.purchase_orders_id_seq', 3, true);
 -- Name: sale_items_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.sale_items_id_seq', 52, true);
+SELECT pg_catalog.setval('public.sale_items_id_seq', 58, true);
 
 
 --
 -- Name: sales_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.sales_id_seq', 17, true);
+SELECT pg_catalog.setval('public.sales_id_seq', 19, true);
 
 
 --
