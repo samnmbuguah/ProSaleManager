@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,13 @@ export function SaleTerminal({ children, onSendReceipt }: SaleTerminalProps) {
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
   const [showPhoneInput, setShowPhoneInput] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
+
+  // Expose setReceipt to parent component
+  useEffect(() => {
+    if (window._setReceiptState) {
+      window._setReceiptState = setReceipt;
+    }
+  }, []);
 
   const handleSendReceipt = async (method: 'whatsapp' | 'sms') => {
     if (receipt && onSendReceipt) {
