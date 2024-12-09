@@ -24,6 +24,7 @@ interface SaleItemInput {
   quantity: number;
   price: string | number;
   name?: string;
+  skuPricingId?: number | null;
 }
 
 export function registerRoutes(app: Express) {
@@ -412,11 +413,12 @@ export function registerRoutes(app: Express) {
 
       // Create sale items
       await db.insert(saleItems).values(
-        items.map((item: any) => ({
+        items.map((item: SaleItemInput) => ({
           saleId: sale.id,
           productId: item.productId,
           quantity: item.quantity,
           price: item.price,
+          skuPricingId: item.skuPricingId || null,
         }))
       );
 
