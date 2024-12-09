@@ -37,7 +37,6 @@ export function ProductTable({ products = [], isLoading }: ProductTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>SKU</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Buying Price</TableHead>
               <TableHead>Selling Price</TableHead>
@@ -51,7 +50,6 @@ export function ProductTable({ products = [], isLoading }: ProductTableProps) {
             {products.map((product) => (
               <TableRow key={product.id}>
                 <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>{product.sku}</TableCell>
                 <TableCell>{product.category}</TableCell>
                 <TableCell>KSh {Number(product.buyingPrice).toFixed(2)}</TableCell>
                 <TableCell>KSh {Number(product.sellingPrice).toFixed(2)}</TableCell>
