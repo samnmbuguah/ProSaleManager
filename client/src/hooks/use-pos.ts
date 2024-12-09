@@ -95,8 +95,8 @@ export function usePos() {
         paymentMethod: data.sale.paymentMethod || 'cash',
         timestamp: data.sale.createdAt || new Date().toISOString(),
         transactionId: `TXN-${data.sale.id}`,
-        // Ensure cashAmount is properly converted to number when available
-        cashAmount: data.sale.cashAmount ? Number(data.sale.cashAmount) : undefined,
+        // Convert cash amount to number and ensure it's included when available
+        cashAmount: sale.cashAmount ? Number(sale.cashAmount) : undefined,
         receiptStatus: {
           sms: Boolean(data.receipt.receiptStatus?.sms),
           whatsapp: Boolean(data.receipt.receiptStatus?.whatsapp),
