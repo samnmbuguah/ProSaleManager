@@ -27,8 +27,13 @@ export function PaymentDialog({
   const [query, setQuery] = useState("");
   const selectedCustomer = customers?.find(c => c.id === selectedCustomerId);
 
-  const handlePayment = (method: string) => {
-    onComplete(method, selectedCustomerId, pointsToUse);
+  const handlePayment = async (method: string) => {
+    try {
+      await onComplete(method, selectedCustomerId, pointsToUse);
+      // Do not close the dialog automatically - receipt will be shown
+    } catch (error) {
+      console.error('Payment error:', error);
+    }
   };
 
   const handlePointsUse = (points: number) => {

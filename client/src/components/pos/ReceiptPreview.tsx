@@ -21,6 +21,13 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
     return null;
   }
 
+  // Format date safely
+  const formattedDate = receipt.timestamp ? 
+    new Date(receipt.timestamp).toLocaleString('en-KE', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }) : 'Invalid Date';
+
   return (
     <Card className={`w-full ${settings.paperSize === 'thermal' ? 'max-w-[302px]' : 'max-w-md'} mx-auto ${fontSize}`}>
       <CardHeader>
@@ -42,8 +49,8 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
           </div>
         )}
         <div className="text-center text-muted-foreground mt-2">
-          <p>Transaction ID: {receipt.transactionId}</p>
-          <p>{new Date(receipt.timestamp).toLocaleString()}</p>
+          <p>Transaction ID: {receipt.transactionId || 'N/A'}</p>
+          <p>{formattedDate}</p>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
