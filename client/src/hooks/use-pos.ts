@@ -27,7 +27,7 @@ export interface ReceiptData {
     total: number;
   }[];
   customer?: {
-    name: string;
+    name?: string;
     phone?: string;
     email?: string;
   };
