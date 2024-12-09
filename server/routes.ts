@@ -12,6 +12,7 @@ import {
   loyaltyPoints, loyaltyTransactions,
   insertSupplierSchema,
   insertProductSupplierSchema,
+  skuPricing,
 } from "@db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { desc } from "drizzle-orm";
@@ -184,11 +185,16 @@ export function registerRoutes(app: Express) {
     try {
       const { productId, prices } = req.body;
       
-      const skuPrices = Object.entries(prices).map(([skuType, pricing]) => ({
+      interface SkuPricing {
+        buyingPrice: string;
+        sellingPrice: string;
+      }
+      
+      const skuPrices = Object.entries(prices).map(([skuType, pricing]: [string, any]) => ({
         productId,
         skuType,
-        buyingPrice: pricing.buyingPrice,
-        sellingPrice: pricing.sellingPrice,
+        buyingPrice: (pricing as SkuPricing).buyingPrice,
+        sellingPrice: (pricing as SkuPricing).sellingPrice,
       }));
 
       await db.insert(skuPricing).values(skuPrices);
