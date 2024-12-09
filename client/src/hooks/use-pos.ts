@@ -59,10 +59,6 @@ export function usePos() {
 
   const createSaleMutation = useMutation<{ sale: Sale; receipt: ReceiptData }, Error, SalePayload>({
     mutationFn: async (sale) => {
-      // Expose receipt setter globally for the SaleTerminal
-      if (!window._setReceiptState) {
-        window._setReceiptState = () => {};
-      }
       const response = await fetch('/api/sales', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -76,11 +72,6 @@ export function usePos() {
       }
       
       const saleData = await response.json();
-      
-      // Set up receipt state setter if not already defined
-      if (!window._setReceiptState) {
-        window._setReceiptState = () => {};
-      }
       
       // Fetch receipt data with retries
       let retries = 3;
@@ -101,10 +92,6 @@ export function usePos() {
             sms: false,
             whatsapp: false,
           };
-          // Update receipt state in SaleTerminal
-          if (window._setReceiptState) {
-            window._setReceiptState(receipt);
-          }
           break;
         } catch (error) {
           lastError = error;
@@ -147,6 +134,9 @@ export function usePos() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      if (window._setReceiptState) {
+        window._setReceiptState(data.receipt);
+      }
       toast({
         title: "Sale completed",
         description: "Transaction has been processed successfully",
