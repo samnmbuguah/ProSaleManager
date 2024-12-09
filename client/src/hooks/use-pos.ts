@@ -75,29 +75,40 @@ export function usePos() {
       if (!data.receipt || !data.sale) {
         throw new Error('Invalid response format from server');
       }
+
+      // Ensure all receipt fields are properly formatted
+      const formattedReceipt: ReceiptData = {
+        ...data.receipt,
+        items: data.receipt.items.map((item: any) => ({
+          name: item.name || 'Unknown Product',
+          quantity: Number(item.quantity) || 0,
+          unitPrice: Number(item.unitPrice) || 0,
+          total: Number(item.total) || 0,
+        })),
+        total: Number(data.receipt.total) || 0,
+        timestamp: data.receipt.timestamp || new Date().toISOString(),
+        transactionId: data.receipt.transactionId || `TXN-${data.sale.id}`,
+        receiptStatus: {
+          sms: false,
+          whatsapp: false,
+          ...data.receipt.receiptStatus,
+        },
+      };
       
       return {
-        sale: {
-          id: data.sale.id,
-          customerId: data.sale.customerId,
-          userId: data.sale.userId,
-          total: data.sale.total,
-          paymentMethod: data.sale.paymentMethod,
-          paymentStatus: data.sale.paymentStatus,
-          createdAt: data.sale.createdAt,
-          updatedAt: data.sale.updatedAt,
-        },
-        receipt: data.receipt,
+        sale: data.sale,
+        receipt: formattedReceipt,
       };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      // Set receipt state for display
       if (window._setReceiptState) {
         window._setReceiptState(data.receipt);
       }
       toast({
         title: "Sale completed",
-        description: "Transaction has been processed successfully",
+        description: "Transaction has been processed successfully. Receipt is ready.",
       });
       return data;
     },

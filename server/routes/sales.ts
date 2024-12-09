@@ -215,23 +215,23 @@ router.post("/", async (req, res) => {
       customerData = customer;
     }
 
-    // Prepare receipt data with proper type handling
+    // Prepare receipt data with proper type handling and validation
     const receipt = {
       id: sale.id,
       items: productDetails.map(item => ({
-        name: item.name,
-        quantity: Number(item.quantity),
-        unitPrice: parseFloat(item.price),
-        total: (Number(item.quantity) * parseFloat(item.price)),
+        name: item.name || 'Unknown Product',
+        quantity: Number(item.quantity) || 0,
+        unitPrice: Number(item.price) || 0,
+        total: (Number(item.quantity) * Number(item.price)) || 0,
       })),
       customer: customerData ? {
-        name: customerData.name,
-        phone: customerData.phone,
-        email: customerData.email,
+        name: customerData.name || '',
+        phone: customerData.phone || '',
+        email: customerData.email || '',
       } : undefined,
-      total: parseFloat(total),
-      paymentMethod,
-      timestamp: sale.createdAt.toISOString(),
+      total: Number(total) || 0,
+      paymentMethod: paymentMethod || 'cash',
+      timestamp: sale.createdAt?.toISOString() || new Date().toISOString(),
       transactionId: `TXN-${sale.id}`,
       receiptStatus: {
         sms: false,
