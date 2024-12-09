@@ -17,11 +17,12 @@ export function SaleTerminal({ children, onSendReceipt }: SaleTerminalProps) {
   const [showPhoneInput, setShowPhoneInput] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
 
-  // Expose setReceipt to parent component
+  // Make setReceipt available globally for the POS system
   useEffect(() => {
-    if (window._setReceiptState) {
-      window._setReceiptState = setReceipt;
-    }
+    window._setReceiptState = setReceipt;
+    return () => {
+      window._setReceiptState = undefined;
+    };
   }, []);
 
   const handleSendReceipt = async (method: 'whatsapp' | 'sms') => {
