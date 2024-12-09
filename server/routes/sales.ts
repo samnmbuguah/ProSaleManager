@@ -331,29 +331,29 @@ router.get("/:id/receipt", async (req, res) => {
         name: products.name,
         quantity: saleItems.quantity,
         unitPrice: saleItems.price,
-        total: sql<string>`(${saleItems.quantity} * ${saleItems.price})::text`,
+        total: sql<string>`(${saleItems.quantity} * cast(${saleItems.price} as decimal))::text`,
       })
       .from(saleItems)
       .leftJoin(products, eq(saleItems.productId, products.id))
       .where(eq(saleItems.saleId, parseInt(id)));
 
-    // Format receipt data
+    // Format receipt data with proper type handling and error checks
     const receipt = {
       id: sale.id,
       items: items.map(item => ({
         name: item.name || 'Unknown Product',
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        total: item.total,
+        quantity: Number(item.quantity) || 0,
+        unitPrice: parseFloat(item.unitPrice?.toString() || '0'),
+        total: parseFloat(item.total?.toString() || '0'),
       })),
       customer: sale.customer?.name ? {
         name: sale.customer.name,
         phone: sale.customer.phone,
         email: sale.customer.email,
       } : undefined,
-      total: sale.total,
-      paymentMethod: sale.paymentMethod,
-      timestamp: sale.createdAt,
+      total: parseFloat(sale.total?.toString() || '0'),
+      paymentMethod: sale.paymentMethod || 'cash',
+      timestamp: sale.createdAt?.toISOString() || new Date().toISOString(),
       transactionId: `TXN-${sale.id}`,
       receiptStatus: {
         sms: false,
@@ -370,4 +370,5 @@ router.get("/:id/receipt", async (req, res) => {
     });
   }
 });
-export default router; 
+
+export default router;
