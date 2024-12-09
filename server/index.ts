@@ -417,8 +417,9 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     serveStatic(app);
   }
 
-  // Start server
-  const PORT = process.env.PORT || 5000;
+  // Set environment variables before any deployment checks
+  process.env.PORT = process.env.PORT || '5000';
+
   // Initialize backup schedule before server start
   try {
     initializeBackupSchedule();
@@ -427,8 +428,8 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     console.error('Backup schedule initialization error:', error);
   }
 
-  server.listen(Number(PORT), "0.0.0.0", () => {
-    log(`serving on port ${PORT}`);
+  server.listen(Number(process.env.PORT), "0.0.0.0", () => {
+    log(`serving on port ${process.env.PORT}`);
     
     // Run deployment process in background
     Promise.resolve().then(async () => {
