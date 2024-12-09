@@ -78,20 +78,22 @@ export function usePos() {
 
       // Ensure all receipt fields are properly formatted
       const formattedReceipt: ReceiptData = {
-        ...data.receipt,
+        id: data.sale.id,
         items: data.receipt.items.map((item: any) => ({
           name: item.name || 'Unknown Product',
           quantity: Number(item.quantity) || 0,
-          unitPrice: Number(item.unitPrice) || 0,
-          total: Number(item.total) || 0,
+          unitPrice: Number(item.price) || 0,
+          total: Number(item.quantity) * Number(item.price) || 0,
         })),
-        total: Number(data.receipt.total) || 0,
-        timestamp: data.receipt.timestamp || new Date().toISOString(),
-        transactionId: data.receipt.transactionId || `TXN-${data.sale.id}`,
+        customer: data.receipt.customer,
+        total: Number(data.sale.total) || 0,
+        paymentMethod: data.sale.paymentMethod,
+        timestamp: data.sale.createdAt,
+        transactionId: `TXN-${data.sale.id}`,
         receiptStatus: {
           sms: false,
           whatsapp: false,
-          ...data.receipt.receiptStatus,
+          ...(data.receipt.receiptStatus || {}),
         },
       };
       
@@ -110,7 +112,6 @@ export function usePos() {
         title: "Sale completed",
         description: "Transaction has been processed successfully. Receipt is ready.",
       });
-      return data;
     },
     onError: (error) => {
       toast({
