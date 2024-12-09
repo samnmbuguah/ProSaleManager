@@ -25,7 +25,6 @@ export const users = pgTable("users", {
 export const products = pgTable("products", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull(),
-  sku: text("sku").notNull().unique(),
   buyingPrice: decimal("buying_price", { precision: 10, scale: 2 }).notNull(),
   sellingPrice: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
   stock: integer("stock").default(0).notNull(),
@@ -37,11 +36,12 @@ export const products = pgTable("products", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// SKU Pricing schema
-export const skuPricing = pgTable("sku_pricing", {
+// Unit Pricing schema
+export const unitPricing = pgTable("unit_pricing", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   productId: integer("product_id").references(() => products.id).notNull(),
-  skuType: text("sku_type").notNull(), // 'per_piece', 'three_piece', 'dozen'
+  unitType: text("unit_type").notNull(), // 'piece', 'dozen', 'box', etc.
+  quantity: integer("quantity").notNull(),
   buyingPrice: decimal("buying_price", { precision: 10, scale: 2 }).notNull(),
   sellingPrice: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -142,7 +142,7 @@ export const saleItems = pgTable("sale_items", {
   productId: integer("product_id")
     .references(() => products.id)
     .notNull(),
-  skuPricingId: integer("sku_pricing_id").references(() => skuPricing.id),
+  unitPricingId: integer("unit_pricing_id").references(() => unitPricing.id),
   quantity: integer("quantity").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -185,10 +185,10 @@ export const selectProductSchema = createSelectSchema(products);
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Product = z.infer<typeof selectProductSchema>;
 
-export const insertSkuPricingSchema = createInsertSchema(skuPricing);
-export const selectSkuPricingSchema = createSelectSchema(skuPricing);
-export type InsertSkuPricing = z.infer<typeof insertSkuPricingSchema>;
-export type SkuPricing = z.infer<typeof selectSkuPricingSchema>;
+export const insertUnitPricingSchema = createInsertSchema(unitPricing);
+export const selectUnitPricingSchema = createSelectSchema(unitPricing);
+export type InsertUnitPricing = z.infer<typeof insertUnitPricingSchema>;
+export type UnitPricing = z.infer<typeof selectUnitPricingSchema>;
 
 export const insertCustomerSchema = createInsertSchema(customers);
 export const selectCustomerSchema = createSelectSchema(customers);

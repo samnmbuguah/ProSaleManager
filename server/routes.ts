@@ -12,7 +12,7 @@ import {
   loyaltyPoints, loyaltyTransactions,
   insertSupplierSchema,
   insertProductSupplierSchema,
-  skuPricing,
+  unitPricing,
 } from "@db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { desc } from "drizzle-orm";
@@ -24,7 +24,7 @@ interface SaleItemInput {
   quantity: number;
   price: string | number;
   name?: string;
-  skuPricingId?: number | null;
+  unitPricingId?: number | null;
 }
 
 export function registerRoutes(app: Express) {
@@ -180,46 +180,50 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // SKU Pricing endpoints
-  app.post("/api/sku-pricing", async (req, res) => {
+  // Unit Pricing endpoints
+  app.post("/api/unit-pricing", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
       const { productId, prices } = req.body;
       
-      interface SkuPricing {
+      interface UnitPrice {
+        unitType: string;
+        quantity: number;
         buyingPrice: string;
         sellingPrice: string;
       }
       
-      const skuPrices = Object.entries(prices).map(([skuType, pricing]: [string, any]) => ({
+      const unitPrices = Object.entries(prices).map(([unitType, pricing]: [string, any]) => ({
         productId,
-        skuType,
-        buyingPrice: (pricing as SkuPricing).buyingPrice,
-        sellingPrice: (pricing as SkuPricing).sellingPrice,
+        unitType,
+        quantity: (pricing as UnitPrice).quantity,
+        buyingPrice: (pricing as UnitPrice).buyingPrice,
+        sellingPrice: (pricing as UnitPrice).sellingPrice,
       }));
 
       // Delete existing prices for this product first
-      await db.delete(skuPricing).where(eq(skuPricing.productId, productId));
+      await db.delete(unitPricing).where(eq(unitPricing.productId, productId));
       
       // Insert new prices
-      await db.insert(skuPricing).values(skuPrices);
+      await db.insert(unitPricing).values(unitPrices);
       res.json({ success: true });
     } catch (error) {
-      console.error('Create SKU pricing error:', error);
-      res.status(500).json({ error: "Failed to create SKU pricing" });
+      console.error('Create unit pricing error:', error);
+      res.status(500).json({ error: "Failed to create unit pricing" });
     }
   });
 
-  // Bulk SKU Pricing update endpoint
-  app.post("/api/sku-pricing/bulk", async (req, res) => {
+  // Bulk Unit Pricing update endpoint
+  app.post("/api/unit-pricing/bulk", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
       const { updates } = req.body;
       
-      interface BulkSkuPricing {
+      interface BulkUnitPricing {
         productId: number;
         prices: {
           [key: string]: {
+            quantity: number;
             buyingPrice: string;
             sellingPrice: string;
           }
@@ -232,44 +236,45 @@ export function registerRoutes(app: Express) {
       }
 
       // Process each product's pricing updates
-      for (const update of updates as BulkSkuPricing[]) {
+      for (const update of updates as BulkUnitPricing[]) {
         const { productId, prices } = update;
         
-        const skuPrices = Object.entries(prices).map(([skuType, pricing]) => ({
+        const unitPrices = Object.entries(prices).map(([unitType, pricing]) => ({
           productId,
-          skuType,
+          unitType,
+          quantity: pricing.quantity,
           buyingPrice: pricing.buyingPrice,
           sellingPrice: pricing.sellingPrice,
         }));
 
         // Delete existing prices for this product
-        await db.delete(skuPricing).where(eq(skuPricing.productId, productId));
+        await db.delete(unitPricing).where(eq(unitPricing.productId, productId));
         
         // Insert new prices
-        await db.insert(skuPricing).values(skuPrices);
+        await db.insert(unitPricing).values(unitPrices);
       }
 
       res.json({ success: true });
     } catch (error) {
-      console.error('Bulk SKU pricing update error:', error);
-      res.status(500).json({ error: "Failed to update SKU pricing" });
+      console.error('Bulk unit pricing update error:', error);
+      res.status(500).json({ error: "Failed to update unit pricing" });
     }
   });
 
-  // Get SKU Pricing for a product
-  app.get("/api/sku-pricing/:productId", async (req, res) => {
+  // Get Unit Pricing for a product
+  app.get("/api/unit-pricing/:productId", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
       const productId = parseInt(req.params.productId);
       const prices = await db
         .select()
-        .from(skuPricing)
-        .where(eq(skuPricing.productId, productId));
+        .from(unitPricing)
+        .where(eq(unitPricing.productId, productId));
       
       res.json(prices);
     } catch (error) {
-      console.error('Fetch SKU pricing error:', error);
-      res.status(500).json({ error: "Failed to fetch SKU pricing" });
+      console.error('Fetch unit pricing error:', error);
+      res.status(500).json({ error: "Failed to fetch unit pricing" });
     }
   });
 
@@ -485,7 +490,7 @@ export function registerRoutes(app: Express) {
           productId: item.productId,
           quantity: item.quantity,
           price: item.price,
-          skuPricingId: item.skuPricingId || null,
+          unitPricingId: item.unitPricingId || null,
         }))
       );
 
@@ -747,7 +752,7 @@ export function registerRoutes(app: Express) {
       const demoProducts = [
         {
           name: "Milk 500ml",
-          sku: "DAIRY-001",
+          
           buyingPrice: "45.00",
           sellingPrice: "65.00",
           stock: 50,
@@ -758,7 +763,7 @@ export function registerRoutes(app: Express) {
         },
         {
           name: "Bread",
-          sku: "BAKERY-001", 
+           
           buyingPrice: "50.00",
           sellingPrice: "70.00",
           stock: 30,
@@ -769,7 +774,7 @@ export function registerRoutes(app: Express) {
         },
         {
           name: "Sugar 1kg",
-          sku: "GROCERY-001",
+          
           buyingPrice: "130.00",
           sellingPrice: "165.00",
           stock: 100,
