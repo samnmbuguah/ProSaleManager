@@ -5,6 +5,12 @@ import { Minus, Plus, ShoppingCart } from "lucide-react";
 
 interface CartItem extends Product {
   quantity: number;
+  selectedUnitPrice: {
+    unitType: string;
+    quantity: number;
+    sellingPrice: string;
+  };
+  unitPricingId?: number | null;
 }
 
 interface CartProps {
@@ -28,14 +34,14 @@ export function Cart({ items, onUpdateQuantity, onCheckout, total }: CartProps) 
             key={item.id}
             className="flex items-center justify-between p-2 bg-accent rounded-lg"
           >
-            <div>
+            <div className="flex-1">
               <div className="font-medium">{item.name}</div>
               <div className="text-sm text-muted-foreground">
                 KSh {Number(item.selectedUnitPrice.sellingPrice).toFixed(2)} per {item.selectedUnitPrice.quantity} {item.selectedUnitPrice.unitType}
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ml-4">
               <Button
                 variant="outline"
                 size="icon"

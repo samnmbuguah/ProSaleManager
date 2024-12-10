@@ -51,10 +51,17 @@ export function ProductTable({ products = [], isLoading }: ProductTableProps) {
               <TableRow key={product.id}>
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{product.category}</TableCell>
-                <TableCell>KSh {Number(product.buyingPrice).toFixed(2)}</TableCell>
-                <TableCell>KSh {Number(product.sellingPrice).toFixed(2)}</TableCell>
                 <TableCell>
-                  {(((Number(product.sellingPrice) - Number(product.buyingPrice)) / Number(product.buyingPrice)) * 100).toFixed(1)}%
+                  KSh {product.defaultUnitPricing ? Number(product.defaultUnitPricing.buyingPrice).toFixed(2) : "N/A"}
+                </TableCell>
+                <TableCell>
+                  KSh {product.defaultUnitPricing ? Number(product.defaultUnitPricing.sellingPrice).toFixed(2) : "N/A"}
+                </TableCell>
+                <TableCell>
+                  {product.defaultUnitPricing ? 
+                    (((Number(product.defaultUnitPricing.sellingPrice) - Number(product.defaultUnitPricing.buyingPrice)) / 
+                      Number(product.defaultUnitPricing.buyingPrice)) * 100).toFixed(1) + "%" : 
+                    "N/A"}
                 </TableCell>
                 <TableCell>{product.stock}</TableCell>
                 <TableCell>

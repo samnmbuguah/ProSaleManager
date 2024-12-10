@@ -4,6 +4,12 @@ import { useToast } from '@/hooks/use-toast';
 
 interface CartItem extends Product {
   quantity: number;
+  selectedUnitPrice: {
+    unitType: string;
+    quantity: number;
+    sellingPrice: string;
+  };
+  unitPricingId?: number | null;
 }
 
 interface SalePayload {
@@ -11,6 +17,7 @@ interface SalePayload {
     productId: number;
     quantity: number;
     price: number;
+    unitPricingId?: number | null;
   }[];
   customerId?: number;
   total: number;
@@ -131,15 +138,19 @@ export function usePos() {
   const searchProducts = (query: string) => {
     if (!products) return [];
     return products.filter(p => 
-      p.name.toLowerCase().includes(query.toLowerCase()) ||
-      p.sku.toLowerCase().includes(query.toLowerCase())
+      p.name.toLowerCase().includes(query.toLowerCase())
     );
   };
 
   const calculateTotal = (items: CartItem[]) => {
     return items.reduce((sum, item) => {
+      if (!item.selectedUnitPrice) return sum;
+      
       const unitPrice = Number(item.selectedUnitPrice.sellingPrice);
       const unitsPerPrice = item.selectedUnitPrice.quantity;
+      
+      if (unitsPerPrice <= 0 || !unitPrice) return sum;
+      
       // Calculate how many complete units we're buying
       const completeUnits = Math.floor(item.quantity / unitsPerPrice);
       // Calculate remaining items that don't make a complete unit
@@ -148,6 +159,7 @@ export function usePos() {
       const completeUnitsPrice = completeUnits * unitPrice;
       // Calculate price for remaining items (proportional to the unit price)
       const remainingItemsPrice = (remainingItems / unitsPerPrice) * unitPrice;
+      
       return sum + completeUnitsPrice + remainingItemsPrice;
     }, 0);
   };

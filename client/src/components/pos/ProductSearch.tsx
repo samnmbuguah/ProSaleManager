@@ -35,7 +35,15 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
             onClick={() => onSelect(product)}
           >
             <div className="font-bold">{product.name}</div>
-            <div className="text-sm text-muted-foreground">KSh {Number(product.sellingPrice).toFixed(2)}</div>
+            <div className="text-sm text-muted-foreground">
+              {product.defaultUnitPricing ? (
+                <>
+                  KSh {Number(product.defaultUnitPricing.sellingPrice).toFixed(2)} per {product.defaultUnitPricing.quantity} {product.defaultUnitPricing.unitType}
+                </>
+              ) : (
+                "Price not set"
+              )}
+            </div>
           </Button>
         ))}
       </div>
