@@ -21,7 +21,7 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Product schema
+// Define products table first without the foreign key reference
 export const products = pgTable("products", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull(),
@@ -31,12 +31,12 @@ export const products = pgTable("products", {
   maxStock: integer("max_stock"),
   reorderPoint: integer("reorder_point"),
   stockUnit: text("stock_unit").default("piece").notNull(),
-  defaultUnitPricingId: integer("default_unit_pricing_id").references(() => unitPricing.id),
+  defaultUnitPricingId: integer("default_unit_pricing_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Unit Pricing schema
+// Unit Pricing schema with references to products
 export const unitPricing = pgTable("unit_pricing", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   productId: integer("product_id").references(() => products.id).notNull(),
@@ -49,7 +49,7 @@ export const unitPricing = pgTable("unit_pricing", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Unit Pricing relations
+// Relations
 export const unitPricingRelations = relations(unitPricing, ({ one }) => ({
   product: one(products, {
     fields: [unitPricing.productId],
@@ -57,7 +57,6 @@ export const unitPricingRelations = relations(unitPricing, ({ one }) => ({
   }),
 }));
 
-// Product relations
 export const productsRelations = relations(products, ({ many, one }) => ({
   unitPricing: many(unitPricing),
   defaultUnitPricing: one(unitPricing, {
@@ -192,7 +191,7 @@ export const loyaltyTransactions = pgTable("loyalty_transactions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Schema validations
+// Schema validations with updated types
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -202,14 +201,29 @@ export const insertProductSchema = createInsertSchema(products);
 export const selectProductSchema = createSelectSchema(products);
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Product = z.infer<typeof selectProductSchema> & {
-  unitPricing?: UnitPricing[];
-  defaultUnitPricing?: UnitPricing & {
-    buyingPrice: number;
-    sellingPrice: number;
-  };
+  unitPricing?: Array<{
+    id: number;
+    productId: number;
+    unitType: string;
+    quantity: number;
+    buyingPrice: string | number;
+    sellingPrice: string | number;
+    isDefault: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  }>;
+  defaultUnitPricing?: {
+    id: number;
+    productId: number;
+    unitType: string;
+    quantity: number;
+    buyingPrice: string | number;
+    sellingPrice: string | number;
+    isDefault: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  } | null;
 };
-
-// Define relations between products and unit pricing
 
 export const insertUnitPricingSchema = createInsertSchema(unitPricing);
 export const selectUnitPricingSchema = createSelectSchema(unitPricing);

@@ -35,7 +35,7 @@ interface OrderItem {
   product: {
     id: number;
     name: string;
-    sku: string;
+    stockUnit: string;
   };
 }
 
@@ -86,7 +86,7 @@ export function PurchaseOrderDetails({ orderId, isOpen, onClose, supplier }: Pur
               <TableHeader>
                 <TableRow>
                   <TableHead>Product</TableHead>
-                  <TableHead>SKU</TableHead>
+                  <TableHead>Stock Unit</TableHead>
                   <TableHead>Quantity</TableHead>
                   <TableHead>Buying Price</TableHead>
                   <TableHead>Selling Price</TableHead>
@@ -97,7 +97,7 @@ export function PurchaseOrderDetails({ orderId, isOpen, onClose, supplier }: Pur
                 {items?.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{item.product.name}</TableCell>
-                    <TableCell>{item.product.sku}</TableCell>
+                    <TableCell>{item.product.stockUnit}</TableCell>
                     <TableCell>{item.quantity}</TableCell>
                     <TableCell>{formatCurrency(item.buyingPrice)}</TableCell>
                     <TableCell>{formatCurrency(item.sellingPrice)}</TableCell>
