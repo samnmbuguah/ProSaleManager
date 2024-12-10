@@ -232,7 +232,8 @@ CREATE TABLE public.products (
     reorder_point integer,
     created_at timestamp without time zone DEFAULT now() NOT NULL,
     updated_at timestamp without time zone DEFAULT now() NOT NULL,
-    stock_unit public.sku_type DEFAULT 'per_piece'::public.sku_type NOT NULL
+    stock_unit public.sku_type DEFAULT 'per_piece'::public.sku_type NOT NULL,
+    default_unit_pricing_id integer
 );
 
 
@@ -452,6 +453,47 @@ ALTER TABLE public.suppliers ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
 
 
 --
+-- Name: unit_pricing; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.unit_pricing (
+    id integer NOT NULL,
+    product_id integer NOT NULL,
+    unit_type text NOT NULL,
+    quantity integer NOT NULL,
+    buying_price numeric(10,2) NOT NULL,
+    selling_price numeric(10,2) NOT NULL,
+    is_default boolean DEFAULT false NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE public.unit_pricing OWNER TO neondb_owner;
+
+--
+-- Name: unit_pricing_id_seq; Type: SEQUENCE; Schema: public; Owner: neondb_owner
+--
+
+CREATE SEQUENCE public.unit_pricing_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.unit_pricing_id_seq OWNER TO neondb_owner;
+
+--
+-- Name: unit_pricing_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: neondb_owner
+--
+
+ALTER SEQUENCE public.unit_pricing_id_seq OWNED BY public.unit_pricing.id;
+
+
+--
 -- Name: users; Type: TABLE; Schema: public; Owner: neondb_owner
 --
 
@@ -494,6 +536,13 @@ ALTER TABLE ONLY drizzle.__drizzle_migrations ALTER COLUMN id SET DEFAULT nextva
 --
 
 ALTER TABLE ONLY public.sku_pricing ALTER COLUMN id SET DEFAULT nextval('public.sku_pricing_id_seq'::regclass);
+
+
+--
+-- Name: unit_pricing id; Type: DEFAULT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.unit_pricing ALTER COLUMN id SET DEFAULT nextval('public.unit_pricing_id_seq'::regclass);
 
 
 --
@@ -549,11 +598,11 @@ COPY public.product_suppliers (id, product_id, supplier_id, cost_price, is_prefe
 -- Data for Name: products; Type: TABLE DATA; Schema: public; Owner: neondb_owner
 --
 
-COPY public.products (id, name, sku, buying_price, selling_price, stock, category, min_stock, max_stock, reorder_point, created_at, updated_at, stock_unit) FROM stdin;
-3	boxers	45454	45.00	70.00	-57	boxers	10	100	20	2024-12-05 08:23:37.902187	2024-12-05 08:25:09.787	per_piece
-2	another one	ete	56.00	65.00	-42	boxers	10	100	20	2024-12-04 19:20:05.897472	2024-12-04 19:20:05.897472	per_piece
-4	Ben 10 S	Pieces 	83.33	150.00	37	boxers	10	100	20	2024-12-05 08:34:14.647455	2024-12-09 17:32:42.271	per_piece
-1	New Product	44g55	57.00	78.00	-100	bra	10	100	20	2024-12-04 19:19:14.347645	2024-12-05 08:25:56.826	per_piece
+COPY public.products (id, name, sku, buying_price, selling_price, stock, category, min_stock, max_stock, reorder_point, created_at, updated_at, stock_unit, default_unit_pricing_id) FROM stdin;
+3	boxers	45454	45.00	70.00	-57	boxers	10	100	20	2024-12-05 08:23:37.902187	2024-12-05 08:25:09.787	per_piece	\N
+2	another one	ete	56.00	65.00	-42	boxers	10	100	20	2024-12-04 19:20:05.897472	2024-12-04 19:20:05.897472	per_piece	\N
+4	Ben 10 S	Pieces 	83.33	150.00	37	boxers	10	100	20	2024-12-05 08:34:14.647455	2024-12-09 17:32:42.271	per_piece	\N
+1	New Product	44g55	57.00	78.00	-100	bra	10	100	20	2024-12-04 19:19:14.347645	2024-12-05 08:25:56.826	per_piece	\N
 \.
 
 
@@ -1081,6 +1130,14 @@ COPY public.suppliers (id, name, email, phone, address, created_at, updated_at) 
 
 
 --
+-- Data for Name: unit_pricing; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.unit_pricing (id, product_id, unit_type, quantity, buying_price, selling_price, is_default, created_at, updated_at) FROM stdin;
+\.
+
+
+--
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: neondb_owner
 --
 
@@ -1172,6 +1229,13 @@ SELECT pg_catalog.setval('public.sku_pricing_id_seq', 4, true);
 --
 
 SELECT pg_catalog.setval('public.suppliers_id_seq', 2, true);
+
+
+--
+-- Name: unit_pricing_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
+--
+
+SELECT pg_catalog.setval('public.unit_pricing_id_seq', 1, false);
 
 
 --
@@ -1294,6 +1358,14 @@ ALTER TABLE ONLY public.suppliers
 
 
 --
+-- Name: unit_pricing unit_pricing_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.unit_pricing
+    ADD CONSTRAINT unit_pricing_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
 --
 
@@ -1315,6 +1387,20 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_username_key UNIQUE (username);
+
+
+--
+-- Name: idx_unit_pricing_is_default; Type: INDEX; Schema: public; Owner: neondb_owner
+--
+
+CREATE INDEX idx_unit_pricing_is_default ON public.unit_pricing USING btree (is_default) WHERE (is_default = true);
+
+
+--
+-- Name: idx_unit_pricing_product_id; Type: INDEX; Schema: public; Owner: neondb_owner
+--
+
+CREATE INDEX idx_unit_pricing_product_id ON public.unit_pricing USING btree (product_id);
 
 
 --
@@ -1355,6 +1441,14 @@ ALTER TABLE ONLY public.product_suppliers
 
 ALTER TABLE ONLY public.product_suppliers
     ADD CONSTRAINT product_suppliers_supplier_id_fkey FOREIGN KEY (supplier_id) REFERENCES public.suppliers(id);
+
+
+--
+-- Name: products products_default_unit_pricing_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.products
+    ADD CONSTRAINT products_default_unit_pricing_id_fkey FOREIGN KEY (default_unit_pricing_id) REFERENCES public.unit_pricing(id);
 
 
 --
