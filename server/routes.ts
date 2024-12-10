@@ -104,9 +104,8 @@ export function registerRoutes(app: Express) {
           product: {
             id: products.id,
             name: products.name,
-            sku: products.sku,
-            buyingPrice: products.buyingPrice,
-            sellingPrice: products.sellingPrice,
+            stockUnit: products.stockUnit,
+            defaultUnitPricingId: products.defaultUnitPricingId,
           },
         })
         .from(productSuppliersTable)
@@ -148,21 +147,44 @@ export function registerRoutes(app: Express) {
         .select({
           id: products.id,
           name: products.name,
-          sku: products.sku,
-          buyingPrice: products.buyingPrice,
-          sellingPrice: products.sellingPrice,
           stock: products.stock,
           category: products.category,
           minStock: products.minStock,
           maxStock: products.maxStock,
           reorderPoint: products.reorderPoint,
+          stockUnit: products.stockUnit,
+          defaultUnitPricingId: products.defaultUnitPricingId,
           createdAt: products.createdAt,
           updatedAt: products.updatedAt,
         })
         .from(products)
         .orderBy(products.name);
       
-      res.json(allProducts);
+      // Fetch unit pricing for each product
+      const productsWithPricing = await Promise.all(
+        allProducts.map(async (product) => {
+          const pricing = await db
+            .select()
+            .from(unitPricing)
+            .where(eq(unitPricing.productId, product.id));
+          
+          const defaultPricing = product.defaultUnitPricingId
+            ? await db
+                .select()
+                .from(unitPricing)
+                .where(eq(unitPricing.id, product.defaultUnitPricingId))
+                .limit(1)
+            : null;
+
+          return {
+            ...product,
+            unitPricing: pricing,
+            defaultUnitPricing: defaultPricing?.[0] || null,
+          };
+        })
+      );
+      
+      res.json(productsWithPricing);
     } catch (error) {
       console.error('Fetch products error:', error);
       res.status(500).json({ error: "Failed to fetch products" });
@@ -353,14 +375,24 @@ export function registerRoutes(app: Express) {
         })
         .returning();
 
-      // Update product prices
-      await db.update(products)
-        .set({
-          buyingPrice: buyingPrice.toString(),
-          sellingPrice: sellingPrice.toString(),
-          updatedAt: new Date()
+      // Update or create unit pricing for the product
+      await db.insert(unitPricing)
+        .values({
+          productId,
+          unitType: 'piece',
+          quantity: 1,
+          buyingPrice,
+          sellingPrice,
+          isDefault: true,
         })
-        .where(eq(products.id, productId));
+        .onConflictDoUpdate({
+          target: [unitPricing.productId, unitPricing.unitType],
+          set: {
+            buyingPrice,
+            sellingPrice,
+            updatedAt: new Date(),
+          },
+        });
 
       res.json(item);
     } catch (error) {
@@ -403,8 +435,6 @@ export function registerRoutes(app: Express) {
             .update(products)
             .set({ 
               stock: sql`${products.stock} + ${item.quantity}`,
-              buyingPrice: item.buyingPrice,
-              sellingPrice: item.sellingPrice,
               updatedAt: new Date()
             })
             .where(eq(products.id, item.productId));
@@ -433,7 +463,7 @@ export function registerRoutes(app: Express) {
           product: {
             id: products.id,
             name: products.name,
-            sku: products.sku,
+            stockUnit: products.stockUnit,
           }
         })
         .from(purchaseOrderItems)
@@ -752,40 +782,78 @@ export function registerRoutes(app: Express) {
       const demoProducts = [
         {
           name: "Milk 500ml",
-          
-          buyingPrice: "45.00",
-          sellingPrice: "65.00",
           stock: 50,
           category: "Dairy",
           minStock: 10,
           maxStock: 100,
           reorderPoint: 20,
+          stockUnit: "piece",
         },
         {
           name: "Bread",
-           
-          buyingPrice: "50.00",
-          sellingPrice: "70.00",
           stock: 30,
           category: "Bakery",
           minStock: 5,
           maxStock: 50,
           reorderPoint: 10,
+          stockUnit: "piece",
         },
         {
           name: "Sugar 1kg",
-          
-          buyingPrice: "130.00",
-          sellingPrice: "165.00",
           stock: 100,
           category: "Grocery",
           minStock: 20,
           maxStock: 200,
           reorderPoint: 50,
+          stockUnit: "piece",
         }
       ];
 
-      await db.insert(products).values(demoProducts);
+      const insertedProducts = await db.insert(products).values(demoProducts).returning();
+      
+      // Add unit pricing for each product
+      const unitPricingData = insertedProducts.map(product => ([
+        {
+          productId: product.id,
+          unitType: "piece",
+          quantity: 1,
+          buyingPrice: product.name.includes("Milk") ? "45.00" : product.name.includes("Bread") ? "50.00" : "130.00",
+          sellingPrice: product.name.includes("Milk") ? "65.00" : product.name.includes("Bread") ? "70.00" : "165.00",
+          isDefault: true,
+        },
+        {
+          productId: product.id,
+          unitType: "dozen",
+          quantity: 12,
+          buyingPrice: product.name.includes("Milk") ? "520.00" : product.name.includes("Bread") ? "580.00" : "1500.00",
+          sellingPrice: product.name.includes("Milk") ? "720.00" : product.name.includes("Bread") ? "800.00" : "1900.00",
+          isDefault: false,
+        }
+      ])).flat();
+
+      await db.insert(unitPricing).values(unitPricingData);
+      
+      // Update default unit pricing IDs
+      await Promise.all(
+        insertedProducts.map(async (product) => {
+          const [defaultPricing] = await db
+            .select()
+            .from(unitPricing)
+            .where(and(
+              eq(unitPricing.productId, product.id),
+              eq(unitPricing.isDefault, true)
+            ))
+            .limit(1);
+
+          if (defaultPricing) {
+            await db
+              .update(products)
+              .set({ defaultUnitPricingId: defaultPricing.id })
+              .where(eq(products.id, product.id));
+          }
+        })
+      );
+
       res.json({ message: "Demo data added successfully" });
     } catch (error) {
       console.error('Add demo data error:', error);
