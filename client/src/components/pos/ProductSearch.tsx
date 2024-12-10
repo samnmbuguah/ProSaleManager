@@ -12,7 +12,11 @@ interface ProductSearchProps {
 
 export function ProductSearch({ products, onSelect, searchProducts }: ProductSearchProps) {
   const [query, setQuery] = useState("");
-  const filteredProducts = query ? searchProducts(query) : products;
+  const filteredProducts = query ? searchProducts(query) : products || [];
+
+  if (!Array.isArray(filteredProducts)) {
+    return <div>Error: Products data is not available</div>;
+  }
 
   return (
     <div className="space-y-4">
