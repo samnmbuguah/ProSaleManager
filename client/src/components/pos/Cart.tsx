@@ -38,6 +38,12 @@ export function Cart({ items, onUpdateQuantity, onCheckout, total }: CartProps) 
               <div className="font-medium">{item.name}</div>
               <div className="text-sm text-muted-foreground">
                 KSh {Number(item.selectedUnitPrice.sellingPrice).toFixed(2)} per {item.selectedUnitPrice.quantity} {item.selectedUnitPrice.unitType}
+                <div className="text-xs">
+                  Subtotal: KSh {(
+                    (Number(item.selectedUnitPrice.sellingPrice) * item.quantity) / 
+                    item.selectedUnitPrice.quantity
+                  ).toFixed(2)}
+                </div>
               </div>
             </div>
             
