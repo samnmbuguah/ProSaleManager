@@ -29,7 +29,7 @@ export default function InventoryPage() {
   const loadDemoData = async () => {
     try {
       setIsLoadingDemo(true);
-      const response = await fetch('/api/demo/seed', {
+      const response = await fetch('/api/seed-demo-data', {
         method: 'POST',
         credentials: 'include',
       });
@@ -66,15 +66,17 @@ export default function InventoryPage() {
         </TabsList>
 
         <TabsContent value="products" className="space-y-4">
-          <div className="flex justify-end gap-2">
-            <Button 
-              variant="outline"
-              onClick={loadDemoData}
-              disabled={isLoadingDemo}
-            >
-              <Database className="mr-2 h-4 w-4" />
-              {isLoadingDemo ? "Loading..." : "Load Demo Data"}
-            </Button>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline"
+                onClick={loadDemoData}
+                disabled={isLoadingDemo}
+              >
+                <Database className="mr-2 h-4 w-4" />
+                {isLoadingDemo ? "Loading..." : "Load Demo Data"}
+              </Button>
+            </div>
             <Button onClick={() => setIsProductFormOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Add Product
