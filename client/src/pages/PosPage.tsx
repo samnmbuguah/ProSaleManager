@@ -8,7 +8,7 @@ import { usePos } from "../hooks/use-pos";
 
 interface CartItem extends Product {
   quantity: number;
-  unitPricingId?: number;
+  unitPricingId?: number | null;
   selectedUnitPrice: {
     unitType: string;
     quantity: number;
@@ -31,8 +31,13 @@ export default function PosPage() {
             : item
         );
       }
-      // Use default unit pricing if available
-      const defaultPricing = product.defaultUnitPricing || {
+
+      // Get default unit pricing
+      const defaultPricing = product.defaultUnitPricing ? {
+        unitType: product.defaultUnitPricing.unitType,
+        quantity: product.defaultUnitPricing.quantity,
+        sellingPrice: product.defaultUnitPricing.sellingPrice.toString(),
+      } : {
         unitType: product.stockUnit,
         quantity: 1,
         sellingPrice: "0",
@@ -41,7 +46,8 @@ export default function PosPage() {
       return [...items, { 
         ...product, 
         quantity: 1,
-        selectedUnitPrice: defaultPricing
+        selectedUnitPrice: defaultPricing,
+        unitPricingId: product.defaultUnitPricingId || null,
       }];
     });
   };
@@ -65,7 +71,8 @@ export default function PosPage() {
       items: cartItems.map(item => ({
         productId: item.id,
         quantity: item.quantity,
-        price: Number(item.sellingPrice),
+        price: Number(item.selectedUnitPrice.sellingPrice),
+        unitPricingId: item.unitPricingId || null,
       })),
       customerId,
       total: calculateTotal(cartItems),
