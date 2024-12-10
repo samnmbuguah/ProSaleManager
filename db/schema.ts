@@ -30,7 +30,7 @@ export const products = pgTable("products", {
   minStock: integer("min_stock"),
   maxStock: integer("max_stock"),
   reorderPoint: integer("reorder_point"),
-  stockUnit: text("stock_unit").default("per_piece").notNull(),
+  stockUnit: text("stock_unit").default("piece").notNull(),
   defaultUnitPricingId: integer("default_unit_pricing_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -40,7 +40,7 @@ export const products = pgTable("products", {
 export const unitPricing = pgTable("unit_pricing", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   productId: integer("product_id").references(() => products.id).notNull(),
-  unitType: text("unit_type").notNull(), // 'per_piece', 'three_piece', 'dozen'
+  unitType: text("unit_type").notNull(),
   quantity: integer("quantity").notNull(),
   buyingPrice: decimal("buying_price", { precision: 10, scale: 2 }).notNull(),
   sellingPrice: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
@@ -54,6 +54,15 @@ export const unitPricingRelations = relations(unitPricing, ({ one }) => ({
   product: one(products, {
     fields: [unitPricing.productId],
     references: [products.id],
+  }),
+}));
+
+// Product relations
+export const productsRelations = relations(products, ({ many, one }) => ({
+  unitPricing: many(unitPricing),
+  defaultUnitPricing: one(unitPricing, {
+    fields: [products.defaultUnitPricingId],
+    references: [unitPricing.id],
   }),
 }));
 
@@ -198,13 +207,6 @@ export type Product = z.infer<typeof selectProductSchema> & {
 };
 
 // Define relations between products and unit pricing
-export const productsRelations = relations(products, ({ many, one }) => ({
-  unitPricing: many(unitPricing),
-  defaultUnitPricing: one(unitPricing, {
-    fields: [products.defaultUnitPricingId],
-    references: [unitPricing.id],
-  }),
-}));
 
 export const insertUnitPricingSchema = createInsertSchema(unitPricing);
 export const selectUnitPricingSchema = createSelectSchema(unitPricing);

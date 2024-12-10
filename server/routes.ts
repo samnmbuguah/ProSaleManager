@@ -379,7 +379,7 @@ export function registerRoutes(app: Express) {
       await db.insert(unitPricing)
         .values({
           productId,
-          unitType: 'piece',
+          unitType: product.stockUnit || 'piece',
           quantity: 1,
           buyingPrice,
           sellingPrice,
@@ -781,55 +781,99 @@ export function registerRoutes(app: Express) {
     try {
       const demoProducts = [
         {
-          name: "Milk 500ml",
+          name: "Rice",
+          stock: 100,
+          category: "Grains",
+          minStock: 20,
+          maxStock: 200,
+          reorderPoint: 40,
+          stockUnit: "kg",
+        },
+        {
+          name: "Cooking Oil",
           stock: 50,
-          category: "Dairy",
+          category: "Cooking",
           minStock: 10,
           maxStock: 100,
           reorderPoint: 20,
-          stockUnit: "piece",
+          stockUnit: "litre",
         },
         {
-          name: "Bread",
-          stock: 30,
-          category: "Bakery",
-          minStock: 5,
-          maxStock: 50,
-          reorderPoint: 10,
-          stockUnit: "piece",
-        },
-        {
-          name: "Sugar 1kg",
-          stock: 100,
-          category: "Grocery",
-          minStock: 20,
-          maxStock: 200,
-          reorderPoint: 50,
-          stockUnit: "piece",
+          name: "Wheat Flour",
+          stock: 80,
+          category: "Baking",
+          minStock: 15,
+          maxStock: 150,
+          reorderPoint: 30,
+          stockUnit: "kg",
         }
       ];
 
       const insertedProducts = await db.insert(products).values(demoProducts).returning();
       
       // Add unit pricing for each product
-      const unitPricingData = insertedProducts.map(product => ([
-        {
+      const unitPricingData = insertedProducts.map(product => {
+        const baseConfig = {
           productId: product.id,
-          unitType: "piece",
-          quantity: 1,
-          buyingPrice: product.name.includes("Milk") ? "45.00" : product.name.includes("Bread") ? "50.00" : "130.00",
-          sellingPrice: product.name.includes("Milk") ? "65.00" : product.name.includes("Bread") ? "70.00" : "165.00",
           isDefault: true,
-        },
-        {
-          productId: product.id,
-          unitType: "dozen",
-          quantity: 12,
-          buyingPrice: product.name.includes("Milk") ? "520.00" : product.name.includes("Bread") ? "580.00" : "1500.00",
-          sellingPrice: product.name.includes("Milk") ? "720.00" : product.name.includes("Bread") ? "800.00" : "1900.00",
-          isDefault: false,
+        };
+
+        if (product.name === "Rice") {
+          return [
+            {
+              ...baseConfig,
+              unitType: "kg",
+              quantity: 1,
+              buyingPrice: "120.00",
+              sellingPrice: "150.00",
+            },
+            {
+              ...baseConfig,
+              isDefault: false,
+              unitType: "kg",
+              quantity: 25,
+              buyingPrice: "2800.00",
+              sellingPrice: "3500.00",
+            }
+          ];
+        } else if (product.name === "Cooking Oil") {
+          return [
+            {
+              ...baseConfig,
+              unitType: "litre",
+              quantity: 1,
+              buyingPrice: "200.00",
+              sellingPrice: "250.00",
+            },
+            {
+              ...baseConfig,
+              isDefault: false,
+              unitType: "litre",
+              quantity: 5,
+              buyingPrice: "950.00",
+              sellingPrice: "1150.00",
+            }
+          ];
+        } else {
+          return [
+            {
+              ...baseConfig,
+              unitType: "kg",
+              quantity: 1,
+              buyingPrice: "150.00",
+              sellingPrice: "180.00",
+            },
+            {
+              ...baseConfig,
+              isDefault: false,
+              unitType: "kg",
+              quantity: 2,
+              buyingPrice: "290.00",
+              sellingPrice: "350.00",
+            }
+          ];
         }
-      ])).flat();
+      }).flat();
 
       await db.insert(unitPricing).values(unitPricingData);
       
