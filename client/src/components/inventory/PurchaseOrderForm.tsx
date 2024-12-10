@@ -69,8 +69,8 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
     setItems([...items, {
       productId: parseInt(productId),
       quantity: 1,
-      buyingPrice: supplierPricing ? Number(supplierPricing.costPrice) : Number(product.buyingPrice),
-      sellingPrice: Number(product.sellingPrice),
+      buyingPrice: supplierPricing ? Number(supplierPricing.costPrice) : (product.defaultUnitPricing ? Number(product.defaultUnitPricing.buyingPrice) : 0),
+      sellingPrice: product.defaultUnitPricing ? Number(product.defaultUnitPricing.sellingPrice) : 0,
       name: product.name,
     }]);
   };
