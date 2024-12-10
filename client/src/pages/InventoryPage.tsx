@@ -12,16 +12,49 @@ import { useSuppliers } from "@/hooks/use-suppliers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/hooks/use-user";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Database } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function InventoryPage() {
   const { user } = useUser();
+  const { toast } = useToast();
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
   const [isPurchaseOrderFormOpen, setIsPurchaseOrderFormOpen] = useState(false);
   const [isSupplierFormOpen, setIsSupplierFormOpen] = useState(false);
+  const [isLoadingDemo, setIsLoadingDemo] = useState(false);
   const { products, isLoading: isLoadingProducts, createProduct, isCreating: isCreatingProduct } = useProducts();
   const { createPurchaseOrder, createPurchaseOrderItem, isCreating: isCreatingPO } = usePurchaseOrders();
   const { createSupplier, isCreating: isCreatingSupplier } = useSuppliers();
+
+  const loadDemoData = async () => {
+    try {
+      setIsLoadingDemo(true);
+      const response = await fetch('/api/demo/seed', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to load demo data');
+      }
+      
+      toast({
+        title: "Success",
+        description: "Demo data loaded successfully",
+      });
+      
+      // Refresh the page to show new data
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load demo data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingDemo(false);
+    }
+  };
 
   return (
     <div className="container py-6 space-y-6">
@@ -33,7 +66,15 @@ export default function InventoryPage() {
         </TabsList>
 
         <TabsContent value="products" className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button 
+              variant="outline"
+              onClick={loadDemoData}
+              disabled={isLoadingDemo}
+            >
+              <Database className="mr-2 h-4 w-4" />
+              {isLoadingDemo ? "Loading..." : "Load Demo Data"}
+            </Button>
             <Button onClick={() => setIsProductFormOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Add Product
