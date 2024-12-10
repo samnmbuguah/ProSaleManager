@@ -379,7 +379,7 @@ export function registerRoutes(app: Express) {
       await db.insert(unitPricing)
         .values({
           productId,
-          unitType: product.stockUnit || 'piece',
+          unitType: 'piece', // Default to piece, will be updated from product data later
           quantity: 1,
           buyingPrice,
           sellingPrice,
@@ -778,6 +778,11 @@ export function registerRoutes(app: Express) {
   // Demo data seeding endpoint
   app.post("/api/seed-demo-data", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    
+    // Clear existing data first
+    await db.delete(unitPricing);
+    await db.delete(products);
+    
     try {
       const demoProducts = [
         {

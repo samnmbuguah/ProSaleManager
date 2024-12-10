@@ -31,7 +31,7 @@ export const products = pgTable("products", {
   maxStock: integer("max_stock"),
   reorderPoint: integer("reorder_point"),
   stockUnit: text("stock_unit").default("piece").notNull(),
-  defaultUnitPricingId: integer("default_unit_pricing_id"),
+  defaultUnitPricingId: integer("default_unit_pricing_id").references(() => unitPricing.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -203,7 +203,10 @@ export const selectProductSchema = createSelectSchema(products);
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Product = z.infer<typeof selectProductSchema> & {
   unitPricing?: UnitPricing[];
-  defaultUnitPricing?: UnitPricing;
+  defaultUnitPricing?: UnitPricing & {
+    buyingPrice: number;
+    sellingPrice: number;
+  };
 };
 
 // Define relations between products and unit pricing

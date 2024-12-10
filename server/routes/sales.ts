@@ -139,7 +139,6 @@ router.post("/", async (req, res) => {
         return {
           ...item,
           name: product?.name || 'Unknown Product',
-          sku: product?.sku || 'N/A',
         };
       })
     );
