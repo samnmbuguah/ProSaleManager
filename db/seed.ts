@@ -51,136 +51,110 @@ async function seedUsers() {
 }
 
 async function seedProducts() {
-  // Insert products first
-  const [rice, sugar, flour] = await db.insert(products).values([
+  // Insert products first with retail items
+  // Insert initial products
+  const productsToInsert = [
     {
-      name: 'Rice',
-      sku: 'RIC-001',
-      buying_price: '100',
-      selling_price: '120',
-      stock: 1000,
-      category: 'Grains',
-      min_stock: 100,
-      max_stock: 2000,
-      reorder_point: 200,
-      stock_unit: 'kg',
-      created_at: new Date(),
-      updated_at: new Date(),
+      name: 'Classic White T-Shirt',
+      sku: 'TSHIRT-001',
+      buying_price: '999',
+      selling_price: '1999',
+      stock: 100,
+      category: 'Clothing',
+      min_stock: 20,
+      max_stock: 200,
+      reorder_point: 30,
+      stock_unit: 'per_piece' as const,
     },
     {
-      name: 'Sugar',
-      sku: 'SUG-001',
-      buying_price: '120',
-      selling_price: '150',
-      stock: 500,
-      category: 'Groceries',
-      min_stock: 50,
-      max_stock: 1000,
-      reorder_point: 100,
-      stock_unit: 'kg',
-      created_at: new Date(),
-      updated_at: new Date(),
+      name: 'Leather Wallet',
+      sku: 'WALLET-001',
+      buying_price: '1999',
+      selling_price: '2999',
+      stock: 50,
+      category: 'Accessories',
+      min_stock: 10,
+      max_stock: 100,
+      reorder_point: 15,
+      stock_unit: 'per_piece' as const,
     },
     {
-      name: 'Wheat Flour',
-      sku: 'FLR-001',
-      buying_price: '90',
-      selling_price: '110',
-      stock: 800,
-      category: 'Baking',
-      min_stock: 100,
-      max_stock: 1500,
-      reorder_point: 200,
-      stock_unit: 'kg',
-      created_at: new Date(),
-      updated_at: new Date(),
+      name: 'Running Shoes',
+      sku: 'SHOES-001',
+      buying_price: '5999',
+      selling_price: '7999',
+      stock: 75,
+      category: 'Footwear',
+      min_stock: 15,
+      max_stock: 150,
+      reorder_point: 25,
+      stock_unit: 'per_piece' as const,
     },
-  ]).returning()
+    {
+      name: 'Wireless Headphones',
+      sku: 'AUDIO-001',
+      buying_price: '8999',
+      selling_price: '12999',
+      stock: 30,
+      category: 'Electronics',
+      min_stock: 5,
+      max_stock: 50,
+      reorder_point: 10,
+      stock_unit: 'per_piece' as const,
+    },
+  ];
 
-  // Insert unit pricing for each product
-  const unitPricingData = [
-    // Rice units
-    {
-      product_id: rice.id,
-      unit_type: 'kg',
-      quantity: 1,
-      buying_price: '100',
-      selling_price: '120',
-      is_default: true,
-    },
-    {
-      product_id: rice.id,
-      unit_type: '25kg bag',
-      quantity: 25,
-      buying_price: '2400',
-      selling_price: '2800',
-    },
-    {
-      product_id: rice.id,
-      unit_type: '50kg bag',
-      quantity: 50,
-      buying_price: '4700',
-      selling_price: '5500',
-    },
-    // Sugar units
-    {
-      product_id: sugar.id,
-      unit_type: 'kg',
-      quantity: 1,
-      buying_price: '120',
-      selling_price: '150',
-      is_default: true,
-    },
-    {
-      product_id: sugar.id,
-      unit_type: '2kg pack',
-      quantity: 2,
-      buying_price: '230',
-      selling_price: '280',
-    },
-    {
-      product_id: sugar.id,
-      unit_type: '50kg bag',
-      quantity: 50,
-      buying_price: '5700',
-      selling_price: '6800',
-    },
-    // Flour units
-    {
-      product_id: flour.id,
-      unit_type: 'kg',
-      quantity: 1,
-      buying_price: '90',
-      selling_price: '110',
-      is_default: true,
-    },
-    {
-      product_id: flour.id,
-      unit_type: '2kg pack',
-      quantity: 2,
-      buying_price: '170',
-      selling_price: '200',
-    },
-    {
-      product_id: flour.id,
-      unit_type: 'bale',
-      quantity: 24,
-      buying_price: '2040',
-      selling_price: '2400',
-    },
-  ]
+  const insertedProducts = await db.insert(products).values(productsToInsert).returning();
 
-  const unitPricings = await db.insert(unitPricing).values(unitPricingData).returning()
+  // Prepare unit pricing data for each product
+  // Prepare unit pricing data for each product
+  const unitPricingData = insertedProducts.flatMap(product => {
+    const basePrice = parseFloat(product.buying_price);
+    const markupMultiplier = parseFloat(product.selling_price) / basePrice;
+
+    return [
+      // Per piece pricing (default)
+      {
+        product_id: product.id,
+        unit_type: 'per_piece',
+        quantity: 1,
+        buying_price: basePrice.toFixed(2),
+        selling_price: (basePrice * markupMultiplier).toFixed(2),
+        is_default: true,
+      },
+      // Three piece pricing (10% discount)
+      {
+        product_id: product.id,
+        unit_type: 'three_piece',
+        quantity: 3,
+        buying_price: (basePrice * 2.7).toFixed(2),
+        selling_price: (basePrice * markupMultiplier * 2.7).toFixed(2),
+        is_default: false,
+      },
+      // Dozen pricing (15% discount)
+      {
+        product_id: product.id,
+        unit_type: 'dozen',
+        quantity: 12,
+        buying_price: (basePrice * 10.2).toFixed(2),
+        selling_price: (basePrice * markupMultiplier * 10.2).toFixed(2),
+        is_default: false,
+      }
+    ];
+  });
+
+  // Insert all unit pricing records
+  const unitPricings = await db.insert(unitPricing).values(unitPricingData).returning();
 
   // Update products with default unit pricing IDs
-  for (const product of [rice, sugar, flour]) {
+  for (const product of insertedProducts) {
     const defaultPricing = unitPricings.find(
       up => up.product_id === product.id && up.is_default
-    )
+    );
     if (defaultPricing) {
       await db.update(products)
         .set({ default_unit_pricing_id: defaultPricing.id })
-        .where(eq(products.id, product.id))
+        .where(eq(products.id, product.id));
     }
   }
 }
