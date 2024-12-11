@@ -19,9 +19,7 @@ import {
 } from "@/components/ui/select";
 
 import { z } from "zod";
-import { UnitTypeValues, defaultUnitQuantities } from "@db/schema";
-
-const UnitTypes = ['per_piece', 'three_piece', 'dozen'] as const;
+import { UnitTypeValues, defaultUnitQuantities, UnitTypes, UnitTypeEnum } from "@db/schema";
 
 // Define the product schema for form validation
 const productSchema = z.object({
@@ -32,9 +30,9 @@ const productSchema = z.object({
   min_stock: z.number().min(0, "Minimum stock cannot be negative"),
   max_stock: z.number().min(0, "Maximum stock cannot be negative"),
   reorder_point: z.number().min(0, "Reorder point cannot be negative"),
-  stock_unit: z.enum(UnitTypes),
+  stock_unit: UnitTypeEnum,
   price_units: z.array(z.object({
-    unit_type: z.enum(UnitTypes),
+    unit_type: UnitTypeEnum,
     quantity: z.number(),
     buying_price: z.string(),
     selling_price: z.string(),
@@ -84,13 +82,14 @@ const STOCK_UNITS = [
 
 export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductFormProps) {
   // Initialize default values for price units
-  const defaultPriceUnits: PriceUnit[] = UnitTypes.map((unitType) => ({
-    unit_type: unitType as UnitTypeValues,
-    quantity: defaultUnitQuantities[unitType as UnitTypeValues],
+  // Initialize default values for price units
+  const defaultPriceUnits = UnitTypes.map((unitType) => ({
+    unit_type: unitType,
+    quantity: defaultUnitQuantities[unitType],
     buying_price: "0",
     selling_price: "0",
     is_default: unitType === 'per_piece'
-  }));
+  })) satisfies PriceUnit[];
 
   // Initialize form with proper default values
   const form = useForm<ProductFormData>({

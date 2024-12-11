@@ -230,11 +230,76 @@ export function registerRoutes(app: Express) {
   app.post("/api/products", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const [product] = await db.insert(products).values(req.body).returning();
-      res.json(product);
+      console.log('Creating product with data:', JSON.stringify(req.body, null, 2));
+      
+      // Start a transaction to handle both product and pricing creation
+      const result = await db.transaction(async (tx) => {
+        // First create the product without the price_units and default_unit_pricing_id
+        const { price_units, ...productData } = req.body;
+        
+        // Ensure we have at least one price unit
+        if (!price_units || price_units.length === 0) {
+          throw new Error('At least one price unit is required');
+        }
+
+        // Find the default price unit
+        const defaultUnit = price_units.find((unit: any) => unit.is_default);
+        if (!defaultUnit) {
+          throw new Error('No default price unit specified');
+        }
+
+        const [product] = await tx.insert(products)
+          .values({
+            ...productData,
+            sku: productData.sku || generateSKU(productData.name),
+            default_unit_pricing_id: null, // Will be updated after creating price units
+          })
+          .returning();
+
+        console.log('Created product:', product);
+
+        // Create price units for the product
+        const priceUnitsData = price_units.map((unit: any) => ({
+          product_id: product.id,
+          unit_type: unit.unit_type,
+          quantity: defaultUnitQuantities[unit.unit_type],
+          buying_price: unit.buying_price.toString(),
+          selling_price: unit.selling_price.toString(),
+          is_default: unit.is_default,
+        }));
+
+        const insertedPriceUnits = await tx.insert(unitPricing)
+          .values(priceUnitsData)
+          .returning();
+
+        console.log('Created price units:', insertedPriceUnits);
+
+        // Update product with default unit pricing ID
+        const [updatedProduct] = await tx.update(products)
+          .set({ default_unit_pricing_id: defaultUnit ? insertedPriceUnits.find(u => u.unit_type === defaultUnit.unit_type)?.id : null })
+          .where(eq(products.id, product.id))
+          .returning();
+
+        return {
+          ...updatedProduct,
+          price_units: insertedPriceUnits.map(unit => ({
+            unit_type: unit.unit_type,
+            quantity: unit.quantity,
+            buying_price: unit.buying_price.toString(),
+            selling_price: unit.selling_price.toString(),
+            is_default: unit.is_default,
+          })),
+        };
+      });
+
+      res.json(result);
     } catch (error) {
       console.error('Create product error:', error);
-      res.status(500).json({ error: "Failed to create product" });
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Failed to create product" });
+      }
     }
   });
 
