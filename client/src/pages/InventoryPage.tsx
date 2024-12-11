@@ -176,12 +176,23 @@ export default function InventoryPage() {
               };
               
               try {
+                console.log('Creating product with data:', productData);
                 await createProduct(productData);
+                toast({
+                  title: "Success",
+                  description: "Product created successfully",
+                });
                 setIsProductFormOpen(false);
               } catch (error) {
                 console.error('Failed to create product:', error);
+                toast({
+                  variant: "destructive",
+                  title: "Error",
+                  description: error instanceof Error ? error.message : "Failed to create product",
+                });
+                // Don't close the form on error
+                return;
               }
-              setIsProductFormOpen(false);
             }}
             isSubmitting={isCreatingProduct}
           />
