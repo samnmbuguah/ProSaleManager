@@ -164,13 +164,21 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    // Get product prices
-    const prices = await db
+    // Get unit pricing
+    const priceUnits = await db
       .select()
-      .from(productPrices)
-      .where(eq(productPrices.productId, product.id));
+      .from(unitPricing)
+      .where(eq(unitPricing.product_id, product.id));
 
-    res.json({ ...product, priceUnits: prices });
+    const formattedPriceUnits = priceUnits.map(unit => ({
+      unit_type: unit.unit_type,
+      quantity: unit.quantity,
+      buying_price: unit.buying_price.toString(),
+      selling_price: unit.selling_price.toString(),
+      is_default: unit.is_default
+    }));
+
+    res.json({ ...product, price_units: formattedPriceUnits });
   } catch (error) {
     console.error('Error fetching product:', error);
     res.status(500).json({ error: 'Failed to fetch product' });
