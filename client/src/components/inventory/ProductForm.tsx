@@ -19,6 +19,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+export interface PriceUnit {
+  unit_type: 'per_piece' | 'three_piece' | 'dozen';
+  quantity: number;
+  buying_price: string;
+  selling_price: string;
+  is_default: boolean;
+}
+
 export interface ProductFormData {
   name: string;
   sku: string;
@@ -28,8 +36,7 @@ export interface ProductFormData {
   max_stock: number;
   reorder_point: number;
   stock_unit: 'per_piece' | 'three_piece' | 'dozen';
-  buying_price: string;
-  selling_price: string;
+  price_units: PriceUnit[];
 }
 
 interface ProductFormProps {
@@ -53,19 +60,44 @@ const STOCK_UNITS = [
 ] as const;
 
 export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductFormProps) {
-  const form = useForm<ProductFormData>({
-    resolver: zodResolver(insertProductSchema),
-    defaultValues: initialData || {
-      name: "",
-      sku: "",
-      stock: 0,
-      category: "",
-      min_stock: 0,
-      max_stock: 0,
-      reorder_point: 0,
-      stock_unit: "per_piece",
+  const defaultPriceUnits: PriceUnit[] = [
+    {
+      unit_type: 'per_piece',
+      quantity: 1,
       buying_price: "0",
       selling_price: "0",
+      is_default: true
+    },
+    {
+      unit_type: 'three_piece',
+      quantity: 3,
+      buying_price: "0",
+      selling_price: "0",
+      is_default: false
+    },
+    {
+      unit_type: 'dozen',
+      quantity: 12,
+      buying_price: "0",
+      selling_price: "0",
+      is_default: false
+    }
+  ];
+
+  const form = useForm<ProductFormData>({
+    resolver: zodResolver(insertProductSchema),
+    defaultValues: {
+      ...(initialData || {
+        name: "",
+        sku: "",
+        stock: 0,
+        category: "",
+        min_stock: 0,
+        max_stock: 0,
+        reorder_point: 0,
+        stock_unit: "per_piece",
+      }),
+      price_units: initialData?.price_units || defaultPriceUnits,
     },
   });
 
@@ -165,33 +197,62 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="buying_price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Buying Price</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="col-span-2">
+            <h3 className="text-lg font-semibold mb-4">Price Units</h3>
+            {defaultPriceUnits.map((unit, index) => (
+              <div key={unit.unit_type} className="grid grid-cols-2 gap-4 mb-6 p-4 border rounded-lg">
+                <div className="col-span-2">
+                  <h4 className="font-medium mb-2 capitalize">
+                    {unit.unit_type.replace('_', ' ')} ({unit.quantity} {unit.quantity === 1 ? 'piece' : 'pieces'})
+                  </h4>
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name={`price_units.${index}.buying_price`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Buying Price</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          <FormField
-            control={form.control}
-            name="selling_price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Selling Price</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                <FormField
+                  control={form.control}
+                  name={`price_units.${index}.selling_price`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Selling Price</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <input 
+                  type="hidden" 
+                  {...form.register(`price_units.${index}.unit_type`)} 
+                  value={unit.unit_type}
+                />
+                <input 
+                  type="hidden" 
+                  {...form.register(`price_units.${index}.quantity`)} 
+                  value={unit.quantity}
+                />
+                <input 
+                  type="hidden" 
+                  {...form.register(`price_units.${index}.is_default`)} 
+                  value={index === 0 ? "true" : "false"}
+                />
+              </div>
+            ))}
+          </div>
 
           <FormField
             control={form.control}
