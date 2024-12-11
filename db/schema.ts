@@ -68,6 +68,31 @@ export const unitPricing = pgTable("unit_pricing", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Validation schema for unit pricing
+export const unitPricingValidationSchema = z.object({
+  unit_type: z.enum(UnitTypeValues),
+  quantity: z.number().int().positive(),
+  buying_price: z.string().transform(val => Number(val)),
+  selling_price: z.string().transform(val => Number(val)),
+  is_default: z.boolean(),
+});
+
+export const productWithPriceUnitsSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  sku: z.string().min(1, "SKU is required"),
+  stock: z.number().min(0, "Stock cannot be negative"),
+  category: z.string().optional(),
+  min_stock: z.number().min(0).optional(),
+  max_stock: z.number().min(0).optional(),
+  reorder_point: z.number().min(0).optional(),
+  stock_unit: z.enum(UnitTypeValues).default("per_piece"),
+  price_units: z.array(unitPricingValidationSchema)
+    .min(1, "At least one price unit is required")
+    .refine(units => units.some(unit => unit.is_default), {
+      message: "One unit must be marked as default"
+    }),
+});
+
 // Relations
 export const unitPricingRelations = relations(unitPricing, ({ one }) => ({
   product: one(products, {

@@ -56,6 +56,12 @@ router.post('/', async (req, res) => {
 
     const result = await db.transaction(async (tx) => {
       // Step 1: Create the product first
+      // Get the default unit for initial product prices
+      const defaultUnit = price_units.find(unit => unit.is_default);
+      if (!defaultUnit) {
+        throw new Error("A default price unit must be specified");
+      }
+
       const [newProduct] = await tx.insert(products)
         .values({
           name: productData.name,
@@ -66,6 +72,8 @@ router.post('/', async (req, res) => {
           max_stock: productData.max_stock,
           reorder_point: productData.reorder_point,
           stock_unit: productData.stock_unit,
+          buying_price: defaultUnit.buying_price,
+          selling_price: defaultUnit.selling_price,
           default_unit_pricing_id: null // Will be set after creating unit prices
         })
         .returning();
@@ -75,12 +83,9 @@ router.post('/', async (req, res) => {
       // Step 2: Create unit pricing entries
       const unitPricingData = price_units.map(unit => {
         // Ensure prices are valid decimal strings
-        const buyingPrice = typeof unit.buying_price === 'number' 
-          ? unit.buying_price.toString() 
-          : unit.buying_price;
-        const sellingPrice = typeof unit.selling_price === 'number'
-          ? unit.selling_price.toString()
-          : unit.selling_price;
+        // Ensure prices are valid decimal strings
+        const buyingPrice = String(unit.buying_price);
+        const sellingPrice = String(unit.selling_price);
           
         return {
           product_id: newProduct.id,
