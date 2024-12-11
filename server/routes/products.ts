@@ -26,8 +26,14 @@ const productSchema = z.object({
   price_units: z.array(z.object({
     unit_type: z.enum(UnitTypeValues),
     quantity: z.number().int().positive(),
-    buying_price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price format"),
-    selling_price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price format"),
+    buying_price: z.union([
+      z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price format"),
+      z.number().positive()
+    ]).transform(val => typeof val === 'string' ? val : val.toString()),
+    selling_price: z.union([
+      z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price format"),
+      z.number().positive()
+    ]).transform(val => typeof val === 'string' ? val : val.toString()),
     is_default: z.boolean()
   })).min(1, "At least one price unit is required").refine(
     (units) => units.filter(unit => unit.is_default).length === 1,
@@ -67,14 +73,24 @@ router.post('/', async (req, res) => {
       console.log('Created product:', JSON.stringify(newProduct, null, 2));
       
       // Step 2: Create unit pricing entries
-      const unitPricingData = price_units.map(unit => ({
-        product_id: newProduct.id,
-        unit_type: unit.unit_type,
-        quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValues],
-        buying_price: unit.buying_price,
-        selling_price: unit.selling_price,
-        is_default: unit.is_default,
-      }));
+      const unitPricingData = price_units.map(unit => {
+        // Ensure prices are valid decimal strings
+        const buyingPrice = typeof unit.buying_price === 'number' 
+          ? unit.buying_price.toString() 
+          : unit.buying_price;
+        const sellingPrice = typeof unit.selling_price === 'number'
+          ? unit.selling_price.toString()
+          : unit.selling_price;
+          
+        return {
+          product_id: newProduct.id,
+          unit_type: unit.unit_type,
+          quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValues],
+          buying_price: buyingPrice,
+          selling_price: sellingPrice,
+          is_default: unit.is_default,
+        };
+      });
       
       console.log('Creating unit pricing with data:', JSON.stringify(unitPricingData, null, 2));
       
