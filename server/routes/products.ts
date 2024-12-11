@@ -44,9 +44,12 @@ const productSchema = z.object({
 // Create a new product with unit pricing
 router.post('/', async (req, res) => {
   try {
-    console.log('Received product data:', JSON.stringify(req.body, null, 2));
+    console.log('=== Creating Product ===');
+    console.log('1. Received product data:', JSON.stringify(req.body, null, 2));
     const validatedData = productSchema.parse(req.body);
+    console.log('2. Validated data:', JSON.stringify(validatedData, null, 2));
     const { price_units, ...productData } = validatedData;
+    console.log('3. Price units to save:', JSON.stringify(price_units, null, 2));
 
     // Validate that we have a default unit
     const defaultUnit = price_units.find(unit => unit.is_default);
@@ -81,13 +84,17 @@ router.post('/', async (req, res) => {
       console.log('Created product:', JSON.stringify(newProduct, null, 2));
       
       // Step 2: Create unit pricing entries
+      console.log('4. Creating unit pricing data...');
       const unitPricingData = price_units.map(unit => {
         // Ensure prices are valid decimal strings
-        // Ensure prices are valid decimal strings
-        const buyingPrice = String(unit.buying_price);
-        const sellingPrice = String(unit.selling_price);
+        const buyingPrice = typeof unit.buying_price === 'string' 
+          ? unit.buying_price 
+          : String(unit.buying_price);
+        const sellingPrice = typeof unit.selling_price === 'string'
+          ? unit.selling_price
+          : String(unit.selling_price);
           
-        return {
+        const pricingUnit = {
           product_id: newProduct.id,
           unit_type: unit.unit_type,
           quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValues],
@@ -95,6 +102,8 @@ router.post('/', async (req, res) => {
           selling_price: sellingPrice,
           is_default: unit.is_default,
         };
+        console.log('Unit pricing entry:', JSON.stringify(pricingUnit, null, 2));
+        return pricingUnit;
       });
       
       console.log('Creating unit pricing with data:', JSON.stringify(unitPricingData, null, 2));
@@ -138,6 +147,7 @@ router.post('/', async (req, res) => {
       }
     });
     
+    console.log('5. Final response data:', JSON.stringify(result, null, 2));
     res.status(201).json(result);
   } catch (error) {
     console.error('Error creating product:', error);
@@ -208,6 +218,8 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
+    console.log('\n=== Retrieving Product ===');
+    console.log('1. Product ID:', productId);
     console.log('Fetching product with ID:', productId);
 
     // Get product with all its unit pricing in a single query
