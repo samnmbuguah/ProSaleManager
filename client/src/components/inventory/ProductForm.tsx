@@ -1,7 +1,7 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { insertProductSchema, type InsertProduct, type UnitTypeValues, UnitTypeValues as UnitTypes, defaultUnitQuantities } from "@db/schema";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
@@ -10,7 +10,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -20,6 +19,9 @@ import {
 } from "@/components/ui/select";
 
 import { z } from "zod";
+import { UnitTypeValues, defaultUnitQuantities } from "@db/schema";
+
+const UnitTypes = ['per_piece', 'three_piece', 'dozen'] as const;
 
 // Define the product schema for form validation
 const productSchema = z.object({
@@ -39,6 +41,7 @@ const productSchema = z.object({
     is_default: z.boolean()
   }))
 });
+
 export interface PriceUnit {
   unit_type: UnitTypeValues;
   quantity: number;
@@ -80,28 +83,32 @@ const STOCK_UNITS = [
 ] as const;
 
 export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductFormProps) {
+  // Initialize default values for price units
   const defaultPriceUnits: PriceUnit[] = UnitTypes.map((unitType) => ({
-    unit_type: unitType,
-    quantity: defaultUnitQuantities[unitType],
+    unit_type: unitType as UnitTypeValues,
+    quantity: defaultUnitQuantities[unitType as UnitTypeValues],
     buying_price: "0",
     selling_price: "0",
     is_default: unitType === 'per_piece'
   }));
 
+  // Initialize form with proper default values
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      ...(initialData || {
-        name: "",
-        sku: "",
-        stock: 0,
-        category: "",
-        min_stock: 0,
-        max_stock: 0,
-        reorder_point: 0,
-        stock_unit: "per_piece",
-      }),
-      price_units: initialData?.price_units || defaultPriceUnits,
+      name: initialData?.name ?? "",
+      sku: initialData?.sku ?? "",
+      stock: initialData?.stock ?? 0,
+      category: initialData?.category ?? "",
+      min_stock: initialData?.min_stock ?? 0,
+      max_stock: initialData?.max_stock ?? 0,
+      reorder_point: initialData?.reorder_point ?? 0,
+      stock_unit: initialData?.stock_unit ?? "per_piece",
+      price_units: initialData?.price_units?.map(unit => ({
+        ...unit,
+        buying_price: String(unit.buying_price),
+        selling_price: String(unit.selling_price)
+      })) ?? defaultPriceUnits,
     },
   });
 
@@ -142,21 +149,7 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
               <FormItem>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="sku"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>SKU</FormLabel>
-                <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value || ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -169,7 +162,7 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || ""}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
@@ -195,7 +188,12 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
               <FormItem>
                 <FormLabel>Current Stock</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} onChange={e => field.onChange(+e.target.value)} />
+                  <Input
+                    type="number"
+                    {...field}
+                    value={field.value || "0"}
+                    onChange={e => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -208,7 +206,7 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Stock Unit</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || "per_piece"}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select stock unit" />
@@ -244,7 +242,12 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
                     <FormItem>
                       <FormLabel>Buying Price</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.01" {...field} />
+                        <Input
+                          type="number"
+                          step="0.01"
+                          {...field}
+                          value={field.value || "0"}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -258,7 +261,12 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
                     <FormItem>
                       <FormLabel>Selling Price</FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.01" {...field} />
+                        <Input
+                          type="number"
+                          step="0.01"
+                          {...field}
+                          value={field.value || "0"}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -267,18 +275,18 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
 
                 <input 
                   type="hidden" 
-                  {...form.register(`price_units.${index}.unit_type`)} 
+                  {...form.register(`price_units.${index}.unit_type`)}
                   value={unit.unit_type}
                 />
                 <input 
                   type="hidden" 
-                  {...form.register(`price_units.${index}.quantity`)} 
+                  {...form.register(`price_units.${index}.quantity`)}
                   value={unit.quantity}
                 />
                 <input 
                   type="hidden" 
-                  {...form.register(`price_units.${index}.is_default`)} 
-                  value={index === 0 ? "true" : "false"}
+                  {...form.register(`price_units.${index}.is_default`)}
+                  value={String(index === 0)}
                 />
               </div>
             ))}
@@ -291,7 +299,12 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
               <FormItem>
                 <FormLabel>Minimum Stock</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} onChange={e => field.onChange(+e.target.value)} />
+                  <Input
+                    type="number"
+                    {...field}
+                    value={field.value || "0"}
+                    onChange={e => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -305,7 +318,12 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
               <FormItem>
                 <FormLabel>Maximum Stock</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} onChange={e => field.onChange(+e.target.value)} />
+                  <Input
+                    type="number"
+                    {...field}
+                    value={field.value || "0"}
+                    onChange={e => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -319,7 +337,12 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
               <FormItem>
                 <FormLabel>Reorder Point</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} onChange={e => field.onChange(+e.target.value)} />
+                  <Input
+                    type="number"
+                    {...field}
+                    value={field.value || "0"}
+                    onChange={e => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
