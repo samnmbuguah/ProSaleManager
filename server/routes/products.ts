@@ -187,7 +187,39 @@ router.put('/:id', async (req, res) => {
         throw new Error("A default pricing unit is required");
       }
 
-      // Update the product with the default unit's prices
+      // Step 1: Remove the default_unit_pricing_id reference first
+      await tx.update(products)
+        .set({ default_unit_pricing_id: null })
+        .where(eq(products.id, productId));
+
+      // Step 2: Delete existing unit pricing
+      await tx.delete(unitPricing)
+        .where(eq(unitPricing.product_id, productId));
+
+      // Step 3: Insert new unit pricing
+      let newDefaultPricingId = null;
+      if (validatedData.price_units && validatedData.price_units.length > 0) {
+        const unitPricingData = validatedData.price_units.map(unit => ({
+          product_id: productId,
+          unit_type: unit.unit_type,
+          quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValues],
+          buying_price: unit.buying_price,
+          selling_price: unit.selling_price,
+          is_default: unit.is_default,
+        }));
+
+        const insertedPricingUnits = await tx.insert(unitPricing)
+          .values(unitPricingData)
+          .returning();
+
+        // Find the default pricing unit
+        const defaultPricingUnit = insertedPricingUnits.find(unit => unit.is_default);
+        if (defaultPricingUnit) {
+          newDefaultPricingId = defaultPricingUnit.id;
+        }
+      }
+
+      // Step 4: Update the product with all new information including the new default pricing ID
       await tx.update(products)
         .set({
           name: validatedData.name,
@@ -200,40 +232,9 @@ router.put('/:id', async (req, res) => {
           stock_unit: validatedData.stock_unit,
           buying_price: defaultUnit.buying_price,
           selling_price: defaultUnit.selling_price,
+          default_unit_pricing_id: newDefaultPricingId,
         })
         .where(eq(products.id, productId));
-
-      // Update the product to remove the default_unit_pricing_id reference first
-      await tx.update(products)
-        .set({ default_unit_pricing_id: null })
-        .where(eq(products.id, productId));
-
-      // Then delete existing unit pricing
-      await tx.delete(unitPricing)
-        .where(eq(unitPricing.product_id, productId));
-
-      // Insert new unit pricing
-      if (validatedData.price_units && validatedData.price_units.length > 0) {
-        const unitPricingData = validatedData.price_units.map(unit => ({
-          product_id: productId,
-          unit_type: unit.unit_type,
-          quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValues],
-          buying_price: unit.buying_price,
-          selling_price: unit.selling_price,
-          is_default: unit.is_default,
-        }));
-
-        const [defaultPricing] = await tx.insert(unitPricing)
-          .values(unitPricingData)
-          .returning();
-
-        // Update product with default unit pricing ID
-        if (defaultPricing) {
-          await tx.update(products)
-            .set({ default_unit_pricing_id: defaultPricing.id })
-            .where(eq(products.id, productId));
-        }
-      }
 
       // Fetch the updated product
       const [updatedProduct] = await tx
