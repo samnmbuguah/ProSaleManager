@@ -19,6 +19,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { z } from "zod";
+
+// Define the product schema for form validation
+const productSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  sku: z.string(),
+  stock: z.number().min(0, "Stock cannot be negative"),
+  category: z.string().min(1, "Category is required"),
+  min_stock: z.number().min(0, "Minimum stock cannot be negative"),
+  max_stock: z.number().min(0, "Maximum stock cannot be negative"),
+  reorder_point: z.number().min(0, "Reorder point cannot be negative"),
+  stock_unit: z.enum(UnitTypes),
+  price_units: z.array(z.object({
+    unit_type: z.enum(UnitTypes),
+    quantity: z.number(),
+    buying_price: z.string(),
+    selling_price: z.string(),
+    is_default: z.boolean()
+  }))
+});
 export interface PriceUnit {
   unit_type: UnitTypeValues;
   quantity: number;
@@ -87,8 +107,23 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
 
   const handleSubmit = async (data: ProductFormData) => {
     try {
-      console.log('Submitting form data:', data);
-      await onSubmit(data);
+      // Ensure numeric values are properly converted
+      const formattedData = {
+        ...data,
+        stock: Number(data.stock),
+        min_stock: Number(data.min_stock),
+        max_stock: Number(data.max_stock),
+        reorder_point: Number(data.reorder_point),
+        price_units: data.price_units.map(unit => ({
+          ...unit,
+          quantity: Number(unit.quantity),
+          buying_price: String(unit.buying_price),
+          selling_price: String(unit.selling_price)
+        }))
+      };
+      
+      console.log('Submitting form data:', formattedData);
+      await onSubmit(formattedData);
     } catch (error) {
       console.error('Form submission error:', error);
       // Keep the form open on error
