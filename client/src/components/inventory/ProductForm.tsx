@@ -69,7 +69,7 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
   }));
 
   const form = useForm<ProductFormData>({
-    resolver: zodResolver(insertProductSchema),
+    resolver: zodResolver(productSchema),
     defaultValues: {
       ...(initialData || {
         name: "",
@@ -85,9 +85,20 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
     },
   });
 
+  const handleSubmit = async (data: ProductFormData) => {
+    try {
+      console.log('Submitting form data:', data);
+      await onSubmit(data);
+    } catch (error) {
+      console.error('Form submission error:', error);
+      // Keep the form open on error
+      return;
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
