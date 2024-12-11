@@ -1,207 +1,123 @@
-import { useState, ChangeEvent } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, Phone, Receipt, User } from "lucide-react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import { useCustomers } from "@/hooks/use-customers";
-import { LoyaltyPointsSection } from "./LoyaltyPointsSection";
+import { Label } from "@/components/ui/label";
+import { formatCurrency } from "@/lib/utils";
+
+interface PriceUnit {
+  stock_unit: string;
+  selling_price: string;
+  buying_price: string;
+  conversion_rate: string;
+}
+
+interface CartItem {
+  id: number;
+  name: string;
+  quantity: number;
+  selectedUnit: string;
+  unitPrice: number;
+  total: number;
+  priceUnits: PriceUnit[];
+}
 
 interface PaymentDialogProps {
-  open: boolean;
+  isOpen: boolean;
   onClose: () => void;
-  onComplete: (paymentMethod: string, customerId?: number, pointsUsed?: number, cashAmount?: string) => Promise<void>;
-  total: number;
-  isProcessing: boolean;
+  cartItems: CartItem[];
+  onProcessPayment: (paymentDetails: {
+    amountPaid: number;
+    change: number;
+    items: CartItem[];
+  }) => Promise<void>;
 }
 
 export function PaymentDialog({
-  open,
+  isOpen,
   onClose,
-  onComplete,
-  total,
-  isProcessing,
+  cartItems,
+  onProcessPayment,
 }: PaymentDialogProps) {
-  const [selectedCustomerId, setSelectedCustomerId] = useState<number>();
-  const [pointsToUse, setPointsToUse] = useState(0);
-  const [showCashDialog, setShowCashDialog] = useState(false);
-  const [cashAmount, setCashAmount] = useState("");
-  const { customers, searchCustomers } = useCustomers();
-  const [query, setQuery] = useState("");
-  const selectedCustomer = customers?.find(c => c.id === selectedCustomerId);
+  const [amountPaid, setAmountPaid] = useState<string>("");
 
-  const handlePayment = async (method: string) => {
-    try {
-      await onComplete(method, selectedCustomerId, pointsToUse);
+  const total = cartItems.reduce((sum, item) => sum + item.total, 0);
+  const change = parseFloat(amountPaid) - total;
+  const isValidPayment = parseFloat(amountPaid) >= total;
+
+  const handlePayment = async () => {
+    if (isValidPayment) {
+      await onProcessPayment({
+        amountPaid: parseFloat(amountPaid),
+        change,
+        items: cartItems,
+      });
       onClose();
-    } catch (error) {
-      console.error('Payment error:', error);
     }
-  };
-
-  const handleCashPayment = async () => {
-    const amountReceived = Number(cashAmount);
-    if (amountReceived < (total - pointsToUse)) {
-      return; // Amount is insufficient
-    }
-
-    try {
-      await onComplete("cash", selectedCustomerId, pointsToUse, cashAmount);
-      setShowCashDialog(false);
-      setCashAmount("");
-      onClose();
-    } catch (error) {
-      console.error('Payment error:', error);
-    }
-  };
-
-  const handlePointsUse = (points: number) => {
-    setPointsToUse(points);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Complete Payment</DialogTitle>
+          <DialogTitle>Process Payment</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="text-2xl font-bold text-center">
-            KSh {(total - pointsToUse).toFixed(2)}
-            {pointsToUse > 0 && (
-              <div className="text-sm text-muted-foreground">
-                Original: KSh {total.toFixed(2)}
-              </div>
-            )}
+          <div className="space-y-2">
+            <Label>Cart Items</Label>
+            <div className="space-y-2">
+              {cartItems.map((item) => (
+                <div
+                  key={`${item.id}-${item.selectedUnit}`}
+                  className="flex justify-between text-sm"
+                >
+                  <span>
+                    {item.name} ({item.quantity} {item.selectedUnit} @{" "}
+                    {formatCurrency(item.unitPrice)})
+                  </span>
+                  <span>{formatCurrency(item.total)}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="space-y-4">
-            <Command className="rounded-lg border shadow-md">
-              <CommandInput
-                placeholder="Search customer..."
-                value={query}
-                onValueChange={setQuery}
-              />
-              <CommandEmpty>No customer found.</CommandEmpty>
-              <CommandGroup>
-                {searchCustomers(query).map((customer) => (
-                  <CommandItem
-                    key={customer.id}
-                    onSelect={() => setSelectedCustomerId(customer.id)}
-                  >
-                    <User className="mr-2 h-4 w-4" />
-                    {customer.name}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </Command>
+          <div className="flex justify-between font-medium">
+            <span>Total</span>
+            <span>{formatCurrency(total)}</span>
+          </div>
 
-            {selectedCustomer && (
-              <div className="rounded-lg border p-4 bg-accent">
-                <div className="space-y-2">
-                  <div className="font-medium">{selectedCustomer.name}</div>
-                  {selectedCustomer.email && (
-                    <div className="text-sm flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      {selectedCustomer.email}
-                    </div>
-                  )}
-                  {selectedCustomer.phone && (
-                    <div className="text-sm flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      {selectedCustomer.phone}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <LoyaltyPointsSection 
-              customerId={selectedCustomerId}
-              total={total}
-              onPointsUse={handlePointsUse}
+          <div className="space-y-2">
+            <Label htmlFor="amount-paid">Amount Paid</Label>
+            <Input
+              id="amount-paid"
+              type="number"
+              step="0.01"
+              value={amountPaid}
+              onChange={(e) => setAmountPaid(e.target.value)}
+              className="text-right"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Button
-              size="lg"
-              className="h-24"
-              onClick={() => handlePayment("mpesa")}
-              disabled={isProcessing}
-            >
-              <div className="space-y-2">
-                <Phone className="h-6 w-6 mx-auto" />
-                <div>M-Pesa</div>
-              </div>
-            </Button>
+          {parseFloat(amountPaid) > 0 && (
+            <div className="flex justify-between font-medium">
+              <span>Change</span>
+              <span>{formatCurrency(change)}</span>
+            </div>
+          )}
 
-            <Dialog open={showCashDialog} onOpenChange={setShowCashDialog}>
-              <DialogTrigger asChild>
-                <Button
-                  size="lg"
-                  className="h-24"
-                  disabled={isProcessing}
-                >
-                  <div className="space-y-2">
-                    <Receipt className="h-6 w-6 mx-auto" />
-                    <div>Cash</div>
-                  </div>
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Enter Cash Amount</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="text-2xl font-bold text-center">
-                    Total: KSh {(total - pointsToUse).toFixed(2)}
-                  </div>
-                  <div>
-                    <Label htmlFor="cashAmount">Amount Received</Label>
-                    <Input
-                      id="cashAmount"
-                      type="number"
-                      min={total - pointsToUse}
-                      step="0.01"
-                      value={cashAmount}
-                      onChange={(e: ChangeEvent<HTMLInputElement>) => setCashAmount(e.target.value)}
-                    />
-                  </div>
-                  {Number(cashAmount) >= (total - pointsToUse) && (
-                    <div className="text-lg text-center">
-                      Change: KSh {(Number(cashAmount) - (total - pointsToUse)).toFixed(2)}
-                    </div>
-                  )}
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setShowCashDialog(false)}>
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleCashPayment}
-                      disabled={Number(cashAmount) < (total - pointsToUse)}
-                    >
-                      Complete Payment
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+          <Button
+            className="w-full"
+            onClick={handlePayment}
+            disabled={!isValidPayment}
+          >
+            Complete Payment
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
