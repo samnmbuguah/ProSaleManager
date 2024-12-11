@@ -1,8 +1,8 @@
 import { useState } from "react";
-import type { Product, UnitType } from "@db/schema";
+import type { Product, UnitTypeValues } from "@db/schema";
 
 interface ProductPriceUnit {
-  unit_type: UnitType;
+  unit_type: UnitTypeValues;
   quantity: number;
   buying_price: string;
   selling_price: string;

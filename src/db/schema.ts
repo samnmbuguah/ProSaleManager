@@ -4,16 +4,18 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { sql } from 'drizzle-orm';
 
 // Define unit types enum
-export enum UnitType {
-  PER_PIECE = 'per_piece',
-  THREE_PIECE = 'three_piece',
-  DOZEN = 'dozen'
-}
+export const UnitType = {
+  PER_PIECE: 'per_piece',
+  THREE_PIECE: 'three_piece',
+  DOZEN: 'dozen'
+} as const;
+
+export type UnitTypeValues = typeof UnitType[keyof typeof UnitType];
 
 export type UnitPricing = {
   id: number;
   product_id: number;
-  unit_type: UnitType;
+  unit_type: UnitTypeValues;
   quantity: number;
   buying_price: string;
   selling_price: string;
@@ -61,9 +63,9 @@ export const insertProductSchema = z.object({
   min_stock: z.number().min(0).optional(),
   max_stock: z.number().min(0).optional(),
   reorder_point: z.number().min(0).optional(),
-  stock_unit: z.enum(['per_piece', 'three_piece', 'dozen']).default('per_piece'),
+  stock_unit: z.enum(Object.values(UnitType)).default(UnitType.PER_PIECE),
   price_units: z.array(z.object({
-    unit_type: z.enum(['per_piece', 'three_piece', 'dozen']),
+    unit_type: z.enum(Object.values(UnitType)),
     quantity: z.number(),
     buying_price: z.string(),
     selling_price: z.string(),
@@ -102,7 +104,7 @@ export type UnitPricingInsert = typeof unitPricing.$inferInsert;
 
 export type Product = typeof products.$inferSelect & {
   price_units?: Array<{
-    unit_type: UnitType;
+    unit_type: UnitTypeValues;
     quantity: number;
     buying_price: string;
     selling_price: string;
