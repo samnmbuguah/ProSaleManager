@@ -13,11 +13,7 @@ import {
   insertSupplierSchema,
   insertProductSupplierSchema,
   unitPricing,
-  defaultUnitQuantities,
-  type UnitTypeValues,
-  productSchema,
-  type InsertProduct,
-} from "../src/db/schema";
+} from "@db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { desc } from "drizzle-orm";
 import { gte, lte } from "drizzle-orm";
@@ -234,117 +230,11 @@ export function registerRoutes(app: Express) {
   app.post("/api/products", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      console.log('Received product creation request:', req.body);
-      
-      // Validate the entire product data using the schema
-      const validationResult = productSchema.safeParse(req.body);
-      if (!validationResult.success) {
-        return res.status(400).json({
-          error: "Invalid product data",
-          details: validationResult.error.issues
-        });
-      }
-
-      const { price_units, ...productData } = validationResult.data;
-      
-      // Double check price units array (though schema should have validated this)
-      if (!price_units || !Array.isArray(price_units) || price_units.length === 0) {
-        return res.status(400).json({ 
-          error: "At least one price unit is required",
-          received: price_units 
-        });
-      }
-
-      // Start a transaction
-      const result = await db.transaction(async (tx) => {
-        // Create product first
-        const [product] = await tx.insert(products)
-          .values({
-            name: productData.name,
-            sku: productData.sku || generateSKU(productData.name),
-            stock: productData.stock || 0,
-            category: productData.category,
-            min_stock: productData.min_stock,
-            max_stock: productData.max_stock,
-            reorder_point: productData.reorder_point,
-            stock_unit: productData.stock_unit,
-            default_unit_pricing_id: null, // Will be updated after creating price units
-            is_active: true,
-            created_at: new Date(),
-            updated_at: new Date()
-          })
-          .returning();
-
-        console.log('Created product:', product);
-
-        // Prepare unit pricing data with proper types
-        const unitPricingData = price_units.map(unit => ({
-          product_id: product.id,
-          unit_type: unit.unit_type,
-          quantity: unit.quantity || defaultUnitQuantities[unit.unit_type as UnitTypeValues],
-          buying_price: ensurePriceString(unit.buying_price),
-          selling_price: ensurePriceString(unit.selling_price),
-          is_default: unit.is_default,
-          created_at: new Date(),
-          updated_at: new Date()
-        }));
-
-        console.log('Inserting unit pricing data:', unitPricingData);
-
-        // Insert all pricing units
-        const insertedPricingUnits = await tx.insert(unitPricing)
-          .values(unitPricingData)
-          .returning();
-
-        if (!insertedPricingUnits || insertedPricingUnits.length === 0) {
-          throw new Error('Failed to insert unit pricing data');
-        }
-
-        console.log('Inserted pricing units:', insertedPricingUnits);
-
-        // Find the default pricing unit
-        const defaultPricingUnit = insertedPricingUnits.find(unit => unit.is_default);
-        if (!defaultPricingUnit) {
-          throw new Error('No default pricing unit specified');
-        }
-
-        // Update product with default unit pricing ID
-        const [updatedProduct] = await tx.update(products)
-          .set({ 
-            default_unit_pricing_id: defaultPricingUnit.id,
-            updated_at: new Date()
-          })
-          .where(eq(products.id, product.id))
-          .returning();
-
-        return {
-          ...updatedProduct,
-          price_units: insertedPricingUnits.map(unit => ({
-            unit_type: unit.unit_type,
-            quantity: unit.quantity,
-            buying_price: unit.buying_price.toString(),
-            selling_price: unit.selling_price.toString(),
-            is_default: unit.is_default
-          }))
-        };
-      });
-
-      res.json(result);
+      const [product] = await db.insert(products).values(req.body).returning();
+      res.json(product);
     } catch (error) {
       console.error('Create product error:', error);
-      console.error('Request body:', JSON.stringify(req.body, null, 2));
-      
-      if (error instanceof Error && error.message === 'No default pricing unit specified') {
-        return res.status(400).json({ 
-          error: "Product creation failed",
-          details: "At least one price unit must be marked as default"
-        });
-      }
-      
-      res.status(500).json({ 
-        error: "Failed to create product",
-        details: error instanceof Error ? error.message : "Unknown error occurred during product creation"
-      });
+      res.status(500).json({ error: "Failed to create product" });
     }
   });
 

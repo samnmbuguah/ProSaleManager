@@ -14,14 +14,6 @@ run = ["npm", "run", "start"]
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 5001
-externalPort = 3000
-
-[[ports]]
-localPort = 5002
-externalPort = 3001
-
 [workflows]
 runButton = "Project"
 
@@ -64,5 +56,5 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "tsx watch --clear-screen=false --exclude vite.config.ts server/index.ts"
-waitForPort = 5001
+args = "tsx watch --clear-screen=false server/index.ts"
+waitForPort = 5000
