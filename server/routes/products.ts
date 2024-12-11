@@ -203,7 +203,12 @@ router.put('/:id', async (req, res) => {
         })
         .where(eq(products.id, productId));
 
-      // Delete existing unit pricing
+      // Update the product to remove the default_unit_pricing_id reference first
+      await tx.update(products)
+        .set({ default_unit_pricing_id: null })
+        .where(eq(products.id, productId));
+
+      // Then delete existing unit pricing
       await tx.delete(unitPricing)
         .where(eq(unitPricing.product_id, productId));
 

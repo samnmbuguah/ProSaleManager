@@ -116,7 +116,7 @@ export default function InventoryPage() {
             </Button>
           </div>
           <ProductTable 
-            products={products || []} 
+            products={(products as ProductWithPricing[]) || []} 
             isLoading={isLoadingProducts} 
             onUpdateProduct={handleUpdateProduct}
           />
