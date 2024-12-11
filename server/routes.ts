@@ -20,11 +20,21 @@ import { gte, lte } from "drizzle-orm";
 import { startOfDay, startOfWeek, startOfMonth, startOfYear, endOfDay } from "date-fns";
 
 interface SaleItemInput {
-  productId: number;
+  product_id: number;
   quantity: number;
   price: string | number;
   name?: string;
-  unitPricingId?: number | null;
+  unit_pricing_id?: number | null;
+}
+
+function generateSKU(name: string): string {
+  // Convert name to uppercase and remove special characters
+  const cleanName = name.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  // Take first 3 characters (or pad with X if shorter)
+  const prefix = (cleanName + 'XXX').slice(0, 3);
+  // Add random 4-digit number
+  const suffix = Math.floor(1000 + Math.random() * 9000);
+  return `${prefix}-${suffix}`;
 }
 
 export function registerRoutes(app: Express) {
@@ -93,19 +103,19 @@ export function registerRoutes(app: Express) {
       const supplierProducts = await db
         .select({
           id: productSuppliersTable.id,
-          productId: productSuppliersTable.productId,
-          supplierId: productSuppliersTable.supplierId,
-          costPrice: productSuppliersTable.costPrice,
-          isPreferred: productSuppliersTable.isPreferred,
-          lastSupplyDate: productSuppliersTable.lastSupplyDate,
-          createdAt: productSuppliersTable.createdAt,
-          updatedAt: productSuppliersTable.updatedAt,
+          product_id: productSuppliersTable.productId,
+          supplier_id: productSuppliersTable.supplierId,
+          cost_price: productSuppliersTable.costPrice,
+          is_preferred: productSuppliersTable.isPreferred,
+          last_supply_date: productSuppliersTable.lastSupplyDate,
+          created_at: productSuppliersTable.createdAt,
+          updated_at: productSuppliersTable.updatedAt,
           supplier: suppliers,
           product: {
             id: products.id,
             name: products.name,
-            stockUnit: products.stockUnit,
-            defaultUnitPricingId: products.defaultUnitPricingId,
+            stock_unit: products.stock_unit,
+            default_unit_pricing_id: products.default_unit_pricing_id,
           },
         })
         .from(productSuppliersTable)
@@ -149,13 +159,13 @@ export function registerRoutes(app: Express) {
           name: products.name,
           stock: products.stock,
           category: products.category,
-          minStock: products.minStock,
-          maxStock: products.maxStock,
-          reorderPoint: products.reorderPoint,
-          stockUnit: products.stockUnit,
-          defaultUnitPricingId: products.defaultUnitPricingId,
-          createdAt: products.createdAt,
-          updatedAt: products.updatedAt,
+          min_stock: products.min_stock,
+          max_stock: products.max_stock,
+          reorder_point: products.reorder_point,
+          stock_unit: products.stock_unit,
+          default_unit_pricing_id: products.default_unit_pricing_id,
+          created_at: products.created_at,
+          updated_at: products.updated_at,
         })
         .from(products)
         .orderBy(products.name);
@@ -166,13 +176,13 @@ export function registerRoutes(app: Express) {
           const pricing = await db
             .select()
             .from(unitPricing)
-            .where(eq(unitPricing.productId, product.id));
+            .where(eq(unitPricing.product_id, product.id));
           
-          const defaultPricing = product.defaultUnitPricingId
+          const defaultPricing = product.default_unit_pricing_id
             ? await db
                 .select()
                 .from(unitPricing)
-                .where(eq(unitPricing.id, product.defaultUnitPricingId))
+                .where(eq(unitPricing.id, product.default_unit_pricing_id))
                 .limit(1)
             : null;
 
@@ -202,6 +212,60 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  // Products API
+  app.put("/api/products/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+    try {
+      const productId = parseInt(req.params.id);
+      const updates = req.body;
+
+      // Check if product exists and has sales records
+      const [existingProduct] = await db
+        .select({
+          id: products.id,
+          hasSales: sql`EXISTS (SELECT 1 FROM ${saleItems} WHERE ${saleItems.productId} = ${products.id})`
+        })
+        .from(products)
+        .where(eq(products.id, productId))
+        .limit(1);
+
+      if (!existingProduct) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      // If product has sales, only allow updating certain fields
+      if (existingProduct.hasSales) {
+        const safeUpdates = {
+          name: updates.name,
+          category: updates.category,
+          min_stock: updates.min_stock,
+          max_stock: updates.max_stock,
+          reorder_point: updates.reorder_point,
+        };
+
+        const [updatedProduct] = await db
+          .update(products)
+          .set(safeUpdates)
+          .where(eq(products.id, productId))
+          .returning();
+
+        return res.json(updatedProduct);
+      }
+
+      // If no sales records, allow updating all fields
+      const [updatedProduct] = await db
+        .update(products)
+        .set(updates)
+        .where(eq(products.id, productId))
+        .returning();
+
+      res.json(updatedProduct);
+    } catch (error) {
+      console.error('Update product error:', error);
+      res.status(500).json({ error: "Failed to update product" });
+    }
+  });
+
   // Unit Pricing endpoints
   app.post("/api/unit-pricing", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
@@ -209,25 +273,32 @@ export function registerRoutes(app: Express) {
       const { productId, prices } = req.body;
       
       interface UnitPrice {
-        unitType: string;
+        unit_type: string;
         quantity: number;
-        buyingPrice: string;
-        sellingPrice: string;
+        buying_price: string;
+        selling_price: string;
       }
       
-      const unitPrices = Object.entries(prices).map(([unitType, pricing]: [string, any]) => ({
+      const unitPrices = Object.entries(prices).map(([unit_type, pricing]: [string, any]) => ({
         productId,
-        unitType,
+        unit_type,
         quantity: (pricing as UnitPrice).quantity,
-        buyingPrice: (pricing as UnitPrice).buyingPrice,
-        sellingPrice: (pricing as UnitPrice).sellingPrice,
+        buying_price: (pricing as UnitPrice).buying_price,
+        selling_price: (pricing as UnitPrice).selling_price,
       }));
 
       // Delete existing prices for this product first
-      await db.delete(unitPricing).where(eq(unitPricing.productId, productId));
+      await db.delete(unitPricing).where(eq(unitPricing.product_id, productId));
       
       // Insert new prices
-      await db.insert(unitPricing).values(unitPrices);
+      await db.insert(unitPricing).values(unitPrices.map(price => ({
+        product_id: price.productId,
+        unit_type: price.unit_type,
+        quantity: price.quantity,
+        buying_price: price.buying_price,
+        selling_price: price.selling_price,
+        is_default: false,
+      })));
       res.json({ success: true });
     } catch (error) {
       console.error('Create unit pricing error:', error);
@@ -246,8 +317,8 @@ export function registerRoutes(app: Express) {
         prices: {
           [key: string]: {
             quantity: number;
-            buyingPrice: string;
-            sellingPrice: string;
+            buying_price: string;
+            selling_price: string;
           }
         }
       }
@@ -261,19 +332,26 @@ export function registerRoutes(app: Express) {
       for (const update of updates as BulkUnitPricing[]) {
         const { productId, prices } = update;
         
-        const unitPrices = Object.entries(prices).map(([unitType, pricing]) => ({
+        const unitPrices = Object.entries(prices).map(([unit_type, pricing]) => ({
           productId,
-          unitType,
+          unit_type,
           quantity: pricing.quantity,
-          buyingPrice: pricing.buyingPrice,
-          sellingPrice: pricing.sellingPrice,
+          buying_price: pricing.buying_price,
+          selling_price: pricing.selling_price,
         }));
 
         // Delete existing prices for this product
-        await db.delete(unitPricing).where(eq(unitPricing.productId, productId));
+        await db.delete(unitPricing).where(eq(unitPricing.product_id, productId));
         
         // Insert new prices
-        await db.insert(unitPricing).values(unitPrices);
+        await db.insert(unitPricing).values(unitPrices.map(price => ({
+          product_id: price.productId,
+          unit_type: price.unit_type,
+          quantity: price.quantity,
+          buying_price: price.buying_price,
+          selling_price: price.selling_price,
+          is_default: false,
+        })));
       }
 
       res.json({ success: true });
@@ -291,7 +369,7 @@ export function registerRoutes(app: Express) {
       const prices = await db
         .select()
         .from(unitPricing)
-        .where(eq(unitPricing.productId, productId));
+        .where(eq(unitPricing.product_id, productId));
       
       res.json(prices);
     } catch (error) {
@@ -378,19 +456,19 @@ export function registerRoutes(app: Express) {
       // Update or create unit pricing for the product
       await db.insert(unitPricing)
         .values({
-          productId,
-          unitType: 'piece', // Default to piece, will be updated from product data later
+          product_id: productId,
+          unit_type: 'piece', // Default to piece, will be updated from product data later
           quantity: 1,
-          buyingPrice,
-          sellingPrice,
-          isDefault: true,
+          buying_price: buyingPrice,
+          selling_price: sellingPrice,
+          is_default: true,
         })
         .onConflictDoUpdate({
-          target: [unitPricing.productId, unitPricing.unitType],
+          target: [unitPricing.product_id, unitPricing.unit_type],
           set: {
-            buyingPrice,
-            sellingPrice,
-            updatedAt: new Date(),
+            buying_price: buyingPrice,
+            selling_price: sellingPrice,
+            updated_at: new Date(),
           },
         });
 
@@ -435,7 +513,7 @@ export function registerRoutes(app: Express) {
             .update(products)
             .set({ 
               stock: sql`${products.stock} + ${item.quantity}`,
-              updatedAt: new Date()
+              updated_at: new Date()
             })
             .where(eq(products.id, item.productId));
         }
@@ -456,14 +534,14 @@ export function registerRoutes(app: Express) {
       const items = await db
         .select({
           id: purchaseOrderItems.id,
-          purchaseOrderId: purchaseOrderItems.purchaseOrderId,
+          purchase_order_id: purchaseOrderItems.purchaseOrderId,
           quantity: purchaseOrderItems.quantity,
           buyingPrice: purchaseOrderItems.buyingPrice,
           sellingPrice: purchaseOrderItems.sellingPrice,
           product: {
             id: products.id,
             name: products.name,
-            stockUnit: products.stockUnit,
+            stock_unit: products.stock_unit,
           }
         })
         .from(purchaseOrderItems)
@@ -517,10 +595,10 @@ export function registerRoutes(app: Express) {
       await db.insert(saleItems).values(
         items.map((item: SaleItemInput) => ({
           saleId: sale.id,
-          productId: item.productId,
+          productId: item.product_id,
           quantity: item.quantity,
           price: item.price,
-          unitPricingId: item.unitPricingId || null,
+          unitPricingId: item.unit_pricing_id || null,
         }))
       );
 
@@ -789,32 +867,37 @@ export function registerRoutes(app: Express) {
           name: "Rice",
           stock: 100,
           category: "Grains",
-          minStock: 20,
-          maxStock: 200,
-          reorderPoint: 40,
-          stockUnit: "kg",
+          min_stock: 20,
+          max_stock: 200,
+          reorder_point: 40,
+          stock_unit: "kg",
         },
         {
           name: "Cooking Oil",
           stock: 50,
           category: "Cooking",
-          minStock: 10,
-          maxStock: 100,
-          reorderPoint: 20,
-          stockUnit: "litre",
+          min_stock: 10,
+          max_stock: 100,
+          reorder_point: 20,
+          stock_unit: "litre",
         },
         {
           name: "Wheat Flour",
           stock: 80,
           category: "Baking",
-          minStock: 15,
-          maxStock: 150,
-          reorderPoint: 30,
-          stockUnit: "kg",
+          min_stock: 15,
+          max_stock: 150,
+          reorder_point: 30,
+          stock_unit: "kg",
         }
       ];
 
-      const insertedProducts = await db.insert(products).values(demoProducts).returning();
+      const insertedProducts = await db.insert(products).values(demoProducts.map(product => ({
+        ...product,
+        sku: generateSKU(product.name),
+        buying_price: "0",
+        selling_price: "0",
+      }))).returning();
       
       // Add unit pricing for each product
       const unitPricingData = insertedProducts.map(product => {
@@ -827,60 +910,67 @@ export function registerRoutes(app: Express) {
           return [
             {
               ...baseConfig,
-              unitType: "kg",
+              unit_type: "kg",
               quantity: 1,
-              buyingPrice: "120.00",
-              sellingPrice: "150.00",
+              buying_price: "120.00",
+              selling_price: "150.00",
             },
             {
               ...baseConfig,
               isDefault: false,
-              unitType: "kg",
+              unit_type: "kg",
               quantity: 25,
-              buyingPrice: "2800.00",
-              sellingPrice: "3500.00",
+              buying_price: "2800.00",
+              selling_price: "3500.00",
             }
           ];
         } else if (product.name === "Cooking Oil") {
           return [
             {
               ...baseConfig,
-              unitType: "litre",
+              unit_type: "litre",
               quantity: 1,
-              buyingPrice: "200.00",
-              sellingPrice: "250.00",
+              buying_price: "200.00",
+              selling_price: "250.00",
             },
             {
               ...baseConfig,
               isDefault: false,
-              unitType: "litre",
+              unit_type: "litre",
               quantity: 5,
-              buyingPrice: "950.00",
-              sellingPrice: "1150.00",
+              buying_price: "950.00",
+              selling_price: "1150.00",
             }
           ];
         } else {
           return [
             {
               ...baseConfig,
-              unitType: "kg",
+              unit_type: "kg",
               quantity: 1,
-              buyingPrice: "150.00",
-              sellingPrice: "180.00",
+              buying_price: "150.00",
+              selling_price: "180.00",
             },
             {
               ...baseConfig,
               isDefault: false,
-              unitType: "kg",
+              unit_type: "kg",
               quantity: 2,
-              buyingPrice: "290.00",
-              sellingPrice: "350.00",
+              buying_price: "290.00",
+              selling_price: "350.00",
             }
           ];
         }
       }).flat();
 
-      await db.insert(unitPricing).values(unitPricingData);
+      await db.insert(unitPricing).values(unitPricingData.map(pricing => ({
+        product_id: pricing.productId,
+        unit_type: pricing.unit_type,
+        quantity: pricing.quantity,
+        buying_price: pricing.buying_price,
+        selling_price: pricing.selling_price,
+        is_default: pricing.isDefault,
+      })));
       
       // Update default unit pricing IDs
       await Promise.all(
@@ -889,15 +979,15 @@ export function registerRoutes(app: Express) {
             .select()
             .from(unitPricing)
             .where(and(
-              eq(unitPricing.productId, product.id),
-              eq(unitPricing.isDefault, true)
+              eq(unitPricing.product_id, product.id),
+              eq(unitPricing.is_default, true)
             ))
             .limit(1);
 
           if (defaultPricing) {
             await db
               .update(products)
-              .set({ defaultUnitPricingId: defaultPricing.id })
+              .set({ default_unit_pricing_id: defaultPricing.id })
               .where(eq(products.id, product.id));
           }
         })
