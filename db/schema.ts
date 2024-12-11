@@ -6,6 +6,7 @@ import {
   integer,
   decimal,
   boolean,
+  serial,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -25,34 +26,38 @@ export const users = pgTable("users", {
 export const products = pgTable("products", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull(),
+  sku: text("sku").notNull(),
+  buying_price: decimal("buying_price", { precision: 10, scale: 2 }).notNull(),
+  selling_price: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
   stock: integer("stock").default(0).notNull(),
   category: text("category"),
-  minStock: integer("min_stock"),
-  maxStock: integer("max_stock"),
-  reorderPoint: integer("reorder_point"),
-  stockUnit: text("stock_unit").default("piece").notNull(),
-  defaultUnitPricingId: integer("default_unit_pricing_id"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  min_stock: integer("min_stock"),
+  max_stock: integer("max_stock"),
+  reorder_point: integer("reorder_point"),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+  stock_unit: text("stock_unit").default("per_piece").notNull(),
+  default_unit_pricing_id: integer("default_unit_pricing_id"),
+  defaultUnit: text('default_unit').notNull().default('piece'),
 });
 
 // Unit Pricing schema with references to products
 export const unitPricing = pgTable("unit_pricing", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  productId: integer("product_id").references(() => products.id).notNull(),
-  unitType: text("unit_type").notNull(),
+  product_id: integer("product_id").references(() => products.id).notNull(),
+  unit_type: text("unit_type").notNull(),
   quantity: integer("quantity").notNull(),
-  buyingPrice: decimal("buying_price", { precision: 10, scale: 2 }).notNull(),
-  sellingPrice: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
-  isDefault: boolean("is_default").default(false).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  buying_price: decimal("buying_price", { precision: 10, scale: 2 }).notNull(),
+  selling_price: decimal("selling_price", { precision: 10, scale: 2 }).notNull(),
+  is_default: boolean("is_default").default(false).notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Relations
 export const unitPricingRelations = relations(unitPricing, ({ one }) => ({
   product: one(products, {
-    fields: [unitPricing.productId],
+    fields: [unitPricing.product_id],
     references: [products.id],
   }),
 }));
@@ -60,7 +65,7 @@ export const unitPricingRelations = relations(unitPricing, ({ one }) => ({
 export const productsRelations = relations(products, ({ many, one }) => ({
   unitPricing: many(unitPricing),
   defaultUnitPricing: one(unitPricing, {
-    fields: [products.defaultUnitPricingId],
+    fields: [products.default_unit_pricing_id],
     references: [unitPricing.id],
   }),
 }));
@@ -191,6 +196,18 @@ export const loyaltyTransactions = pgTable("loyalty_transactions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Product Prices schema
+export const productPrices = pgTable('product_prices', {
+  id: serial('id').primaryKey(),
+  productId: integer('product_id').references(() => products.id, { onDelete: 'cascade' }),
+  stockUnit: text('stock_unit').notNull(),
+  sellingPrice: decimal('selling_price', { precision: 10, scale: 2 }).notNull(),
+  buyingPrice: decimal('buying_price', { precision: 10, scale: 2 }).notNull(),
+  conversionRate: decimal('conversion_rate', { precision: 10, scale: 4 }).notNull().default('1'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
 // Schema validations with updated types
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
@@ -201,27 +218,27 @@ export const insertProductSchema = createInsertSchema(products);
 export const selectProductSchema = createSelectSchema(products);
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Product = z.infer<typeof selectProductSchema> & {
-  unitPricing?: Array<{
+  unit_pricing?: Array<{
     id: number;
-    productId: number;
-    unitType: string;
+    product_id: number;
+    unit_type: string;
     quantity: number;
-    buyingPrice: string | number;
-    sellingPrice: string | number;
-    isDefault: boolean;
-    createdAt: Date;
-    updatedAt: Date;
+    buying_price: string | number;
+    selling_price: string | number;
+    is_default: boolean;
+    created_at: Date;
+    updated_at: Date;
   }>;
-  defaultUnitPricing?: {
+  default_unit_pricing?: {
     id: number;
-    productId: number;
-    unitType: string;
+    product_id: number;
+    unit_type: string;
     quantity: number;
-    buyingPrice: string | number;
-    sellingPrice: string | number;
-    isDefault: boolean;
-    createdAt: Date;
-    updatedAt: Date;
+    buying_price: string | number;
+    selling_price: string | number;
+    is_default: boolean;
+    created_at: Date;
+    updated_at: Date;
   } | null;
 };
 
