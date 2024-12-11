@@ -88,21 +88,21 @@ export const unitPricingSchema = z.object({
   quantity: z.number().int().positive(),
   buying_price: z.union([
     z.string(),
-    z.number().transform(val => val.toString())
-  ]).transform(val => (typeof val === 'string' ? val : val.toString())),
+    z.number()
+  ]).transform(val => val.toString()),
   selling_price: z.union([
     z.string(),
-    z.number().transform(val => val.toString())
-  ]).transform(val => (typeof val === 'string' ? val : val.toString())),
+    z.number()
+  ]).transform(val => val.toString()),
   is_default: z.boolean().default(false),
 }).refine(
   (data) => {
-    const quantityMap = {
-      [UnitType.PER_PIECE]: 1,
-      [UnitType.THREE_PIECE]: 3,
-      [UnitType.DOZEN]: 12
+    const quantityMap: Record<UnitTypeValues, number> = {
+      'per_piece': 1,
+      'three_piece': 3,
+      'dozen': 12
     };
-    return data.quantity === quantityMap[data.unit_type];
+    return data.quantity === quantityMap[data.unit_type as UnitTypeValues];
   },
   {
     message: "Quantity must match the unit type (1 for per piece, 3 for three piece, 12 for dozen)",
