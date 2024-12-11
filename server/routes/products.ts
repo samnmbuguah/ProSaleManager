@@ -35,6 +35,7 @@ const productSchema = z.object({
 // Create a new product with unit pricing
 router.post('/', async (req, res) => {
   try {
+    console.log('Received product data:', req.body);
     const validatedData = productSchema.parse(req.body);
     const { price_units, ...productData } = validatedData;
     
@@ -45,29 +46,37 @@ router.post('/', async (req, res) => {
     }
 
     const result = await db.transaction(async (tx) => {
+      console.log('Creating product with data:', productData);
+      
       // Step 1: Create the product first without default unit pricing ID
       const [newProduct] = await tx.insert(products)
         .values({
           ...productData,
-          buying_price: defaultUnit.buying_price,
-          selling_price: defaultUnit.selling_price,
+          buying_price: "0", // Will be updated with default unit price
+          selling_price: "0", // Will be updated with default unit price
           default_unit_pricing_id: null // Initially set to null
         })
         .returning();
+      
+      console.log('Created product:', newProduct);
       
       // Step 2: Create unit pricing entries
       const unitPricingData = price_units.map(unit => ({
         product_id: newProduct.id,
         unit_type: unit.unit_type,
-        quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValues],
+        quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValues] || 1,
         buying_price: unit.buying_price,
         selling_price: unit.selling_price,
         is_default: unit.is_default,
       }));
       
+      console.log('Creating unit pricing with data:', unitPricingData);
+      
       const insertedPricingUnits = await tx.insert(unitPricing)
         .values(unitPricingData)
         .returning();
+      
+      console.log('Created unit pricing:', insertedPricingUnits);
       
       // Find the default pricing unit
       const defaultPricingUnit = insertedPricingUnits.find(unit => unit.is_default);
@@ -75,11 +84,17 @@ router.post('/', async (req, res) => {
         throw new Error("Failed to create default pricing unit");
       }
       
-      // Step 3: Update product with the default unit pricing ID
+      // Step 3: Update product with the default unit pricing ID and prices
       const [updatedProduct] = await tx.update(products)
-        .set({ default_unit_pricing_id: defaultPricingUnit.id })
+        .set({ 
+          default_unit_pricing_id: defaultPricingUnit.id,
+          buying_price: defaultPricingUnit.buying_price,
+          selling_price: defaultPricingUnit.selling_price
+        })
         .where(eq(products.id, newProduct.id))
         .returning();
+      
+      console.log('Updated product with default pricing:', updatedProduct);
       
       // Step 4: Return the complete product with all pricing information
       return {
