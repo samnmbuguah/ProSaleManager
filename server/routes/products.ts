@@ -21,12 +21,57 @@ const productSchema = z.object({
   priceUnits: z.array(priceUnitSchema).min(1),
 });
 
-// Create a new product
+// Create a new product with unit pricing
 router.post('/', async (req, res) => {
   try {
-    const validatedData = insertProductSchema.parse(req.body);
-    const [newProduct] = await db.insert(products).values(validatedData).returning();
-    res.status(201).json(newProduct);
+    const { price_units, ...productData } = req.body;
+    
+    // Validate the product data
+    const validatedProduct = insertProductSchema.parse(productData);
+    
+    const result = await db.transaction(async (tx) => {
+      // Create the product first
+      const [newProduct] = await tx.insert(products)
+        .values(validatedProduct)
+        .returning();
+      
+      // Create unit pricing entries if provided
+      if (Array.isArray(price_units) && price_units.length > 0) {
+        const unitPricingData = price_units.map(unit => ({
+          product_id: newProduct.id,
+          unit_type: unit.unit_type,
+          quantity: unit.quantity,
+          buying_price: unit.buying_price,
+          selling_price: unit.selling_price,
+          is_default: unit.is_default,
+        }));
+        
+        const [defaultPricing] = await tx.insert(unitPricing)
+          .values(unitPricingData)
+          .returning();
+        
+        // Update product with default unit pricing ID
+        await tx.update(products)
+          .set({ default_unit_pricing_id: defaultPricing.id })
+          .where(eq(products.id, newProduct.id));
+          
+        // Get the updated product with all pricing
+        const [updatedProduct] = await tx.select()
+          .from(products)
+          .where(eq(products.id, newProduct.id))
+          .limit(1);
+          
+        const prices = await tx.select()
+          .from(unitPricing)
+          .where(eq(unitPricing.product_id, newProduct.id));
+          
+        return { ...updatedProduct, unit_pricing: prices };
+      }
+      
+      return newProduct;
+    });
+    
+    res.status(201).json(result);
   } catch (error) {
     console.error('Error creating product:', error);
     res.status(500).json({ error: 'Failed to create product' });
