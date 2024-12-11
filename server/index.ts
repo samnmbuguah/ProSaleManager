@@ -8,8 +8,8 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { db } from "../db";
 import { sql } from 'drizzle-orm';
 import { setupAuth } from "./auth";
-import { initializeBackupSchedule } from "./db/backup";
-import { handleDeployment } from "./deployment/deploy";
+// import { initializeBackupSchedule } from "./db/backup";
+// import { handleDeployment } from "./deployment/deploy";
 
 // Monitoring metrics
 const metrics = {
@@ -421,18 +421,18 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   process.env.PORT = process.env.PORT || '5000';
 
   // Initialize backup schedule before server start
-  try {
+  /* try {
     initializeBackupSchedule();
     console.log('Backup schedule initialized');
   } catch (error) {
     console.error('Backup schedule initialization error:', error);
-  }
+  } */
 
   server.listen(Number(process.env.PORT), "0.0.0.0", () => {
     log(`serving on port ${process.env.PORT}`);
     
-    // Run deployment process in background
-    Promise.resolve().then(async () => {
+    // Comment out deployment process
+    /* Promise.resolve().then(async () => {
       try {
         const deployment = await handleDeployment();
         if (!deployment.success) {
@@ -443,7 +443,7 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       } catch (error) {
         console.error('Deployment process error:', error);
       }
-    });
+    }); */
   }).on('error', (error) => {
     console.error('Error starting server:', error);
     process.exit(1);
