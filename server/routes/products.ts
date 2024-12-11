@@ -1,33 +1,55 @@
 import { Router } from 'express';
 import { db } from '../../db';
-import { products, productPrices, insertProductSchema, unitPricing } from '../../db/schema';
+import { products, productPrices, insertProductSchema, unitPricing, UnitTypeValues } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 const router = Router();
 
 const priceUnitSchema = z.object({
-  stock_unit: z.string(),
-  selling_price: z.string(),
+  unit_type: z.enum(UnitTypeValues),
+  quantity: z.number(),
   buying_price: z.string(),
-  conversion_rate: z.string(),
+  selling_price: z.string(),
+  is_default: z.boolean()
 });
 
 const productSchema = z.object({
   name: z.string().min(1),
-  sku: z.string().optional(),
-  description: z.string().optional(),
-  stock_unit: z.string(),
-  priceUnits: z.array(priceUnitSchema).min(1),
+  sku: z.string(),
+  category: z.string(),
+  stock: z.number(),
+  min_stock: z.number(),
+  max_stock: z.number(),
+  reorder_point: z.number(),
+  stock_unit: z.enum(UnitTypeValues),
+  price_units: z.array(z.object({
+    unit_type: z.enum(UnitTypeValues),
+    quantity: z.number(),
+    buying_price: z.string(),
+    selling_price: z.string(),
+    is_default: z.boolean()
+  }))
 });
 
 // Create a new product with unit pricing
 router.post('/', async (req, res) => {
   try {
-    const { price_units, ...productData } = req.body;
+    const validatedData = productSchema.parse(req.body);
+    const { price_units, ...productData } = validatedData;
     
-    // Validate the product data
-    const validatedProduct = insertProductSchema.parse(productData);
+    // Get the default pricing unit for the product's base price
+    const defaultUnit = price_units.find(unit => unit.is_default);
+    if (!defaultUnit) {
+      throw new Error("A default pricing unit is required");
+    }
+
+    // Prepare the product data with the default unit's prices
+    const validatedProduct = {
+      ...productData,
+      buying_price: defaultUnit.buying_price,
+      selling_price: defaultUnit.selling_price,
+    };
     
     const result = await db.transaction(async (tx) => {
       // Create the product first
@@ -142,25 +164,33 @@ router.put('/:id', async (req, res) => {
       await tx.update(products)
         .set({
           name: validatedData.name,
-          sku: validatedData.sku || undefined,
+          sku: validatedData.sku,
+          category: validatedData.category,
+          stock: validatedData.stock,
+          min_stock: validatedData.min_stock,
+          max_stock: validatedData.max_stock,
+          reorder_point: validatedData.reorder_point,
           stock_unit: validatedData.stock_unit,
         })
         .where(eq(products.id, productId));
 
-      // Delete existing price units
-      await tx.delete(productPrices)
-        .where(eq(productPrices.productId, productId));
+      // Delete existing unit pricing
+      await tx.delete(unitPricing)
+        .where(eq(unitPricing.product_id, productId));
 
-      // Insert new price units
-      await tx.insert(productPrices).values(
-        validatedData.priceUnits.map(pu => ({
-          productId,
-          stockUnit: pu.stock_unit,
-          sellingPrice: pu.selling_price,
-          buyingPrice: pu.buying_price,
-          conversionRate: pu.conversion_rate,
-        }))
-      );
+      // Insert new unit pricing
+      if (validatedData.price_units && validatedData.price_units.length > 0) {
+        const unitPricingData = validatedData.price_units.map(unit => ({
+          product_id: productId,
+          unit_type: unit.unit_type,
+          quantity: unit.quantity,
+          buying_price: unit.buying_price,
+          selling_price: unit.selling_price,
+          is_default: unit.is_default,
+        }));
+
+        await tx.insert(unitPricing).values(unitPricingData);
+      }
 
       // Fetch the updated product
       const [updatedProduct] = await tx
@@ -171,10 +201,10 @@ router.put('/:id', async (req, res) => {
 
       const prices = await tx
         .select()
-        .from(productPrices)
-        .where(eq(productPrices.productId, productId));
+        .from(unitPricing)
+        .where(eq(unitPricing.product_id, productId));
 
-      return { ...updatedProduct, priceUnits: prices };
+      return { ...updatedProduct, price_units: prices };
     });
 
     res.json(result);

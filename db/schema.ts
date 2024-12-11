@@ -44,7 +44,17 @@ export const products = pgTable("products", {
 // Unit Pricing schema with references to products
 // Define unit type values
 export const UnitTypeValues = ['per_piece', 'three_piece', 'dozen'] as const;
-export type UnitTypeValues = typeof UnitTypeValues[number];
+export type UnitTypeValues = (typeof UnitTypeValues)[number];
+
+export const defaultUnitQuantities: Record<UnitTypeValues, number> = {
+  per_piece: 1,
+  three_piece: 3,
+  dozen: 12,
+};
+
+export const isValidUnitType = (type: string): type is UnitTypeValues => {
+  return UnitTypeValues.includes(type as UnitTypeValues);
+};
 
 export const unitPricing = pgTable("unit_pricing", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
