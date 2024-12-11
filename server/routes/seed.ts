@@ -8,30 +8,38 @@ const router = Router();
 
 router.post('/seed-demo-data', async (req, res) => {
   try {
-    // First, clear existing data
+    // Clear existing data in a separate transaction
     await db.transaction(async (tx) => {
-      // Step 1: Remove all default_unit_pricing_id references
+      console.log('Starting data cleanup...');
+      
+      // Step 1: Remove all default_unit_pricing_id references from products
       await tx.update(products)
         .set({ default_unit_pricing_id: null });
+      console.log('Removed default_unit_pricing_id references');
       
       // Step 2: Delete all unit pricing entries
       await tx.delete(unitPricing);
+      console.log('Deleted unit pricing entries');
       
       // Step 3: Delete all products
       await tx.delete(products);
+      console.log('Deleted products');
     });
 
-    // Now insert new data
+    console.log('Starting demo data insertion...');
+    
+    // Insert new data in a separate transaction
     const result = await db.transaction(async (tx) => {
       const createdProducts = [];
       
       for (const productData of seedProducts) {
         const { price_units, ...productDetails } = productData;
+        console.log(`Processing product: ${productDetails.name}`);
         
-        // Find default price unit
+        // Validate default price unit
         const defaultUnit = price_units.find(unit => unit.is_default);
         if (!defaultUnit) {
-          throw new Error(`Product ${productData.name} has no default price unit`);
+          throw new Error(`Product ${productDetails.name} has no default price unit`);
         }
         
         // Step 1: Create product without default unit pricing ID
@@ -43,12 +51,13 @@ router.post('/seed-demo-data', async (req, res) => {
             default_unit_pricing_id: null
           })
           .returning();
-          
+        console.log(`Created product: ${newProduct.id}`);
+        
         // Step 2: Create all price units
         const priceUnitsData = price_units.map(unit => ({
           product_id: newProduct.id,
           unit_type: unit.unit_type,
-          quantity: unit.quantity,
+          quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValues],
           buying_price: unit.buying_price,
           selling_price: unit.selling_price,
           is_default: unit.is_default,
@@ -57,6 +66,7 @@ router.post('/seed-demo-data', async (req, res) => {
         const insertedPricingUnits = await tx.insert(unitPricing)
           .values(priceUnitsData)
           .returning();
+        console.log(`Created ${insertedPricingUnits.length} price units for product ${newProduct.id}`);
         
         // Find the default pricing unit
         const defaultPricingUnit = insertedPricingUnits.find(unit => unit.is_default);
@@ -68,23 +78,33 @@ router.post('/seed-demo-data', async (req, res) => {
         await tx.update(products)
           .set({ default_unit_pricing_id: defaultPricingUnit.id })
           .where(eq(products.id, newProduct.id));
-          
+        console.log(`Updated product ${newProduct.id} with default pricing unit ${defaultPricingUnit.id}`);
+        
         createdProducts.push({
           ...newProduct,
-          price_units: priceUnitsData
+          price_units: insertedPricingUnits.map(unit => ({
+            unit_type: unit.unit_type,
+            quantity: unit.quantity,
+            buying_price: unit.buying_price.toString(),
+            selling_price: unit.selling_price.toString(),
+            is_default: unit.is_default
+          }))
         });
       }
       
       return createdProducts;
     });
     
+    console.log('Demo data seeding completed successfully');
     res.status(201).json({
       message: 'Demo data seeded successfully',
       products: result
     });
   } catch (error) {
     console.error('Error seeding demo data:', error);
-    res.status(500).json({ error: 'Failed to seed demo data' });
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Failed to seed demo data' 
+    });
   }
 });
 
