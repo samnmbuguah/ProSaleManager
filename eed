@@ -1,0 +1,28 @@
+                                           Table "public.products"
+         Column          |            Type             | Collation | Nullable |           Default            
+-------------------------+-----------------------------+-----------+----------+------------------------------
+ id                      | integer                     |           | not null | generated always as identity
+ name                    | text                        |           | not null | 
+ sku                     | text                        |           | not null | 
+ buying_price            | numeric(10,2)               |           | not null | 
+ selling_price           | numeric(10,2)               |           | not null | 
+ stock                   | integer                     |           | not null | 0
+ category                | text                        |           |          | 
+ min_stock               | integer                     |           |          | 
+ max_stock               | integer                     |           |          | 
+ reorder_point           | integer                     |           |          | 
+ created_at              | timestamp without time zone |           | not null | now()
+ updated_at              | timestamp without time zone |           | not null | now()
+ stock_unit              | sku_type                    |           | not null | 'per_piece'::sku_type
+ default_unit_pricing_id | integer                     |           |          | 
+Indexes:
+    "products_pkey" PRIMARY KEY, btree (id)
+    "products_sku_key" UNIQUE CONSTRAINT, btree (sku)
+Foreign-key constraints:
+    "products_default_unit_pricing_id_fkey" FOREIGN KEY (default_unit_pricing_id) REFERENCES unit_pricing(id)
+Referenced by:
+    TABLE "product_suppliers" CONSTRAINT "product_suppliers_product_id_fkey" FOREIGN KEY (product_id) REFERENCES products(id)
+    TABLE "purchase_order_items" CONSTRAINT "purchase_order_items_product_id_fkey" FOREIGN KEY (product_id) REFERENCES products(id)
+    TABLE "sale_items" CONSTRAINT "sale_items_product_id_fkey" FOREIGN KEY (product_id) REFERENCES products(id)
+    TABLE "sku_pricing" CONSTRAINT "sku_pricing_product_id_fkey" FOREIGN KEY (product_id) REFERENCES products(id)
+
