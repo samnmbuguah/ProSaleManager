@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ProductForm } from "@/components/inventory/ProductForm";
-import { ProductTable } from "@/components/inventory/ProductTable";
+import { ProductTable, type ProductWithPricing } from "@/components/inventory/ProductTable";
 import { PurchaseOrderForm } from "@/components/inventory/PurchaseOrderForm";
 import { PurchaseOrderList } from "@/components/inventory/PurchaseOrderList";
 import { SupplierForm } from "@/components/inventory/SupplierForm";

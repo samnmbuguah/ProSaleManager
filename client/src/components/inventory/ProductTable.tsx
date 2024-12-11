@@ -2,8 +2,14 @@ import { useState } from "react";
 import type { Product, UnitTypeValues } from "@db/schema";
 
 import { PriceUnit } from "./ProductForm";
-type ProductWithPricing = Product & {
-  price_units?: PriceUnit[];
+export type ProductWithPricing = Product & {
+  price_units?: Array<{
+    unit_type: UnitTypeValues;
+    quantity: number;
+    buying_price: string;
+    selling_price: string;
+    is_default: boolean;
+  }>;
 };
 import {
   Table,
