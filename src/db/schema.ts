@@ -22,6 +22,11 @@ export type UnitPriceUnit = {
   updated_at?: Date;
 };
 
+// Ensure consistent type handling for price values
+export const ensurePriceString = (price: string | number): string => {
+  return typeof price === 'string' ? price : price.toString();
+};
+
 export type UnitPricing = UnitPriceUnit & {
   id: number;
   product_id: number;
@@ -81,8 +86,14 @@ export const unitPricingSchema = z.object({
   product_id: z.number().int().positive("Product ID is required"),
   unit_type: z.enum([UnitType.PER_PIECE, UnitType.THREE_PIECE, UnitType.DOZEN]),
   quantity: z.number().int().positive(),
-  buying_price: z.number().positive("Buying price must be greater than 0"),
-  selling_price: z.number().positive("Selling price must be greater than 0"),
+  buying_price: z.union([
+    z.string(),
+    z.number().transform(val => val.toString())
+  ]).transform(val => (typeof val === 'string' ? val : val.toString())),
+  selling_price: z.union([
+    z.string(),
+    z.number().transform(val => val.toString())
+  ]).transform(val => (typeof val === 'string' ? val : val.toString())),
   is_default: z.boolean().default(false),
 }).refine(
   (data) => {
@@ -103,8 +114,20 @@ export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type UnitPricingInsert = typeof unitPricing.$inferInsert;
 
 export type Product = typeof products.$inferSelect & {
-  price_units?: UnitPriceUnit[];
-  default_unit_pricing?: UnitPriceUnit | null;
+  price_units?: Array<{
+    unit_type: UnitTypeValues;
+    quantity: number;
+    buying_price: string;
+    selling_price: string;
+    is_default: boolean;
+  }>;
+  default_unit_pricing?: {
+    unit_type: UnitTypeValues;
+    quantity: number;
+    buying_price: string;
+    selling_price: string;
+    is_default: boolean;
+  } | null;
 };
 
 // Sale items table with unit pricing reference

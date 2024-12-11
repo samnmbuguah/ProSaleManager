@@ -1,0 +1,55 @@
+ ERROR(TypeScript)  Property 'toString' does not exist on type 'never'.
+ FILE  /home/runner/ProSaleManager/server/routes/products.ts:269:29
+
+    267 |       const buyingPrice = typeof unit.buying_price === 'string' 
+    268 |         ? unit.buying_price 
+  > 269 |         : unit.buying_price.toString();
+        |                             ^^^^^^^^
+    270 |       const sellingPrice = typeof unit.selling_price === 'string'
+    271 |         ? unit.selling_price
+    272 |         : unit.selling_price.toString();
+
+ ERROR(TypeScript)  Property 'toString' does not exist on type 'never'.
+ FILE  /home/runner/ProSaleManager/server/routes/products.ts:272:30
+
+    270 |       const sellingPrice = typeof unit.selling_price === 'string'
+    271 |         ? unit.selling_price
+  > 272 |         : unit.selling_price.toString();
+        |                              ^^^^^^^^
+    273 |
+    274 |       return {
+    275 |         unit_type: unit.unit_type,
+
+ ERROR(TypeScript)  No overload matches this call.
+  Overload 2 of 2, '(values: { name: string | SQL<unknown> | Placeholder<string, any>; sku: string | SQL<unknown> | Placeholder<string, any>; buying_price: string | SQL<unknown> | Placeholder<...>; ... 9 more ...; default_unit_pricing_id?: number | ... 3 more ... | undefined; }[]): PgInsertBase<...>', gave the following error.
+    Object literal may only specify known properties, and 'buying_price' does not exist in type '{ name: string | SQL<unknown> | Placeholder<string, any>; sku: string | SQL<unknown> | Placeholder<string, any>; buying_price: string | SQL<unknown> | Placeholder<...>; ... 9 more ...; default_unit_pricing_id?: number | ... 3 more ... | undefined; }[]'.
+ FILE  /home/runner/ProSaleManager/server/routes/seed.ts:58:13
+
+    56 |           .values({
+    57 |             ...productDetails,
+  > 58 |             buying_price,
+       |             ^^^^^^^^^^^^
+    59 |             selling_price,
+    60 |             default_unit_pricing_id: null
+    61 |           })
+
+ ERROR(TypeScript)  No overload matches this call.
+  Overload 1 of 2, '(value: { buying_price: string | SQL<unknown> | Placeholder<string, any>; selling_price: string | SQL<unknown> | Placeholder<string, any>; product_id: number | SQL<...> | Placeholder<...>; ... 4 more ...; is_default?: boolean | ... 2 more ... | undefined; }): PgInsertBase<...>', gave the following error.
+    Argument of type '{ product_id: number; unit_type: "per_piece" | "three_piece" | "dozen"; quantity: number; buying_price: number; selling_price: number; is_default: boolean; }[]' is not assignable to parameter of type '{ buying_price: string | SQL<unknown> | Placeholder<string, any>; selling_price: string | SQL<unknown> | Placeholder<string, any>; product_id: number | SQL<...> | Placeholder<...>; ... 4 more ...; is_default?: boolean | ... 2 more ... | undefined; }'.
+      Type '{ product_id: number; unit_type: "per_piece" | "three_piece" | "dozen"; quantity: number; buying_price: number; selling_price: number; is_default: boolean; }[]' is missing the following properties from type '{ buying_price: string | SQL<unknown> | Placeholder<string, any>; selling_price: string | SQL<unknown> | Placeholder<string, any>; product_id: number | SQL<...> | Placeholder<...>; ... 4 more ...; is_default?: boolean | ... 2 more ... | undefined; }': buying_price, selling_price, product_id, unit_type, quantity
+  Overload 2 of 2, '(values: { buying_price: string | SQL<unknown> | Placeholder<string, any>; selling_price: string | SQL<unknown> | Placeholder<string, any>; product_id: number | SQL<...> | Placeholder<...>; ... 4 more ...; is_default?: boolean | ... 2 more ... | undefined; }[]): PgInsertBase<...>', gave the following error.
+    Argument of type '{ product_id: number; unit_type: "per_piece" | "three_piece" | "dozen"; quantity: number; buying_price: number; selling_price: number; is_default: boolean; }[]' is not assignable to parameter of type '{ buying_price: string | SQL<unknown> | Placeholder<string, any>; selling_price: string | SQL<unknown> | Placeholder<string, any>; product_id: number | SQL<...> | Placeholder<...>; ... 4 more ...; is_default?: boolean | ... 2 more ... | undefined; }[]'.
+      Type '{ product_id: number; unit_type: "per_piece" | "three_piece" | "dozen"; quantity: number; buying_price: number; selling_price: number; is_default: boolean; }' is not assignable to type '{ buying_price: string | SQL<unknown> | Placeholder<string, any>; selling_price: string | SQL<unknown> | Placeholder<string, any>; product_id: number | SQL<...> | Placeholder<...>; ... 4 more ...; is_default?: boolean | ... 2 more ... | undefined; }'.
+        Types of property 'buying_price' are incompatible.
+          Type 'number' is not assignable to type 'string | SQL<unknown> | Placeholder<string, any>'.
+ FILE  /home/runner/ProSaleManager/server/routes/seed.ts:80:19
+
+    78 |         
+    79 |         const insertedPricingUnits = await tx.insert(unitPricing)
+  > 80 |           .values(priceUnitsData)
+       |                   ^^^^^^^^^^^^^^
+    81 |           .returning();
+    82 |         console.log(`Created ${insertedPricingUnits.length} price units for product ${newProduct.id}`);
+    83 |         
+
+[TypeScript] Found 4 errors. Watching for file changes.
