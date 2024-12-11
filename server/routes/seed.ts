@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '../../db';
-import { products, unitPricing } from '../../db/schema';
+import { products, unitPricing, UnitTypeValues, defaultUnitQuantities } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import { seedProducts } from '../seed/products';
 
@@ -9,22 +9,21 @@ const router = Router();
 router.post('/seed-demo-data', async (req, res) => {
   try {
     // Clear existing data in a separate transaction
-    await db.transaction(async (tx) => {
-      console.log('Starting data cleanup...');
-      
-      // Step 1: Remove all default_unit_pricing_id references from products
-      await tx.update(products)
-        .set({ default_unit_pricing_id: null });
-      console.log('Removed default_unit_pricing_id references');
-      
-      // Step 2: Delete all unit pricing entries
-      await tx.delete(unitPricing);
-      console.log('Deleted unit pricing entries');
-      
-      // Step 3: Delete all products
-      await tx.delete(products);
-      console.log('Deleted products');
-    });
+    // Clear existing data
+    console.log('Starting data cleanup...');
+    
+    // Step 1: Remove all default_unit_pricing_id references from products
+    await db.update(products)
+      .set({ default_unit_pricing_id: null });
+    console.log('Removed default_unit_pricing_id references');
+    
+    // Step 2: Delete all unit pricing entries
+    await db.delete(unitPricing);
+    console.log('Deleted unit pricing entries');
+    
+    // Step 3: Delete all products
+    await db.delete(products);
+    console.log('Deleted products');
 
     console.log('Starting demo data insertion...');
     
