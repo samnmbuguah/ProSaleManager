@@ -103,7 +103,7 @@ router.post('/', async (req, res) => {
 // Get all products with their price units
 router.get('/', async (req, res) => {
   try {
-    const result = await db
+    const productsData = await db
       .select({
         id: products.id,
         name: products.name,
@@ -119,6 +119,27 @@ router.get('/', async (req, res) => {
         default_unit_pricing_id: products.default_unit_pricing_id,
       })
       .from(products);
+
+    // Fetch price units for each product
+    const result = await Promise.all(
+      productsData.map(async (product) => {
+        const priceUnits = await db
+          .select()
+          .from(unitPricing)
+          .where(eq(unitPricing.product_id, product.id));
+
+        return {
+          ...product,
+          price_units: priceUnits.map(unit => ({
+            unit_type: unit.unit_type,
+            quantity: unit.quantity,
+            buying_price: unit.buying_price.toString(),
+            selling_price: unit.selling_price.toString(),
+            is_default: unit.is_default
+          }))
+        };
+      })
+    );
 
     res.json(result);
   } catch (error) {
@@ -160,7 +181,13 @@ router.put('/:id', async (req, res) => {
     const productId = parseInt(req.params.id);
 
     const result = await db.transaction(async (tx) => {
-      // Update the product
+      // Get the default pricing unit
+      const defaultUnit = validatedData.price_units.find(unit => unit.is_default);
+      if (!defaultUnit) {
+        throw new Error("A default pricing unit is required");
+      }
+
+      // Update the product with the default unit's prices
       await tx.update(products)
         .set({
           name: validatedData.name,
@@ -171,6 +198,8 @@ router.put('/:id', async (req, res) => {
           max_stock: validatedData.max_stock,
           reorder_point: validatedData.reorder_point,
           stock_unit: validatedData.stock_unit,
+          buying_price: defaultUnit.buying_price,
+          selling_price: defaultUnit.selling_price,
         })
         .where(eq(products.id, productId));
 
@@ -183,13 +212,22 @@ router.put('/:id', async (req, res) => {
         const unitPricingData = validatedData.price_units.map(unit => ({
           product_id: productId,
           unit_type: unit.unit_type,
-          quantity: unit.quantity,
+          quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValues],
           buying_price: unit.buying_price,
           selling_price: unit.selling_price,
           is_default: unit.is_default,
         }));
 
-        await tx.insert(unitPricing).values(unitPricingData);
+        const [defaultPricing] = await tx.insert(unitPricing)
+          .values(unitPricingData)
+          .returning();
+
+        // Update product with default unit pricing ID
+        if (defaultPricing) {
+          await tx.update(products)
+            .set({ default_unit_pricing_id: defaultPricing.id })
+            .where(eq(products.id, productId));
+        }
       }
 
       // Fetch the updated product
