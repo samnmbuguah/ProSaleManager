@@ -19,10 +19,12 @@ import {
 } from "@/components/ui/select";
 
 import { z } from "zod";
-import { UnitTypeValues, defaultUnitQuantities, UnitTypes, UnitTypeEnum } from "@db/schema";
+import { UnitTypeValues, defaultUnitQuantities } from "@db/schema";
+
+const UnitTypes = ['per_piece', 'three_piece', 'dozen'] as const;
 
 // Define the product schema for form validation
-const productFormSchema = z.object({
+const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
   sku: z.string(),
   stock: z.number().min(0, "Stock cannot be negative"),
@@ -30,17 +32,15 @@ const productFormSchema = z.object({
   min_stock: z.number().min(0, "Minimum stock cannot be negative"),
   max_stock: z.number().min(0, "Maximum stock cannot be negative"),
   reorder_point: z.number().min(0, "Reorder point cannot be negative"),
-  stock_unit: UnitTypeEnum,
+  stock_unit: z.enum(UnitTypes),
   price_units: z.array(z.object({
-    unit_type: UnitTypeEnum,
+    unit_type: z.enum(UnitTypes),
     quantity: z.number(),
     buying_price: z.string(),
     selling_price: z.string(),
     is_default: z.boolean()
-  })).min(1, "At least one price unit is required")
+  }))
 });
-
-type ProductFormData = z.infer<typeof productFormSchema>;
 
 export interface PriceUnit {
   unit_type: UnitTypeValues;
@@ -84,18 +84,17 @@ const STOCK_UNITS = [
 
 export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductFormProps) {
   // Initialize default values for price units
-  // Initialize default values for price units
-  const defaultPriceUnits = UnitTypes.map((unitType) => ({
-    unit_type: unitType,
-    quantity: defaultUnitQuantities[unitType],
+  const defaultPriceUnits: PriceUnit[] = UnitTypes.map((unitType) => ({
+    unit_type: unitType as UnitTypeValues,
+    quantity: defaultUnitQuantities[unitType as UnitTypeValues],
     buying_price: "0",
     selling_price: "0",
     is_default: unitType === 'per_piece'
-  })) satisfies PriceUnit[];
+  }));
 
   // Initialize form with proper default values
   const form = useForm<ProductFormData>({
-    resolver: zodResolver(productFormSchema),
+    resolver: zodResolver(productSchema),
     defaultValues: {
       name: initialData?.name ?? "",
       sku: initialData?.sku ?? "",
@@ -115,55 +114,40 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
                 selling_price: String(existingUnit.selling_price)
               };
             }
-            return {
-              unit_type: unitType,
-              quantity: defaultUnitQuantities[unitType],
+            return defaultPriceUnits.find(u => u.unit_type === unitType) || {
+              unit_type: unitType as UnitTypeValues,
+              quantity: defaultUnitQuantities[unitType as UnitTypeValues],
               buying_price: "0",
               selling_price: "0",
-              is_default: unitType === "per_piece"
+              is_default: unitType === 'per_piece'
             };
           })
-        : UnitTypes.map(unitType => ({
-            unit_type: unitType,
-            quantity: defaultUnitQuantities[unitType],
-            buying_price: "0",
-            selling_price: "0",
-            is_default: unitType === "per_piece"
-          })),
+        : defaultPriceUnits,
     },
   });
 
   const handleSubmit = async (data: ProductFormData) => {
     try {
-      // Ensure all numeric values are properly converted and price units are formatted
+      // Ensure numeric values are properly converted
       const formattedData = {
         ...data,
         stock: Number(data.stock),
         min_stock: Number(data.min_stock),
         max_stock: Number(data.max_stock),
         reorder_point: Number(data.reorder_point),
-        price_units: UnitTypes.map(unitType => {
-          const unit = data.price_units.find(u => u.unit_type === unitType) || {
-            unit_type: unitType,
-            quantity: defaultUnitQuantities[unitType],
-            buying_price: "0",
-            selling_price: "0",
-            is_default: unitType === "per_piece"
-          };
-          
-          return {
-            ...unit,
-            quantity: defaultUnitQuantities[unitType],
-            buying_price: String(unit.buying_price),
-            selling_price: String(unit.selling_price)
-          };
-        })
+        price_units: data.price_units.map(unit => ({
+          ...unit,
+          quantity: Number(unit.quantity),
+          buying_price: String(unit.buying_price),
+          selling_price: String(unit.selling_price)
+        }))
       };
       
       console.log('Submitting form data:', formattedData);
       await onSubmit(formattedData);
     } catch (error) {
       console.error('Form submission error:', error);
+      // Keep the form open on error
       return;
     }
   };
