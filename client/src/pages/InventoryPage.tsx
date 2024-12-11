@@ -14,6 +14,16 @@ import { useUser } from "@/hooks/use-user";
 import { Button } from "@/components/ui/button";
 import { Plus, Database } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import type { ProductFormData } from "@/components/inventory/ProductForm";
+
+function generateSKU(name: string): string {
+  return name
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 6)
+    .padEnd(6, '0') + 
+    Math.random().toString(36).substring(2, 5).toUpperCase();
+}
 
 export default function InventoryPage() {
   const { user } = useUser();
@@ -22,7 +32,14 @@ export default function InventoryPage() {
   const [isPurchaseOrderFormOpen, setIsPurchaseOrderFormOpen] = useState(false);
   const [isSupplierFormOpen, setIsSupplierFormOpen] = useState(false);
   const [isLoadingDemo, setIsLoadingDemo] = useState(false);
-  const { products, isLoading: isLoadingProducts, createProduct, isCreating: isCreatingProduct } = useProducts();
+  const { 
+    products, 
+    isLoading: isLoadingProducts, 
+    createProduct, 
+    updateProduct,
+    isCreating: isCreatingProduct,
+    isUpdating: isUpdatingProduct
+  } = useProducts();
   const { createPurchaseOrder, createPurchaseOrderItem, isCreating: isCreatingPO } = usePurchaseOrders();
   const { createSupplier, isCreating: isCreatingSupplier } = useSuppliers();
 
@@ -56,6 +73,22 @@ export default function InventoryPage() {
     }
   };
 
+  const handleUpdateProduct = async (id: number, data: any) => {
+    try {
+      await updateProduct({ id, ...data });
+      toast({
+        title: "Success",
+        description: "Product updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update product",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="container py-6 space-y-6">
       <Tabs defaultValue="products">
@@ -82,7 +115,11 @@ export default function InventoryPage() {
               Add Product
             </Button>
           </div>
-          <ProductTable products={products || []} isLoading={isLoadingProducts} />
+          <ProductTable 
+            products={products || []} 
+            isLoading={isLoadingProducts} 
+            onUpdateProduct={handleUpdateProduct}
+          />
         </TabsContent>
 
         <TabsContent value="purchase-orders" className="space-y-4">
@@ -106,39 +143,21 @@ export default function InventoryPage() {
             <DialogTitle>Add Product</DialogTitle>
           </DialogHeader>
           <ProductForm
-            onSubmit={async (data) => {
+            onSubmit={async (data: ProductFormData) => {
               const productData = {
                 name: data.name,
-                buyingPrice: data.perPiece.buyingPrice,
-                sellingPrice: data.perPiece.sellingPrice,
+                sku: generateSKU(data.name),
                 stock: data.stock,
                 category: data.category,
-                minStock: data.minStock,
-                maxStock: data.maxStock,
-                reorderPoint: data.reorderPoint,
-                stockUnit: data.stockUnit,
+                min_stock: data.min_stock,
+                max_stock: data.max_stock,
+                reorder_point: data.reorder_point,
+                stock_unit: data.stock_unit,
+                buying_price: data.buying_price,
+                selling_price: data.selling_price,
               };
               
-              const product = await createProduct(productData);
-
-              if (product?.id) {
-                // Insert SKU pricing records
-                await fetch('/api/unit-pricing', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    productId: product.id,
-                    prices: {
-                      per_piece: data.perPiece,
-                      three_piece: data.threePiece,
-                      dozen: data.dozen,
-                    }
-                  }),
-                });
-              }
-
+              await createProduct(productData);
               setIsProductFormOpen(false);
             }}
             isSubmitting={isCreatingProduct}
@@ -147,35 +166,37 @@ export default function InventoryPage() {
       </Dialog>
 
       <Dialog open={isPurchaseOrderFormOpen} onOpenChange={setIsPurchaseOrderFormOpen}>
-        <DialogContent className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Create Purchase Order</DialogTitle>
           </DialogHeader>
           <PurchaseOrderForm
             onSubmit={async (data) => {
-              try {
-                const purchaseOrder = await createPurchaseOrder({
-                  supplierId: Number(data.supplierId),
-                  userId: user?.id ?? 0,
-                  total: data.total.toString(),
-                  status: "pending",
-                });
+              const total = data.items.reduce((sum, item) => 
+                sum + (Number(item.buying_price) * item.quantity), 0
+              ).toFixed(2);
 
-                if (purchaseOrder && data.items) {
-                  await Promise.all(data.items.map(item => 
-                    createPurchaseOrderItem({
-                      purchaseOrderId: purchaseOrder.id,
-                      productId: item.productId,
-                      quantity: item.quantity,
-                      buyingPrice: item.buyingPrice.toString(),
-                      sellingPrice: item.sellingPrice.toString(),
-                    })
-                  ));
-                }
-                setIsPurchaseOrderFormOpen(false);
-              } catch (error) {
-                console.error('Error creating purchase order:', error);
+              const order = await createPurchaseOrder({
+                supplierId: data.supplierId,
+                userId: user?.id || 0,
+                orderDate: new Date(),
+                status: "pending",
+                total,
+              });
+
+              if (order?.id) {
+                await Promise.all(data.items.map(item => 
+                  createPurchaseOrderItem({
+                    purchaseOrderId: order.id,
+                    productId: item.productId,
+                    quantity: item.quantity,
+                    buyingPrice: item.buying_price.toString(),
+                    sellingPrice: item.selling_price.toString(),
+                  })
+                ));
               }
+
+              setIsPurchaseOrderFormOpen(false);
             }}
             isSubmitting={isCreatingPO}
           />
@@ -183,7 +204,7 @@ export default function InventoryPage() {
       </Dialog>
 
       <Dialog open={isSupplierFormOpen} onOpenChange={setIsSupplierFormOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Add Supplier</DialogTitle>
           </DialogHeader>
