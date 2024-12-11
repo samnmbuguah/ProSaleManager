@@ -144,9 +144,22 @@ export default function InventoryPage() {
           </DialogHeader>
           <ProductForm
             onSubmit={async (data: ProductFormData) => {
+              // Get the default pricing unit
+              const defaultUnit = data.price_units.find(unit => unit.is_default);
+              if (!defaultUnit) {
+                toast({
+                  title: "Error",
+                  description: "A default pricing unit is required",
+                  variant: "destructive",
+                });
+                return;
+              }
+
               const productData = {
                 name: data.name,
                 sku: generateSKU(data.name),
+                buying_price: defaultUnit.buying_price,
+                selling_price: defaultUnit.selling_price,
                 stock: data.stock,
                 category: data.category,
                 min_stock: data.min_stock,
@@ -159,10 +172,15 @@ export default function InventoryPage() {
                   buying_price: unit.buying_price,
                   selling_price: unit.selling_price,
                   is_default: unit.is_default
-                })),
+                }))
               };
               
-              await createProduct(productData);
+              try {
+                await createProduct(productData);
+                setIsProductFormOpen(false);
+              } catch (error) {
+                console.error('Failed to create product:', error);
+              }
               setIsProductFormOpen(false);
             }}
             isSubmitting={isCreatingProduct}

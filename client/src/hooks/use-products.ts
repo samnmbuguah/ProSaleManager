@@ -18,14 +18,21 @@ export function useProducts() {
   });
 
   const createProductMutation = useMutation({
-    mutationFn: async (data: InsertProduct) => {
+    mutationFn: async (data: InsertProduct & { price_units?: Array<{
+      unit_type: string;
+      quantity: number;
+      buying_price: string;
+      selling_price: string;
+      is_default: boolean;
+    }> }) => {
       const response = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error("Failed to create product");
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create product");
       }
       return response.json();
     },
