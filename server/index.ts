@@ -189,12 +189,18 @@ const app = express();
 // Initialize database tables
 (async () => {
   try {
+    console.log('Starting database initialization...');
     await migrate(db, {
       migrationsFolder: './migrations',
     });
     console.log('Database migrations completed successfully');
+    
+    // Verify database connection
+    await db.execute(sql`SELECT 1`);
+    console.log('Database connection verified');
   } catch (error) {
-    console.error('Error running migrations:', error);
+    console.error('Database initialization error:', error);
+    process.exit(1); // Exit if database initialization fails
   }
 })();
 
