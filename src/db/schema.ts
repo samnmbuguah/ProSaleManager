@@ -10,11 +10,9 @@ export const UnitType = {
   DOZEN: 'dozen'
 } as const;
 
-export type UnitTypeValues = typeof UnitType[keyof typeof UnitType];
+export type UnitTypeValues = (typeof UnitType)[keyof typeof UnitType];
 
-export type UnitPricing = {
-  id: number;
-  product_id: number;
+export type UnitPriceUnit = {
   unit_type: UnitTypeValues;
   quantity: number;
   buying_price: string;
@@ -24,11 +22,16 @@ export type UnitPricing = {
   updated_at?: Date;
 };
 
+export type UnitPricing = UnitPriceUnit & {
+  id: number;
+  product_id: number;
+};
+
 // Create unit pricing table
 export const unitPricing = pgTable('unit_pricing', {
   id: serial('id').primaryKey(),
   product_id: integer('product_id').notNull(),
-  unit_type: varchar('unit_type', { enum: Object.values(UnitType) }).notNull(),
+  unit_type: varchar('unit_type').notNull(),
   quantity: integer('quantity').notNull().default(1),
   buying_price: decimal('buying_price', { precision: 10, scale: 2 }).notNull(),
   selling_price: decimal('selling_price', { precision: 10, scale: 2 }).notNull(),
@@ -63,9 +66,9 @@ export const insertProductSchema = z.object({
   min_stock: z.number().min(0).optional(),
   max_stock: z.number().min(0).optional(),
   reorder_point: z.number().min(0).optional(),
-  stock_unit: z.enum(Object.values(UnitType)).default(UnitType.PER_PIECE),
+  stock_unit: z.enum([UnitType.PER_PIECE, UnitType.THREE_PIECE, UnitType.DOZEN]).default(UnitType.PER_PIECE),
   price_units: z.array(z.object({
-    unit_type: z.enum(Object.values(UnitType)),
+    unit_type: z.enum([UnitType.PER_PIECE, UnitType.THREE_PIECE, UnitType.DOZEN]),
     quantity: z.number(),
     buying_price: z.string(),
     selling_price: z.string(),
@@ -96,23 +99,15 @@ export const unitPricingSchema = z.object({
   }
 );
 
-export const insertUnitPricingSchema = unitPricingSchema.omit({ id: true });
-export const updateUnitPricingSchema = unitPricingSchema.partial();
-
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type UnitPricingInsert = typeof unitPricing.$inferInsert;
 
 export type Product = typeof products.$inferSelect & {
-  price_units?: Array<{
-    unit_type: UnitTypeValues;
-    quantity: number;
-    buying_price: string;
-    selling_price: string;
-    is_default: boolean;
-  }>;
+  price_units?: Array<UnitPriceUnit>;
+  default_unit_pricing?: UnitPriceUnit | null;
 };
 
-//Sale items table with unit pricing reference
+// Sale items table with unit pricing reference
 export const saleItems = pgTable('sale_items', {
   id: serial('id').primaryKey(),
   sale_id: integer('sale_id').notNull(),
