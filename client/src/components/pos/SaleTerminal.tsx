@@ -40,10 +40,10 @@ export function SaleTerminal({ children, onSendReceipt }: SaleTerminalProps) {
           if (!prev) return null;
           return {
             ...prev,
-            receiptStatus: {
-              ...prev.receiptStatus,
+            receipt_status: {
+              ...prev.receipt_status,
               [method]: true,
-              lastSentAt: new Date().toISOString(),
+              last_sent_at: new Date().toISOString(),
             }
           };
         });
