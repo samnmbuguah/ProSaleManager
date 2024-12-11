@@ -879,9 +879,11 @@ export function registerRoutes(app: Express) {
           min_stock: 20,
           max_stock: 200,
           reorder_point: 40,
-          stock_unit: "per_piece",
-          buying_price: "120.00",
-          selling_price: "150.00",
+          stock_unit: "per_piece" as const,
+          sku: generateSKU("Rice"),
+          default_unit_pricing_id: null,
+          buying_price: "0",
+          selling_price: "0"
         },
         {
           name: "Cooking Oil",
@@ -890,9 +892,11 @@ export function registerRoutes(app: Express) {
           min_stock: 10,
           max_stock: 100,
           reorder_point: 20,
-          stock_unit: "per_piece",
-          buying_price: "200.00",
-          selling_price: "250.00",
+          stock_unit: "per_piece" as const,
+          sku: generateSKU("Cooking Oil"),
+          default_unit_pricing_id: null,
+          buying_price: "0",
+          selling_price: "0"
         },
         {
           name: "Wheat Flour",
@@ -901,50 +905,94 @@ export function registerRoutes(app: Express) {
           min_stock: 15,
           max_stock: 150,
           reorder_point: 30,
-          stock_unit: "per_piece",
-          buying_price: "150.00",
-          selling_price: "180.00",
+          stock_unit: "per_piece" as const,
+          sku: generateSKU("Wheat Flour"),
+          default_unit_pricing_id: null,
+          buying_price: "0",
+          selling_price: "0"
         }
       ];
 
-      const insertedProducts = await db.insert(products).values(demoProducts.map(product => ({
-        ...product,
-        sku: generateSKU(product.name),
-        default_unit_pricing_id: null
-      }))).returning();
+      const insertedProducts = await db.insert(products).values(demoProducts).returning();
       
       // Add unit pricing for each product
-      const unitPricingData = insertedProducts.map(product => {
+      const unitPricingData = insertedProducts.flatMap(product => {
         const baseConfig = {
           product_id: product.id,
-          is_default: true,
         };
 
-        // All products use per_piece as the base unit type
-        const pricing = [
+        // Define prices based on product name
+        let basePrice, sellingPrice;
+        switch (product.name) {
+          case "Rice":
+            basePrice = "120.00";
+            sellingPrice = "150.00";
+            break;
+          case "Cooking Oil":
+            basePrice = "200.00";
+            sellingPrice = "250.00";
+            break;
+          case "Wheat Flour":
+            basePrice = "150.00";
+            sellingPrice = "180.00";
+            break;
+          default:
+            basePrice = "100.00";
+            sellingPrice = "120.00";
+        }
+
+        // Create pricing entries for different units
+        return [
           {
             ...baseConfig,
             unit_type: "per_piece",
             quantity: 1,
-            buying_price: product.buying_price,
-            selling_price: product.selling_price,
+            buying_price: basePrice,
+            selling_price: sellingPrice,
+            is_default: true
           },
           {
             ...baseConfig,
-            is_default: false,
+            unit_type: "three_piece",
+            quantity: 3,
+            buying_price: (parseFloat(basePrice) * 2.7).toFixed(2), // 3 for price of 2.7
+            selling_price: (parseFloat(sellingPrice) * 2.7).toFixed(2),
+            is_default: false
+          },
+          {
+            ...baseConfig,
             unit_type: "dozen",
             quantity: 12,
-            buying_price: (parseFloat(product.buying_price) * 11).toFixed(2), // 12 for price of 11
-            selling_price: (parseFloat(product.selling_price) * 11).toFixed(2),
+            buying_price: (parseFloat(basePrice) * 10.2).toFixed(2), // 12 for price of 10.2
+            selling_price: (parseFloat(sellingPrice) * 10.2).toFixed(2),
+            is_default: false
           }
         ];
+      });
 
-        return pricing;
-      }).flat();
+      // Insert unit pricing data and get the inserted records
+      const insertedUnitPricing = await db.insert(unitPricing)
+        .values(unitPricingData)
+        .returning();
 
-      await db.insert(unitPricing).values(unitPricingData);
+      // Update products with their default unit pricing
+      for (const product of insertedProducts) {
+        const defaultPricing = insertedUnitPricing.find(
+          up => up.product_id === product.id && up.is_default
+        );
+
+        if (defaultPricing) {
+          await db.update(products)
+            .set({
+              default_unit_pricing_id: defaultPricing.id,
+              buying_price: defaultPricing.buying_price,
+              selling_price: defaultPricing.selling_price
+            })
+            .where(eq(products.id, product.id));
+        }
+      }
       
-      // Update default unit pricing IDs
+      // Update default unit pricing IDs and prices
       await Promise.all(
         insertedProducts.map(async (product) => {
           const [defaultPricing] = await db
@@ -959,7 +1007,11 @@ export function registerRoutes(app: Express) {
           if (defaultPricing) {
             await db
               .update(products)
-              .set({ default_unit_pricing_id: defaultPricing.id })
+              .set({ 
+                default_unit_pricing_id: defaultPricing.id,
+                buying_price: defaultPricing.buying_price,
+                selling_price: defaultPricing.selling_price
+              })
               .where(eq(products.id, product.id));
           }
         })
