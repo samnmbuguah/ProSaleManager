@@ -1,0 +1,78 @@
+ ERROR(TypeScript)  Module '"@db/schema"' has no exported member 'UnitType'.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/ProductTable.tsx:2:24
+
+    1 | import { useState } from "react";
+  > 2 | import type { Product, UnitType } from "@db/schema";
+      |                        ^^^^^^^^
+    3 |
+    4 | interface ProductPriceUnit {
+    5 |   unit_type: keyof typeof UnitType;
+
+ ERROR(TypeScript)  Property 'price_units' does not exist on type 'Product'.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/ProductTable.tsx:65:33
+
+    63 |
+    64 |   const getDefaultPricing = (product: Product) => {
+  > 65 |     const defaultUnit = product.price_units?.find(unit => unit.is_default);
+       |                                 ^^^^^^^^^^^
+    66 |     return defaultUnit || {
+    67 |       buying_price: "0",
+    68 |       selling_price: "0",
+
+ ERROR(TypeScript)  Parameter 'unit' implicitly has an 'any' type.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/ProductTable.tsx:65:51
+
+    63 |
+    64 |   const getDefaultPricing = (product: Product) => {
+  > 65 |     const defaultUnit = product.price_units?.find(unit => unit.is_default);
+       |                                                   ^^^^
+    66 |     return defaultUnit || {
+    67 |       buying_price: "0",
+    68 |       selling_price: "0",
+
+ ERROR(TypeScript)  Property 'price_units' does not exist on type 'Product'.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/ProductTable.tsx:154:45
+
+    152 |                 reorder_point: editingProduct.reorder_point || 0,
+    153 |                 stock_unit: editingProduct.stock_unit as any,
+  > 154 |                 price_units: editingProduct.price_units || []
+        |                                             ^^^^^^^^^^^
+    155 |               }}
+    156 |               onSubmit={async (data: ProductFormData) => {
+    157 |                 if (onUpdateProduct && editingProduct.id) {
+
+ ERROR(TypeScript)  Property 'price_units' does not exist on type 'Product'.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/ProductTable.tsx:185:36
+
+    183 |                 <div>
+    184 |                   <h3 className="font-medium">Pricing Information</h3>
+  > 185 |                   {selectedProduct.price_units?.map(unit => (
+        |                                    ^^^^^^^^^^^
+    186 |                     <div key={unit.unit_type} className="mb-2">
+    187 |                       <p className="capitalize">{unit.unit_type.replace('_', ' ')}:</p>
+    188 |                       <p className="ml-4">Buy: KSh {Number(unit.buying_price).toFixed(2)}</p>
+
+ ERROR(TypeScript)  Parameter 'unit' implicitly has an 'any' type.
+ FILE  /home/runner/ProSaleManager/client/src/components/inventory/ProductTable.tsx:185:53
+
+    183 |                 <div>
+    184 |                   <h3 className="font-medium">Pricing Information</h3>
+  > 185 |                   {selectedProduct.price_units?.map(unit => (
+        |                                                     ^^^^
+    186 |                     <div key={unit.unit_type} className="mb-2">
+    187 |                       <p className="capitalize">{unit.unit_type.replace('_', ' ')}:</p>
+    188 |                       <p className="ml-4">Buy: KSh {Number(unit.buying_price).toFixed(2)}</p>
+
+ ERROR(TypeScript)  Argument of type '{ name: string; sku: string; stock: number; category: string; min_stock: number; max_stock: number; reorder_point: number; stock_unit: "per_piece" | "three_piece" | "dozen"; price_units: { unit_type: "per_piece" | ... 1 more ... | "dozen"; quantity: number; buying_price: string; selling_price: string; is_default: bo...' is not assignable to parameter of type '{ name: string; sku: string; buying_price: string; selling_price: string; id?: number | undefined; stock?: number | undefined; category?: string | null | undefined; min_stock?: number | null | undefined; ... 6 more ...; defaultUnit?: string | undefined; }'.
+  Type '{ name: string; sku: string; stock: number; category: string; min_stock: number; max_stock: number; reorder_point: number; stock_unit: "per_piece" | "three_piece" | "dozen"; price_units: { unit_type: "per_piece" | ... 1 more ... | "dozen"; quantity: number; buying_price: string; selling_price: string; is_default: bo...' is missing the following properties from type '{ name: string; sku: string; buying_price: string; selling_price: string; id?: number | undefined; stock?: number | undefined; category?: string | null | undefined; min_stock?: number | null | undefined; ... 6 more ...; defaultUnit?: string | undefined; }': buying_price, selling_price
+ FILE  /home/runner/ProSaleManager/client/src/pages/InventoryPage.tsx:165:35
+
+    163 |               };
+    164 |               
+  > 165 |               await createProduct(productData);
+        |                                   ^^^^^^^^^^^
+    166 |               setIsProductFormOpen(false);
+    167 |             }}
+    168 |             isSubmitting={isCreatingProduct}
+
+[TypeScript] Found 7 errors. Watching for file changes.
