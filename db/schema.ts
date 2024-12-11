@@ -13,7 +13,7 @@ import { z } from "zod";
 
 // User schema
 export const users = pgTable("users", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   email: text("email").notNull(),
   username: text("username").notNull(),
   password: text("password").notNull(),
@@ -24,7 +24,7 @@ export const users = pgTable("users", {
 
 // Define products table first without the foreign key reference
 export const products = pgTable("products", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   name: text("name").notNull(),
   sku: text("sku").notNull(),
   buying_price: decimal("buying_price", { precision: 10, scale: 2 }).notNull(),
@@ -38,7 +38,6 @@ export const products = pgTable("products", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
   stock_unit: text("stock_unit").default("per_piece").notNull(),
   default_unit_pricing_id: integer("default_unit_pricing_id"),
-  
 });
 
 // Unit Pricing schema with references to products
@@ -57,7 +56,7 @@ export const isValidUnitType = (type: string): type is UnitTypeValues => {
 };
 
 export const unitPricing = pgTable("unit_pricing", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   product_id: integer("product_id").references(() => products.id).notNull(),
   unit_type: text("unit_type").notNull(),
   quantity: integer("quantity").notNull(),
@@ -111,7 +110,7 @@ export const productsRelations = relations(products, ({ many, one }) => ({
 
 // Customer schema
 export const customers = pgTable("customers", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email"),
   phone: text("phone"),
@@ -122,7 +121,7 @@ export const customers = pgTable("customers", {
 
 // Supplier schema
 export const suppliers = pgTable("suppliers", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull(),
   phone: text("phone"),
@@ -133,7 +132,7 @@ export const suppliers = pgTable("suppliers", {
 
 // Product Supplier schema
 export const productSuppliers = pgTable("product_suppliers", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   productId: integer("product_id")
     .references(() => products.id)
     .notNull(),
@@ -149,7 +148,7 @@ export const productSuppliers = pgTable("product_suppliers", {
 
 // Purchase Order schema
 export const purchaseOrders = pgTable("purchase_orders", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   supplierId: integer("supplier_id")
     .references(() => suppliers.id)
     .notNull(),
@@ -166,7 +165,7 @@ export const purchaseOrders = pgTable("purchase_orders", {
 
 // Purchase Order Item schema
 export const purchaseOrderItems = pgTable("purchase_order_items", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   purchaseOrderId: integer("purchase_order_id")
     .references(() => purchaseOrders.id)
     .notNull(),
@@ -182,7 +181,7 @@ export const purchaseOrderItems = pgTable("purchase_order_items", {
 
 // Sale schema
 export const sales = pgTable("sales", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   customerId: integer("customer_id").references(() => customers.id),
   userId: integer("user_id")
     .references(() => users.id)
@@ -196,7 +195,7 @@ export const sales = pgTable("sales", {
 
 // Sale Item schema
 export const saleItems = pgTable("sale_items", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   saleId: integer("sale_id")
     .references(() => sales.id)
     .notNull(),
@@ -212,7 +211,7 @@ export const saleItems = pgTable("sale_items", {
 
 // Loyalty Points schema
 export const loyaltyPoints = pgTable("loyalty_points", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   customerId: integer("customer_id")
     .references(() => customers.id)
     .notNull(),
@@ -223,7 +222,7 @@ export const loyaltyPoints = pgTable("loyalty_points", {
 
 // Loyalty Transactions schema
 export const loyaltyTransactions = pgTable("loyalty_transactions", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: serial("id").primaryKey(),
   customerId: integer("customer_id")
     .references(() => customers.id)
     .notNull(),
@@ -233,18 +232,6 @@ export const loyaltyTransactions = pgTable("loyalty_transactions", {
   points: integer("points").notNull(),
   type: text("type").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-// Product Prices schema
-export const productPrices = pgTable('product_prices', {
-  id: serial('id').primaryKey(),
-  productId: integer('product_id').references(() => products.id, { onDelete: 'cascade' }),
-  stockUnit: text('stock_unit').notNull(),
-  sellingPrice: decimal('selling_price', { precision: 10, scale: 2 }).notNull(),
-  buyingPrice: decimal('buying_price', { precision: 10, scale: 2 }).notNull(),
-  conversionRate: decimal('conversion_rate', { precision: 10, scale: 4 }).notNull().default('1'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 // Schema validations with updated types
