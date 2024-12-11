@@ -49,7 +49,7 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
           </div>
         )}
         <div className="text-center text-muted-foreground mt-2">
-          <p>Transaction ID: {receipt.transactionId || 'N/A'}</p>
+          <p>Transaction ID: {receipt.transaction_id || 'N/A'}</p>
           <p>{formattedDate}</p>
         </div>
       </CardHeader>
@@ -63,14 +63,14 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
         )}
         
         <div className="space-y-2">
-          {receipt.items.map((item: { name: string; quantity: number; unitPrice: number; total: number }, index: number) => (
+          {receipt.items.map((item: { name: string; quantity: number; unit_price: number; total: number }, index: number) => (
             <div key={index} className="flex justify-between text-sm">
               <div>
                 <span>{item.quantity}x </span>
                 <span>{item.name}</span>
               </div>
               <div className="text-right">
-                <div>{formatCurrency(item.unitPrice)}</div>
+                <div>{formatCurrency(item.unit_price)}</div>
                 <div>{formatCurrency(item.total)}</div>
               </div>
             </div>
@@ -83,18 +83,18 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
             <span>{formatCurrency(receipt.total)}</span>
           </div>
           <div className="text-sm text-muted-foreground">
-            Paid via {receipt.paymentMethod}
-            {receipt.paymentMethod.toLowerCase() === "cash" && (
-              <div className="space-y-1 mt-1">
-                {typeof receipt.cashAmount === 'number' && (
+            Paid via {receipt.payment_method}
+            {receipt.payment_method.toLowerCase() === "cash" && (
+              <div className="mt-2">
+                {typeof receipt.cash_amount === 'number' && (
                   <>
-                    <div className="flex justify-between">
-                      <span>Amount Received:</span>
-                      <span>{formatCurrency(receipt.cashAmount)}</span>
+                    <div className="flex justify-between text-sm">
+                      <span>Cash Tendered:</span>
+                      <span>{formatCurrency(receipt.cash_amount)}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between text-sm">
                       <span>Change:</span>
-                      <span>{formatCurrency(receipt.cashAmount - receipt.total)}</span>
+                      <span>{formatCurrency(receipt.cash_amount - receipt.total)}</span>
                     </div>
                   </>
                 )}
@@ -112,14 +112,14 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
         <Button variant="outline" size="sm" onClick={() => onSend('whatsapp')}>
           <FaWhatsapp className="w-4 h-4 mr-2" />
           WhatsApp
-          {receipt.receiptStatus?.whatsapp && (
+          {receipt.receipt_status?.whatsapp && (
             <span className="ml-2 text-green-500">✓</span>
           )}
         </Button>
         <Button variant="outline" size="sm" onClick={() => onSend('sms')}>
           <MessageSquare className="w-4 h-4 mr-2" />
           SMS
-          {receipt.receiptStatus?.sms && (
+          {receipt.receipt_status?.sms && (
             <span className="ml-2 text-green-500">✓</span>
           )}
         </Button>
