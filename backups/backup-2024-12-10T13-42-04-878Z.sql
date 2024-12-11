@@ -3,7 +3,7 @@
 --
 
 -- Dumped from database version 16.6
--- Dumped by pg_dump version 16.4
+-- Dumped by pg_dump version 16.6 (Ubuntu 16.6-0ubuntu0.24.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -598,7 +598,10 @@ COPY public.product_suppliers (id, product_id, supplier_id, cost_price, is_prefe
 --
 
 COPY public.products (id, name, sku, buying_price, selling_price, stock, category, min_stock, max_stock, reorder_point, created_at, updated_at, stock_unit, default_unit_pricing_id) FROM stdin;
-14	Bras B	Pieces 	0.00	0.00	2	bra	10	100	20	2024-12-10 11:02:14.90165	2024-12-10 11:02:14.90165	per_piece	\N
+25	Classic White T-Shirt	TSHIRT-001	999.00	1999.00	100	Clothing	20	200	30	2024-12-10 13:07:37.154	2024-12-10 13:07:37.154	per_piece	2
+26	Leather Wallet	WALLET-001	1999.00	2999.00	50	Accessories	10	100	15	2024-12-10 13:07:37.154	2024-12-10 13:07:37.154	per_piece	3
+27	Running Shoes	SHOES-001	5999.00	7999.00	75	Footwear	15	150	25	2024-12-10 13:07:37.154	2024-12-10 13:07:37.154	per_piece	4
+28	Wireless Headphones	AUDIO-001	8999.00	12999.00	30	Electronics	5	50	10	2024-12-10 13:07:37.154	2024-12-10 13:07:37.154	per_piece	5
 \.
 
 
@@ -628,7 +631,6 @@ COPY public.purchase_orders (id, supplier_id, user_id, status, order_date, recei
 --
 
 COPY public.sale_items (id, sale_id, product_id, quantity, price, created_at, updated_at, sku_pricing_id, unit_pricing_id) FROM stdin;
-350	112	14	1	0.00	2024-12-10 11:12:02.398824	2024-12-10 11:12:02.398824	\N	\N
 \.
 
 
@@ -757,9 +759,10 @@ COPY public.sales (id, customer_id, user_id, total, payment_method, payment_stat
 --
 
 COPY public.sku_pricing (id, product_id, sku_type, buying_price, selling_price, created_at, updated_at) FROM stdin;
-5	14	per_piece	0.00	0.00	2024-12-10 11:02:15.392411	2024-12-10 11:02:15.392411
-6	14	three_piece	0.00	0.00	2024-12-10 11:02:15.392411	2024-12-10 11:02:15.392411
-7	14	dozen	3000.00	4800.00	2024-12-10 11:02:15.392411	2024-12-10 11:02:15.392411
+8	25	per_piece	999.00	1999.00	2024-12-10 13:07:37.921282	2024-12-10 13:07:37.921282
+9	26	per_piece	1999.00	2999.00	2024-12-10 13:07:38.476731	2024-12-10 13:07:38.476731
+10	27	per_piece	5999.00	7999.00	2024-12-10 13:07:38.964971	2024-12-10 13:07:38.964971
+11	28	per_piece	8999.00	12999.00	2024-12-10 13:07:39.497743	2024-12-10 13:07:39.497743
 \.
 
 
@@ -778,6 +781,10 @@ COPY public.suppliers (id, name, email, phone, address, created_at, updated_at) 
 --
 
 COPY public.unit_pricing (id, product_id, unit_type, quantity, buying_price, selling_price, is_default, created_at, updated_at) FROM stdin;
+2	25	per_piece	1	999.00	1999.00	t	2024-12-10 13:07:37.55	2024-12-10 13:07:37.55
+3	26	per_piece	1	1999.00	2999.00	t	2024-12-10 13:07:38.106	2024-12-10 13:07:38.106
+4	27	per_piece	1	5999.00	7999.00	t	2024-12-10 13:07:38.65	2024-12-10 13:07:38.65
+5	28	per_piece	1	8999.00	12999.00	t	2024-12-10 13:07:39.141	2024-12-10 13:07:39.141
 \.
 
 
@@ -830,7 +837,7 @@ SELECT pg_catalog.setval('public.product_suppliers_id_seq', 2, true);
 -- Name: products_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.products_id_seq', 14, true);
+SELECT pg_catalog.setval('public.products_id_seq', 28, true);
 
 
 --
@@ -865,7 +872,7 @@ SELECT pg_catalog.setval('public.sales_id_seq', 112, true);
 -- Name: sku_pricing_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.sku_pricing_id_seq', 7, true);
+SELECT pg_catalog.setval('public.sku_pricing_id_seq', 11, true);
 
 
 --
@@ -879,7 +886,7 @@ SELECT pg_catalog.setval('public.suppliers_id_seq', 2, true);
 -- Name: unit_pricing_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.unit_pricing_id_seq', 1, false);
+SELECT pg_catalog.setval('public.unit_pricing_id_seq', 5, true);
 
 
 --

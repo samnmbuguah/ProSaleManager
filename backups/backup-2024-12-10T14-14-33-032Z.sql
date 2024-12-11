@@ -3,7 +3,7 @@
 --
 
 -- Dumped from database version 16.6
--- Dumped by pg_dump version 16.4
+-- Dumped by pg_dump version 16.6 (Ubuntu 16.6-0ubuntu0.24.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -598,7 +598,10 @@ COPY public.product_suppliers (id, product_id, supplier_id, cost_price, is_prefe
 --
 
 COPY public.products (id, name, sku, buying_price, selling_price, stock, category, min_stock, max_stock, reorder_point, created_at, updated_at, stock_unit, default_unit_pricing_id) FROM stdin;
-14	Bras B	Pieces 	0.00	0.00	2	bra	10	100	20	2024-12-10 11:02:14.90165	2024-12-10 11:02:14.90165	per_piece	\N
+30	Rice	RIC-1001	120.00	150.00	1000	Grains	100	2000	200	2024-12-10 13:54:52.546	2024-12-10 13:54:52.546	per_piece	6
+31	Sugar	SUG-1002	120.00	150.00	500	Groceries	50	1000	100	2024-12-10 13:54:52.546	2024-12-10 13:54:52.546	per_piece	9
+32	Cooking Oil	OIL-1003	200.00	250.00	200	Cooking	20	400	40	2024-12-10 13:54:52.546	2024-12-10 13:54:52.546	per_piece	12
+33	Wheat Flour	FLR-1004	120.00	150.00	800	Baking	100	1500	200	2024-12-10 13:54:52.546	2024-12-10 13:54:52.546	per_piece	15
 \.
 
 
@@ -628,7 +631,6 @@ COPY public.purchase_orders (id, supplier_id, user_id, status, order_date, recei
 --
 
 COPY public.sale_items (id, sale_id, product_id, quantity, price, created_at, updated_at, sku_pricing_id, unit_pricing_id) FROM stdin;
-350	112	14	1	0.00	2024-12-10 11:12:02.398824	2024-12-10 11:12:02.398824	\N	\N
 \.
 
 
@@ -749,6 +751,7 @@ COPY public.sales (id, customer_id, user_id, total, payment_method, payment_stat
 110	\N	2	228.00	mpesa	paid	2024-12-09 19:53:43.308779	2024-12-09 19:53:43.308779
 111	\N	1	0.00	mpesa	paid	2024-12-10 09:04:10.769646	2024-12-10 09:04:10.769646
 112	\N	1	0.00	cash	paid	2024-12-10 11:12:02.225118	2024-12-10 11:12:02.225118
+113	\N	1	0.00	mpesa	paid	2024-12-10 13:43:51.468319	2024-12-10 13:43:51.468319
 \.
 
 
@@ -757,9 +760,6 @@ COPY public.sales (id, customer_id, user_id, total, payment_method, payment_stat
 --
 
 COPY public.sku_pricing (id, product_id, sku_type, buying_price, selling_price, created_at, updated_at) FROM stdin;
-5	14	per_piece	0.00	0.00	2024-12-10 11:02:15.392411	2024-12-10 11:02:15.392411
-6	14	three_piece	0.00	0.00	2024-12-10 11:02:15.392411	2024-12-10 11:02:15.392411
-7	14	dozen	3000.00	4800.00	2024-12-10 11:02:15.392411	2024-12-10 11:02:15.392411
 \.
 
 
@@ -778,6 +778,18 @@ COPY public.suppliers (id, name, email, phone, address, created_at, updated_at) 
 --
 
 COPY public.unit_pricing (id, product_id, unit_type, quantity, buying_price, selling_price, is_default, created_at, updated_at) FROM stdin;
+6	30	per_piece	1	120.00	150.00	t	2024-12-10 13:54:52.823	2024-12-10 13:54:52.823
+7	30	per_piece	12	1380.00	1700.00	f	2024-12-10 13:54:52.823	2024-12-10 13:54:52.823
+8	30	per_piece	24	2640.00	3250.00	f	2024-12-10 13:54:52.823	2024-12-10 13:54:52.823
+9	31	per_piece	1	120.00	150.00	t	2024-12-10 13:54:52.823	2024-12-10 13:54:52.823
+10	31	per_piece	12	1380.00	1700.00	f	2024-12-10 13:54:52.823	2024-12-10 13:54:52.823
+11	31	per_piece	24	2640.00	3250.00	f	2024-12-10 13:54:52.823	2024-12-10 13:54:52.823
+12	32	per_piece	1	120.00	150.00	t	2024-12-10 13:54:52.823	2024-12-10 13:54:52.823
+13	32	per_piece	12	1380.00	1700.00	f	2024-12-10 13:54:52.823	2024-12-10 13:54:52.823
+14	32	per_piece	24	2640.00	3250.00	f	2024-12-10 13:54:52.823	2024-12-10 13:54:52.823
+15	33	per_piece	1	120.00	150.00	t	2024-12-10 13:54:52.823	2024-12-10 13:54:52.823
+16	33	per_piece	12	1380.00	1700.00	f	2024-12-10 13:54:52.823	2024-12-10 13:54:52.823
+17	33	per_piece	24	2640.00	3250.00	f	2024-12-10 13:54:52.823	2024-12-10 13:54:52.823
 \.
 
 
@@ -830,7 +842,7 @@ SELECT pg_catalog.setval('public.product_suppliers_id_seq', 2, true);
 -- Name: products_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.products_id_seq', 14, true);
+SELECT pg_catalog.setval('public.products_id_seq', 33, true);
 
 
 --
@@ -851,21 +863,21 @@ SELECT pg_catalog.setval('public.purchase_orders_id_seq', 5, true);
 -- Name: sale_items_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.sale_items_id_seq', 350, true);
+SELECT pg_catalog.setval('public.sale_items_id_seq', 351, true);
 
 
 --
 -- Name: sales_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.sales_id_seq', 112, true);
+SELECT pg_catalog.setval('public.sales_id_seq', 113, true);
 
 
 --
 -- Name: sku_pricing_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.sku_pricing_id_seq', 7, true);
+SELECT pg_catalog.setval('public.sku_pricing_id_seq', 11, true);
 
 
 --
@@ -879,7 +891,7 @@ SELECT pg_catalog.setval('public.suppliers_id_seq', 2, true);
 -- Name: unit_pricing_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
 --
 
-SELECT pg_catalog.setval('public.unit_pricing_id_seq', 1, false);
+SELECT pg_catalog.setval('public.unit_pricing_id_seq', 17, true);
 
 
 --
