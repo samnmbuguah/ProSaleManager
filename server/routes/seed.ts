@@ -12,18 +12,20 @@ router.post('/seed-demo-data', async (req, res) => {
     // Clear existing data
     console.log('Starting data cleanup...');
     
-    // Step 1: Remove all default_unit_pricing_id references from products
-    await db.update(products)
-      .set({ default_unit_pricing_id: null });
-    console.log('Removed default_unit_pricing_id references');
-    
-    // Step 2: Delete all unit pricing entries
-    await db.delete(unitPricing);
-    console.log('Deleted unit pricing entries');
-    
-    // Step 3: Delete all products
-    await db.delete(products);
-    console.log('Deleted products');
+    await db.transaction(async (tx) => {
+      // Step 1: Remove all default_unit_pricing_id references from products
+      await tx.update(products)
+        .set({ default_unit_pricing_id: null });
+      console.log('Removed default_unit_pricing_id references');
+      
+      // Step 2: Delete all unit pricing entries
+      await tx.delete(unitPricing);
+      console.log('Deleted unit pricing entries');
+      
+      // Step 3: Delete all products
+      await tx.delete(products);
+      console.log('Deleted products');
+    });
 
     console.log('Starting demo data insertion...');
     
@@ -40,13 +42,21 @@ router.post('/seed-demo-data', async (req, res) => {
         if (!defaultUnit) {
           throw new Error(`Product ${productDetails.name} has no default price unit`);
         }
+
+        // Convert string prices to numbers for the database
+        const buying_price = typeof defaultUnit.buying_price === 'string' 
+          ? parseFloat(defaultUnit.buying_price) 
+          : defaultUnit.buying_price;
+        const selling_price = typeof defaultUnit.selling_price === 'string'
+          ? parseFloat(defaultUnit.selling_price)
+          : defaultUnit.selling_price;
         
         // Step 1: Create product without default unit pricing ID
         const [newProduct] = await tx.insert(products)
           .values({
             ...productDetails,
-            buying_price: defaultUnit.buying_price,
-            selling_price: defaultUnit.selling_price,
+            buying_price,
+            selling_price,
             default_unit_pricing_id: null
           })
           .returning();
@@ -57,8 +67,12 @@ router.post('/seed-demo-data', async (req, res) => {
           product_id: newProduct.id,
           unit_type: unit.unit_type,
           quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValues],
-          buying_price: unit.buying_price,
-          selling_price: unit.selling_price,
+          buying_price: typeof unit.buying_price === 'string' 
+            ? parseFloat(unit.buying_price) 
+            : unit.buying_price,
+          selling_price: typeof unit.selling_price === 'string'
+            ? parseFloat(unit.selling_price)
+            : unit.selling_price,
           is_default: unit.is_default,
         }));
         
