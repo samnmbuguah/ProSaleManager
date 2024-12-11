@@ -65,7 +65,7 @@ router.post('/seed-demo-data', async (req, res) => {
         const priceUnitsData = price_units.map(unit => ({
           product_id: newProduct.id,
           unit_type: unit.unit_type,
-          quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValues],
+          quantity: defaultUnitQuantities[unit.unit_type],
           buying_price: unit.buying_price.toString(),
           selling_price: unit.selling_price.toString(),
           is_default: unit.is_default,
