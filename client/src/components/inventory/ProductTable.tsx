@@ -2,16 +2,14 @@ import { useState } from "react";
 import type { Product, UnitType } from "@db/schema";
 
 interface ProductPriceUnit {
-  unit_type: keyof typeof UnitType;
+  unit_type: UnitType;
   quantity: number;
   buying_price: string;
   selling_price: string;
   is_default: boolean;
 }
 
-type ProductWithPricing = Product & {
-  price_units?: ProductPriceUnit[];
-};
+type ProductWithPricing = Product;
 import {
   Table,
   TableBody,

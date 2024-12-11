@@ -4,16 +4,16 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { sql } from 'drizzle-orm';
 
 // Define unit types enum
-export const UnitType = {
-  PER_PIECE: 'per_piece',
-  THREE_PIECE: 'three_piece',
-  DOZEN: 'dozen'
-} as const;
+export enum UnitType {
+  PER_PIECE = 'per_piece',
+  THREE_PIECE = 'three_piece',
+  DOZEN = 'dozen'
+}
 
 export type UnitPricing = {
   id: number;
   product_id: number;
-  unit_type: keyof typeof UnitType;
+  unit_type: UnitType;
   quantity: number;
   buying_price: string;
   selling_price: string;
@@ -102,7 +102,7 @@ export type UnitPricingInsert = typeof unitPricing.$inferInsert;
 
 export type Product = typeof products.$inferSelect & {
   price_units?: Array<{
-    unit_type: keyof typeof UnitType;
+    unit_type: UnitType;
     quantity: number;
     buying_price: string;
     selling_price: string;
