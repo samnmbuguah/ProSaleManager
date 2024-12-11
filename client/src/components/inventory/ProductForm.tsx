@@ -22,7 +22,7 @@ import { z } from "zod";
 import { UnitTypeValues, defaultUnitQuantities, UnitTypes, UnitTypeEnum } from "@db/schema";
 
 // Define the product schema for form validation
-const productSchema = z.object({
+const productFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   sku: z.string(),
   stock: z.number().min(0, "Stock cannot be negative"),
@@ -37,8 +37,10 @@ const productSchema = z.object({
     buying_price: z.string(),
     selling_price: z.string(),
     is_default: z.boolean()
-  }))
+  })).min(1, "At least one price unit is required")
 });
+
+type ProductFormData = z.infer<typeof productFormSchema>;
 
 export interface PriceUnit {
   unit_type: UnitTypeValues;
@@ -93,7 +95,7 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
 
   // Initialize form with proper default values
   const form = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(productFormSchema),
     defaultValues: {
       name: initialData?.name ?? "",
       sku: initialData?.sku ?? "",
@@ -113,40 +115,55 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
                 selling_price: String(existingUnit.selling_price)
               };
             }
-            return defaultPriceUnits.find(u => u.unit_type === unitType) || {
-              unit_type: unitType as UnitTypeValues,
-              quantity: defaultUnitQuantities[unitType as UnitTypeValues],
+            return {
+              unit_type: unitType,
+              quantity: defaultUnitQuantities[unitType],
               buying_price: "0",
               selling_price: "0",
-              is_default: unitType === 'per_piece'
+              is_default: unitType === "per_piece"
             };
           })
-        : defaultPriceUnits,
+        : UnitTypes.map(unitType => ({
+            unit_type: unitType,
+            quantity: defaultUnitQuantities[unitType],
+            buying_price: "0",
+            selling_price: "0",
+            is_default: unitType === "per_piece"
+          })),
     },
   });
 
   const handleSubmit = async (data: ProductFormData) => {
     try {
-      // Ensure numeric values are properly converted
+      // Ensure all numeric values are properly converted and price units are formatted
       const formattedData = {
         ...data,
         stock: Number(data.stock),
         min_stock: Number(data.min_stock),
         max_stock: Number(data.max_stock),
         reorder_point: Number(data.reorder_point),
-        price_units: data.price_units.map(unit => ({
-          ...unit,
-          quantity: Number(unit.quantity),
-          buying_price: String(unit.buying_price),
-          selling_price: String(unit.selling_price)
-        }))
+        price_units: UnitTypes.map(unitType => {
+          const unit = data.price_units.find(u => u.unit_type === unitType) || {
+            unit_type: unitType,
+            quantity: defaultUnitQuantities[unitType],
+            buying_price: "0",
+            selling_price: "0",
+            is_default: unitType === "per_piece"
+          };
+          
+          return {
+            ...unit,
+            quantity: defaultUnitQuantities[unitType],
+            buying_price: String(unit.buying_price),
+            selling_price: String(unit.selling_price)
+          };
+        })
       };
       
       console.log('Submitting form data:', formattedData);
       await onSubmit(formattedData);
     } catch (error) {
       console.error('Form submission error:', error);
-      // Keep the form open on error
       return;
     }
   };

@@ -13,6 +13,8 @@ import {
   insertSupplierSchema,
   insertProductSupplierSchema,
   unitPricing,
+  defaultUnitQuantities,
+  UnitTypeValues,
 } from "@db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { desc } from "drizzle-orm";
@@ -242,8 +244,16 @@ export function registerRoutes(app: Express) {
           throw new Error('At least one price unit is required');
         }
 
+        interface PriceUnit {
+          unit_type: UnitTypeValues;
+          quantity: number;
+          buying_price: string;
+          selling_price: string;
+          is_default: boolean;
+        }
+
         // Find the default price unit
-        const defaultUnit = price_units.find((unit: any) => unit.is_default);
+        const defaultUnit = price_units.find((unit: PriceUnit) => unit.is_default);
         if (!defaultUnit) {
           throw new Error('No default price unit specified');
         }
@@ -259,7 +269,7 @@ export function registerRoutes(app: Express) {
         console.log('Created product:', product);
 
         // Create price units for the product
-        const priceUnitsData = price_units.map((unit: any) => ({
+        const priceUnitsData = price_units.map((unit: PriceUnit) => ({
           product_id: product.id,
           unit_type: unit.unit_type,
           quantity: defaultUnitQuantities[unit.unit_type],
