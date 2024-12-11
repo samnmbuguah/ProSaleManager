@@ -858,8 +858,17 @@ export function registerRoutes(app: Express) {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     
     // Clear existing data first
-    await db.delete(unitPricing);
-    await db.delete(products);
+    await db.transaction(async (tx) => {
+      // First remove the foreign key references
+      await tx.update(products)
+        .set({ default_unit_pricing_id: null });
+      
+      // Then delete the unit pricing entries
+      await tx.delete(unitPricing);
+      
+      // Finally delete the products
+      await tx.delete(products);
+    });
     
     try {
       const demoProducts = [
@@ -895,8 +904,9 @@ export function registerRoutes(app: Express) {
       const insertedProducts = await db.insert(products).values(demoProducts.map(product => ({
         ...product,
         sku: generateSKU(product.name),
-        buying_price: "0",
-        selling_price: "0",
+        buying_price: "0.00",
+        selling_price: "0.00",
+        default_unit_pricing_id: null
       }))).returning();
       
       // Add unit pricing for each product
