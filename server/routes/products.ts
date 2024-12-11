@@ -165,21 +165,48 @@ router.get('/', async (req, res) => {
 // Get a single product by ID
 router.get('/:id', async (req, res) => {
   try {
+    const productId = parseInt(req.params.id);
+    console.log('Fetching product with ID:', productId);
+
+    // Get product with all its unit pricing in a single query
     const [product] = await db
-      .select()
+      .select({
+        id: products.id,
+        name: products.name,
+        sku: products.sku,
+        stock: products.stock,
+        category: products.category,
+        min_stock: products.min_stock,
+        max_stock: products.max_stock,
+        reorder_point: products.reorder_point,
+        stock_unit: products.stock_unit,
+        default_unit_pricing_id: products.default_unit_pricing_id,
+      })
       .from(products)
-      .where(eq(products.id, parseInt(req.params.id)))
+      .where(eq(products.id, productId))
       .limit(1);
 
     if (!product) {
+      console.log('Product not found with ID:', productId);
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    // Get unit pricing
+    console.log('Found product:', product);
+
+    // Get all unit pricing for the product
     const priceUnits = await db
-      .select()
+      .select({
+        id: unitPricing.id,
+        unit_type: unitPricing.unit_type,
+        quantity: unitPricing.quantity,
+        buying_price: unitPricing.buying_price,
+        selling_price: unitPricing.selling_price,
+        is_default: unitPricing.is_default,
+      })
       .from(unitPricing)
       .where(eq(unitPricing.product_id, product.id));
+
+    console.log('Found price units:', priceUnits);
 
     const formattedPriceUnits = priceUnits.map(unit => ({
       unit_type: unit.unit_type,
@@ -189,10 +216,19 @@ router.get('/:id', async (req, res) => {
       is_default: unit.is_default
     }));
 
-    res.json({ ...product, price_units: formattedPriceUnits });
+    const response = {
+      ...product,
+      price_units: formattedPriceUnits
+    };
+
+    console.log('Sending response:', response);
+    res.json(response);
   } catch (error) {
     console.error('Error fetching product:', error);
-    res.status(500).json({ error: 'Failed to fetch product' });
+    res.status(500).json({ 
+      error: 'Failed to fetch product',
+      details: error instanceof Error ? error.message : undefined
+    });
   }
 });
 
