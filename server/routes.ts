@@ -230,11 +230,67 @@ export function registerRoutes(app: Express) {
   app.post("/api/products", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const [product] = await db.insert(products).values(req.body).returning();
-      res.json(product);
+      const { price_units, ...productData } = req.body;
+      
+      // Create product first
+      const [product] = await db.insert(products)
+        .values({
+          ...productData,
+          default_unit_pricing_id: null, // Will be updated after creating price units
+        })
+        .returning();
+
+      console.log('Created product:', product);
+
+      if (price_units && Array.isArray(price_units)) {
+        // Insert unit pricing data
+        const unitPricingData = price_units.map(unit => ({
+          product_id: product.id,
+          unit_type: unit.unit_type,
+          quantity: unit.quantity,
+          buying_price: unit.buying_price,
+          selling_price: unit.selling_price,
+          is_default: unit.is_default,
+        }));
+
+        console.log('Inserting unit pricing data:', unitPricingData);
+
+        const insertedPricingUnits = await db.insert(unitPricing)
+          .values(unitPricingData)
+          .returning();
+
+        console.log('Inserted pricing units:', insertedPricingUnits);
+
+        // Find the default pricing unit
+        const defaultPricingUnit = insertedPricingUnits.find(unit => unit.is_default);
+        if (defaultPricingUnit) {
+          // Update product with default unit pricing ID
+          await db.update(products)
+            .set({ default_unit_pricing_id: defaultPricingUnit.id })
+            .where(eq(products.id, product.id));
+        }
+
+        // Return the complete product data
+        res.json({
+          ...product,
+          price_units: insertedPricingUnits.map(unit => ({
+            unit_type: unit.unit_type,
+            quantity: unit.quantity,
+            buying_price: unit.buying_price.toString(),
+            selling_price: unit.selling_price.toString(),
+            is_default: unit.is_default
+          }))
+        });
+      } else {
+        res.json(product);
+      }
     } catch (error) {
       console.error('Create product error:', error);
-      res.status(500).json({ error: "Failed to create product" });
+      console.error('Request body:', req.body);
+      res.status(500).json({ 
+        error: "Failed to create product",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 

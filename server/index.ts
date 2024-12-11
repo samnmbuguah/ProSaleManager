@@ -8,8 +8,6 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { db } from "../db";
 import { sql } from 'drizzle-orm';
 import { setupAuth } from "./auth";
-// import { initializeBackupSchedule } from "./db/backup";
-// import { handleDeployment } from "./deployment/deploy";
 
 // Monitoring metrics
 const metrics = {
@@ -157,17 +155,6 @@ function updateEndpointMetrics(path: string, duration: number, isError: boolean,
       threshold: `${responseTimeThreshold}ms`,
       timestamp: new Date().toISOString()
     });
-    
-    // Add extra monitoring for very slow responses
-    if (duration > responseTimeThreshold * 2) {
-      console.error('[Health Monitor] Critical response time:', {
-        path,
-        duration: `${duration}ms`,
-        average: `${avgResponseTime.toFixed(2)}ms`,
-        impact: `${((duration - avgResponseTime) / avgResponseTime * 100).toFixed(2)}% slower than average`,
-        timestamp: new Date().toISOString()
-      });
-    }
   }
 
   metrics.endpointMetrics.set(path, metric);
@@ -424,34 +411,27 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   }
 
   // Set environment variables before any deployment checks
-  process.env.PORT = process.env.PORT || '5000';
+  const PORT = process.env.PORT || '5001';
+  process.env.PORT = PORT;
 
-  // Initialize backup schedule before server start
-  /* try {
-    initializeBackupSchedule();
-    console.log('Backup schedule initialized');
-  } catch (error) {
-    console.error('Backup schedule initialization error:', error);
-  } */
+  const startServer = (retryCount = 0) => {
+    const maxRetries = 3;
+    const basePort = Number(PORT);
+    const currentPort = basePort + retryCount;
 
-  server.listen(Number(process.env.PORT), "0.0.0.0", () => {
-    log(`serving on port ${process.env.PORT}`);
-    
-    // Comment out deployment process
-    /* Promise.resolve().then(async () => {
-      try {
-        const deployment = await handleDeployment();
-        if (!deployment.success) {
-          console.error('Deployment warning:', deployment.error);
-        } else {
-          log('Server deployment completed successfully');
-        }
-      } catch (error) {
-        console.error('Deployment process error:', error);
+    server.listen(currentPort, "0.0.0.0", () => {
+      log(`serving on port ${currentPort}`);
+      process.env.PORT = currentPort.toString();
+    }).on('error', (error: any) => {
+      if (error.code === 'EADDRINUSE' && retryCount < maxRetries) {
+        console.log(`Port ${currentPort} is in use, trying port ${currentPort + 1}`);
+        startServer(retryCount + 1);
+      } else {
+        console.error('Error starting server:', error);
+        process.exit(1);
       }
-    }); */
-  }).on('error', (error) => {
-    console.error('Error starting server:', error);
-    process.exit(1);
-  });
+    });
+  };
+
+  startServer();
 })();

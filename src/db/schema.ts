@@ -5,15 +5,15 @@ import { sql } from 'drizzle-orm';
 
 // Define unit types enum
 export const UnitType = {
-  PER_PIECE: 'per_piece' as const,
-  THREE_PIECE: 'three_piece' as const,
-  DOZEN: 'dozen' as const
+  PER_PIECE: 'per_piece',
+  THREE_PIECE: 'three_piece',
+  DOZEN: 'dozen'
 } as const;
 
-export type UnitTypeValues = typeof UnitType[keyof typeof UnitType];
+export type UnitTypeValues = (typeof UnitType)[keyof typeof UnitType];
 
 // Ensure all unit type values are properly typed
-export const UnitTypeEnum = z.enum(['per_piece', 'three_piece', 'dozen']);
+export const UnitTypeEnum = z.enum([UnitType.PER_PIECE, UnitType.THREE_PIECE, UnitType.DOZEN]);
 
 export const defaultUnitQuantities: Record<UnitTypeValues, number> = {
   'per_piece': 1,
