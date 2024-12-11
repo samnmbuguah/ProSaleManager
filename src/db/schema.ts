@@ -3,17 +3,17 @@ import { z } from 'zod';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { sql } from 'drizzle-orm';
 
-// Define unit types enum
-export const UnitType = {
-  PER_PIECE: 'per_piece' as const,
-  THREE_PIECE: 'three_piece' as const,
-  DOZEN: 'dozen' as const
-} as const;
+// Define unit types as string literals for better type safety
+export const UnitTypes = ['per_piece', 'three_piece', 'dozen'] as const;
+export type UnitTypeValues = typeof UnitTypes[number];
 
-export type UnitTypeValues = typeof UnitType[keyof typeof UnitType];
+// Create a zod enum for validation
+export const UnitTypeEnum = z.enum(UnitTypes);
 
-// Ensure all unit type values are properly typed
-export const UnitTypeEnum = z.enum(['per_piece', 'three_piece', 'dozen']);
+// Ensure type safety for unit type values
+export const isValidUnitType = (value: string): value is UnitTypeValues => {
+  return UnitTypes.includes(value as UnitTypeValues);
+};
 
 export const defaultUnitQuantities: Record<UnitTypeValues, number> = {
   'per_piece': 1,
