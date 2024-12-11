@@ -1,26 +1,40 @@
-import type { Product } from "@db/schema";
+import type { Product } from "../../../../db/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
 
-interface CartItem extends Product {
+interface PriceUnit {
+  stock_unit: string;
+  selling_price: string;
+  buying_price: string;
+  conversion_rate: string;
+}
+
+interface CartItem {
+  id: number;
+  name: string;
   quantity: number;
-  selectedUnitPrice: {
-    unitType: string;
-    quantity: number;
-    sellingPrice: string;
-  };
-  unitPricingId?: number | null;
+  selectedUnit: string;
+  unitPrice: number;
+  total: number;
+  priceUnits: PriceUnit[];
 }
 
 interface CartProps {
   items: CartItem[];
-  onUpdateQuantity: (productId: number, quantity: number) => void;
+  onUpdateQuantity: (productId: number, selectedUnit: string, quantity: number) => void;
   onCheckout: () => void;
   total: number;
 }
 
 export function Cart({ items, onUpdateQuantity, onCheckout, total }: CartProps) {
+  const formatPrice = (price: string | number) => {
+    return `KSh ${Number(price).toLocaleString("en-KE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-2 mb-4">
@@ -31,18 +45,15 @@ export function Cart({ items, onUpdateQuantity, onCheckout, total }: CartProps) 
       <div className="flex-1 overflow-auto space-y-2">
         {items.map((item) => (
           <div
-            key={item.id}
+            key={`${item.id}-${item.selectedUnit}`}
             className="flex items-center justify-between p-2 bg-accent rounded-lg"
           >
             <div className="flex-1">
               <div className="font-medium">{item.name}</div>
               <div className="text-sm text-muted-foreground">
-                KSh {Number(item.selectedUnitPrice.sellingPrice).toFixed(2)} per {item.selectedUnitPrice.quantity} {item.selectedUnitPrice.unitType}
+                {formatPrice(item.unitPrice)} per {item.selectedUnit}
                 <div className="text-xs">
-                  Subtotal: KSh {(
-                    (Number(item.selectedUnitPrice.sellingPrice) * item.quantity) / 
-                    item.selectedUnitPrice.quantity
-                  ).toFixed(2)}
+                  Subtotal: {formatPrice(item.total)}
                 </div>
               </div>
             </div>
@@ -51,7 +62,7 @@ export function Cart({ items, onUpdateQuantity, onCheckout, total }: CartProps) 
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                onClick={() => onUpdateQuantity(item.id, item.selectedUnit, item.quantity - 1)}
               >
                 <Minus className="h-4 w-4" />
               </Button>
@@ -59,14 +70,14 @@ export function Cart({ items, onUpdateQuantity, onCheckout, total }: CartProps) 
               <Input
                 type="number"
                 value={item.quantity}
-                onChange={(e) => onUpdateQuantity(item.id, parseInt(e.target.value) || 0)}
+                onChange={(e) => onUpdateQuantity(item.id, item.selectedUnit, parseInt(e.target.value) || 0)}
                 className="w-16 text-center"
               />
               
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                onClick={() => onUpdateQuantity(item.id, item.selectedUnit, item.quantity + 1)}
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -78,7 +89,7 @@ export function Cart({ items, onUpdateQuantity, onCheckout, total }: CartProps) 
       <div className="mt-4 space-y-4">
         <div className="flex justify-between text-lg font-bold">
           <span>Total</span>
-          <span>KSh {total.toFixed(2)}</span>
+          <span>{formatPrice(total)}</span>
         </div>
 
         <Button
