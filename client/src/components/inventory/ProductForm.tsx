@@ -19,9 +19,9 @@ import {
 } from "@/components/ui/select";
 
 import { z } from "zod";
-import { UnitType, UnitTypeValues, defaultUnitQuantities } from "@db/schema";
+import { UnitTypeValues, defaultUnitQuantities } from "@db/schema";
 
-const UnitTypes = [UnitType.PER_PIECE, UnitType.THREE_PIECE, UnitType.DOZEN] as const;
+const UnitTypes = ['per_piece', 'three_piece', 'dozen'] as const;
 
 // Define the product schema for form validation
 const productSchema = z.object({
@@ -32,9 +32,9 @@ const productSchema = z.object({
   min_stock: z.number().min(0, "Minimum stock cannot be negative"),
   max_stock: z.number().min(0, "Maximum stock cannot be negative"),
   reorder_point: z.number().min(0, "Reorder point cannot be negative"),
-  stock_unit: z.enum([UnitType.PER_PIECE, UnitType.THREE_PIECE, UnitType.DOZEN]),
+  stock_unit: z.enum(UnitTypes),
   price_units: z.array(z.object({
-    unit_type: z.enum([UnitType.PER_PIECE, UnitType.THREE_PIECE, UnitType.DOZEN]),
+    unit_type: z.enum(UnitTypes),
     quantity: z.number(),
     buying_price: z.string(),
     selling_price: z.string(),
