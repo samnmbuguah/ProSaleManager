@@ -30,12 +30,12 @@ interface PurchaseOrderDetailsProps {
 interface OrderItem {
   id: number;
   quantity: number;
-  buyingPrice: string;
-  sellingPrice: string;
+  buying_price: string;
+  selling_price: string;
   product: {
     id: number;
     name: string;
-    stockUnit: string;
+    stock_unit: string;
   };
 }
 
@@ -97,12 +97,12 @@ export function PurchaseOrderDetails({ orderId, isOpen, onClose, supplier }: Pur
                 {items?.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{item.product.name}</TableCell>
-                    <TableCell>{item.product.stockUnit}</TableCell>
+                    <TableCell>{item.product.stock_unit}</TableCell>
                     <TableCell>{item.quantity}</TableCell>
-                    <TableCell>{formatCurrency(item.buyingPrice)}</TableCell>
-                    <TableCell>{formatCurrency(item.sellingPrice)}</TableCell>
+                    <TableCell>{formatCurrency(item.buying_price)}</TableCell>
+                    <TableCell>{formatCurrency(item.selling_price)}</TableCell>
                     <TableCell>
-                      {formatCurrency((Number(item.buyingPrice) * item.quantity).toString())}
+                      {formatCurrency((Number(item.buying_price) * item.quantity).toString())}
                     </TableCell>
                   </TableRow>
                 ))}
