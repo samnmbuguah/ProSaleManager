@@ -8,7 +8,15 @@ export function useInventory() {
 
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ['products'],
-    queryFn: () => fetch('/api/products').then(res => res.json()),
+    queryFn: async () => {
+      const response = await fetch('/api/products');
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+      const data = await response.json();
+      console.log('Fetched products data:', data); // Debug log
+      return data;
+    },
   });
 
   const createProductMutation = useMutation<Product, Error, InsertProduct>({
