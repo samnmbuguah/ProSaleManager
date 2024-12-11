@@ -1,5 +1,17 @@
 import { useState } from "react";
-import type { Product } from "@db/schema";
+import type { Product, UnitType } from "@db/schema";
+
+interface ProductPriceUnit {
+  unit_type: keyof typeof UnitType;
+  quantity: number;
+  buying_price: string;
+  selling_price: string;
+  is_default: boolean;
+}
+
+type ProductWithPricing = Product & {
+  price_units?: ProductPriceUnit[];
+};
 import {
   Table,
   TableBody,
@@ -15,7 +27,7 @@ import { ProductForm, type ProductFormData } from "./ProductForm";
 import { Settings, Edit } from "lucide-react";
 
 interface ProductTableProps {
-  products: Product[];
+  products: ProductWithPricing[];
   isLoading: boolean;
   onUpdateProduct?: (id: number, data: Partial<ProductFormData>) => Promise<void>;
 }

@@ -153,8 +153,13 @@ export default function InventoryPage() {
                 max_stock: data.max_stock,
                 reorder_point: data.reorder_point,
                 stock_unit: data.stock_unit,
-                buying_price: data.buying_price,
-                selling_price: data.selling_price,
+                price_units: data.price_units.map(unit => ({
+                  unit_type: unit.unit_type,
+                  quantity: unit.quantity,
+                  buying_price: unit.buying_price,
+                  selling_price: unit.selling_price,
+                  is_default: unit.is_default
+                })),
               };
               
               await createProduct(productData);
