@@ -153,6 +153,8 @@ export function registerRoutes(app: Express) {
   // Products API with correct column names
   app.get("/api/products", async (req, res) => {
     try {
+      console.log('Fetching products with pricing information...');
+      
       const allProducts = await db
         .select({
           id: products.id,
@@ -169,28 +171,52 @@ export function registerRoutes(app: Express) {
         })
         .from(products)
         .orderBy(products.name);
+
+      console.log(`Found ${allProducts.length} products`);
       
       // Fetch unit pricing for each product
       const productsWithPricing = await Promise.all(
         allProducts.map(async (product) => {
-          const pricing = await db
-            .select()
-            .from(unitPricing)
-            .where(eq(unitPricing.product_id, product.id));
-          
-          const defaultPricing = product.default_unit_pricing_id
-            ? await db
-                .select()
-                .from(unitPricing)
-                .where(eq(unitPricing.id, product.default_unit_pricing_id))
-                .limit(1)
-            : null;
+          try {
+            const pricing = await db
+              .select({
+                id: unitPricing.id,
+                unit_type: unitPricing.unit_type,
+                quantity: unitPricing.quantity,
+                buying_price: unitPricing.buying_price,
+                selling_price: unitPricing.selling_price,
+                is_default: unitPricing.is_default,
+              })
+              .from(unitPricing)
+              .where(eq(unitPricing.product_id, product.id));
 
-          return {
-            ...product,
-            unitPricing: pricing,
-            defaultUnitPricing: defaultPricing?.[0] || null,
-          };
+            console.log(`Found ${pricing.length} price units for product ${product.id}`);
+
+            // Transform pricing data to match frontend expectations
+            const price_units = pricing.map(unit => ({
+              unit_type: unit.unit_type,
+              quantity: unit.quantity,
+              buying_price: unit.buying_price.toString(),
+              selling_price: unit.selling_price.toString(),
+              is_default: unit.is_default
+            }));
+
+            // Find default pricing unit
+            const defaultUnit = price_units.find(unit => unit.is_default);
+
+            return {
+              ...product,
+              price_units,
+              default_unit_pricing: defaultUnit || null,
+            };
+          } catch (error) {
+            console.error(`Error fetching pricing for product ${product.id}:`, error);
+            return {
+              ...product,
+              price_units: [],
+              default_unit_pricing: null,
+            };
+          }
         })
       );
       
