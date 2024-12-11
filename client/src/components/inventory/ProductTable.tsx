@@ -60,7 +60,7 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
   };
 
   const getDefaultPricing = (product: Product) => {
-    const defaultUnit = product.price_units?.find(unit => unit.is_default);
+    const defaultUnit = product.price_units?.find((unit: { unit_type: string; buying_price: string; selling_price: string; is_default: boolean }) => unit.is_default);
     return defaultUnit || {
       buying_price: "0",
       selling_price: "0",
@@ -180,7 +180,7 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
                 </div>
                 <div>
                   <h3 className="font-medium">Pricing Information</h3>
-                  {selectedProduct.price_units?.map(unit => (
+                  {selectedProduct.price_units?.map((unit: { unit_type: string; buying_price: string; selling_price: string }) => (
                     <div key={unit.unit_type} className="mb-2">
                       <p className="capitalize">{unit.unit_type.replace('_', ' ')}:</p>
                       <p className="ml-4">Buy: KSh {Number(unit.buying_price).toFixed(2)}</p>

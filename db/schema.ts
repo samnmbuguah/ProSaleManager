@@ -244,6 +244,13 @@ export type Product = z.infer<typeof selectProductSchema> & {
     created_at: Date;
     updated_at: Date;
   } | null;
+  price_units?: Array<{
+    unit_type: string;
+    quantity: number;
+    buying_price: string;
+    selling_price: string;
+    is_default: boolean;
+  }>;
 };
 
 export const insertUnitPricingSchema = createInsertSchema(unitPricing);
