@@ -3,18 +3,15 @@ import { db } from '../../db';
 import { products, productPrices, insertProductSchema, unitPricing, UnitTypeValues, defaultUnitQuantities } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { generateSKU } from '../routes';
 
 const router = Router();
 
 const priceUnitSchema = z.object({
   unit_type: z.enum(UnitTypeValues),
   quantity: z.number(),
-  buying_price: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'string' ? val : val.toString()
-  ),
-  selling_price: z.union([z.string(), z.number()]).transform(val => 
-    typeof val === 'string' ? val : val.toString()
-  ),
+  buying_price: z.string(),
+  selling_price: z.string(),
   is_default: z.boolean()
 });
 
@@ -43,24 +40,20 @@ router.post('/', async (req, res) => {
     const { price_units, ...productData } = validatedData;
 
     const result = await db.transaction(async (tx) => {
-      // Get the default unit for initial product prices
-      const defaultUnit = price_units.find(unit => unit.is_default);
-      if (!defaultUnit) {
-        throw new Error("A default price unit must be specified");
-      }
-
       // Create the product first
       const [newProduct] = await tx.insert(products)
         .values({
           name: productData.name,
-          sku: productData.sku,
+          sku: productData.sku || generateSKU(productData.name),
           category: productData.category,
           stock: productData.stock,
           min_stock: productData.min_stock,
           max_stock: productData.max_stock,
           reorder_point: productData.reorder_point,
           stock_unit: productData.stock_unit,
-          default_unit_pricing_id: null // Will be set after creating unit prices
+          default_unit_pricing_id: null, // Will be set after creating unit prices
+          buying_price: "0", // Default value, will be updated from unit pricing
+          selling_price: "0" // Default value, will be updated from unit pricing
         })
         .returning();
       
@@ -121,14 +114,14 @@ router.post('/', async (req, res) => {
 // Get all products with their price units
 router.get('/', async (req, res) => {
   try {
-    const productsData = await db
+    const allProducts = await db
       .select()
       .from(products)
       .orderBy(products.name);
 
     // Fetch price units for each product
     const result = await Promise.all(
-      productsData.map(async (product) => {
+      allProducts.map(async (product) => {
         const priceUnits = await db
           .select()
           .from(unitPricing)
@@ -136,13 +129,7 @@ router.get('/', async (req, res) => {
 
         return {
           ...product,
-          price_units: priceUnits.map(unit => ({
-            unit_type: unit.unit_type,
-            quantity: unit.quantity,
-            buying_price: unit.buying_price,
-            selling_price: unit.selling_price,
-            is_default: unit.is_default
-          }))
+          price_units: priceUnits
         };
       })
     );
@@ -163,22 +150,9 @@ router.get('/:id', async (req, res) => {
     const productId = parseInt(req.params.id);
     console.log('\n=== Retrieving Product ===');
     console.log('1. Product ID:', productId);
-    console.log('Fetching product with ID:', productId);
 
-    // Get product with all its unit pricing in a single query
     const [product] = await db
-      .select({
-        id: products.id,
-        name: products.name,
-        sku: products.sku,
-        stock: products.stock,
-        category: products.category,
-        min_stock: products.min_stock,
-        max_stock: products.max_stock,
-        reorder_point: products.reorder_point,
-        stock_unit: products.stock_unit,
-        default_unit_pricing_id: products.default_unit_pricing_id,
-      })
+      .select()
       .from(products)
       .where(eq(products.id, productId))
       .limit(1);
@@ -192,40 +166,15 @@ router.get('/:id', async (req, res) => {
 
     // Get all unit pricing for the product
     const priceUnits = await db
-      .select({
-        id: unitPricing.id,
-        unit_type: unitPricing.unit_type,
-        quantity: unitPricing.quantity,
-        buying_price: unitPricing.buying_price,
-        selling_price: unitPricing.selling_price,
-        is_default: unitPricing.is_default,
-      })
+      .select()
       .from(unitPricing)
       .where(eq(unitPricing.product_id, product.id));
 
     console.log('Found price units:', JSON.stringify(priceUnits, null, 2));
 
-    const formattedPriceUnits = priceUnits.map(unit => {
-      // Ensure price values are properly formatted strings
-      const buyingPrice = typeof unit.buying_price === 'string' 
-        ? unit.buying_price 
-        : unit.buying_price.toString();
-      const sellingPrice = typeof unit.selling_price === 'string'
-        ? unit.selling_price
-        : unit.selling_price.toString();
-
-      return {
-        unit_type: unit.unit_type,
-        quantity: unit.quantity,
-        buying_price: buyingPrice,
-        selling_price: sellingPrice,
-        is_default: unit.is_default
-      };
-    });
-
     const response = {
       ...product,
-      price_units: formattedPriceUnits
+      price_units: priceUnits
     };
 
     console.log('Sending response:', response);
@@ -298,13 +247,7 @@ router.put('/:id', async (req, res) => {
 
       return {
         ...updatedProduct,
-        price_units: insertedPricingUnits.map(unit => ({
-          unit_type: unit.unit_type,
-          quantity: unit.quantity,
-          buying_price: unit.buying_price,
-          selling_price: unit.selling_price,
-          is_default: unit.is_default
-        }))
+        price_units: insertedPricingUnits
       };
     });
 
@@ -315,28 +258,6 @@ router.put('/:id', async (req, res) => {
       error: error instanceof Error ? error.message : 'Failed to update product',
       details: error instanceof Error ? error.stack : undefined
     });
-  }
-});
-
-// Delete a product
-router.delete('/:id', async (req, res) => {
-  try {
-    const productId = parseInt(req.params.id);
-
-    await db.transaction(async (tx) => {
-      // Delete price units first (cascade should handle this, but being explicit)
-      await tx.delete(productPrices)
-        .where(eq(productPrices.productId, productId));
-
-      // Delete the product
-      await tx.delete(products)
-        .where(eq(products.id, productId));
-    });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting product:', error);
-    res.status(500).json({ error: 'Failed to delete product' });
   }
 });
 
