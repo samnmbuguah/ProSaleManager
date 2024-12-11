@@ -89,7 +89,7 @@ router.get("/:id/items", async (req, res) => {
         unitPricingId: saleItems.unitPricingId,
         product: {
           name: products.name,
-          stockUnit: products.stockUnit,
+          stock_unit: products.stock_unit,
         },
       })
       .from(saleItems)
@@ -131,7 +131,7 @@ router.post("/", async (req, res) => {
           .select({
             id: products.id,
             name: products.name,
-            stockUnit: products.stockUnit,
+            stock_unit: products.stock_unit,
           })
           .from(products)
           .where(eq(products.id, item.productId))
