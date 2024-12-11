@@ -53,7 +53,9 @@ router.post('/seed-demo-data', async (req, res) => {
             max_stock: productDetails.max_stock,
             reorder_point: productDetails.reorder_point,
             stock_unit: productDetails.stock_unit,
-            default_unit_pricing_id: null
+            default_unit_pricing_id: null,
+            buying_price: "0",
+            selling_price: "0"
           })
           .returning();
 

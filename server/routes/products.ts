@@ -1,11 +1,19 @@
 import { Router } from 'express';
 import { db } from '../../db';
-import { products, productPrices, insertProductSchema, unitPricing, UnitTypeValues, defaultUnitQuantities } from '../../db/schema';
+import { products, insertProductSchema, unitPricing, UnitTypeValues, defaultUnitQuantities } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { generateSKU } from '../routes';
 
 const router = Router();
+function generateSKU(name: string): string {
+  // Convert name to uppercase and remove special characters
+  const cleanName = name.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  // Take first 3 characters (or pad with X if shorter)
+  const prefix = (cleanName + 'XXX').slice(0, 3);
+  // Add random 4-digit number
+  const suffix = Math.floor(1000 + Math.random() * 9000);
+  return `${prefix}-${suffix}`;
+}
 
 const priceUnitSchema = z.object({
   unit_type: z.enum(UnitTypeValues),
@@ -114,22 +122,57 @@ router.post('/', async (req, res) => {
 // Get all products with their price units
 router.get('/', async (req, res) => {
   try {
+    console.log('Fetching all products with pricing information...');
     const allProducts = await db
-      .select()
+      .select({
+        id: products.id,
+        name: products.name,
+        sku: products.sku,
+        category: products.category,
+        stock: products.stock,
+        min_stock: products.min_stock,
+        max_stock: products.max_stock,
+        reorder_point: products.reorder_point,
+        stock_unit: products.stock_unit,
+        default_unit_pricing_id: products.default_unit_pricing_id,
+        created_at: products.created_at,
+        updated_at: products.updated_at,
+      })
       .from(products)
       .orderBy(products.name);
+
+    console.log(`Found ${allProducts.length} products`);
 
     // Fetch price units for each product
     const result = await Promise.all(
       allProducts.map(async (product) => {
         const priceUnits = await db
-          .select()
+          .select({
+            id: unitPricing.id,
+            unit_type: unitPricing.unit_type,
+            quantity: unitPricing.quantity,
+            buying_price: unitPricing.buying_price,
+            selling_price: unitPricing.selling_price,
+            is_default: unitPricing.is_default,
+          })
           .from(unitPricing)
           .where(eq(unitPricing.product_id, product.id));
 
+        console.log(`Found ${priceUnits.length} price units for product ${product.id}`);
+
+        // Transform the price units into the expected format
+        const formattedPriceUnits = priceUnits.map(unit => ({
+          unit_type: unit.unit_type,
+          quantity: unit.quantity,
+          buying_price: unit.buying_price,
+          selling_price: unit.selling_price,
+          is_default: unit.is_default
+        }));
+
         return {
           ...product,
-          price_units: priceUnits
+          price_units: formattedPriceUnits,
+          default_unit_pricing: formattedPriceUnits.find(unit => unit.is_default) || null
         };
       })
     );
