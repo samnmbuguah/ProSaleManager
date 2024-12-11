@@ -9,7 +9,6 @@ const router = Router();
 router.post('/seed-demo-data', async (req, res) => {
   try {
     // Clear existing data in a separate transaction
-    // Clear existing data
     console.log('Starting data cleanup...');
     
     await db.transaction(async (tx) => {
@@ -43,23 +42,21 @@ router.post('/seed-demo-data', async (req, res) => {
           throw new Error(`Product ${productDetails.name} has no default price unit`);
         }
 
-        // Convert string prices to numbers for the database
-        const buying_price = typeof defaultUnit.buying_price === 'string' 
-          ? parseFloat(defaultUnit.buying_price) 
-          : defaultUnit.buying_price;
-        const selling_price = typeof defaultUnit.selling_price === 'string'
-          ? parseFloat(defaultUnit.selling_price)
-          : defaultUnit.selling_price;
-        
         // Step 1: Create product without default unit pricing ID
         const [newProduct] = await tx.insert(products)
           .values({
-            ...productDetails,
-            buying_price,
-            selling_price,
+            name: productDetails.name,
+            sku: productDetails.sku || generateSKU(productDetails.name),
+            category: productDetails.category,
+            stock: productDetails.stock,
+            min_stock: productDetails.min_stock,
+            max_stock: productDetails.max_stock,
+            reorder_point: productDetails.reorder_point,
+            stock_unit: productDetails.stock_unit,
             default_unit_pricing_id: null
           })
           .returning();
+
         console.log(`Created product: ${newProduct.id}`);
         
         // Step 2: Create all price units
@@ -67,18 +64,15 @@ router.post('/seed-demo-data', async (req, res) => {
           product_id: newProduct.id,
           unit_type: unit.unit_type,
           quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValues],
-          buying_price: typeof unit.buying_price === 'string' 
-            ? parseFloat(unit.buying_price) 
-            : unit.buying_price,
-          selling_price: typeof unit.selling_price === 'string'
-            ? parseFloat(unit.selling_price)
-            : unit.selling_price,
+          buying_price: unit.buying_price.toString(),
+          selling_price: unit.selling_price.toString(),
           is_default: unit.is_default,
         }));
         
         const insertedPricingUnits = await tx.insert(unitPricing)
           .values(priceUnitsData)
           .returning();
+          
         console.log(`Created ${insertedPricingUnits.length} price units for product ${newProduct.id}`);
         
         // Find the default pricing unit
@@ -88,18 +82,18 @@ router.post('/seed-demo-data', async (req, res) => {
         }
         
         // Step 3: Update product with default unit pricing ID
-        await tx.update(products)
+        const [updatedProduct] = await tx.update(products)
           .set({ default_unit_pricing_id: defaultPricingUnit.id })
-          .where(eq(products.id, newProduct.id));
-        console.log(`Updated product ${newProduct.id} with default pricing unit ${defaultPricingUnit.id}`);
+          .where(eq(products.id, newProduct.id))
+          .returning();
         
         createdProducts.push({
-          ...newProduct,
+          ...updatedProduct,
           price_units: insertedPricingUnits.map(unit => ({
             unit_type: unit.unit_type,
             quantity: unit.quantity,
-            buying_price: unit.buying_price.toString(),
-            selling_price: unit.selling_price.toString(),
+            buying_price: unit.buying_price,
+            selling_price: unit.selling_price,
             is_default: unit.is_default
           }))
         });
@@ -120,5 +114,14 @@ router.post('/seed-demo-data', async (req, res) => {
     });
   }
 });
+
+function generateSKU(name: string): string {
+  return name
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 6)
+    .padEnd(6, '0') + 
+    Math.random().toString(36).substring(2, 5).toUpperCase();
+}
 
 export default router;
