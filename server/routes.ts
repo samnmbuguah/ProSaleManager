@@ -942,14 +942,7 @@ export function registerRoutes(app: Express) {
         return pricing;
       }).flat();
 
-      await db.insert(unitPricing).values(unitPricingData.map(pricing => ({
-        product_id: pricing.productId,
-        unit_type: pricing.unit_type,
-        quantity: pricing.quantity,
-        buying_price: pricing.buying_price,
-        selling_price: pricing.selling_price,
-        is_default: pricing.isDefault,
-      })));
+      await db.insert(unitPricing).values(unitPricingData);
       
       // Update default unit pricing IDs
       await Promise.all(
