@@ -879,7 +879,9 @@ export function registerRoutes(app: Express) {
           min_stock: 20,
           max_stock: 200,
           reorder_point: 40,
-          stock_unit: "kg",
+          stock_unit: "per_piece",
+          buying_price: "120.00",
+          selling_price: "150.00",
         },
         {
           name: "Cooking Oil",
@@ -888,7 +890,9 @@ export function registerRoutes(app: Express) {
           min_stock: 10,
           max_stock: 100,
           reorder_point: 20,
-          stock_unit: "litre",
+          stock_unit: "per_piece",
+          buying_price: "200.00",
+          selling_price: "250.00",
         },
         {
           name: "Wheat Flour",
@@ -897,80 +901,45 @@ export function registerRoutes(app: Express) {
           min_stock: 15,
           max_stock: 150,
           reorder_point: 30,
-          stock_unit: "kg",
+          stock_unit: "per_piece",
+          buying_price: "150.00",
+          selling_price: "180.00",
         }
       ];
 
       const insertedProducts = await db.insert(products).values(demoProducts.map(product => ({
         ...product,
         sku: generateSKU(product.name),
-        buying_price: "0.00",
-        selling_price: "0.00",
         default_unit_pricing_id: null
       }))).returning();
       
       // Add unit pricing for each product
       const unitPricingData = insertedProducts.map(product => {
         const baseConfig = {
-          productId: product.id,
-          isDefault: true,
+          product_id: product.id,
+          is_default: true,
         };
 
-        if (product.name === "Rice") {
-          return [
-            {
-              ...baseConfig,
-              unit_type: "kg",
-              quantity: 1,
-              buying_price: "120.00",
-              selling_price: "150.00",
-            },
-            {
-              ...baseConfig,
-              isDefault: false,
-              unit_type: "kg",
-              quantity: 25,
-              buying_price: "2800.00",
-              selling_price: "3500.00",
-            }
-          ];
-        } else if (product.name === "Cooking Oil") {
-          return [
-            {
-              ...baseConfig,
-              unit_type: "litre",
-              quantity: 1,
-              buying_price: "200.00",
-              selling_price: "250.00",
-            },
-            {
-              ...baseConfig,
-              isDefault: false,
-              unit_type: "litre",
-              quantity: 5,
-              buying_price: "950.00",
-              selling_price: "1150.00",
-            }
-          ];
-        } else {
-          return [
-            {
-              ...baseConfig,
-              unit_type: "kg",
-              quantity: 1,
-              buying_price: "150.00",
-              selling_price: "180.00",
-            },
-            {
-              ...baseConfig,
-              isDefault: false,
-              unit_type: "kg",
-              quantity: 2,
-              buying_price: "290.00",
-              selling_price: "350.00",
-            }
-          ];
-        }
+        // All products use per_piece as the base unit type
+        const pricing = [
+          {
+            ...baseConfig,
+            unit_type: "per_piece",
+            quantity: 1,
+            buying_price: product.buying_price,
+            selling_price: product.selling_price,
+          },
+          {
+            ...baseConfig,
+            is_default: false,
+            unit_type: "dozen",
+            quantity: 12,
+            buying_price: (parseFloat(product.buying_price) * 11).toFixed(2), // 12 for price of 11
+            selling_price: (parseFloat(product.selling_price) * 11).toFixed(2),
+          }
+        ];
+
+        return pricing;
       }).flat();
 
       await db.insert(unitPricing).values(unitPricingData.map(pricing => ({
