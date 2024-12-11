@@ -38,7 +38,7 @@ export const products = pgTable("products", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
   stock_unit: text("stock_unit").default("per_piece").notNull(),
   default_unit_pricing_id: integer("default_unit_pricing_id"),
-  defaultUnit: text('default_unit').notNull().default('piece'),
+  
 });
 
 // Unit Pricing schema with references to products
