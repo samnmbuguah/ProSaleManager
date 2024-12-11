@@ -5,12 +5,41 @@ import { sql } from 'drizzle-orm';
 
 // Define unit types enum
 export const UnitType = {
-  PER_PIECE: 'per_piece',
-  THREE_PIECE: 'three_piece',
-  DOZEN: 'dozen'
-} as const;
+  PER_PIECE: 'per_piece' as const,
+  THREE_PIECE: 'three_piece' as const,
+  DOZEN: 'dozen' as const
+};
 
-export type UnitTypeValues = (typeof UnitType)[keyof typeof UnitType];
+export type UnitTypeValues = typeof UnitType[keyof typeof UnitType];
+
+// Ensure all unit type values are properly typed
+export const UnitTypeEnum = z.enum(['per_piece', 'three_piece', 'dozen']);
+
+export const defaultUnitQuantities: Record<UnitTypeValues, number> = {
+  'per_piece': 1,
+  'three_piece': 3,
+  'dozen': 12
+};
+
+// Validation schemas
+export const productSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  sku: z.string().min(1, "SKU is required"),
+  stock: z.number().min(0, "Stock cannot be negative"),
+  category: z.string().optional(),
+  min_stock: z.number().min(0).optional(),
+  max_stock: z.number().min(0).optional(),
+  reorder_point: z.number().min(0).optional(),
+  stock_unit: z.enum([UnitType.PER_PIECE, UnitType.THREE_PIECE, UnitType.DOZEN]).default(UnitType.PER_PIECE),
+  price_units: z.array(z.object({
+    unit_type: z.enum([UnitType.PER_PIECE, UnitType.THREE_PIECE, UnitType.DOZEN]),
+    quantity: z.number(),
+    buying_price: z.string(),
+    selling_price: z.string(),
+    is_default: z.boolean()
+  })).min(1, "At least one price unit is required"),
+  is_active: z.boolean().default(true),
+});
 
 export type UnitPriceUnit = {
   unit_type: UnitTypeValues;
