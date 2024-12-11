@@ -41,12 +41,25 @@ router.post('/', async (req, res) => {
     console.log('Received product data:', JSON.stringify(req.body, null, 2));
     const validatedData = productSchema.parse(req.body);
     const { price_units, ...productData } = validatedData;
-    
+
+    // Validate that we have a default unit
+    const defaultUnit = price_units.find(unit => unit.is_default);
+    if (!defaultUnit) {
+      throw new Error("A default price unit must be specified");
+    }
+
     const result = await db.transaction(async (tx) => {
       // Step 1: Create the product first
       const [newProduct] = await tx.insert(products)
         .values({
-          ...productData,
+          name: productData.name,
+          sku: productData.sku,
+          category: productData.category,
+          stock: productData.stock,
+          min_stock: productData.min_stock,
+          max_stock: productData.max_stock,
+          reorder_point: productData.reorder_point,
+          stock_unit: productData.stock_unit,
           default_unit_pricing_id: null // Will be set after creating unit prices
         })
         .returning();
@@ -93,8 +106,8 @@ router.post('/', async (req, res) => {
           price_units: insertedPricingUnits.map(unit => ({
             unit_type: unit.unit_type,
             quantity: unit.quantity,
-            buying_price: unit.buying_price.toString(),
-            selling_price: unit.selling_price.toString(),
+            buying_price: unit.buying_price,
+            selling_price: unit.selling_price,
             is_default: unit.is_default
           }))
         };
@@ -122,8 +135,6 @@ router.get('/', async (req, res) => {
         id: products.id,
         name: products.name,
         sku: products.sku,
-        buying_price: products.buying_price,
-        selling_price: products.selling_price,
         stock: products.stock,
         category: products.category,
         min_stock: products.min_stock,
@@ -138,7 +149,14 @@ router.get('/', async (req, res) => {
     const result = await Promise.all(
       productsData.map(async (product) => {
         const priceUnits = await db
-          .select()
+          .select({
+            id: unitPricing.id,
+            unit_type: unitPricing.unit_type,
+            quantity: unitPricing.quantity,
+            buying_price: unitPricing.buying_price,
+            selling_price: unitPricing.selling_price,
+            is_default: unitPricing.is_default,
+          })
           .from(unitPricing)
           .where(eq(unitPricing.product_id, product.id));
 
@@ -147,8 +165,8 @@ router.get('/', async (req, res) => {
           price_units: priceUnits.map(unit => ({
             unit_type: unit.unit_type,
             quantity: unit.quantity,
-            buying_price: unit.buying_price.toString(),
-            selling_price: unit.selling_price.toString(),
+            buying_price: unit.buying_price,
+            selling_price: unit.selling_price,
             is_default: unit.is_default
           }))
         };
@@ -158,7 +176,10 @@ router.get('/', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error fetching products:', error);
-    res.status(500).json({ error: 'Failed to fetch products' });
+    res.status(500).json({ 
+      error: 'Failed to fetch products',
+      details: error instanceof Error ? error.message : undefined 
+    });
   }
 });
 
