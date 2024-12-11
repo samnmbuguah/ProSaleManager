@@ -64,5 +64,5 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "tsx watch --clear-screen=false server/index.ts"
+args = "tsx watch --clear-screen=false --exclude vite.config.ts server/index.ts"
 waitForPort = 5001
