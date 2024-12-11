@@ -15,105 +15,101 @@ const priceUnitSchema = z.object({
 });
 
 const productSchema = z.object({
-  name: z.string().min(1),
-  sku: z.string(),
+  name: z.string().min(1, "Name is required"),
+  sku: z.string().min(1, "SKU is required"),
   category: z.string(),
-  stock: z.number(),
-  min_stock: z.number(),
-  max_stock: z.number(),
-  reorder_point: z.number(),
-  stock_unit: z.enum(UnitTypeValues),
+  stock: z.number().min(0, "Stock cannot be negative"),
+  min_stock: z.number().min(0).optional(),
+  max_stock: z.number().min(0).optional(),
+  reorder_point: z.number().min(0).optional(),
+  stock_unit: z.enum(UnitTypeValues).default("per_piece"),
   price_units: z.array(z.object({
     unit_type: z.enum(UnitTypeValues),
-    quantity: z.number(),
-    buying_price: z.string(),
-    selling_price: z.string(),
+    quantity: z.number().int().positive(),
+    buying_price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price format"),
+    selling_price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price format"),
     is_default: z.boolean()
-  }))
+  })).min(1, "At least one price unit is required").refine(
+    (units) => units.filter(unit => unit.is_default).length === 1,
+    "Exactly one price unit must be marked as default"
+  )
 });
 
 // Create a new product with unit pricing
 router.post('/', async (req, res) => {
   try {
-    console.log('Received product data:', req.body);
+    console.log('Received product data:', JSON.stringify(req.body, null, 2));
     const validatedData = productSchema.parse(req.body);
     const { price_units, ...productData } = validatedData;
     
-    // Get the default pricing unit for the product's base price
-    const defaultUnit = price_units.find(unit => unit.is_default);
-    if (!defaultUnit) {
-      throw new Error("A default pricing unit is required");
-    }
-
     const result = await db.transaction(async (tx) => {
-      console.log('Creating product with data:', productData);
-      
-      // Step 1: Create the product first without default unit pricing ID
+      // Step 1: Create the product first
       const [newProduct] = await tx.insert(products)
         .values({
           ...productData,
-          buying_price: "0", // Will be updated with default unit price
-          selling_price: "0", // Will be updated with default unit price
-          default_unit_pricing_id: null // Initially set to null
+          default_unit_pricing_id: null // Will be set after creating unit prices
         })
         .returning();
       
-      console.log('Created product:', newProduct);
+      console.log('Created product:', JSON.stringify(newProduct, null, 2));
       
       // Step 2: Create unit pricing entries
       const unitPricingData = price_units.map(unit => ({
         product_id: newProduct.id,
         unit_type: unit.unit_type,
-        quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValues] || 1,
+        quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValues],
         buying_price: unit.buying_price,
         selling_price: unit.selling_price,
         is_default: unit.is_default,
       }));
       
-      console.log('Creating unit pricing with data:', unitPricingData);
+      console.log('Creating unit pricing with data:', JSON.stringify(unitPricingData, null, 2));
       
-      const insertedPricingUnits = await tx.insert(unitPricing)
-        .values(unitPricingData)
-        .returning();
-      
-      console.log('Created unit pricing:', insertedPricingUnits);
-      
-      // Find the default pricing unit
-      const defaultPricingUnit = insertedPricingUnits.find(unit => unit.is_default);
-      if (!defaultPricingUnit) {
-        throw new Error("Failed to create default pricing unit");
+      try {
+        const insertedPricingUnits = await tx.insert(unitPricing)
+          .values(unitPricingData)
+          .returning();
+        
+        console.log('Created unit pricing:', JSON.stringify(insertedPricingUnits, null, 2));
+        
+        // Find the default pricing unit
+        const defaultPricingUnit = insertedPricingUnits.find(unit => unit.is_default);
+        if (!defaultPricingUnit) {
+          throw new Error("No default pricing unit was created");
+        }
+        
+        // Step 3: Update product with the default unit pricing ID
+        const [updatedProduct] = await tx.update(products)
+          .set({ 
+            default_unit_pricing_id: defaultPricingUnit.id
+          })
+          .where(eq(products.id, newProduct.id))
+          .returning();
+        
+        console.log('Updated product with default pricing:', JSON.stringify(updatedProduct, null, 2));
+        
+        return {
+          ...updatedProduct,
+          price_units: insertedPricingUnits.map(unit => ({
+            unit_type: unit.unit_type,
+            quantity: unit.quantity,
+            buying_price: unit.buying_price.toString(),
+            selling_price: unit.selling_price.toString(),
+            is_default: unit.is_default
+          }))
+        };
+      } catch (err) {
+        console.error('Error creating unit pricing:', err);
+        throw new Error(`Failed to create unit pricing: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
-      
-      // Step 3: Update product with the default unit pricing ID and prices
-      const [updatedProduct] = await tx.update(products)
-        .set({ 
-          default_unit_pricing_id: defaultPricingUnit.id,
-          buying_price: defaultPricingUnit.buying_price,
-          selling_price: defaultPricingUnit.selling_price
-        })
-        .where(eq(products.id, newProduct.id))
-        .returning();
-      
-      console.log('Updated product with default pricing:', updatedProduct);
-      
-      // Step 4: Return the complete product with all pricing information
-      return {
-        ...updatedProduct,
-        price_units: insertedPricingUnits.map(unit => ({
-          unit_type: unit.unit_type,
-          quantity: unit.quantity,
-          buying_price: unit.buying_price.toString(),
-          selling_price: unit.selling_price.toString(),
-          is_default: unit.is_default
-        }))
-      };
     });
     
     res.status(201).json(result);
   } catch (error) {
     console.error('Error creating product:', error);
-    res.status(500).json({ 
-      error: error instanceof Error ? error.message : 'Failed to create product'
+    res.status(400).json({ 
+      error: error instanceof Error ? error.message : 'Failed to create product',
+      details: error instanceof Error ? error.stack : undefined
     });
   }
 });
