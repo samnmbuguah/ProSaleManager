@@ -14,8 +14,17 @@ export function useInventory() {
         throw new Error('Failed to fetch products');
       }
       const data = await response.json();
-      console.log('Fetched products data:', data); // Debug log
-      return data;
+      // Add detailed debug logging for price data
+      console.log('Fetched products data:', JSON.stringify(data, null, 2));
+      const productsWithPricing = data.map((product: any) => {
+        console.log('Processing product:', product.name, 'Price units:', product.price_units);
+        return {
+          ...product,
+          price_units: product.price_units || [],
+          default_unit_pricing: product.price_units?.find((unit: any) => unit.is_default) || null
+        };
+      });
+      return productsWithPricing;
     },
   });
 

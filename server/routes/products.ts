@@ -2,15 +2,15 @@ import { Router } from 'express';
 import { db } from '../../db';
 import { 
   products, 
-  insertProductSchema, 
   unitPricing,
   UnitType,
-  defaultUnitQuantities,
   UnitTypeValues,
-  productSchema
+  defaultUnitQuantities,
+  productSchema,
+  type Product,
+  type InsertProduct
 } from '../../db/schema';
 import { eq } from 'drizzle-orm';
-import { z } from 'zod';
 
 const router = Router();
 
@@ -60,7 +60,7 @@ router.get('/', async (req, res) => {
           // Transform pricing data to match frontend expectations
           const price_units = pricing.map(unit => ({
             id: unit.id,
-            unit_type: unit.unit_type,
+            unit_type: unit.unit_type as UnitTypeValues,
             quantity: unit.quantity,
             buying_price: unit.buying_price.toString(),
             selling_price: unit.selling_price.toString(),
@@ -104,7 +104,8 @@ router.post('/', async (req, res) => {
     
     const result = await db.transaction(async (tx) => {
       // Create the product first
-      const [newProduct] = await tx.insert(products)
+      const [newProduct] = await tx
+        .insert(products)
         .values({
           name: validatedData.name,
           sku: validatedData.sku || generateSKU(validatedData.name),
@@ -115,6 +116,7 @@ router.post('/', async (req, res) => {
           reorder_point: validatedData.reorder_point,
           stock_unit: validatedData.stock_unit,
           default_unit_pricing_id: null,
+          is_active: validatedData.is_active
         })
         .returning();
       
@@ -128,7 +130,8 @@ router.post('/', async (req, res) => {
         is_default: unit.is_default,
       }));
       
-      const insertedPricingUnits = await tx.insert(unitPricing)
+      const insertedPricingUnits = await tx
+        .insert(unitPricing)
         .values(unitPricingData)
         .returning();
       
@@ -139,7 +142,8 @@ router.post('/', async (req, res) => {
       }
       
       // Update product with the default unit pricing ID
-      const [updatedProduct] = await tx.update(products)
+      const [updatedProduct] = await tx
+        .update(products)
         .set({ default_unit_pricing_id: defaultPricingUnit.id })
         .where(eq(products.id, newProduct.id))
         .returning();
@@ -148,7 +152,7 @@ router.post('/', async (req, res) => {
         ...updatedProduct,
         price_units: insertedPricingUnits.map(unit => ({
           id: unit.id,
-          unit_type: unit.unit_type,
+          unit_type: unit.unit_type as UnitTypeValues,
           quantity: unit.quantity,
           buying_price: unit.buying_price.toString(),
           selling_price: unit.selling_price.toString(),
@@ -268,6 +272,7 @@ router.put('/:id', async (req, res) => {
           reorder_point: validatedData.reorder_point,
           stock_unit: validatedData.stock_unit,
           default_unit_pricing_id: defaultPricingUnit.id,
+          is_active: validatedData.is_active // Added is_active
         })
         .where(eq(products.id, productId))
         .returning();
