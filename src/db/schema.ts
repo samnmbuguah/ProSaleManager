@@ -3,33 +3,23 @@ import { z } from 'zod';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { sql } from 'drizzle-orm';
 
-// Define unit types as string literals for better type safety
-export const UnitTypes = ['per_piece', 'three_piece', 'dozen'] as const;
-export type UnitTypeValues = (typeof UnitTypes)[number];
+// Define unit types enum
+export const UnitType = {
+  PER_PIECE: 'per_piece' as const,
+  THREE_PIECE: 'three_piece' as const,
+  DOZEN: 'dozen' as const
+} as const;
 
-// Create a zod enum for validation
-export const UnitTypeEnum = z.enum(UnitTypes);
+export type UnitTypeValues = typeof UnitType[keyof typeof UnitType];
 
-// Define quantities for each unit type
-export const defaultUnitQuantities = {
+// Ensure all unit type values are properly typed
+export const UnitTypeEnum = z.enum(['per_piece', 'three_piece', 'dozen']);
+
+export const defaultUnitQuantities: Record<UnitTypeValues, number> = {
   'per_piece': 1,
   'three_piece': 3,
   'dozen': 12
-} as const satisfies Record<UnitTypeValues, number>;
-
-// Ensure type safety for unit type values
-export const isValidUnitType = (value: string): value is UnitTypeValues => {
-  return UnitTypes.includes(value as UnitTypeValues);
 };
-
-// Define interface for price unit data
-export interface PriceUnit {
-  unit_type: UnitTypeValues;
-  quantity: number;
-  buying_price: string;
-  selling_price: string;
-  is_default: boolean;
-}
 
 // Validation schemas
 export const productSchema = z.object({
@@ -40,9 +30,9 @@ export const productSchema = z.object({
   min_stock: z.number().min(0).optional(),
   max_stock: z.number().min(0).optional(),
   reorder_point: z.number().min(0).optional(),
-  stock_unit: UnitTypeEnum.default('per_piece'),
+  stock_unit: z.enum([UnitType.PER_PIECE, UnitType.THREE_PIECE, UnitType.DOZEN]).default(UnitType.PER_PIECE),
   price_units: z.array(z.object({
-    unit_type: UnitTypeEnum,
+    unit_type: z.enum([UnitType.PER_PIECE, UnitType.THREE_PIECE, UnitType.DOZEN]),
     quantity: z.number(),
     buying_price: z.string(),
     selling_price: z.string(),
