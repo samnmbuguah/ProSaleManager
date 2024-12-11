@@ -422,7 +422,7 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     server.listen(currentPort, "0.0.0.0", () => {
       log(`serving on port ${currentPort}`);
       process.env.PORT = currentPort.toString();
-    }).on('error', (error: any) => {
+    }).on('error', (error: NodeJS.ErrnoException) => {
       if (error.code === 'EADDRINUSE' && retryCount < maxRetries) {
         console.log(`Port ${currentPort} is in use, trying port ${currentPort + 1}`);
         startServer(retryCount + 1);

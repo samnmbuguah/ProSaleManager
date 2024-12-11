@@ -1,7 +1,104 @@
-import { pgTable, varchar, integer, decimal, boolean, timestamp, serial } from 'drizzle-orm/pg-core';
+import { pgTable, varchar, integer, decimal, boolean, timestamp, serial, text } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { sql } from 'drizzle-orm';
+
+// Define all database tables
+export const customers = pgTable('customers', {
+  id: serial('id').primaryKey(),
+  name: varchar('name').notNull(),
+  email: varchar('email'),
+  phone: varchar('phone'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow()
+});
+
+export const sales = pgTable('sales', {
+  id: serial('id').primaryKey(),
+  customerId: integer('customer_id'),
+  userId: integer('user_id').notNull(),
+  total: decimal('total', { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: varchar('payment_method').notNull(),
+  paymentStatus: varchar('payment_status').notNull(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow()
+});
+
+export const suppliers = pgTable('suppliers', {
+  id: serial('id').primaryKey(),
+  name: varchar('name').notNull(),
+  email: varchar('email'),
+  phone: varchar('phone'),
+  address: text('address'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow()
+});
+
+export const productSuppliers = pgTable('product_suppliers', {
+  id: serial('id').primaryKey(),
+  productId: integer('product_id').notNull(),
+  supplierId: integer('supplier_id').notNull(),
+  costPrice: decimal('cost_price', { precision: 10, scale: 2 }),
+  isPreferred: boolean('is_preferred').default(false),
+  lastSupplyDate: timestamp('last_supply_date'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow()
+});
+
+export const purchaseOrders = pgTable('purchase_orders', {
+  id: serial('id').primaryKey(),
+  supplierId: integer('supplier_id').notNull(),
+  userId: integer('user_id').notNull(),
+  status: varchar('status').notNull(),
+  orderDate: timestamp('order_date').defaultNow(),
+  receivedDate: timestamp('received_date'),
+  total: decimal('total', { precision: 10, scale: 2 }).notNull(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow()
+});
+
+export const purchaseOrderItems = pgTable('purchase_order_items', {
+  id: serial('id').primaryKey(),
+  purchaseOrderId: integer('purchase_order_id').notNull(),
+  productId: integer('product_id').notNull(),
+  quantity: integer('quantity').notNull(),
+  buyingPrice: decimal('buying_price', { precision: 10, scale: 2 }).notNull(),
+  sellingPrice: decimal('selling_price', { precision: 10, scale: 2 }).notNull(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow()
+});
+
+export const loyaltyPoints = pgTable('loyalty_points', {
+  id: serial('id').primaryKey(),
+  customerId: integer('customer_id').notNull(),
+  points: integer('points').notNull().default(0),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow()
+});
+
+export const loyaltyTransactions = pgTable('loyalty_transactions', {
+  id: serial('id').primaryKey(),
+  customerId: integer('customer_id').notNull(),
+  saleId: integer('sale_id').notNull(),
+  points: integer('points').notNull(),
+  type: varchar('type').notNull(),
+  created_at: timestamp('created_at').defaultNow()
+});
+
+// Validation schemas
+export const insertSupplierSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  address: z.string().optional()
+});
+
+export const insertProductSupplierSchema = z.object({
+  productId: z.number(),
+  supplierId: z.number(),
+  costPrice: z.string().optional(),
+  isPreferred: z.boolean().optional()
+});
 
 // Define unit types enum
 export const UnitType = {
@@ -12,7 +109,7 @@ export const UnitType = {
 
 export type UnitTypeValues = (typeof UnitType)[keyof typeof UnitType];
 
-// Ensure all unit type values are properly typed
+// Define the enum for unit types
 export const UnitTypeEnum = z.enum([UnitType.PER_PIECE, UnitType.THREE_PIECE, UnitType.DOZEN]);
 
 export const defaultUnitQuantities: Record<UnitTypeValues, number> = {
@@ -52,8 +149,20 @@ export type UnitPriceUnit = {
 };
 
 // Ensure consistent type handling for price values
-export const ensurePriceString = (price: string | number): string => {
-  return typeof price === 'string' ? price : price.toString();
+export const ensurePriceString = (price: string | number | undefined): string => {
+  if (price === undefined) {
+    throw new Error('Price is required');
+  }
+  // Handle numeric strings that might have currency symbols
+  if (typeof price === 'string') {
+    // Remove any currency symbols and whitespace
+    const cleanPrice = price.replace(/[^0-9.-]/g, '');
+    if (!cleanPrice || isNaN(Number(cleanPrice))) {
+      throw new Error('Invalid price format');
+    }
+    return cleanPrice;
+  }
+  return price.toString();
 };
 
 export type UnitPricing = UnitPriceUnit & {
