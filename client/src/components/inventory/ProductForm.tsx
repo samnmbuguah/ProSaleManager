@@ -104,11 +104,25 @@ export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductForm
       max_stock: initialData?.max_stock ?? 0,
       reorder_point: initialData?.reorder_point ?? 0,
       stock_unit: initialData?.stock_unit ?? "per_piece",
-      price_units: initialData?.price_units?.map(unit => ({
-        ...unit,
-        buying_price: String(unit.buying_price),
-        selling_price: String(unit.selling_price)
-      })) ?? defaultPriceUnits,
+      price_units: initialData?.price_units 
+        ? UnitTypes.map(unitType => {
+            const existingUnit = initialData.price_units?.find(u => u.unit_type === unitType);
+            if (existingUnit) {
+              return {
+                ...existingUnit,
+                buying_price: String(existingUnit.buying_price),
+                selling_price: String(existingUnit.selling_price)
+              };
+            }
+            return defaultPriceUnits.find(u => u.unit_type === unitType) || {
+              unit_type: unitType as UnitTypeValues,
+              quantity: defaultUnitQuantities[unitType as UnitTypeValues],
+              buying_price: "0",
+              selling_price: "0",
+              is_default: unitType === 'per_piece'
+            };
+          })
+        : defaultPriceUnits,
     },
   });
 

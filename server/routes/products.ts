@@ -233,7 +233,7 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    console.log('Found product:', product);
+    console.log('Found product:', JSON.stringify(product, null, 2));
 
     // Get all unit pricing for the product
     const priceUnits = await db
@@ -248,15 +248,25 @@ router.get('/:id', async (req, res) => {
       .from(unitPricing)
       .where(eq(unitPricing.product_id, product.id));
 
-    console.log('Found price units:', priceUnits);
+    console.log('Found price units:', JSON.stringify(priceUnits, null, 2));
 
-    const formattedPriceUnits = priceUnits.map(unit => ({
-      unit_type: unit.unit_type,
-      quantity: unit.quantity,
-      buying_price: unit.buying_price.toString(),
-      selling_price: unit.selling_price.toString(),
-      is_default: unit.is_default
-    }));
+    const formattedPriceUnits = priceUnits.map(unit => {
+      // Ensure price values are properly formatted strings
+      const buyingPrice = typeof unit.buying_price === 'string' 
+        ? unit.buying_price 
+        : unit.buying_price.toString();
+      const sellingPrice = typeof unit.selling_price === 'string'
+        ? unit.selling_price
+        : unit.selling_price.toString();
+
+      return {
+        unit_type: unit.unit_type,
+        quantity: unit.quantity,
+        buying_price: buyingPrice,
+        selling_price: sellingPrice,
+        is_default: unit.is_default
+      };
+    });
 
     const response = {
       ...product,
