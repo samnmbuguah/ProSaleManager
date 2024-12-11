@@ -17,7 +17,7 @@ import { Settings, Edit } from "lucide-react";
 interface ProductTableProps {
   products: Product[];
   isLoading: boolean;
-  onUpdateProduct?: (id: number, data: Partial<Product>) => Promise<void>;
+  onUpdateProduct?: (id: number, data: Partial<ProductFormData>) => Promise<void>;
 }
 
 export function ProductTable({ products = [], isLoading, onUpdateProduct }: ProductTableProps) {
@@ -49,6 +49,15 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
     return (((selling - buying) / buying) * 100).toFixed(1) + "%";
   };
 
+  const getDefaultPricing = (product: Product) => {
+    const defaultUnit = product.price_units?.find(unit => unit.is_default);
+    return defaultUnit || {
+      buying_price: "0",
+      selling_price: "0",
+      unit_type: product.stock_unit
+    };
+  };
+
   return (
     <>
       <div className="rounded-md border">
@@ -59,8 +68,7 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
               <TableHead>SKU</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Stock Unit</TableHead>
-              <TableHead>Buying Price</TableHead>
-              <TableHead>Selling Price</TableHead>
+              <TableHead>Default Price (Buy/Sell)</TableHead>
               <TableHead>Profit Margin</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead>Status</TableHead>
@@ -68,49 +76,49 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.map((product) => (
-              <TableRow key={product.id}>
-                <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>{product.sku}</TableCell>
-                <TableCell>{product.category}</TableCell>
-                <TableCell>{product.stock_unit}</TableCell>
-                <TableCell>
-                  KSh {Number(product.buying_price).toFixed(2)}
-                </TableCell>
-                <TableCell>
-                  KSh {Number(product.selling_price).toFixed(2)}
-                </TableCell>
-                <TableCell>
-                  {calculateProfitMargin(product.buying_price, product.selling_price)}
-                </TableCell>
-                <TableCell>{product.stock}</TableCell>
-                <TableCell>
-                  <Badge variant={getStockStatus(product).variant}>
-                    {getStockStatus(product).label}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingProduct(product)}
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedProduct(product)}
-                    >
-                      <Settings className="h-4 w-4 mr-1" />
-                      Manage
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {products.map((product) => {
+              const defaultPricing = getDefaultPricing(product);
+              return (
+                <TableRow key={product.id}>
+                  <TableCell className="font-medium">{product.name}</TableCell>
+                  <TableCell>{product.sku}</TableCell>
+                  <TableCell>{product.category}</TableCell>
+                  <TableCell>{product.stock_unit}</TableCell>
+                  <TableCell>
+                    {`KSh ${Number(defaultPricing.buying_price).toFixed(2)} / ${Number(defaultPricing.selling_price).toFixed(2)}`}
+                  </TableCell>
+                  <TableCell>
+                    {calculateProfitMargin(defaultPricing.buying_price, defaultPricing.selling_price)}
+                  </TableCell>
+                  <TableCell>{product.stock}</TableCell>
+                  <TableCell>
+                    <Badge variant={getStockStatus(product).variant}>
+                      {getStockStatus(product).label}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingProduct(product)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedProduct(product)}
+                      >
+                        <Settings className="h-4 w-4 mr-1" />
+                        Manage
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
@@ -131,23 +139,11 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
                 max_stock: editingProduct.max_stock || 0,
                 reorder_point: editingProduct.reorder_point || 0,
                 stock_unit: editingProduct.stock_unit as any,
-                buying_price: editingProduct.buying_price?.toString() || "0",
-                selling_price: editingProduct.selling_price?.toString() || "0",
+                price_units: editingProduct.price_units || []
               }}
               onSubmit={async (data: ProductFormData) => {
                 if (onUpdateProduct && editingProduct.id) {
-                  await onUpdateProduct(editingProduct.id, {
-                    name: data.name,
-                    sku: data.sku,
-                    category: data.category,
-                    stock: data.stock,
-                    min_stock: data.min_stock,
-                    max_stock: data.max_stock,
-                    reorder_point: data.reorder_point,
-                    stock_unit: data.stock_unit,
-                    buying_price: data.buying_price,
-                    selling_price: data.selling_price,
-                  });
+                  await onUpdateProduct(editingProduct.id, data);
                   setEditingProduct(null);
                 }
               }}
@@ -174,9 +170,14 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
                 </div>
                 <div>
                   <h3 className="font-medium">Pricing Information</h3>
-                  <p>Buying Price: KSh {Number(selectedProduct.buying_price || 0).toFixed(2)}</p>
-                  <p>Selling Price: KSh {Number(selectedProduct.selling_price || 0).toFixed(2)}</p>
-                  <p>Profit Margin: {calculateProfitMargin(selectedProduct.buying_price || 0, selectedProduct.selling_price || 0)}</p>
+                  {selectedProduct.price_units?.map(unit => (
+                    <div key={unit.unit_type} className="mb-2">
+                      <p className="capitalize">{unit.unit_type.replace('_', ' ')}:</p>
+                      <p className="ml-4">Buy: KSh {Number(unit.buying_price).toFixed(2)}</p>
+                      <p className="ml-4">Sell: KSh {Number(unit.selling_price).toFixed(2)}</p>
+                      <p className="ml-4">Margin: {calculateProfitMargin(unit.buying_price, unit.selling_price)}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
