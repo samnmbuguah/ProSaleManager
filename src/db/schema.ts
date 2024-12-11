@@ -8,7 +8,7 @@ export const UnitType = {
   PER_PIECE: 'per_piece' as const,
   THREE_PIECE: 'three_piece' as const,
   DOZEN: 'dozen' as const
-};
+} as const;
 
 export type UnitTypeValues = typeof UnitType[keyof typeof UnitType];
 
@@ -91,55 +91,7 @@ export const products = pgTable('products', {
   updated_at: timestamp('updated_at').defaultNow()
 });
 
-// Validation Schemas
-export const insertProductSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  sku: z.string().min(1, "SKU is required"),
-  stock: z.number().min(0, "Stock cannot be negative"),
-  category: z.string().optional(),
-  min_stock: z.number().min(0).optional(),
-  max_stock: z.number().min(0).optional(),
-  reorder_point: z.number().min(0).optional(),
-  stock_unit: z.enum([UnitType.PER_PIECE, UnitType.THREE_PIECE, UnitType.DOZEN]).default(UnitType.PER_PIECE),
-  price_units: z.array(z.object({
-    unit_type: z.enum([UnitType.PER_PIECE, UnitType.THREE_PIECE, UnitType.DOZEN]),
-    quantity: z.number(),
-    buying_price: z.string(),
-    selling_price: z.string(),
-    is_default: z.boolean()
-  })).min(1, "At least one price unit is required"),
-  is_active: z.boolean().default(true),
-});
-
-export const unitPricingSchema = z.object({
-  product_id: z.number().int().positive("Product ID is required"),
-  unit_type: z.enum([UnitType.PER_PIECE, UnitType.THREE_PIECE, UnitType.DOZEN]),
-  quantity: z.number().int().positive(),
-  buying_price: z.union([
-    z.string(),
-    z.number()
-  ]).transform(val => val.toString()),
-  selling_price: z.union([
-    z.string(),
-    z.number()
-  ]).transform(val => val.toString()),
-  is_default: z.boolean().default(false),
-}).refine(
-  (data) => {
-    const quantityMap: Record<UnitTypeValues, number> = {
-      'per_piece': 1,
-      'three_piece': 3,
-      'dozen': 12
-    };
-    return data.quantity === quantityMap[data.unit_type as UnitTypeValues];
-  },
-  {
-    message: "Quantity must match the unit type (1 for per piece, 3 for three piece, 12 for dozen)",
-    path: ["quantity"]
-  }
-);
-
-export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type InsertProduct = z.infer<typeof productSchema>;
 export type UnitPricingInsert = typeof unitPricing.$inferInsert;
 
 export type Product = typeof products.$inferSelect & {
