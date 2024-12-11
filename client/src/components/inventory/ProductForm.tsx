@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { insertProductSchema, type InsertProduct } from "@db/schema";
+import { insertProductSchema, type InsertProduct, type UnitTypeValues, UnitTypeValues as UnitTypes, defaultUnitQuantities } from "@db/schema";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 
 export interface PriceUnit {
-  unit_type: 'per_piece' | 'three_piece' | 'dozen';
+  unit_type: UnitTypeValues;
   quantity: number;
   buying_price: string;
   selling_price: string;
@@ -35,7 +35,7 @@ export interface ProductFormData {
   min_stock: number;
   max_stock: number;
   reorder_point: number;
-  stock_unit: 'per_piece' | 'three_piece' | 'dozen';
+  stock_unit: UnitTypeValues;
   price_units: PriceUnit[];
 }
 
@@ -60,29 +60,13 @@ const STOCK_UNITS = [
 ] as const;
 
 export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductFormProps) {
-  const defaultPriceUnits: PriceUnit[] = [
-    {
-      unit_type: 'per_piece',
-      quantity: 1,
-      buying_price: "0",
-      selling_price: "0",
-      is_default: true
-    },
-    {
-      unit_type: 'three_piece',
-      quantity: 3,
-      buying_price: "0",
-      selling_price: "0",
-      is_default: false
-    },
-    {
-      unit_type: 'dozen',
-      quantity: 12,
-      buying_price: "0",
-      selling_price: "0",
-      is_default: false
-    }
-  ];
+  const defaultPriceUnits: PriceUnit[] = UnitTypes.map((unitType) => ({
+    unit_type: unitType,
+    quantity: defaultUnitQuantities[unitType],
+    buying_price: "0",
+    selling_price: "0",
+    is_default: unitType === 'per_piece'
+  }));
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(insertProductSchema),

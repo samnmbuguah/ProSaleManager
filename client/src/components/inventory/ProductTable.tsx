@@ -1,15 +1,10 @@
 import { useState } from "react";
 import type { Product, UnitTypeValues } from "@db/schema";
 
-interface ProductPriceUnit {
-  unit_type: UnitTypeValues;
-  quantity: number;
-  buying_price: string;
-  selling_price: string;
-  is_default: boolean;
-}
-
-type ProductWithPricing = Product;
+import { PriceUnit } from "./ProductForm";
+type ProductWithPricing = Product & {
+  price_units?: PriceUnit[];
+};
 import {
   Table,
   TableBody,
@@ -149,7 +144,13 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
                 max_stock: editingProduct.max_stock || 0,
                 reorder_point: editingProduct.reorder_point || 0,
                 stock_unit: editingProduct.stock_unit as any,
-                price_units: editingProduct.price_units || []
+                price_units: (editingProduct.price_units || []).map(unit => ({
+                  unit_type: unit.unit_type as UnitTypeValues,
+                  quantity: Number(unit.quantity),
+                  buying_price: String(unit.buying_price),
+                  selling_price: String(unit.selling_price),
+                  is_default: Boolean(unit.is_default)
+                }))
               }}
               onSubmit={async (data: ProductFormData) => {
                 if (onUpdateProduct && editingProduct.id) {
