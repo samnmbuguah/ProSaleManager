@@ -103,7 +103,7 @@ export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type UnitPricingInsert = typeof unitPricing.$inferInsert;
 
 export type Product = typeof products.$inferSelect & {
-  price_units?: Array<UnitPriceUnit>;
+  price_units?: UnitPriceUnit[];
   default_unit_pricing?: UnitPriceUnit | null;
 };
 
