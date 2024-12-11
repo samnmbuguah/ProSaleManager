@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '../../db';
-import { products, productPrices, insertProductSchema, unitPricing, UnitTypeValues } from '../../db/schema';
+import { products, productPrices, insertProductSchema, unitPricing, UnitTypeValues, defaultUnitQuantities } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
