@@ -3,60 +3,84 @@ import { SaleTerminal } from "../components/pos/SaleTerminal";
 import { ProductSearch } from "../components/pos/ProductSearch";
 import { Cart } from "../components/pos/Cart";
 import { PaymentDialog } from "../components/pos/PaymentDialog";
-import type { Product } from "@db/schema";
+import type { Product } from "../../../db/schema";
 import { usePos } from "../hooks/use-pos";
 
-interface CartItem extends Product {
+interface PriceUnit {
+  stock_unit: string;
+  selling_price: string;
+  buying_price: string;
+  conversion_rate: string;
+}
+
+interface ExtendedProduct extends Product {
+  priceUnits?: PriceUnit[];
+}
+
+interface CartItem {
+  id: number;
+  name: string;
   quantity: number;
-  unitPricingId?: number | null;
-  selectedUnitPrice: {
-    unitType: string;
-    quantity: number;
-    sellingPrice: string;
-  };
+  selectedUnit: string;
+  unitPrice: number;
+  total: number;
+  priceUnits: PriceUnit[];
 }
 
 export default function PosPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  const { products, searchProducts, calculateTotal, createSale, isProcessing } = usePos();
+  const { products, searchProducts, createSale, isProcessing } = usePos();
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: ExtendedProduct, selectedUnit: string) => {
     setCartItems(items => {
-      const existing = items.find(item => item.id === product.id);
+      const priceUnit = product.priceUnits?.find((p: PriceUnit) => p.stock_unit === selectedUnit);
+      if (!priceUnit) {
+        console.error("Selected price unit not found");
+        return items;
+      }
+
+      const existing = items.find(item => 
+        item.id === product.id && item.selectedUnit === selectedUnit
+      );
+
       if (existing) {
         return items.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+          (item.id === product.id && item.selectedUnit === selectedUnit)
+            ? { 
+                ...item, 
+                quantity: item.quantity + 1,
+                total: (item.quantity + 1) * item.unitPrice
+              }
             : item
         );
       }
-
-      // Get default unit pricing
-      const defaultPricing = product.defaultUnitPricing ? {
-        unitType: product.defaultUnitPricing.unitType,
-        quantity: product.defaultUnitPricing.quantity,
-        sellingPrice: product.defaultUnitPricing.sellingPrice.toString(),
-      } : {
-        unitType: product.stockUnit,
-        quantity: 1,
-        sellingPrice: "0",
-      };
       
+      const sellingPrice = typeof priceUnit.selling_price === 'string' 
+        ? parseFloat(priceUnit.selling_price)
+        : priceUnit.selling_price;
+
       return [...items, { 
-        ...product, 
+        id: product.id,
+        name: product.name,
         quantity: 1,
-        selectedUnitPrice: defaultPricing,
-        unitPricingId: product.defaultUnitPricingId || null,
+        selectedUnit: selectedUnit,
+        unitPrice: sellingPrice,
+        total: sellingPrice,
+        priceUnits: product.priceUnits || [],
       }];
     });
   };
 
-  const handleUpdateQuantity = (productId: number, quantity: number) => {
+  const handleUpdateQuantity = (productId: number, selectedUnit: string, quantity: number) => {
     setCartItems(items =>
       items.map(item =>
-        item.id === productId
-          ? { ...item, quantity }
+        (item.id === productId && item.selectedUnit === selectedUnit)
+          ? { 
+              ...item, 
+              quantity,
+              total: quantity * item.unitPrice
+            }
           : item
       ).filter(item => item.quantity > 0)
     );
@@ -66,18 +90,23 @@ export default function PosPage() {
     setIsPaymentOpen(true);
   };
 
-  const handlePaymentComplete = async (paymentMethod: string, customerId?: number, usePoints?: number, cashAmount?: string) => {
+  const handlePaymentComplete = async (paymentDetails: {
+    amountPaid: number;
+    change: number;
+    items: CartItem[];
+  }) => {
     await createSale({
       items: cartItems.map(item => ({
-        productId: item.id,
+        product_id: item.id,
         quantity: item.quantity,
-        price: Number(item.selectedUnitPrice.sellingPrice),
-        unitPricingId: item.unitPricingId || null,
+        unit: item.selectedUnit,
+        price: item.unitPrice,
       })),
-      customerId,
-      total: calculateTotal(cartItems),
-      paymentMethod,
-      cashAmount: cashAmount ? parseFloat(cashAmount) : undefined,
+      total: cartItems.reduce((sum, item) => sum + item.total, 0).toString(),
+      paymentMethod: 'cash',
+      paymentStatus: 'paid',
+      amountPaid: paymentDetails.amountPaid.toString(),
+      changeAmount: paymentDetails.change.toString(),
     });
     setCartItems([]);
     setIsPaymentOpen(false);
@@ -100,16 +129,15 @@ export default function PosPage() {
           items={cartItems}
           onUpdateQuantity={handleUpdateQuantity}
           onCheckout={handleCheckout}
-          total={calculateTotal(cartItems)}
+          total={cartItems.reduce((sum, item) => sum + item.total, 0)}
         />
       </div>
 
       <PaymentDialog
-        open={isPaymentOpen}
+        isOpen={isPaymentOpen}
         onClose={() => setIsPaymentOpen(false)}
-        onComplete={handlePaymentComplete}
-        total={calculateTotal(cartItems)}
-        isProcessing={isProcessing}
+        cartItems={cartItems}
+        onProcessPayment={handlePaymentComplete}
       />
     </div>
   );
