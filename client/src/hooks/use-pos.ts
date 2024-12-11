@@ -1,27 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Product, Sale, SaleItem, Customer } from '@db/schema';
+import type { Product } from '@db/schema';
 import { useToast } from '@/hooks/use-toast';
 
-interface CartItem extends Product {
+interface SaleItem {
+  product_id: number;
   quantity: number;
-  selectedUnitPrice: {
-    unitType: string;
-    quantity: number;
-    sellingPrice: string;
-  };
-  unitPricingId?: number | null;
+  price: number;
+  unit_pricing_id?: number | null;
 }
 
-interface SalePayload {
-  items: {
-    productId: number;
-    quantity: number;
-    price: number;
-    unitPricingId?: number | null;
-  }[];
+interface SaleData {
+  items: SaleItem[];
   customerId?: number;
-  total: number;
+  total: string;
   paymentMethod: string;
+  paymentStatus: string;
+  amountPaid: string;
+  changeAmount: string;
   cashAmount?: number;
 }
 
@@ -30,7 +25,7 @@ export interface ReceiptData {
   items: {
     name: string;
     quantity: number;
-    unitPrice: number;
+    unit_price: number;
     total: number;
   }[];
   customer?: {
@@ -39,14 +34,14 @@ export interface ReceiptData {
     email?: string;
   };
   total: number;
-  paymentMethod: string;
+  payment_method: string;
   timestamp: string;
-  transactionId: string;
-  cashAmount?: number;
-  receiptStatus?: {
+  transaction_id: string;
+  cash_amount?: number;
+  receipt_status?: {
     sms?: boolean;
     whatsapp?: boolean;
-    lastSentAt?: string;
+    last_sent_at?: string;
   };
 }
 
@@ -60,146 +55,65 @@ export function usePos() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: products } = useQuery<Product[]>({
-    queryKey: ['products'],
-    queryFn: () => fetch('/api/products').then(res => res.json()),
+  const { data: products, isLoading } = useQuery<Product[]>({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const response = await fetch("/api/products");
+      if (!response.ok) {
+        throw new Error("Failed to fetch products");
+      }
+      return response.json();
+    },
   });
 
-  const createSaleMutation = useMutation<{ sale: Sale; receipt: ReceiptData }, Error, SalePayload>({
-    mutationFn: async (sale) => {
-      const response = await fetch('/api/sales', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sale),
-        credentials: 'include',
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to process sale');
-      }
-      
-      const data = await response.json();
-      if (!data.receipt || !data.sale) {
-        throw new Error('Invalid response format from server');
-      }
+  const searchProducts = async (query: string) => {
+    const response = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`);
+    if (!response.ok) {
+      throw new Error("Failed to search products");
+    }
+    return response.json();
+  };
 
-      // Format receipt data with proper cash amount handling
-      const formattedReceipt: ReceiptData = {
-        id: data.sale.id,
-        items: data.receipt.items.map((item: any) => ({
-          name: item.name || 'Unknown Product',
-          quantity: Number(item.quantity) || 0,
-          unitPrice: Number(item.unitPrice || item.price) || 0,
-          total: Number(item.total) || (Number(item.quantity) || 0) * (Number(item.unitPrice || item.price) || 0),
-        })),
-        customer: data.receipt.customer ? {
-          name: data.receipt.customer.name || '',
-          phone: data.receipt.customer.phone || '',
-          email: data.receipt.customer.email || '',
-        } : undefined,
-        total: Number(data.sale.total) || 0,
-        paymentMethod: data.sale.paymentMethod || 'cash',
-        timestamp: data.sale.createdAt || new Date().toISOString(),
-        transactionId: `TXN-${data.sale.id}`,
-        // Convert cash amount to number and ensure it's included when available
-        cashAmount: sale.cashAmount ? Number(sale.cashAmount) : undefined,
-        receiptStatus: {
-          sms: Boolean(data.receipt.receiptStatus?.sms),
-          whatsapp: Boolean(data.receipt.receiptStatus?.whatsapp),
-          lastSentAt: data.receipt.receiptStatus?.lastSentAt,
-        },
-      };
-      
-      return {
-        sale: data.sale,
-        receipt: formattedReceipt,
-      };
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      if (window._setReceiptState) {
-        window._setReceiptState(data.receipt);
+  const createSaleMutation = useMutation({
+    mutationFn: async (data: SaleData) => {
+      const response = await fetch("/api/sales", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to create sale");
       }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
       toast({
-        title: "Sale completed",
-        description: "Transaction has been processed successfully. Receipt is ready.",
+        title: "Success",
+        description: "Sale completed successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         variant: "destructive",
-        title: "Sale failed",
+        title: "Error",
         description: error.message,
       });
     },
   });
 
-  const searchProducts = (query: string) => {
-    if (!products) return [];
-    return products.filter(p => 
-      p.name.toLowerCase().includes(query.toLowerCase())
-    );
-  };
-
-  const calculateTotal = (items: CartItem[]) => {
-    return items.reduce((sum, item) => {
-      if (!item.selectedUnitPrice) return sum;
-      
-      const unitPrice = Number(item.selectedUnitPrice.sellingPrice);
-      const unitsPerPrice = item.selectedUnitPrice.quantity;
-      
-      if (unitsPerPrice <= 0 || !unitPrice) return sum;
-      
-      // Calculate how many complete units we're buying
-      const completeUnits = Math.floor(item.quantity / unitsPerPrice);
-      // Calculate remaining items that don't make a complete unit
-      const remainingItems = item.quantity % unitsPerPrice;
-      // Calculate price for complete units
-      const completeUnitsPrice = completeUnits * unitPrice;
-      // Calculate price for remaining items (proportional to the unit price)
-      const remainingItemsPrice = (remainingItems / unitsPerPrice) * unitPrice;
-      
-      return sum + completeUnitsPrice + remainingItemsPrice;
-    }, 0);
-  };
-
-  const sendReceipt = async (saleId: number, method: 'whatsapp' | 'sms', phoneNumber?: string) => {
-    try {
-      const response = await fetch(`/api/sales/${saleId}/receipt/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method, phoneNumber }),
-        credentials: 'include',
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to send receipt via ${method}`);
-      }
-      
-      toast({
-        title: "Receipt sent",
-        description: `Receipt has been sent via ${method}`,
-      });
-
-      return true;
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: `Failed to send receipt via ${method}`,
-        description: error instanceof Error ? error.message : 'Unknown error',
-      });
-      return false;
-    }
+  const calculateTotal = (items: Array<{ quantity: number; selected_unit_price: { selling_price: string | number } }>) => {
+    return Number(items.reduce((sum, item) => {
+      return sum + (item.quantity * Number(item.selected_unit_price.selling_price));
+    }, 0).toFixed(2));
   };
 
   return {
     products,
+    isLoading,
     searchProducts,
-    calculateTotal,
     createSale: createSaleMutation.mutateAsync,
     isProcessing: createSaleMutation.isPending,
-    sendReceipt,
+    calculateTotal,
   };
 }
