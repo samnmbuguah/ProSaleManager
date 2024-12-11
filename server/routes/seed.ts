@@ -20,12 +20,13 @@ router.post('/seed-demo-data', async (req, res) => {
           throw new Error(`Product ${productData.name} has no default price unit`);
         }
         
-        // Create product with default unit prices
+        // Create product without default unit pricing ID first
         const [newProduct] = await tx.insert(products)
           .values({
             ...productDetails,
             buying_price: defaultUnit.buying_price,
             selling_price: defaultUnit.selling_price,
+            default_unit_pricing_id: null // explicitly set to null initially
           })
           .returning();
           
@@ -39,13 +40,20 @@ router.post('/seed-demo-data', async (req, res) => {
           is_default: unit.is_default,
         }));
         
-        const [defaultPricing] = await tx.insert(unitPricing)
+        // Insert all price units at once
+        const insertedPricingUnits = await tx.insert(unitPricing)
           .values(priceUnitsData)
           .returning();
-          
+        
+        // Find the default pricing unit
+        const defaultPricingUnit = insertedPricingUnits.find(unit => unit.is_default);
+        if (!defaultPricingUnit) {
+          throw new Error(`No default pricing unit found for product ${newProduct.name}`);
+        }
+        
         // Update product with default unit pricing ID
         await tx.update(products)
-          .set({ default_unit_pricing_id: defaultPricing.id })
+          .set({ default_unit_pricing_id: defaultPricingUnit.id })
           .where(eq(products.id, newProduct.id));
           
         createdProducts.push({
