@@ -25,8 +25,8 @@ import {
 interface PurchaseOrderItem {
   productId: number;
   quantity: number;
-  buyingPrice: number;
-  sellingPrice: number;
+  buying_price: number;
+  selling_price: number;
   name?: string;
 }
 
@@ -69,8 +69,8 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
     setItems([...items, {
       productId: parseInt(productId),
       quantity: 1,
-      buyingPrice: supplierPricing ? Number(supplierPricing.costPrice) : (product.defaultUnitPricing ? Number(product.defaultUnitPricing.buyingPrice) : 0),
-      sellingPrice: product.defaultUnitPricing ? Number(product.defaultUnitPricing.sellingPrice) : 0,
+      buying_price: supplierPricing ? Number(supplierPricing.costPrice) : (product.default_unit_pricing ? Number(product.default_unit_pricing.buying_price) : 0),
+      selling_price: product.default_unit_pricing ? Number(product.default_unit_pricing.selling_price) : 0,
       name: product.name,
     }]);
   };
@@ -81,14 +81,14 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
     setItems(newItems);
   };
 
-  const updateItemPrice = (index: number, field: 'buyingPrice' | 'sellingPrice', value: string) => {
+  const updateItemPrice = (index: number, field: 'buying_price' | 'selling_price', value: string) => {
     const newItems = [...items];
     newItems[index][field] = parseFloat(value) || 0;
     setItems(newItems);
   };
 
   const calculateTotal = (): string => {
-    return items.reduce((sum, item) => sum + (item.quantity * item.buyingPrice), 0).toFixed(2);
+    return items.reduce((sum, item) => sum + (item.quantity * item.buying_price), 0).toFixed(2);
   };
 
   const handleSupplierChange = (supplierId: string) => {
@@ -100,7 +100,7 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
       );
       return {
         ...item,
-        buyingPrice: supplierPricing ? Number(supplierPricing.costPrice) : item.buyingPrice,
+        buying_price: supplierPricing ? Number(supplierPricing.costPrice) : item.buying_price,
       };
     }));
   };
@@ -182,8 +182,8 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
                     <Input
                       type="number"
                       step="0.01"
-                      value={item.buyingPrice}
-                      onChange={(e) => updateItemPrice(index, 'buyingPrice', e.target.value)}
+                      value={item.buying_price}
+                      onChange={(e) => updateItemPrice(index, 'buying_price', e.target.value)}
                       className="w-full md:w-32"
                     />
                   </div>
@@ -192,8 +192,8 @@ export function PurchaseOrderForm({ onSubmit, isSubmitting }: PurchaseOrderFormP
                     <Input
                       type="number"
                       step="0.01"
-                      value={item.sellingPrice}
-                      onChange={(e) => updateItemPrice(index, 'sellingPrice', e.target.value)}
+                      value={item.selling_price}
+                      onChange={(e) => updateItemPrice(index, 'selling_price', e.target.value)}
                       className="w-full md:w-32"
                     />
                   </div>
