@@ -3,16 +3,34 @@ import { db } from '../../db';
 import { 
   products, 
   unitPricing,
-  UnitType,
-  UnitTypeValues,
-  defaultUnitQuantities,
-  productSchema,
-  type Product,
-  type InsertProduct
+  type UnitTypeValues,
+  defaultUnitQuantities
 } from '../../db/schema';
 import { eq } from 'drizzle-orm';
+import { z } from "zod";
 
 const router = Router();
+
+// Define the product schema for validation
+const productSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  sku: z.string().min(1, "SKU is required"),
+  stock: z.number().min(0, "Stock cannot be negative"),
+  category: z.string().optional(),
+  min_stock: z.number().min(0).optional(),
+  max_stock: z.number().min(0).optional(),
+  reorder_point: z.number().min(0).optional(),
+  stock_unit: z.enum(['per_piece', 'three_piece', 'dozen']),
+  price_units: z.array(z.object({
+    unit_type: z.enum(['per_piece', 'three_piece', 'dozen']),
+    quantity: z.number(),
+    buying_price: z.string(),
+    selling_price: z.string(),
+    is_default: z.boolean()
+  }))
+});
+
+type ProductFormData = z.infer<typeof productSchema>;
 
 function generateSKU(name: string): string {
   const cleanName = name.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -99,75 +117,47 @@ router.get('/', async (req, res) => {
 // Create a new product with unit pricing
 router.post('/', async (req, res) => {
   try {
-    console.log('Creating new product with data:', JSON.stringify(req.body, null, 2));
-    const validatedData = productSchema.parse(req.body);
-    
-    const result = await db.transaction(async (tx) => {
-      // Create the product first
+    const validatedData = productSchema.parse(req.body) as ProductFormData;
+
+    await db.transaction(async (tx) => {
       const [newProduct] = await tx
         .insert(products)
         .values({
           name: validatedData.name,
-          sku: validatedData.sku || generateSKU(validatedData.name),
-          category: validatedData.category,
+          sku: validatedData.sku,
           stock: validatedData.stock,
-          min_stock: validatedData.min_stock,
-          max_stock: validatedData.max_stock,
-          reorder_point: validatedData.reorder_point,
+          category: validatedData.category || "",
+          min_stock: validatedData.min_stock || 0,
+          max_stock: validatedData.max_stock || 0,
+          reorder_point: validatedData.reorder_point || 0,
           stock_unit: validatedData.stock_unit,
-          default_unit_pricing_id: null,
-          is_active: validatedData.is_active
+          buying_price: validatedData.price_units[0].buying_price,
+          selling_price: validatedData.price_units[0].selling_price
         })
         .returning();
-      
-      // Create unit pricing entries
-      const unitPricingData = validatedData.price_units.map(unit => ({
+
+      const unitPricingData = validatedData.price_units.map((unit: {
+        unit_type: UnitTypeValues;
+        quantity: number;
+        buying_price: string;
+        selling_price: string;
+        is_default: boolean;
+      }) => ({
         product_id: newProduct.id,
         unit_type: unit.unit_type,
-        quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValues],
+        quantity: defaultUnitQuantities[unit.unit_type as keyof typeof defaultUnitQuantities],
         buying_price: unit.buying_price,
         selling_price: unit.selling_price,
-        is_default: unit.is_default,
+        is_default: unit.is_default
       }));
-      
-      const insertedPricingUnits = await tx
-        .insert(unitPricing)
-        .values(unitPricingData)
-        .returning();
-      
-      // Find the default pricing unit
-      const defaultPricingUnit = insertedPricingUnits.find(unit => unit.is_default);
-      if (!defaultPricingUnit) {
-        throw new Error("No default pricing unit was created");
-      }
-      
-      // Update product with the default unit pricing ID
-      const [updatedProduct] = await tx
-        .update(products)
-        .set({ default_unit_pricing_id: defaultPricingUnit.id })
-        .where(eq(products.id, newProduct.id))
-        .returning();
-      
-      return {
-        ...updatedProduct,
-        price_units: insertedPricingUnits.map(unit => ({
-          id: unit.id,
-          unit_type: unit.unit_type as UnitTypeValues,
-          quantity: unit.quantity,
-          buying_price: unit.buying_price.toString(),
-          selling_price: unit.selling_price.toString(),
-          is_default: unit.is_default
-        }))
-      };
+
+      await tx.insert(unitPricing).values(unitPricingData);
     });
-    
-    res.status(201).json(result);
+
+    res.status(201).json({ message: "Product created successfully" });
   } catch (error) {
-    console.error('Error creating product:', error);
-    res.status(400).json({ 
-      error: error instanceof Error ? error.message : 'Failed to create product',
-      details: error instanceof Error ? error.stack : undefined
-    });
+    console.error("Error creating product:", error);
+    res.status(400).json({ error: "Failed to create product" });
   }
 });
 
@@ -222,78 +212,60 @@ router.get('/:id', async (req, res) => {
 // Update a product
 router.put('/:id', async (req, res) => {
   try {
-    const validatedData = productSchema.parse(req.body);
     const productId = parseInt(req.params.id);
+    const validatedData = productSchema.parse(req.body);
 
-    const result = await db.transaction(async (tx) => {
-      // Get the default pricing unit
-      const defaultUnit = validatedData.price_units.find(unit => unit.is_default);
-      if (!defaultUnit) {
-        throw new Error("A default pricing unit is required");
-      }
+    const defaultUnit = validatedData.price_units.find((unit: { is_default: boolean }) => unit.is_default);
+    
+    if (!defaultUnit) {
+      return res.status(400).json({ error: "No default unit pricing provided" });
+    }
 
-      // Step 1: Remove the default_unit_pricing_id reference first
-      await tx.update(products)
-        .set({ default_unit_pricing_id: null })
-        .where(eq(products.id, productId));
+    const unitPricingData = validatedData.price_units.map((unit: {
+      unit_type: UnitTypeValues;
+      quantity: number;
+      buying_price: string;
+      selling_price: string;
+      is_default: boolean;
+    }) => ({
+      product_id: productId,
+      unit_type: unit.unit_type,
+      quantity: defaultUnitQuantities[unit.unit_type as keyof typeof defaultUnitQuantities],
+      buying_price: unit.buying_price,
+      selling_price: unit.selling_price,
+      is_default: unit.is_default
+    }));
 
-      // Step 2: Delete existing unit pricing
-      await tx.delete(unitPricing)
-        .where(eq(unitPricing.product_id, productId));
-
-      // Step 3: Insert new unit pricing
-      const unitPricingData = validatedData.price_units.map(unit => ({
-        product_id: productId,
-        unit_type: unit.unit_type,
-        quantity: defaultUnitQuantities[unit.unit_type],
-        buying_price: unit.buying_price,
-        selling_price: unit.selling_price,
-        is_default: unit.is_default,
-      }));
-
-      const insertedPricingUnits = await tx.insert(unitPricing)
-        .values(unitPricingData)
-        .returning();
-
-      // Find the default pricing unit
-      const defaultPricingUnit = insertedPricingUnits.find(unit => unit.is_default);
-      if (!defaultPricingUnit) {
-        throw new Error("No default pricing unit was created");
-      }
-
-      // Step 4: Update the product
-      const [updatedProduct] = await tx.update(products)
+    // Update product and unit pricing in a transaction
+    await db.transaction(async (tx) => {
+      // Update product
+      await tx
+        .update(products)
         .set({
           name: validatedData.name,
-          category: validatedData.category,
+          sku: validatedData.sku,
           stock: validatedData.stock,
+          category: validatedData.category,
           min_stock: validatedData.min_stock,
           max_stock: validatedData.max_stock,
           reorder_point: validatedData.reorder_point,
-          stock_unit: validatedData.stock_unit,
-          default_unit_pricing_id: defaultPricingUnit.id,
-          is_active: validatedData.is_active // Added is_active
+          stock_unit: validatedData.stock_unit
         })
-        .where(eq(products.id, productId))
-        .returning();
+        .where(eq(products.id, productId));
 
-      return {
-        ...updatedProduct,
-        price_units: insertedPricingUnits.map(unit => ({
-          ...unit,
-          buying_price: unit.buying_price.toString(),
-          selling_price: unit.selling_price.toString()
-        }))
-      };
+      // Delete existing unit pricing
+      await tx
+        .delete(unitPricing)
+        .where(eq(unitPricing.product_id, productId));
+
+      // Insert new unit pricing
+      await tx.insert(unitPricing).values(unitPricingData);
     });
 
-    res.json(result);
+    res.json({ message: "Product updated successfully" });
   } catch (error) {
-    console.error('Error updating product:', error);
-    res.status(400).json({ 
-      error: error instanceof Error ? error.message : 'Failed to update product',
-      details: error instanceof Error ? error.stack : undefined
-    });
+    console.error("Error updating product:", error);
+    res.status(500).json({ error: "Failed to update product" });
   }
 });
 

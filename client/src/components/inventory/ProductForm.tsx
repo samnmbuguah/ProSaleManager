@@ -82,7 +82,7 @@ const STOCK_UNITS = [
   { value: "dozen", label: "Dozen" },
 ] as const;
 
-export function ProductForm({ onSubmit, isSubmitting, initialData }: ProductFormProps) {
+export function ProductForm({ onSubmit, isSubmitting = false, initialData }: ProductFormProps) {
   // Initialize default values for price units
   const defaultPriceUnits: PriceUnit[] = UnitTypes.map((unitType) => ({
     unit_type: unitType as UnitTypeValues,
