@@ -188,6 +188,9 @@ const app = express();
 
 // Initialize database tables and start server
 async function initializeApp() {
+  const port = Number(process.env.PORT) || 5000;
+  let server: ReturnType<typeof createServer>;
+
   try {
     log('Starting database initialization...');
     
@@ -207,8 +210,22 @@ async function initializeApp() {
     }
 
     // Step 2: Create HTTP server
-    const server = createServer(app);
-    const port = Number(process.env.PORT) || 5000;
+    server = createServer(app);
+    
+    // Set timeout for server operations
+    server.timeout = 30000;
+    
+    // Handle server shutdown gracefully
+    const shutdown = () => {
+      log('Shutting down server...');
+      server.close(() => {
+        log('Server closed');
+        process.exit(0);
+      });
+    };
+
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
     
     // Step 3: Setup environment-specific middleware
     try {
@@ -228,23 +245,29 @@ async function initializeApp() {
     return new Promise<typeof server>((resolve, reject) => {
       const maxRetries = 3;
       let retryCount = 0;
+      let currentPort = port;
       
       function attemptListen() {
+        // Clear any existing listeners
+        server.removeAllListeners();
+        
         server
-          .listen(port, "0.0.0.0")
+          .listen(currentPort, "0.0.0.0")
           .once('listening', () => {
-            log(`Server started successfully on port ${port}`);
+            log(`Server started successfully on port ${currentPort}`);
             resolve(server);
           })
           .once('error', (error: NodeJS.ErrnoException) => {
             if (error.code === 'EADDRINUSE' && retryCount < maxRetries) {
               retryCount++;
-              log(`Port ${port} in use, retrying in 1 second...`);
+              currentPort++;
+              log(`Port ${currentPort - 1} in use, trying port ${currentPort}...`);
               server.close();
               setTimeout(attemptListen, 1000);
             } else {
-              console.error('Server startup failed:', error);
-              reject(error);
+              const errorMessage = `Server startup failed: ${error.message}`;
+              console.error(errorMessage);
+              reject(new Error(errorMessage));
             }
           });
       }
