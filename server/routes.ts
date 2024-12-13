@@ -703,15 +703,23 @@ export function registerRoutes(app: Express) {
       }).returning();
 
       // Create sale items
-      await db.insert(saleItems).values(
-        items.map((item: SaleItemInput) => ({
+      // Map and validate sale items before insertion
+      const validatedItems = items.map((item: SaleItemInput) => {
+        if (!item.product_id) {
+          throw new Error(`Invalid product ID for item: ${JSON.stringify(item)}`);
+        }
+        return {
           saleId: sale.id,
           productId: item.product_id,
           quantity: item.quantity,
           price: item.price,
           unitPricingId: item.unit_pricing_id || null,
-        }))
-      );
+        };
+      });
+
+      console.log('Inserting sale items:', validatedItems);
+      
+      await db.insert(saleItems).values(validatedItems);
 
       // Update product stock
       for (const item of items) {

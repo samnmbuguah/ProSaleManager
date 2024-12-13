@@ -99,14 +99,23 @@ export default function PosPage() {
     items: CartItem[];
   }) => {
     try {
-      const saleData = {
-        items: cartItems.map(item => ({
+      // Prepare sale data with validated items
+      const saleItems = cartItems.map(item => {
+        const priceUnit = item.price_units.find(p => p.unit_type === item.selectedUnit);
+        return {
           product_id: item.id,
           quantity: item.quantity,
           price: item.unitPrice.toString(),
           name: item.name,
-          unit_pricing_id: item.price_units.find(p => p.unit_type === item.selectedUnit)?.id
-        })),
+          unit_pricing_id: priceUnit?.id
+        };
+      });
+
+      console.log('Cart items:', cartItems);
+      console.log('Prepared sale items:', saleItems);
+
+      const saleData = {
+        items: saleItems,
         total: cartItems.reduce((sum, item) => sum + item.total, 0).toString(),
         paymentMethod: 'cash',
         paymentStatus: 'paid',
