@@ -35,61 +35,11 @@ const productSchema = z.object({
   stock_unit: z.enum(UnitTypes),
   price_units: z.array(z.object({
     unit_type: z.enum(UnitTypes),
-    quantity: z.number().min(1, "Quantity must be at least 1"),
-    buying_price: z.string()
-      .min(1, "Buying price is required")
-      .refine(
-        (price) => !isNaN(Number(price)) && Number(price) > 0,
-        "Buying price must be a positive number"
-      ),
-    selling_price: z.string()
-      .min(1, "Selling price is required")
-      .refine(
-        (price) => !isNaN(Number(price)) && Number(price) > 0,
-        "Selling price must be a positive number"
-      ),
+    quantity: z.number(),
+    buying_price: z.string().min(1, "Buying price is required"),
+    selling_price: z.string().min(1, "Selling price is required"),
     is_default: z.boolean()
-  }))
-  .min(1, "At least one price unit is required")
-  .refine(
-    (units) => {
-      // Ensure at least one unit is marked as default
-      return units.some(unit => unit.is_default);
-    },
-    {
-      message: "One unit must be marked as default"
-    }
-  )
-  .refine(
-    (units) => {
-      // Check that selling price is higher than buying price for each unit
-      return units.every(unit => 
-        Number(unit.selling_price) > Number(unit.buying_price)
-      );
-    },
-    {
-      message: "Selling price must be higher than buying price for all units"
-    }
-  )
-  .refine(
-    (units) => {
-      // Verify that bulk units have appropriate discounts
-      const sortedUnits = [...units].sort((a, b) => a.quantity - b.quantity);
-      for (let i = 1; i < sortedUnits.length; i++) {
-        const prevUnit = sortedUnits[i - 1];
-        const currentUnit = sortedUnits[i];
-        const prevUnitPrice = Number(prevUnit.selling_price) / prevUnit.quantity;
-        const currentUnitPrice = Number(currentUnit.selling_price) / currentUnit.quantity;
-        if (currentUnitPrice >= prevUnitPrice) {
-          return false;
-        }
-      }
-      return true;
-    },
-    {
-      message: "Bulk units should have lower per-unit prices"
-    }
-  )
+  })).min(1, "At least one price unit is required")
 });
 
 export interface PriceUnit {
