@@ -11,10 +11,12 @@ import { Label } from "@/components/ui/label";
 import { formatCurrency } from "@/lib/utils";
 
 interface PriceUnit {
-  stock_unit: string;
-  selling_price: string;
-  buying_price: string;
-  conversion_rate: string;
+  id: number;
+  unit_type: string;
+  quantity: number;
+  selling_price: string | number;
+  buying_price: string | number;
+  is_default: boolean;
 }
 
 interface CartItem {
@@ -24,7 +26,7 @@ interface CartItem {
   selectedUnit: string;
   unitPrice: number;
   total: number;
-  priceUnits: PriceUnit[];
+  price_units?: PriceUnit[];
 }
 
 interface PaymentDialogProps {
