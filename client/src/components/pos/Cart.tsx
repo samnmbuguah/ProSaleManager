@@ -1,9 +1,7 @@
-import type { Product, PriceUnit, UnitTypeValues } from "../../../../db/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
-
-import { CartItem } from "../../types/pos";
+import { CartItem, UnitTypeValues } from "../../types/pos";
 
 interface CartProps {
   items: CartItem[];
