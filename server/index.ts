@@ -200,7 +200,9 @@ async function initializeApp() {
     console.log('Database connection verified');
 
     const server = createServer(app);
-    const port = Number(process.env.PORT) || 5000;
+    let port = Number(process.env.PORT) || 5000;
+    const maxRetries = 3;
+    let retryCount = 0;
 
     // Setup Vite in development
     if (app.get("env") === "development") {
@@ -209,15 +211,39 @@ async function initializeApp() {
       serveStatic(app);
     }
 
-    return new Promise((resolve, reject) => {
-      server.listen(port, "0.0.0.0", () => {
-        log(`Server started successfully on port ${port}`);
-        resolve(server);
-      }).on('error', (error: Error) => {
-        console.error('Failed to start server:', error);
-        reject(error);
+    // Function to try binding to a port
+    const tryBind = (port: number): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        server.listen(port, "0.0.0.0")
+          .once('listening', () => {
+            log(`Server started successfully on port ${port}`);
+            resolve();
+          })
+          .once('error', (error: NodeJS.ErrnoException) => {
+            if (error.code === 'EADDRINUSE') {
+              server.close();
+              reject(new Error(`Port ${port} is in use`));
+            } else {
+              reject(error);
+            }
+          });
       });
-    });
+    };
+
+    // Try to bind to ports with retry logic
+    while (retryCount < maxRetries) {
+      try {
+        await tryBind(port);
+        return server;
+      } catch (error) {
+        retryCount++;
+        if (retryCount === maxRetries) {
+          throw error;
+        }
+        port++; // Try next port
+        log(`Retrying with port ${port}...`);
+      }
+    }
   } catch (error) {
     console.error('Initialization error:', error);
     throw error;
@@ -475,38 +501,8 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
 });
 
-(async () => {
-  const server = createServer(app);
-
-  // Setup Vite in development
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
-
-  // Set environment variables before any deployment checks
-  process.env.PORT = process.env.PORT || '5000';
-
-  // Initialize backup schedule before server start
-  /* try {
-    initializeBackupSchedule();
-    console.log('Backup schedule initialized');
-  } catch (error) {
-    console.error('Backup schedule initialization error:', error);
-  } */
-
-  const port = Number(process.env.PORT) || 5000;
-  
-  try {
-    server.listen(port, "0.0.0.0", () => {
-      log(`Server started successfully on port ${port}`);
-    }).on('error', (error: Error) => {
-      console.error('Failed to start server:', error);
-      process.exit(1);
-    });
-  } catch (error) {
-    console.error('Critical error during server startup:', error);
-    process.exit(1);
-  }
-})();
+// Initialize the application
+initializeApp().catch((error) => {
+  console.error('Critical error during startup:', error);
+  process.exit(1);
+});

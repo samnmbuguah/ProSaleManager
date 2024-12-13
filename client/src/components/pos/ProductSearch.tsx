@@ -134,11 +134,6 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
               const selectedUnit = selectedUnits[product.id] || (product.price_units?.[0]?.unit_type);
               const selectedPrice = product.price_units?.find(
                 (p: PriceUnit) => {
-                  // Ensure price unit has all required fields
-                  if (!p.id || !p.product_id) {
-                    console.error('Invalid price unit:', p);
-                    return false;
-                  }
                   return p.unit_type === selectedUnit;
                 }
               );
