@@ -3,7 +3,14 @@ import type { UnitTypeValues as SchemaUnitTypeValues } from "../../../db/schema"
 
 export type UnitTypeValues = SchemaUnitTypeValues;
 
-export interface PriceUnit extends Omit<SchemaPriceUnit, 'created_at' | 'updated_at'> {
+export interface PriceUnit {
+  id: number;
+  product_id: number;
+  unit_type: UnitTypeValues;
+  quantity: number;
+  buying_price: string;
+  selling_price: string;
+  is_default: boolean;
   created_at?: Date;
   updated_at?: Date;
 }

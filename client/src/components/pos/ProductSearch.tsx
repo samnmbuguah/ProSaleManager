@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Product } from "@db/schema";
 import type { UnitTypeValues } from "@/types/pos";
-import type { PriceUnit } from "./ProductForm";
+import type { PriceUnit } from "@/types/pos";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface ProductSearchProps {
