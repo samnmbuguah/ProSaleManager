@@ -85,6 +85,16 @@ export default function PosPage() {
         ? parseFloat(priceUnit.selling_price)
         : priceUnit.selling_price;
 
+      // Ensure we're passing complete price unit objects including IDs
+      const processedPriceUnits = product.price_units?.map(pu => ({
+        id: pu.id,
+        unit_type: pu.unit_type,
+        quantity: pu.quantity,
+        selling_price: pu.selling_price,
+        buying_price: pu.buying_price,
+        is_default: pu.is_default
+      })) || [];
+
       return [...items, { 
         id: product.id,
         name: product.name,
@@ -92,7 +102,7 @@ export default function PosPage() {
         selectedUnit: selectedUnit,
         unitPrice: sellingPrice,
         total: sellingPrice,
-        price_units: product.price_units || [],
+        price_units: processedPriceUnits,
       }];
     });
   };
@@ -132,14 +142,23 @@ export default function PosPage() {
         }
 
         // Find and validate the selected price unit
-        const priceUnit = item.price_units?.find(p => p.unit_type === item.selectedUnit);
+        if (!item.price_units || !Array.isArray(item.price_units)) {
+          console.error('No price units available for item:', item);
+          throw new Error(`No price units available for ${item.name}`);
+        }
+
+        const priceUnit = item.price_units.find(p => p.unit_type === item.selectedUnit);
         if (!priceUnit) {
-          console.error('Available price units:', item.price_units);
+          console.error('Selected unit not found among available units:', {
+            selectedUnit: item.selectedUnit,
+            availableUnits: item.price_units.map(pu => pu.unit_type)
+          });
           throw new Error(`Price unit '${item.selectedUnit}' not found for ${item.name}`);
         }
+
         if (!priceUnit.id) {
-          console.error('Invalid price unit:', priceUnit);
-          throw new Error(`Invalid price unit configuration for ${item.name}`);
+          console.error('Price unit missing ID:', priceUnit);
+          throw new Error(`Price unit ${item.selectedUnit} for ${item.name} is missing an ID`);
         }
 
         return {
