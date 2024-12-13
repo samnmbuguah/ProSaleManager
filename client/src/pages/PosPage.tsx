@@ -133,8 +133,13 @@ export default function PosPage() {
 
         // Find and validate the selected price unit
         const priceUnit = item.price_units?.find(p => p.unit_type === item.selectedUnit);
-        if (!priceUnit?.id) {
-          throw new Error(`Price unit not found for ${item.name}`);
+        if (!priceUnit) {
+          console.error('Available price units:', item.price_units);
+          throw new Error(`Price unit '${item.selectedUnit}' not found for ${item.name}`);
+        }
+        if (!priceUnit.id) {
+          console.error('Invalid price unit:', priceUnit);
+          throw new Error(`Invalid price unit configuration for ${item.name}`);
         }
 
         return {
