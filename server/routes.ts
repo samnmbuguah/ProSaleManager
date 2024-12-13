@@ -920,6 +920,129 @@ export function registerRoutes(app: Express) {
     }
   });
 
+
+// Expenses endpoints
+app.get("/api/expenses", async (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+  try {
+    const query = db
+      .select({
+        id: expenses.id,
+        description: expenses.description,
+        amount: expenses.amount,
+        category: expenses.category,
+        date: expenses.date,
+        paymentMethod: expenses.paymentMethod,
+        receiptNumber: expenses.receiptNumber,
+        createdAt: expenses.createdAt,
+        user: {
+          id: users.id,
+          username: users.username,
+        }
+      })
+      .from(expenses)
+      .leftJoin(users, eq(users.id, expenses.userId))
+      .orderBy(desc(expenses.date));
+
+    // Apply date range filter if provided
+    if (req.query.startDate && req.query.endDate) {
+      const startDate = new Date(req.query.startDate as string);
+      const endDate = new Date(req.query.endDate as string);
+      query.where(and(
+        gte(expenses.date, startDate),
+        lte(expenses.date, endDate)
+      ));
+    }
+
+    // Apply category filter if provided
+    if (req.query.category) {
+      query.where(eq(expenses.category, req.query.category as string));
+    }
+
+    const allExpenses = await query;
+    res.json(allExpenses);
+  } catch (error) {
+    console.error('Fetch expenses error:', error);
+    res.status(500).json({ error: "Failed to fetch expenses" });
+  }
+});
+
+app.post("/api/expenses", async (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+  try {
+    const result = expenseValidationSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({
+        error: "Invalid expense data",
+        details: result.error.issues
+      });
+    }
+
+    const [expense] = await db.insert(expenses)
+      .values({
+        ...result.data,
+        userId: req.user!.id,
+      })
+      .returning();
+
+    res.json(expense);
+  } catch (error) {
+    console.error('Create expense error:', error);
+    res.status(500).json({ error: "Failed to create expense" });
+  }
+});
+
+app.get("/api/expenses/:id", async (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+  try {
+    const [expense] = await db
+      .select({
+        id: expenses.id,
+        description: expenses.description,
+        amount: expenses.amount,
+        category: expenses.category,
+        date: expenses.date,
+        paymentMethod: expenses.paymentMethod,
+        receiptNumber: expenses.receiptNumber,
+        createdAt: expenses.createdAt,
+        user: {
+          id: users.id,
+          username: users.username,
+        }
+      })
+      .from(expenses)
+      .leftJoin(users, eq(users.id, expenses.userId))
+      .where(eq(expenses.id, parseInt(req.params.id)))
+      .limit(1);
+
+    if (!expense) {
+      return res.status(404).json({ error: "Expense not found" });
+    }
+
+    res.json(expense);
+  } catch (error) {
+    console.error('Fetch expense details error:', error);
+    res.status(500).json({ error: "Failed to fetch expense details" });
+  }
+});
+
+// Get expense categories endpoint
+app.get("/api/expenses/categories", async (req, res) => {
+  if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+  try {
+    const categories = await db
+      .select({ category: expenses.category })
+      .from(expenses)
+      .groupBy(expenses.category)
+      .orderBy(expenses.category);
+    
+    res.json(categories.map(c => c.category));
+  } catch (error) {
+    console.error('Fetch expense categories error:', error);
+    res.status(500).json({ error: "Failed to fetch expense categories" });
+  }
+});
+
   // Update sales endpoint to handle loyalty points
   const calculateLoyaltyPoints = (total: number) => Math.floor(total / 100); // 1 point per 100 spent
 
