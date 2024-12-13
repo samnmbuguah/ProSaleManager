@@ -3,7 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Product, PriceUnit, UnitTypeValues } from "../../../../db/schema";
+import type { Product } from "@db/schema";
+import type { UnitTypeValues } from "@/types/pos";
+import type { PriceUnit } from "./ProductForm";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface ProductSearchProps {
@@ -27,13 +29,33 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
 
     setIsSearching(true);
     try {
-      const response = await fetch(`/api/products/search?q=${encodeURIComponent(value)}`);
+      // Ensure proper encoding of search query
+      const encodedQuery = encodeURIComponent(value.trim());
+      const response = await fetch(`/api/products/search?q=${encodedQuery}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Search response error:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        });
         throw new Error(`Search failed: ${response.statusText}`);
       }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Invalid response format from server');
+      }
+
       const results = await response.json();
       console.log('Search results:', results);
-      setSearchResults(results);
+      setSearchResults(Array.isArray(results) ? results : []);
     } catch (error) {
       console.error("Search failed:", error);
       setSearchResults([]);
