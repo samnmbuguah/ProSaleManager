@@ -6,7 +6,7 @@ import {
   type UnitTypeValues,
   defaultUnitQuantities
 } from '../../db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, ilike } from 'drizzle-orm';
 import { z } from "zod";
 
 const router = Router();
@@ -118,10 +118,11 @@ router.get('/', async (req, res) => {
 });
 // Search products endpoint
 router.get('/search', async (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  
   try {
     const query = req.query.q as string;
     if (!query) {
-      res.setHeader('Content-Type', 'application/json');
       return res.json([]);
     }
 
@@ -140,13 +141,12 @@ router.get('/search', async (req, res) => {
         stock_unit: products.stock_unit,
         default_unit_pricing_id: products.default_unit_pricing_id,
         buying_price: products.buying_price,
-        selling_price: products.selling_price
+        selling_price: products.selling_price,
+        is_active: products.is_active
       })
       .from(products)
-      .where(sql`LOWER(${products.name}) LIKE ${`%${query.toLowerCase()}%`}`)
+      .where(ilike(products.name, `%${query}%`))
       .orderBy(products.name);
-
-    console.log('Found products:', searchResults);
 
     // Fetch price units for each product
     const productsWithPricing = await Promise.all(
@@ -156,8 +156,6 @@ router.get('/search', async (req, res) => {
             .select()
             .from(unitPricing)
             .where(eq(unitPricing.product_id, product.id));
-
-          console.log(`Price units for product ${product.id}:`, pricing);
 
           return {
             ...product,
@@ -181,14 +179,10 @@ router.get('/search', async (req, res) => {
       })
     );
 
-    // Always set content type before sending response
-    res.setHeader('Content-Type', 'application/json');
-    res.json(productsWithPricing);
+    return res.json(productsWithPricing);
   } catch (error) {
     console.error('Error searching products:', error);
-    // Ensure we send JSON even for errors
-    res.setHeader('Content-Type', 'application/json');
-    res.status(500).json({ 
+    return res.status(500).json({ 
       error: 'Failed to search products',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
