@@ -69,17 +69,18 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
       return;
     }
 
-    // Verify all required fields are present
-    const requiredFields = ['id', 'product_id', 'unit_type', 'quantity', 'selling_price', 'buying_price', 'is_default'] as const;
-    const missingFields = requiredFields.filter(field => !(field in selectedPriceUnit));
-    
-    if (missingFields.length > 0) {
-      console.error("Price unit missing required fields:", {
-        missingFields,
-        priceUnit: selectedPriceUnit
-      });
-      return;
-    }
+    // Create a complete price unit with all required fields
+    const completeSelectedUnit = {
+      id: selectedPriceUnit.id || 0,
+      product_id: product.id,
+      unit_type: selectedPriceUnit.unit_type,
+      quantity: selectedPriceUnit.quantity,
+      buying_price: selectedPriceUnit.buying_price,
+      selling_price: selectedPriceUnit.selling_price,
+      is_default: selectedPriceUnit.is_default,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
 
     onSelect(product, selectedUnit);
   };
