@@ -17,6 +17,7 @@ externalPort = 80
 [[ports]]
 localPort = 5001
 externalPort = 3000
+exposeLocalhost = true
 
 [workflows]
 runButton = "Project"
@@ -37,6 +38,10 @@ args = "Development Server"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Backend API"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Frontend Dev Server"
 
 [[workflows.workflow]]
 name = "Generate Migration"
@@ -81,3 +86,18 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Frontend Dev Server"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd client && npx vite --port 5001"
+waitForPort = 5001
