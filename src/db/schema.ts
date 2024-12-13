@@ -42,6 +42,8 @@ export const productSchema = z.object({
 });
 
 export type UnitPriceUnit = {
+  id?: number;
+  product_id?: number;
   unit_type: UnitTypeValues;
   quantity: number;
   buying_price: string;

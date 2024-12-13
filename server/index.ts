@@ -531,8 +531,5 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
 });
 
-// Initialize the application
-initializeApp().catch((error) => {
-  console.error('Critical error during startup:', error);
-  process.exit(1);
-});
+// Application initialization is handled at the top level
+// No need for duplicate initialization here
