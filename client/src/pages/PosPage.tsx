@@ -18,9 +18,10 @@ interface PriceUnit {
   updated_at: Date;
 }
 
-interface ExtendedProduct extends Product {
+interface ExtendedProduct extends Omit<Product, 'price_units' | 'default_unit_pricing'> {
   price_units?: PriceUnit[];
   default_unit_pricing?: PriceUnit | null;
+  unit_pricing?: PriceUnit[];
 }
 
 interface CartItem {
@@ -30,15 +31,15 @@ interface CartItem {
   selectedUnit: string;
   unitPrice: number;
   total: number;
-  price_units: PriceUnit[];
+  price_units?: PriceUnit[];
 }
 
 interface SaleItem {
-  product_id: number;
-  quantity: number;
-  price: number;
+  product_id: string;
+  quantity: string;
+  price: string;
   name: string;
-  unit_pricing_id: number | null;
+  unit_pricing_id: string | null;
 }
 
 interface SaleData {
@@ -120,36 +121,53 @@ export default function PosPage() {
     items: CartItem[];
   }) => {
     try {
+      if (!cartItems.length) {
+        throw new Error('No items in cart');
+      }
+
       const saleItems = cartItems.map(item => {
-        const priceUnit = item.price_units.find(p => p.unit_type === item.selectedUnit);
-        if (!priceUnit) {
+        // Validate required item properties
+        if (!item.id || !item.name || typeof item.quantity !== 'number' || typeof item.unitPrice !== 'number') {
+          throw new Error(`Invalid item data for ${item.name || 'unknown item'}`);
+        }
+
+        // Find and validate the selected price unit
+        const priceUnit = item.price_units?.find(p => p.unit_type === item.selectedUnit);
+        if (!priceUnit?.id) {
           throw new Error(`Price unit not found for ${item.name}`);
         }
+
         return {
           product_id: item.id.toString(),
-          quantity: item.quantity.toString(),
-          price: item.unitPrice.toString(),
+          quantity: Math.max(0, Math.round(item.quantity)).toString(),
+          price: item.unitPrice.toFixed(2),
           name: item.name,
           unit_pricing_id: priceUnit.id.toString()
         };
       });
 
-      const total = cartItems.reduce((sum, item) => sum + item.total, 0);
+      // Calculate total with proper number handling
+      const total = cartItems.reduce((sum, item) => {
+        const itemTotal = typeof item.total === 'number' ? item.total : 0;
+        return sum + itemTotal;
+      }, 0);
+
       const saleData: SaleData = {
         items: saleItems,
-        total: total.toString(),
+        total: total.toFixed(2),
         paymentMethod: 'cash',
         paymentStatus: 'paid',
-        amountPaid: paymentDetails.amountPaid.toString(),
-        changeAmount: paymentDetails.change.toString(),
+        amountPaid: paymentDetails.amountPaid.toFixed(2),
+        changeAmount: paymentDetails.change.toFixed(2),
         cashAmount: paymentDetails.amountPaid,
       };
-      
+
       await createSale(saleData);
       setCartItems([]);
       setIsPaymentOpen(false);
     } catch (error) {
       console.error('Error completing sale:', error);
+      alert(error instanceof Error ? error.message : 'Failed to complete sale');
     }
   };
 
