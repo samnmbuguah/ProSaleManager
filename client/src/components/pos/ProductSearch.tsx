@@ -48,14 +48,21 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
         throw new Error(`Search failed: ${response.statusText}`);
       }
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Invalid response format from server');
-      }
-
       const results = await response.json();
       console.log('Search results:', results);
-      setSearchResults(Array.isArray(results) ? results : []);
+      
+      // If the server returns an error object
+      if (results.error) {
+        throw new Error(results.error);
+      }
+      
+      // Ensure we have an array of products
+      if (!Array.isArray(results)) {
+        console.error('Unexpected response format:', results);
+        throw new Error('Invalid response format from server');
+      }
+      
+      setSearchResults(results);
     } catch (error) {
       console.error("Search failed:", error);
       setSearchResults([]);
