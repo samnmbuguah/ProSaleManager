@@ -16,7 +16,7 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedUnits, setSelectedUnits] = useState<Record<number, string>>({});
+  const [selectedUnits, setSelectedUnits] = useState<Record<number, UnitTypeValues>>({});
 
   const handleSearch = async (value: string) => {
     setQuery(value);
@@ -37,7 +37,7 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
     }
   };
 
-  const handleUnitChange = (productId: number, stockUnit: string) => {
+  const handleUnitChange = (productId: number, stockUnit: UnitTypeValues) => {
     setSelectedUnits(prev => ({
       ...prev,
       [productId]: stockUnit
@@ -45,7 +45,7 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
   };
 
   const handleAddToCart = (product: Product) => {
-    const selectedUnit = selectedUnits[product.id] || product.stock_unit;
+    const selectedUnit = selectedUnits[product.id] || (product.stock_unit as UnitTypeValues);
     if (!selectedUnit) {
       console.error("No unit selected");
       return;
@@ -66,19 +66,6 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
       });
       return;
     }
-
-    // Create a complete price unit with all required fields
-    const completeSelectedUnit = {
-      id: selectedPriceUnit.id || 0,
-      product_id: product.id,
-      unit_type: selectedPriceUnit.unit_type,
-      quantity: selectedPriceUnit.quantity,
-      buying_price: selectedPriceUnit.buying_price,
-      selling_price: selectedPriceUnit.selling_price,
-      is_default: selectedPriceUnit.is_default,
-      created_at: new Date(),
-      updated_at: new Date()
-    };
 
     onSelect(product, selectedUnit);
   };
@@ -131,7 +118,7 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
                     </div>
                     <Select
                       value={selectedUnit}
-                      onValueChange={(value) => handleUnitChange(product.id, value)}
+                      onValueChange={(value) => handleUnitChange(product.id, value as UnitTypeValues)}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select unit">
