@@ -6,25 +6,7 @@ import { PaymentDialog } from "../components/pos/PaymentDialog";
 import type { Product, UnitPricing } from "../../../db/schema";
 import { usePos } from "../hooks/use-pos";
 
-type PriceUnit = UnitPricing;
-
-interface CartItem {
-  id: number;
-  name: string;
-  quantity: number;
-  selectedUnit: string;
-  unitPrice: number;
-  total: number;
-  price_units: PriceUnit[];
-}
-
-interface SaleItem {
-  product_id: number;
-  quantity: number;
-  price: number;
-  name: string;
-  unit_pricing_id: number;
-}
+import { CartItem, SaleItem } from "../types/pos";
 
 interface SaleData {
   items: SaleItem[];
@@ -41,7 +23,7 @@ export default function PosPage() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const { products, searchProducts, createSale, isProcessing } = usePos();
 
-  const handleAddToCart = (product: Product, selectedUnit: string) => {
+  const handleAddToCart = (product: Product, selectedUnit: UnitTypeValues) => {
     setCartItems(items => {
       // Find the complete price unit with all required fields
       const priceUnit = product.price_units?.find(p => p.unit_type === selectedUnit);
@@ -106,11 +88,7 @@ export default function PosPage() {
     setIsPaymentOpen(true);
   };
 
-  const handlePaymentComplete = async (paymentDetails: {
-    amountPaid: number;
-    change: number;
-    items: CartItem[];
-  }) => {
+  const handlePaymentComplete = async (paymentDetails: PaymentDetails) => {
     try {
       if (!cartItems.length) {
         throw new Error('No items in cart');
