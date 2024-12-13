@@ -6,18 +6,18 @@ interface SaleItem {
   product_id: number;
   quantity: number;
   price: number;
-  unit_pricing_id?: number | null;
+  name: string;
+  unit_pricing_id: number;
 }
 
 interface SaleData {
   items: SaleItem[];
-  customerId?: number;
   total: string;
   paymentMethod: string;
   paymentStatus: string;
   amountPaid: string;
   changeAmount: string;
-  cashAmount?: number;
+  cashAmount: number;
 }
 
 export interface ReceiptData {

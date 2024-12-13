@@ -11,17 +11,16 @@ interface PriceUnit {
   product_id: number;
   unit_type: string;
   quantity: number;
-  selling_price: string | number;
-  buying_price: string | number;
+  selling_price: string;
+  buying_price: string;
   is_default: boolean;
-  created_at: Date;
-  updated_at: Date;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 interface ExtendedProduct extends Omit<Product, 'price_units' | 'default_unit_pricing'> {
   price_units?: PriceUnit[];
   default_unit_pricing?: PriceUnit | null;
-  unit_pricing?: PriceUnit[];
 }
 
 interface CartItem {
@@ -35,11 +34,11 @@ interface CartItem {
 }
 
 interface SaleItem {
-  product_id: string;
-  quantity: string;
-  price: string;
+  product_id: number;
+  quantity: number;
+  price: number;
   name: string;
-  unit_pricing_id: string | null;
+  unit_pricing_id: number;
 }
 
 interface SaleData {
@@ -162,11 +161,11 @@ export default function PosPage() {
         }
 
         return {
-          product_id: item.id.toString(),
-          quantity: Math.max(0, Math.round(item.quantity)).toString(),
-          price: item.unitPrice.toFixed(2),
+          product_id: item.id,
+          quantity: Math.max(0, Math.round(item.quantity)),
+          price: Number(item.unitPrice.toFixed(2)),
           name: item.name,
-          unit_pricing_id: priceUnit.id.toString()
+          unit_pricing_id: priceUnit.id
         };
       });
 
