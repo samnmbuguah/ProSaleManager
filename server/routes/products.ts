@@ -118,9 +118,10 @@ router.get('/', async (req, res) => {
 });
 // Search products endpoint
 router.get('/search', async (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  
   try {
+    // Always set JSON content type
+    res.setHeader('Content-Type', 'application/json');
+    
     const query = req.query.q as string;
     if (!query) {
       return res.json([]);
@@ -128,59 +129,69 @@ router.get('/search', async (req, res) => {
 
     console.log('Searching for products with query:', query);
 
-    const searchResults = await db
-      .select({
-        id: products.id,
-        name: products.name,
-        sku: products.sku,
-        category: products.category,
-        stock: products.stock,
-        min_stock: products.min_stock,
-        max_stock: products.max_stock,
-        reorder_point: products.reorder_point,
-        stock_unit: products.stock_unit,
-        default_unit_pricing_id: products.default_unit_pricing_id,
-        buying_price: products.buying_price,
-        selling_price: products.selling_price
-      })
-      .from(products)
-      .where(ilike(products.name, `%${query}%`))
-      .orderBy(products.name);
+    const searchResults = await db.transaction(async (tx) => {
+      // First get matching products
+      const products_found = await tx
+        .select({
+          id: products.id,
+          name: products.name,
+          sku: products.sku,
+          category: products.category,
+          stock: products.stock,
+          min_stock: products.min_stock,
+          max_stock: products.max_stock,
+          reorder_point: products.reorder_point,
+          stock_unit: products.stock_unit,
+          default_unit_pricing_id: products.default_unit_pricing_id,
+          buying_price: products.buying_price,
+          selling_price: products.selling_price
+        })
+        .from(products)
+        .where(ilike(products.name, `%${query}%`))
+        .orderBy(products.name);
 
-    // Fetch price units for each product
-    const productsWithPricing = await Promise.all(
-      searchResults.map(async (product) => {
-        try {
-          const pricing = await db
+      // Then fetch price units for all found products in one query
+      const product_ids = products_found.map(p => p.id);
+      const all_price_units = product_ids.length > 0 
+        ? await tx
             .select()
             .from(unitPricing)
-            .where(eq(unitPricing.product_id, product.id));
+            .where(sql`${unitPricing.product_id} = ANY(ARRAY[${product_ids}]::int[])`)
+        : [];
 
-          return {
-            ...product,
-            price_units: pricing.map(unit => ({
-              id: unit.id,
-              product_id: product.id,
-              unit_type: unit.unit_type,
-              quantity: unit.quantity,
-              buying_price: unit.buying_price.toString(),
-              selling_price: unit.selling_price.toString(),
-              is_default: unit.is_default
-            }))
-          };
-        } catch (err) {
-          console.error(`Error fetching pricing for product ${product.id}:`, err);
-          return {
-            ...product,
-            price_units: []
-          };
-        }
-      })
-    );
+      // Map price units to their products
+      return products_found.map(product => {
+        const product_price_units = all_price_units
+          .filter(unit => unit.product_id === product.id)
+          .map(unit => ({
+            id: unit.id,
+            product_id: unit.product_id,
+            unit_type: unit.unit_type as UnitTypeValues,
+            quantity: unit.quantity,
+            buying_price: unit.buying_price.toString(),
+            selling_price: unit.selling_price.toString(),
+            is_default: unit.is_default,
+            created_at: unit.created_at,
+            updated_at: unit.updated_at
+          }));
 
-    return res.json(productsWithPricing);
+        // Find default pricing unit
+        const defaultUnit = product_price_units.find(unit => unit.is_default);
+
+        return {
+          ...product,
+          price_units: product_price_units,
+          default_unit_pricing: defaultUnit || null
+        };
+      });
+    });
+
+    console.log(`Found ${searchResults.length} products with pricing information`);
+    return res.json(searchResults);
+
   } catch (error) {
     console.error('Error searching products:', error);
+    // Ensure we still send JSON even for errors
     return res.status(500).json({ 
       error: 'Failed to search products',
       details: error instanceof Error ? error.message : 'Unknown error'
