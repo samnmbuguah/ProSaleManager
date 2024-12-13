@@ -3,12 +3,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Product, PriceUnit } from "../../../../db/schema";
+import type { Product, PriceUnit, UnitTypeValues } from "../../../../db/schema";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface ProductSearchProps {
   products: Product[];
-  onSelect: (product: Product, selectedUnit: string) => void;
+  onSelect: (product: Product, selectedUnit: UnitTypeValues) => void;
   searchProducts: (query: string) => Promise<Product[]>;
 }
 

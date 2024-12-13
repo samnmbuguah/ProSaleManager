@@ -203,9 +203,7 @@ export function registerRoutes(app: Express) {
               quantity: unit.quantity,
               buying_price: unit.buying_price.toString(),
               selling_price: unit.selling_price.toString(),
-              is_default: unit.is_default,
-              created_at: unit.created_at || new Date(),
-              updated_at: unit.updated_at || new Date()
+              is_default: unit.is_default
             }));
 
             // Find default pricing unit
