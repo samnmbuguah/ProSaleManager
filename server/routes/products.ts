@@ -6,7 +6,7 @@ import {
   type UnitTypeValues,
   defaultUnitQuantities
 } from '../../db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { z } from "zod";
 
 const router = Router();
@@ -124,6 +124,8 @@ router.get('/search', async (req, res) => {
       return res.json([]);
     }
 
+    console.log('Searching for products with query:', query);
+
     const searchResults = await db
       .select({
         id: products.id,
@@ -135,11 +137,16 @@ router.get('/search', async (req, res) => {
         max_stock: products.max_stock,
         reorder_point: products.reorder_point,
         stock_unit: products.stock_unit,
+        is_active: products.is_active,
         default_unit_pricing_id: products.default_unit_pricing_id
       })
       .from(products)
-      .where(sql`LOWER(${products.name}) LIKE LOWER(${'%' + query + '%'})`)
+      .where(
+        sql`LOWER(${products.name}) LIKE ${`%${query.toLowerCase()}%`}`
+      )
       .orderBy(products.name);
+
+    console.log('Found products:', searchResults);
 
     // Fetch price units for each product
     const productsWithPricing = await Promise.all(
@@ -148,6 +155,8 @@ router.get('/search', async (req, res) => {
           .select()
           .from(unitPricing)
           .where(eq(unitPricing.product_id, product.id));
+
+        console.log(`Price units for product ${product.id}:`, pricing);
 
         return {
           ...product,
@@ -164,10 +173,14 @@ router.get('/search', async (req, res) => {
       })
     );
 
+    res.setHeader('Content-Type', 'application/json');
     res.json(productsWithPricing);
   } catch (error) {
     console.error('Error searching products:', error);
-    res.status(500).json({ error: 'Failed to search products' });
+    res.status(500).json({ 
+      error: 'Failed to search products',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
