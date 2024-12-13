@@ -1,0 +1,160 @@
+Starting database initialization...
+02:45:59 PM [express] serving on port 5000
+Database migrations completed successfully
+Database connection verified
+
+ ERROR(TypeScript)  Cannot find name 'ExtendedProduct'.
+ FILE  /home/runner/ProSaleManager/client/src/components/pos/ProductSearch.tsx:49:37
+
+    47 |   };
+    48 |
+  > 49 |   const handleAddToCart = (product: ExtendedProduct) => {
+       |                                     ^^^^^^^^^^^^^^^
+    50 |     const selectedUnit = selectedUnits[product.id] || product.stock_unit;
+    51 |     if (!selectedUnit) {
+    52 |       console.error("No unit selected");
+
+ ERROR(TypeScript)  Parameter 'p' implicitly has an 'any' type.
+ FILE  /home/runner/ProSaleManager/client/src/components/pos/ProductSearch.tsx:58:8
+
+    56 |     // Find the complete price unit that matches the selected unit type
+    57 |     const selectedPriceUnit = product.price_units?.find(
+  > 58 |       (p): p is UnitPricing => 
+       |        ^
+    59 |         p.unit_type === selectedUnit && 
+    60 |         typeof p.id === 'number' && 
+    61 |         typeof p.product_id === 'number'
+
+ ERROR(TypeScript)  Parameter 'p' implicitly has an 'any' type.
+ FILE  /home/runner/ProSaleManager/client/src/components/pos/ProductSearch.tsx:67:50
+
+    65 |       console.error("Selected unit not found in price units or missing required fields:", {
+    66 |         selectedUnit,
+  > 67 |         availableUnits: product.price_units?.map(p => ({
+       |                                                  ^
+    68 |           unit_type: p.unit_type,
+    69 |           has_id: typeof p.id === 'number',
+    70 |           has_product_id: typeof p.product_id === 'number'
+
+ ERROR(TypeScript)  Type 'CartItem[]' is not assignable to type 'CartItem[]'. Two different types with this name exist, but they are unrelated.
+  Property 'priceUnits' is missing in type 'CartItem' but required in type 'CartItem'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/PosPage.tsx:194:11
+
+    192 |       <div className="bg-card rounded-lg border p-4">
+    193 |         <Cart
+  > 194 |           items={cartItems}
+        |           ^^^^^
+    195 |           onUpdateQuantity={handleUpdateQuantity}
+    196 |           onCheckout={handleCheckout}
+    197 |           total={cartItems.reduce((sum, item) => sum + item.total, 0)}
+
+ ERROR(TypeScript)  Type '(paymentDetails: {    amountPaid: number;    change: number;    items: CartItem[];}) => Promise<void>' is not assignable to type '(paymentDetails: { amountPaid: number; change: number; items: CartItem[]; }) => Promise<void>'.
+  Types of parameters 'paymentDetails' and 'paymentDetails' are incompatible.
+    Type '{ amountPaid: number; change: number; items: CartItem[]; }' is not assignable to type '{ amountPaid: number; change: number; items: CartItem[]; }'. Two different types with this name exist, but they are unrelated.
+      Types of property 'items' are incompatible.
+        Type 'CartItem[]' is not assignable to type 'CartItem[]'. Two different types with this name exist, but they are unrelated.
+          Type 'CartItem' is not assignable to type 'CartItem'. Two different types with this name exist, but they are unrelated.
+            Types of property 'price_units' are incompatible.
+              Type 'PriceUnit[] | undefined' is not assignable to type '{ id: number; created_at: Date; updated_at: Date; buying_price: string; selling_price: string; product_id: number; unit_type: string; quantity: number; is_default: boolean; }[]'.
+                Type 'undefined' is not assignable to type '{ id: number; created_at: Date; updated_at: Date; buying_price: string; selling_price: string; product_id: number; unit_type: string; quantity: number; is_default: boolean; }[]'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/PosPage.tsx:205:9
+
+    203 |         onClose={() => setIsPaymentOpen(false)}
+    204 |         cartItems={cartItems}
+  > 205 |         onProcessPayment={handlePaymentComplete}
+        |         ^^^^^^^^^^^^^^^^
+    206 |       />
+    207 |     </div>
+    208 |   );
+
+[TypeScript] Found 5 errors. Watching for file changes.
+Fetching products with pricing information...
+Found 3 products
+Fetching pricing for product 92
+Fetching pricing for product 91
+Fetching pricing for product 93
+Found pricing: [
+  {
+    id: 118,
+    unit_type: 'per_piece',
+    quantity: 1,
+    buying_price: '200.00',
+    selling_price: '250.00',
+    is_default: true
+  },
+  {
+    id: 119,
+    unit_type: 'three_piece',
+    quantity: 3,
+    buying_price: '540.00',
+    selling_price: '675.00',
+    is_default: false
+  },
+  {
+    id: 120,
+    unit_type: 'dozen',
+    quantity: 12,
+    buying_price: '2040.00',
+    selling_price: '2550.00',
+    is_default: false
+  }
+]
+Found 3 price units for product 92
+02:50:35 PM [express] GET /api/suppliers 304 in 130ms :: [{"id":1,"name":"Samuel Mbugua Nyambura","em…
+02:50:35 PM [express] GET /api/product-suppliers 304 in 168ms :: []
+02:50:35 PM [express] GET /api/purchase-orders 304 in 173ms :: []
+Found pricing: [
+  {
+    id: 115,
+    unit_type: 'per_piece',
+    quantity: 1,
+    buying_price: '120.00',
+    selling_price: '150.00',
+    is_default: true
+  },
+  {
+    id: 116,
+    unit_type: 'three_piece',
+    quantity: 3,
+    buying_price: '324.00',
+    selling_price: '405.00',
+    is_default: false
+  },
+  {
+    id: 117,
+    unit_type: 'dozen',
+    quantity: 12,
+    buying_price: '1224.00',
+    selling_price: '1530.00',
+    is_default: false
+  }
+]
+Found 3 price units for product 91
+Found pricing: [
+  {
+    id: 121,
+    unit_type: 'per_piece',
+    quantity: 1,
+    buying_price: '150.00',
+    selling_price: '180.00',
+    is_default: true
+  },
+  {
+    id: 122,
+    unit_type: 'three_piece',
+    quantity: 3,
+    buying_price: '405.00',
+    selling_price: '486.00',
+    is_default: false
+  },
+  {
+    id: 123,
+    unit_type: 'dozen',
+    quantity: 12,
+    buying_price: '1530.00',
+    selling_price: '1836.00',
+    is_default: false
+  }
+]
+Found 3 price units for product 93
+02:50:35 PM [express] GET /api/products 304 in 681ms :: [{"id":92,"name":"Cooking Oil","stock":50,"ca…

@@ -46,7 +46,7 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
     }));
   };
 
-  const handleAddToCart = (product: ExtendedProduct) => {
+  const handleAddToCart = (product: Product) => {
     const selectedUnit = selectedUnits[product.id] || product.stock_unit;
     if (!selectedUnit) {
       console.error("No unit selected");
@@ -54,22 +54,21 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
     }
 
     // Find the complete price unit that matches the selected unit type
-    const selectedPriceUnit = product.price_units?.find(
-      (p): p is UnitPricing => 
-        p.unit_type === selectedUnit && 
-        typeof p.id === 'number' && 
-        typeof p.product_id === 'number'
+    const selectedPriceUnit = product.price_units?.find(p => 
+      p.unit_type === selectedUnit
     );
-  
+
     if (!selectedPriceUnit) {
-      console.error("Selected unit not found in price units or missing required fields:", {
+      console.error("Selected unit not found in price units:", {
         selectedUnit,
-        availableUnits: product.price_units?.map(p => ({
-          unit_type: p.unit_type,
-          has_id: typeof p.id === 'number',
-          has_product_id: typeof p.product_id === 'number'
-        }))
+        availableUnits: product.price_units?.map(p => p.unit_type)
       });
+      return;
+    }
+
+    // Verify the price unit has all required fields
+    if (typeof selectedPriceUnit.id !== 'number' || typeof selectedPriceUnit.product_id !== 'number') {
+      console.error("Price unit missing required fields:", selectedPriceUnit);
       return;
     }
 
