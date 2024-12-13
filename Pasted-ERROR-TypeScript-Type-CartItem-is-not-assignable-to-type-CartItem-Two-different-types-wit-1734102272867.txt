@@ -1,0 +1,56 @@
+ERROR(TypeScript)  Type 'CartItem[]' is not assignable to type 'CartItem[]'. Two different types with this name exist, but they are unrelated.
+  Type 'CartItem' is not assignable to type 'CartItem'. Two different types with this name exist, but they are unrelated.
+    Types of property 'selectedUnit' are incompatible.
+      Type 'string' is not assignable to type '"per_piece" | "three_piece" | "dozen"'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/PosPage.tsx:194:11
+
+    192 |       <div className="bg-card rounded-lg border p-4">
+    193 |         <Cart
+  > 194 |           items={cartItems}
+        |           ^^^^^
+    195 |           onUpdateQuantity={handleUpdateQuantity}
+    196 |           onCheckout={handleCheckout}
+    197 |           total={cartItems.reduce((sum, item) => sum + item.total, 0)}
+
+ ERROR(TypeScript)  Type '(paymentDetails: {    amountPaid: number;    change: number;    items: CartItem[];}) => Promise<void>' is not assignable to type '(paymentDetails: { amountPaid: number; change: number; items: CartItem[]; }) => Promise<void>'.
+  Types of parameters 'paymentDetails' and 'paymentDetails' are incompatible.
+    Type '{ amountPaid: number; change: number; items: CartItem[]; }' is not assignable to type '{ amountPaid: number; change: number; items: CartItem[]; }'. Two different types with this name exist, but they are unrelated.
+      Types of property 'items' are incompatible.
+        Type 'CartItem[]' is not assignable to type 'CartItem[]'. Two different types with this name exist, but they are unrelated.
+          Type 'CartItem' is not assignable to type 'CartItem'. Two different types with this name exist, but they are unrelated.
+            Types of property 'price_units' are incompatible.
+              Type 'PriceUnit[] | undefined' is not assignable to type 'UnitPricing[]'.
+                Type 'undefined' is not assignable to type 'UnitPricing[]'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/PosPage.tsx:205:9
+
+    203 |         onClose={() => setIsPaymentOpen(false)}
+    204 |         cartItems={cartItems}
+  > 205 |         onProcessPayment={handlePaymentComplete}
+        |         ^^^^^^^^^^^^^^^^
+    206 |       />
+    207 |     </div>
+    208 |   );
+
+ ERROR(TypeScript)  Property 'created_at' does not exist on type '{ id: number; unit_type: string; quantity: number; buying_price: string; selling_price: string; is_default: boolean; }'.
+ FILE  /home/runner/ProSaleManager/server/routes.ts:207:32
+
+    205 |               selling_price: unit.selling_price.toString(),
+    206 |               is_default: unit.is_default,
+  > 207 |               created_at: unit.created_at || new Date(),
+        |                                ^^^^^^^^^^
+    208 |               updated_at: unit.updated_at || new Date()
+    209 |             }));
+    210 |
+
+ ERROR(TypeScript)  Property 'updated_at' does not exist on type '{ id: number; unit_type: string; quantity: number; buying_price: string; selling_price: string; is_default: boolean; }'.
+ FILE  /home/runner/ProSaleManager/server/routes.ts:208:32
+
+    206 |               is_default: unit.is_default,
+    207 |               created_at: unit.created_at || new Date(),
+  > 208 |               updated_at: unit.updated_at || new Date()
+        |                                ^^^^^^^^^^
+    209 |             }));
+    210 |
+    211 |             // Find default pricing unit
+
+[TypeScript] Found 4 errors. Watching for file changes.
