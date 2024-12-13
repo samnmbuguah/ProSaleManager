@@ -121,6 +121,7 @@ router.get('/search', async (req, res) => {
   try {
     const query = req.query.q as string;
     if (!query) {
+      res.setHeader('Content-Type', 'application/json');
       return res.json([]);
     }
 
@@ -137,12 +138,12 @@ router.get('/search', async (req, res) => {
         max_stock: products.max_stock,
         reorder_point: products.reorder_point,
         stock_unit: products.stock_unit,
-        default_unit_pricing_id: products.default_unit_pricing_id
+        default_unit_pricing_id: products.default_unit_pricing_id,
+        buying_price: products.buying_price,
+        selling_price: products.selling_price
       })
       .from(products)
-      .where(
-        sql`LOWER(${products.name}) LIKE ${`%${query.toLowerCase()}%`}`
-      )
+      .where(sql`LOWER(${products.name}) LIKE ${`%${query.toLowerCase()}%`}`)
       .orderBy(products.name);
 
     console.log('Found products:', searchResults);
@@ -150,32 +151,43 @@ router.get('/search', async (req, res) => {
     // Fetch price units for each product
     const productsWithPricing = await Promise.all(
       searchResults.map(async (product) => {
-        const pricing = await db
-          .select()
-          .from(unitPricing)
-          .where(eq(unitPricing.product_id, product.id));
+        try {
+          const pricing = await db
+            .select()
+            .from(unitPricing)
+            .where(eq(unitPricing.product_id, product.id));
 
-        console.log(`Price units for product ${product.id}:`, pricing);
+          console.log(`Price units for product ${product.id}:`, pricing);
 
-        return {
-          ...product,
-          price_units: pricing.map(unit => ({
-            id: unit.id,
-            product_id: product.id,
-            unit_type: unit.unit_type,
-            quantity: unit.quantity,
-            buying_price: unit.buying_price.toString(),
-            selling_price: unit.selling_price.toString(),
-            is_default: unit.is_default
-          }))
-        };
+          return {
+            ...product,
+            price_units: pricing.map(unit => ({
+              id: unit.id,
+              product_id: product.id,
+              unit_type: unit.unit_type,
+              quantity: unit.quantity,
+              buying_price: unit.buying_price.toString(),
+              selling_price: unit.selling_price.toString(),
+              is_default: unit.is_default
+            }))
+          };
+        } catch (err) {
+          console.error(`Error fetching pricing for product ${product.id}:`, err);
+          return {
+            ...product,
+            price_units: []
+          };
+        }
       })
     );
 
+    // Always set content type before sending response
     res.setHeader('Content-Type', 'application/json');
     res.json(productsWithPricing);
   } catch (error) {
     console.error('Error searching products:', error);
+    // Ensure we send JSON even for errors
+    res.setHeader('Content-Type', 'application/json');
     res.status(500).json({ 
       error: 'Failed to search products',
       details: error instanceof Error ? error.message : 'Unknown error'
