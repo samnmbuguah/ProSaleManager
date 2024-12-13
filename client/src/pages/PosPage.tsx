@@ -7,14 +7,16 @@ import type { Product } from "../../../db/schema";
 import { usePos } from "../hooks/use-pos";
 
 interface PriceUnit {
-  stock_unit: string;
+  unit_type: string;
+  quantity: number;
   selling_price: string;
   buying_price: string;
-  conversion_rate: string;
+  is_default: boolean;
 }
 
 interface ExtendedProduct extends Product {
-  priceUnits?: PriceUnit[];
+  price_units?: PriceUnit[];
+  default_unit_pricing?: PriceUnit | null;
 }
 
 interface CartItem {
@@ -24,7 +26,7 @@ interface CartItem {
   selectedUnit: string;
   unitPrice: number;
   total: number;
-  priceUnits: PriceUnit[];
+  price_units: PriceUnit[];
 }
 
 export default function PosPage() {
@@ -34,9 +36,9 @@ export default function PosPage() {
 
   const handleAddToCart = (product: ExtendedProduct, selectedUnit: string) => {
     setCartItems(items => {
-      const priceUnit = product.priceUnits?.find((p: PriceUnit) => p.stock_unit === selectedUnit);
+      const priceUnit = product.price_units?.find(p => p.unit_type === selectedUnit);
       if (!priceUnit) {
-        console.error("Selected price unit not found");
+        console.error("Selected price unit not found", { selectedUnit, availableUnits: product.price_units });
         return items;
       }
 
@@ -67,7 +69,7 @@ export default function PosPage() {
         selectedUnit: selectedUnit,
         unitPrice: sellingPrice,
         total: sellingPrice,
-        priceUnits: product.priceUnits || [],
+        price_units: product.price_units || [],
       }];
     });
   };
