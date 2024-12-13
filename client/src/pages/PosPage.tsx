@@ -43,9 +43,16 @@ export default function PosPage() {
 
   const handleAddToCart = (product: Product, selectedUnit: string) => {
     setCartItems(items => {
+      // Find the complete price unit with all required fields
       const priceUnit = product.price_units?.find(p => p.unit_type === selectedUnit);
       if (!priceUnit) {
         console.error("Selected price unit not found", { selectedUnit, availableUnits: product.price_units });
+        return items;
+      }
+
+      // Verify price unit has all required fields
+      if (!priceUnit.id || !priceUnit.product_id) {
+        console.error("Price unit missing required fields:", priceUnit);
         return items;
       }
 

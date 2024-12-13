@@ -16,7 +16,7 @@ interface ProductSearchProps {
 
 export function ProductSearch({ products, onSelect, searchProducts }: ProductSearchProps) {
   const [query, setQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<ExtendedProduct[]>([]);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedUnits, setSelectedUnits] = useState<Record<number, string>>({});
 
@@ -53,13 +53,20 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
       return;
     }
 
-    // Verify that the selected price unit exists and has all required fields
-    const selectedPriceUnit = product.price_units?.find(p => 
-      p.unit_type === selectedUnit && p.id && p.product_id
-    );
-
+    // Find the complete price unit that matches the selected unit type
+    const selectedPriceUnit = product.price_units?.find(p => p.unit_type === selectedUnit);
+    
     if (!selectedPriceUnit) {
-      console.error("Selected price unit is invalid or missing required fields");
+      console.error("Selected unit not found in price units:", {
+        selectedUnit,
+        availableUnits: product.price_units?.map(p => p.unit_type)
+      });
+      return;
+    }
+
+    // Verify the price unit has all required fields
+    if (!selectedPriceUnit.id || !selectedPriceUnit.product_id) {
+      console.error("Price unit missing required fields:", selectedPriceUnit);
       return;
     }
 
