@@ -1,4 +1,7 @@
-import type { PriceUnit, UnitTypeValues } from "../../../db/schema";
+import type { PriceUnit } from "../../../db/schema";
+import type { UnitTypeValues as SchemaUnitTypeValues } from "../../../db/schema";
+
+export type UnitTypeValues = SchemaUnitTypeValues;
 
 export interface CartItem {
   id: number;
@@ -24,4 +27,4 @@ export interface PaymentDetails {
   items: CartItem[];
 }
 
-export type { UnitTypeValues };
+export { UnitTypeValues };
