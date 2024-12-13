@@ -7,15 +7,18 @@ import type { Product } from "../../../../db/schema";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface PriceUnit {
-  id?: number;
+  id: number;
+  product_id: number;
   unit_type: string;
   quantity: number;
   selling_price: string;
   buying_price: string;
   is_default: boolean;
+  created_at: Date;
+  updated_at: Date;
 }
 
-interface ExtendedProduct extends Product {
+interface ExtendedProduct extends Omit<Product, 'price_units' | 'default_unit_pricing'> {
   price_units?: PriceUnit[];
   default_unit_pricing?: PriceUnit | null;
 }

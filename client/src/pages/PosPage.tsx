@@ -14,8 +14,8 @@ interface PriceUnit {
   selling_price: string;
   buying_price: string;
   is_default: boolean;
-  created_at?: Date;
-  updated_at?: Date;
+  created_at: Date;
+  updated_at: Date;
 }
 
 interface ExtendedProduct extends Omit<Product, 'price_units' | 'default_unit_pricing'> {
@@ -30,7 +30,7 @@ interface CartItem {
   selectedUnit: string;
   unitPrice: number;
   total: number;
-  price_units?: PriceUnit[];
+  price_units: PriceUnit[];
 }
 
 interface SaleItem {
@@ -80,21 +80,22 @@ export default function PosPage() {
         );
       }
       
-      const sellingPrice = typeof priceUnit.selling_price === 'string' 
-        ? parseFloat(priceUnit.selling_price)
-        : priceUnit.selling_price;
+      const sellingPrice = parseFloat(priceUnit.selling_price);
 
-      // Ensure we're passing complete price unit objects including IDs
-      const processedPriceUnits = product.price_units?.map(pu => ({
+      // Ensure we have all required PriceUnit properties
+      const processedPriceUnits: PriceUnit[] = (product.price_units || []).map(pu => ({
         id: pu.id,
+        product_id: pu.product_id,
         unit_type: pu.unit_type,
         quantity: pu.quantity,
         selling_price: pu.selling_price,
         buying_price: pu.buying_price,
-        is_default: pu.is_default
-      })) || [];
+        is_default: pu.is_default,
+        created_at: pu.created_at,
+        updated_at: pu.updated_at
+      }));
 
-      return [...items, { 
+      const newCartItem: CartItem = {
         id: product.id,
         name: product.name,
         quantity: 1,
@@ -102,7 +103,9 @@ export default function PosPage() {
         unitPrice: sellingPrice,
         total: sellingPrice,
         price_units: processedPriceUnits,
-      }];
+      };
+
+      return [...items, newCartItem];
     });
   };
 
