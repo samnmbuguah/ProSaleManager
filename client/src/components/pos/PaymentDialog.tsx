@@ -10,34 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatCurrency } from "@/lib/utils";
 
-interface PriceUnit {
-  id: number;
-  unit_type: string;
-  quantity: number;
-  selling_price: string | number;
-  buying_price: string | number;
-  is_default: boolean;
-}
-
-interface CartItem {
-  id: number;
-  name: string;
-  quantity: number;
-  selectedUnit: string;
-  unitPrice: number;
-  total: number;
-  price_units?: PriceUnit[];
-}
+import type { CartItem, PaymentDetails } from "../../types/pos";
 
 interface PaymentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   cartItems: CartItem[];
-  onProcessPayment: (paymentDetails: {
-    amountPaid: number;
-    change: number;
-    items: CartItem[];
-  }) => Promise<void>;
+  onProcessPayment: (paymentDetails: PaymentDetails) => Promise<void>;
 }
 
 export function PaymentDialog({

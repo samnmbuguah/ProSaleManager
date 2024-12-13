@@ -3,10 +3,10 @@ import { SaleTerminal } from "../components/pos/SaleTerminal";
 import { ProductSearch } from "../components/pos/ProductSearch";
 import { Cart } from "../components/pos/Cart";
 import { PaymentDialog } from "../components/pos/PaymentDialog";
-import type { Product, UnitPricing } from "../../../db/schema";
+import type { Product } from "../../../db/schema";
 import { usePos } from "../hooks/use-pos";
-
-import { CartItem, SaleItem } from "../types/pos";
+import type { CartItem, SaleItem, PaymentDetails } from "../types/pos";
+import type { UnitTypeValues } from "../../../db/schema";
 
 interface SaleData {
   items: SaleItem[];
