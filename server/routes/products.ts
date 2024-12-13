@@ -122,7 +122,7 @@ router.get('/search', async (req, res) => {
   
   try {
     const query = req.query.q as string;
-    if (!query) {
+    if (!query || typeof query !== 'string') {
       return res.json([]);
     }
 
@@ -147,6 +147,10 @@ router.get('/search', async (req, res) => {
       .where(ilike(products.name, `%${query}%`))
       .orderBy(products.name);
 
+    if (!Array.isArray(searchResults)) {
+      throw new Error('Database query did not return an array');
+    }
+
     // Fetch price units for each product
     const productsWithPricing = await Promise.all(
       searchResults.map(async (product) => {
@@ -155,6 +159,14 @@ router.get('/search', async (req, res) => {
             .select()
             .from(unitPricing)
             .where(eq(unitPricing.product_id, product.id));
+
+          if (!Array.isArray(pricing)) {
+            console.error(`Invalid pricing data for product ${product.id}`);
+            return {
+              ...product,
+              price_units: []
+            };
+          }
 
           return {
             ...product,

@@ -29,7 +29,6 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
 
     setIsSearching(true);
     try {
-      // Ensure proper encoding of search query
       const encodedQuery = encodeURIComponent(value.trim());
       const response = await fetch(`/api/products/search?q=${encodedQuery}`, {
         headers: {
@@ -39,33 +38,38 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Search response error:', {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorText
-        });
-        throw new Error(`Search failed: ${response.statusText}`);
+        throw new Error(`Search request failed with status ${response.status}`);
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        throw new Error('Server did not return JSON');
       }
 
       const results = await response.json();
-      console.log('Search results:', results);
       
-      // If the server returns an error object
       if (results.error) {
         throw new Error(results.error);
       }
-      
-      // Ensure we have an array of products
+
       if (!Array.isArray(results)) {
-        console.error('Unexpected response format:', results);
-        throw new Error('Invalid response format from server');
+        throw new Error('Server returned invalid data format');
       }
-      
-      setSearchResults(results);
+
+      // Validate the structure of each product
+      const validatedResults = results.filter(product => {
+        if (!product || typeof product !== 'object') return false;
+        if (!('id' in product) || !('name' in product)) return false;
+        if (!Array.isArray(product.price_units)) return false;
+        return true;
+      });
+
+      console.log('Validated search results:', validatedResults);
+      setSearchResults(validatedResults);
     } catch (error) {
       console.error("Search failed:", error);
       setSearchResults([]);
+      // You might want to show this error to the user through a toast notification
     } finally {
       setIsSearching(false);
     }
