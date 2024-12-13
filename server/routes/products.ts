@@ -141,8 +141,7 @@ router.get('/search', async (req, res) => {
         stock_unit: products.stock_unit,
         default_unit_pricing_id: products.default_unit_pricing_id,
         buying_price: products.buying_price,
-        selling_price: products.selling_price,
-        is_active: products.is_active
+        selling_price: products.selling_price
       })
       .from(products)
       .where(ilike(products.name, `%${query}%`))
