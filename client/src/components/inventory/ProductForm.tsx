@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 
 import { z } from "zod";
-import { UnitTypeValues, defaultUnitQuantities } from "../../../db/schema";
+import { UnitTypeValues, defaultUnitQuantities } from "@db/schema";
 
 const UnitTypes = ['per_piece', 'three_piece', 'dozen'] as const;
 
