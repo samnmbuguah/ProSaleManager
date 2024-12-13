@@ -126,17 +126,18 @@ export default function PosPage() {
           throw new Error(`Price unit not found for ${item.name}`);
         }
         return {
-          product_id: item.id,
-          quantity: item.quantity,
-          price: item.unitPrice,
+          product_id: item.id.toString(),
+          quantity: item.quantity.toString(),
+          price: item.unitPrice.toString(),
           name: item.name,
-          unit_pricing_id: priceUnit.id
+          unit_pricing_id: priceUnit.id.toString()
         };
       });
 
+      const total = cartItems.reduce((sum, item) => sum + item.total, 0);
       const saleData: SaleData = {
         items: saleItems,
-        total: cartItems.reduce((sum, item) => sum + item.total, 0).toString(),
+        total: total.toString(),
         paymentMethod: 'cash',
         paymentStatus: 'paid',
         amountPaid: paymentDetails.amountPaid.toString(),
