@@ -7,12 +7,15 @@ import type { Product } from "../../../db/schema";
 import { usePos } from "../hooks/use-pos";
 
 interface PriceUnit {
-  id?: number;
+  id: number;
+  product_id: number;
   unit_type: string;
   quantity: number;
-  selling_price: string;
-  buying_price: string;
+  selling_price: string | number;
+  buying_price: string | number;
   is_default: boolean;
+  created_at: Date;
+  updated_at: Date;
 }
 
 interface ExtendedProduct extends Product {
@@ -28,6 +31,24 @@ interface CartItem {
   unitPrice: number;
   total: number;
   price_units: PriceUnit[];
+}
+
+interface SaleItem {
+  product_id: number;
+  quantity: number;
+  price: number;
+  name: string;
+  unit_pricing_id: number | null;
+}
+
+interface SaleData {
+  items: SaleItem[];
+  total: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  amountPaid: string;
+  changeAmount: string;
+  cashAmount: number;
 }
 
 export default function PosPage() {
@@ -99,22 +120,21 @@ export default function PosPage() {
     items: CartItem[];
   }) => {
     try {
-      // Prepare sale data with validated items
       const saleItems = cartItems.map(item => {
         const priceUnit = item.price_units.find(p => p.unit_type === item.selectedUnit);
+        if (!priceUnit) {
+          throw new Error(`Price unit not found for ${item.name}`);
+        }
         return {
           product_id: item.id,
           quantity: item.quantity,
-          price: item.unitPrice.toString(),
+          price: item.unitPrice,
           name: item.name,
-          unit_pricing_id: priceUnit?.id
+          unit_pricing_id: priceUnit.id
         };
       });
 
-      console.log('Cart items:', cartItems);
-      console.log('Prepared sale items:', saleItems);
-
-      const saleData = {
+      const saleData: SaleData = {
         items: saleItems,
         total: cartItems.reduce((sum, item) => sum + item.total, 0).toString(),
         paymentMethod: 'cash',
@@ -124,7 +144,6 @@ export default function PosPage() {
         cashAmount: paymentDetails.amountPaid,
       };
       
-      console.log('Sending sale data:', saleData); // Debug log
       await createSale(saleData);
       setCartItems([]);
       setIsPaymentOpen(false);
