@@ -54,21 +54,30 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
     }
 
     // Find the complete price unit that matches the selected unit type
-    const selectedPriceUnit = product.price_units?.find(p => 
-      p.unit_type === selectedUnit
-    );
+    const priceUnits = product.price_units;
+    if (!priceUnits || !Array.isArray(priceUnits)) {
+      console.error("Product has no price units");
+      return;
+    }
 
+    const selectedPriceUnit = priceUnits.find(p => p.unit_type === selectedUnit);
     if (!selectedPriceUnit) {
       console.error("Selected unit not found in price units:", {
         selectedUnit,
-        availableUnits: product.price_units?.map(p => p.unit_type)
+        availableUnits: priceUnits.map(p => p.unit_type)
       });
       return;
     }
 
-    // Verify the price unit has all required fields
-    if (typeof selectedPriceUnit.id !== 'number' || typeof selectedPriceUnit.product_id !== 'number') {
-      console.error("Price unit missing required fields:", selectedPriceUnit);
+    // Verify all required fields are present
+    const requiredFields = ['id', 'product_id', 'unit_type', 'quantity', 'selling_price', 'buying_price', 'is_default'] as const;
+    const missingFields = requiredFields.filter(field => !(field in selectedPriceUnit));
+    
+    if (missingFields.length > 0) {
+      console.error("Price unit missing required fields:", {
+        missingFields,
+        priceUnit: selectedPriceUnit
+      });
       return;
     }
 

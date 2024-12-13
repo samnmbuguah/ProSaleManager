@@ -4,10 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
 
 interface PriceUnit {
-  stock_unit: string;
-  selling_price: string;
+  id: number;
+  product_id: number;
+  unit_type: string;
+  quantity: number;
   buying_price: string;
-  conversion_rate: string;
+  selling_price: string;
+  is_default: boolean;
+  created_at: Date;
+  updated_at: Date;
 }
 
 interface CartItem {
@@ -17,7 +22,7 @@ interface CartItem {
   selectedUnit: string;
   unitPrice: number;
   total: number;
-  priceUnits: PriceUnit[];
+  price_units: PriceUnit[];
 }
 
 interface CartProps {
