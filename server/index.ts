@@ -186,8 +186,8 @@ function log(message: string) {
 
 const app = express();
 
-// Initialize database tables
-(async () => {
+// Initialize database tables and start server
+async function initializeApp() {
   try {
     console.log('Starting database initialization...');
     await migrate(db, {
@@ -198,15 +198,77 @@ const app = express();
     // Verify database connection
     await db.execute(sql`SELECT 1`);
     console.log('Database connection verified');
-  } catch (error) {
-    console.error('Database initialization error:', error);
-    process.exit(1); // Exit if database initialization fails
-  }
-})();
 
-// Setup middleware
+    const server = createServer(app);
+    const port = Number(process.env.PORT) || 5000;
+
+    // Setup Vite in development
+    if (app.get("env") === "development") {
+      await setupVite(app, server);
+    } else {
+      serveStatic(app);
+    }
+
+    return new Promise((resolve, reject) => {
+      server.listen(port, "0.0.0.0", () => {
+        log(`Server started successfully on port ${port}`);
+        resolve(server);
+      }).on('error', (error: Error) => {
+        console.error('Failed to start server:', error);
+        reject(error);
+      });
+    });
+  } catch (error) {
+    console.error('Initialization error:', error);
+    throw error;
+  }
+}
+
+// Start the application
+initializeApp().catch((error) => {
+  console.error('Critical error during startup:', error);
+  process.exit(1);
+});
+
+// Setup core middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Setup CORS
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+// Ensure JSON responses for API routes
+app.use('/api', (req, res, next) => {
+  res.setHeader('Content-Type', 'application/json');
+  
+  // Catch errors in JSON responses
+  const originalJson = res.json;
+  res.json = function(body) {
+    if (body && body.error) {
+      console.error('API Error:', body.error);
+    }
+    return originalJson.call(this, body);
+  };
+  
+  next();
+});
+
+// Global error handler for API routes
+app.use('/api', (err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error('API Error:', err);
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: err.message
+  });
+});
 
 // Setup authentication before routes
 setupAuth(app);
@@ -434,24 +496,17 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     console.error('Backup schedule initialization error:', error);
   } */
 
-  server.listen(Number(process.env.PORT), "0.0.0.0", () => {
-    log(`serving on port ${process.env.PORT}`);
-    
-    // Comment out deployment process
-    /* Promise.resolve().then(async () => {
-      try {
-        const deployment = await handleDeployment();
-        if (!deployment.success) {
-          console.error('Deployment warning:', deployment.error);
-        } else {
-          log('Server deployment completed successfully');
-        }
-      } catch (error) {
-        console.error('Deployment process error:', error);
-      }
-    }); */
-  }).on('error', (error) => {
-    console.error('Error starting server:', error);
+  const port = Number(process.env.PORT) || 5000;
+  
+  try {
+    server.listen(port, "0.0.0.0", () => {
+      log(`Server started successfully on port ${port}`);
+    }).on('error', (error: Error) => {
+      console.error('Failed to start server:', error);
+      process.exit(1);
+    });
+  } catch (error) {
+    console.error('Critical error during server startup:', error);
     process.exit(1);
-  });
+  }
 })();
