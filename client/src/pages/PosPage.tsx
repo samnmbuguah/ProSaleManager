@@ -3,25 +3,10 @@ import { SaleTerminal } from "../components/pos/SaleTerminal";
 import { ProductSearch } from "../components/pos/ProductSearch";
 import { Cart } from "../components/pos/Cart";
 import { PaymentDialog } from "../components/pos/PaymentDialog";
-import type { Product } from "../../../db/schema";
+import type { Product, UnitPricing } from "../../../db/schema";
 import { usePos } from "../hooks/use-pos";
 
-interface PriceUnit {
-  id: number;
-  product_id: number;
-  unit_type: string;
-  quantity: number;
-  selling_price: string;
-  buying_price: string;
-  is_default: boolean;
-  created_at: Date;
-  updated_at: Date;
-}
-
-interface ExtendedProduct extends Omit<Product, 'price_units' | 'default_unit_pricing'> {
-  price_units?: PriceUnit[];
-  default_unit_pricing?: PriceUnit | null;
-}
+type PriceUnit = UnitPricing;
 
 interface CartItem {
   id: number;
@@ -56,17 +41,11 @@ export default function PosPage() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const { products, searchProducts, createSale, isProcessing } = usePos();
 
-  const handleAddToCart = (product: ExtendedProduct, selectedUnit: string) => {
+  const handleAddToCart = (product: Product, selectedUnit: string) => {
     setCartItems(items => {
       const priceUnit = product.price_units?.find(p => p.unit_type === selectedUnit);
       if (!priceUnit) {
         console.error("Selected price unit not found", { selectedUnit, availableUnits: product.price_units });
-        return items;
-      }
-
-      // Verify the price unit has all required fields
-      if (!priceUnit.id || !priceUnit.product_id) {
-        console.error("Price unit missing required fields:", priceUnit);
         return items;
       }
 
@@ -88,19 +67,6 @@ export default function PosPage() {
       
       const sellingPrice = parseFloat(priceUnit.selling_price);
 
-      // Create a complete PriceUnit object for the selected unit
-      const selectedPriceUnit: PriceUnit = {
-        id: priceUnit.id,
-        product_id: priceUnit.product_id,
-        unit_type: priceUnit.unit_type,
-        quantity: priceUnit.quantity,
-        selling_price: priceUnit.selling_price,
-        buying_price: priceUnit.buying_price,
-        is_default: priceUnit.is_default,
-        created_at: priceUnit.created_at,
-        updated_at: priceUnit.updated_at
-      };
-
       const newCartItem: CartItem = {
         id: product.id,
         name: product.name,
@@ -108,7 +74,7 @@ export default function PosPage() {
         selectedUnit: selectedUnit,
         unitPrice: sellingPrice,
         total: sellingPrice,
-        price_units: [selectedPriceUnit], // Only include the selected price unit
+        price_units: [priceUnit], // Use the price unit directly from the product
       };
 
       return [...items, newCartItem];
