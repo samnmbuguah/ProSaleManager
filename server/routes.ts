@@ -197,11 +197,15 @@ export function registerRoutes(app: Express) {
 
             // Transform pricing data to match frontend expectations
             const price_units = pricing.map(unit => ({
+              id: unit.id,
+              product_id: product.id,
               unit_type: unit.unit_type,
               quantity: unit.quantity,
               buying_price: unit.buying_price.toString(),
               selling_price: unit.selling_price.toString(),
-              is_default: unit.is_default
+              is_default: unit.is_default,
+              created_at: unit.created_at || new Date(),
+              updated_at: unit.updated_at || new Date()
             }));
 
             // Find default pricing unit
