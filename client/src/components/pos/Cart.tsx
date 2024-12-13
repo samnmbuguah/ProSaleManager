@@ -1,25 +1,13 @@
-import type { Product } from "../../../../db/schema";
+import type { Product, PriceUnit, UnitTypeValues } from "../../../../db/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
-
-interface PriceUnit {
-  id: number;
-  product_id: number;
-  unit_type: string;
-  quantity: number;
-  buying_price: string;
-  selling_price: string;
-  is_default: boolean;
-  created_at: Date;
-  updated_at: Date;
-}
 
 interface CartItem {
   id: number;
   name: string;
   quantity: number;
-  selectedUnit: string;
+  selectedUnit: UnitTypeValues;
   unitPrice: number;
   total: number;
   price_units: PriceUnit[];
