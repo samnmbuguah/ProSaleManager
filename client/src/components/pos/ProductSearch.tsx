@@ -7,14 +7,17 @@ import type { Product } from "../../../../db/schema";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface PriceUnit {
-  stock_unit: string;
+  id?: number;
+  unit_type: string;
+  quantity: number;
   selling_price: string;
   buying_price: string;
-  conversion_rate: string;
+  is_default: boolean;
 }
 
 interface ExtendedProduct extends Product {
-  priceUnits?: PriceUnit[];
+  price_units?: PriceUnit[];
+  default_unit_pricing?: PriceUnit | null;
 }
 
 interface ProductSearchProps {
@@ -91,9 +94,9 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
             <div>No products found</div>
           ) : (
             displayProducts.map((product) => {
-              const selectedUnit = selectedUnits[product.id] || product.stock_unit;
-              const selectedPrice = product.priceUnits?.find(
-                (p: PriceUnit) => p.stock_unit === selectedUnit
+              const selectedUnit = selectedUnits[product.id] || (product.price_units?.[0]?.unit_type);
+              const selectedPrice = product.price_units?.find(
+                (p: PriceUnit) => p.unit_type === selectedUnit
               );
 
               return (
@@ -101,7 +104,7 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
                   <CardContent className="p-4 space-y-4">
                     <div className="font-semibold">{product.name}</div>
                     <div className="text-sm text-muted-foreground">
-                      Stock: {product.stock} {product.stock_unit}
+                      Stock: {product.stock} {selectedUnit || 'units'}
                     </div>
                     <Select
                       value={selectedUnit}
@@ -110,14 +113,14 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select unit">
                           {selectedPrice && 
-                            `${formatPrice(selectedPrice.selling_price)} per ${selectedPrice.stock_unit}`
+                            `${formatPrice(selectedPrice.selling_price)} per ${selectedPrice.unit_type}`
                           }
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {product.priceUnits?.map((pricing: PriceUnit) => (
-                          <SelectItem key={pricing.stock_unit} value={pricing.stock_unit}>
-                            {formatPrice(pricing.selling_price)} per {pricing.stock_unit}
+                        {product.price_units?.map((pricing: PriceUnit) => (
+                          <SelectItem key={pricing.unit_type} value={pricing.unit_type}>
+                            {formatPrice(pricing.selling_price)} per {pricing.unit_type}
                           </SelectItem>
                         ))}
                       </SelectContent>
