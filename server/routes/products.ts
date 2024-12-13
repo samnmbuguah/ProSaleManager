@@ -116,6 +116,60 @@ router.get('/', async (req, res) => {
     });
   }
 });
+// Search products endpoint
+router.get('/search', async (req, res) => {
+  try {
+    const query = req.query.q as string;
+    if (!query) {
+      return res.json([]);
+    }
+
+    const searchResults = await db
+      .select({
+        id: products.id,
+        name: products.name,
+        sku: products.sku,
+        category: products.category,
+        stock: products.stock,
+        min_stock: products.min_stock,
+        max_stock: products.max_stock,
+        reorder_point: products.reorder_point,
+        stock_unit: products.stock_unit,
+        default_unit_pricing_id: products.default_unit_pricing_id
+      })
+      .from(products)
+      .where(sql`LOWER(${products.name}) LIKE LOWER(${'%' + query + '%'})`)
+      .orderBy(products.name);
+
+    // Fetch price units for each product
+    const productsWithPricing = await Promise.all(
+      searchResults.map(async (product) => {
+        const pricing = await db
+          .select()
+          .from(unitPricing)
+          .where(eq(unitPricing.product_id, product.id));
+
+        return {
+          ...product,
+          price_units: pricing.map(unit => ({
+            id: unit.id,
+            product_id: product.id,
+            unit_type: unit.unit_type,
+            quantity: unit.quantity,
+            buying_price: unit.buying_price.toString(),
+            selling_price: unit.selling_price.toString(),
+            is_default: unit.is_default
+          }))
+        };
+      })
+    );
+
+    res.json(productsWithPricing);
+  } catch (error) {
+    console.error('Error searching products:', error);
+    res.status(500).json({ error: 'Failed to search products' });
+  }
+});
 
 // Create a new product with unit pricing
 router.post('/', async (req, res) => {
