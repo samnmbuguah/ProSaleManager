@@ -1,7 +1,12 @@
-import type { PriceUnit } from "../../../db/schema";
+import type { PriceUnit as SchemaPriceUnit } from "../../../db/schema";
 import type { UnitTypeValues as SchemaUnitTypeValues } from "../../../db/schema";
 
 export type UnitTypeValues = SchemaUnitTypeValues;
+
+export interface PriceUnit extends Omit<SchemaPriceUnit, 'created_at' | 'updated_at'> {
+  created_at?: Date;
+  updated_at?: Date;
+}
 
 export interface CartItem {
   id: number;
@@ -18,7 +23,7 @@ export interface SaleItem {
   quantity: number;
   price: number;
   name: string;
-  unit_pricing_id: number | null;
+  unit_pricing_id: number;
 }
 
 export interface PaymentDetails {
@@ -26,5 +31,3 @@ export interface PaymentDetails {
   change: number;
   items: CartItem[];
 }
-
-export { UnitTypeValues };
