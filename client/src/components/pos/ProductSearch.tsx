@@ -54,19 +54,22 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
     }
 
     // Find the complete price unit that matches the selected unit type
-    const selectedPriceUnit = product.price_units?.find(p => p.unit_type === selectedUnit);
-    
+    const selectedPriceUnit = product.price_units?.find(
+      (p): p is UnitPricing => 
+        p.unit_type === selectedUnit && 
+        typeof p.id === 'number' && 
+        typeof p.product_id === 'number'
+    );
+  
     if (!selectedPriceUnit) {
-      console.error("Selected unit not found in price units:", {
+      console.error("Selected unit not found in price units or missing required fields:", {
         selectedUnit,
-        availableUnits: product.price_units?.map(p => p.unit_type)
+        availableUnits: product.price_units?.map(p => ({
+          unit_type: p.unit_type,
+          has_id: typeof p.id === 'number',
+          has_product_id: typeof p.product_id === 'number'
+        }))
       });
-      return;
-    }
-
-    // Verify the price unit has all required fields
-    if (!selectedPriceUnit.id || !selectedPriceUnit.product_id) {
-      console.error("Price unit missing required fields:", selectedPriceUnit);
       return;
     }
 
@@ -131,9 +134,9 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {product.price_units?.filter((p: PriceUnit) => p.id && p.product_id).map((pricing: PriceUnit) => (
+                        {product.price_units?.map((pricing) => (
                           <SelectItem key={pricing.unit_type} value={pricing.unit_type}>
-                            {formatPrice(pricing.selling_price)} per {pricing.unit_type}
+                            {formatPrice(pricing.selling_price)} per {pricing.unit_type.replace('_', ' ')}
                           </SelectItem>
                         ))}
                       </SelectContent>
