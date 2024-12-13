@@ -86,6 +86,8 @@ export const products = pgTable('products', {
   reorder_point: integer('reorder_point'),
   stock_unit: varchar('stock_unit', { length: 20 }).notNull().default('per_piece'),
   default_unit_pricing_id: integer('default_unit_pricing_id'),
+  buying_price: decimal('buying_price', { precision: 10, scale: 2 }).notNull().default('0'),
+  selling_price: decimal('selling_price', { precision: 10, scale: 2 }).notNull().default('0'),
   is_active: boolean('is_active').notNull().default(true),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow()

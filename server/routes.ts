@@ -13,6 +13,7 @@ import {
   insertSupplierSchema,
   insertProductSupplierSchema,
   unitPricing,
+  UnitTypeValues,
 } from "@db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { desc } from "drizzle-orm";
@@ -230,7 +231,85 @@ export function registerRoutes(app: Express) {
   app.post("/api/products", async (req, res) => {
     if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
     try {
-      const [product] = await db.insert(products).values(req.body).returning();
+      const { price_units, ...productData } = req.body as {
+        price_units: Array<{
+          unit_type: UnitTypeValues;
+          quantity: number;
+          buying_price: string;
+          selling_price: string;
+          is_default: boolean;
+        }>;
+        name: string;
+        sku?: string;
+        stock: number;
+        category: string;
+        min_stock?: number;
+        max_stock?: number;
+        reorder_point?: number;
+        stock_unit: UnitTypeValues;
+      };
+
+      // Find default price unit
+      const defaultPriceUnit = price_units.find(unit => unit.is_default) || price_units[0];
+      
+      // Create product first with default price values
+      const [product] = await db.insert(products)
+        .values({
+          name: productData.name,
+          sku: productData.sku || generateSKU(productData.name),
+          stock: productData.stock,
+          category: productData.category,
+          min_stock: productData.min_stock || 0,
+          max_stock: productData.max_stock || 0,
+          reorder_point: productData.reorder_point || 0,
+          stock_unit: productData.stock_unit,
+          buying_price: defaultPriceUnit.buying_price,
+          selling_price: defaultPriceUnit.selling_price,
+          default_unit_pricing_id: null, // Will be updated after creating unit pricing
+        })
+        .returning();
+
+      console.log('Created product:', product);
+
+      if (price_units && Array.isArray(price_units)) {
+        // Insert all unit pricing records
+        const unitPricingData = price_units.map(unit => ({
+          product_id: product.id,
+          unit_type: unit.unit_type,
+          quantity: unit.quantity,
+          buying_price: unit.buying_price,
+          selling_price: unit.selling_price,
+          is_default: unit.is_default,
+        }));
+
+        const insertedPricing = await db.insert(unitPricing)
+          .values(unitPricingData)
+          .returning();
+
+        console.log('Inserted unit pricing:', insertedPricing);
+
+        // Find default unit pricing
+        const defaultPricing = insertedPricing.find(p => p.is_default);
+        if (defaultPricing) {
+          // Update product with default unit pricing ID
+          await db.update(products)
+            .set({ default_unit_pricing_id: defaultPricing.id })
+            .where(eq(products.id, product.id));
+        }
+
+        // Return complete product with pricing
+        return res.json({
+          ...product,
+          price_units: insertedPricing.map(p => ({
+            unit_type: p.unit_type,
+            quantity: p.quantity,
+            buying_price: p.buying_price.toString(),
+            selling_price: p.selling_price.toString(),
+            is_default: p.is_default,
+          })),
+        });
+      }
+
       res.json(product);
     } catch (error) {
       console.error('Create product error:', error);
