@@ -179,6 +179,7 @@ export function registerRoutes(app: Express) {
       const productsWithPricing = await Promise.all(
         allProducts.map(async (product) => {
           try {
+            console.log(`Fetching pricing for product ${product.id}`);
             const pricing = await db
               .select({
                 id: unitPricing.id,
@@ -190,6 +191,7 @@ export function registerRoutes(app: Express) {
               })
               .from(unitPricing)
               .where(eq(unitPricing.product_id, product.id));
+            console.log('Found pricing:', pricing);
 
             console.log(`Found ${pricing.length} price units for product ${product.id}`);
 
@@ -272,6 +274,8 @@ export function registerRoutes(app: Express) {
       console.log('Created product:', product);
 
       if (price_units && Array.isArray(price_units)) {
+        console.log('Received price units:', price_units);
+        
         // Insert all unit pricing records
         const unitPricingData = price_units.map(unit => ({
           product_id: product.id,
@@ -281,6 +285,8 @@ export function registerRoutes(app: Express) {
           selling_price: unit.selling_price,
           is_default: unit.is_default,
         }));
+        
+        console.log('Preparing to insert unit pricing data:', unitPricingData);
 
         const insertedPricing = await db.insert(unitPricing)
           .values(unitPricingData)
