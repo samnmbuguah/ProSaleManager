@@ -143,9 +143,16 @@ router.post("/", async (req, res) => {
         saleId: sale.id,
         productId: parseInt(item.product_id),
         quantity: parseInt(item.quantity),
-        price: parseFloat(item.price),
+        price: item.price,
         unitPricingId: item.unit_pricing_id ? parseInt(item.unit_pricing_id) : null,
       }));
+
+      // Validate all data before insert
+      for (const item of saleItemsData) {
+        if (isNaN(item.productId) || isNaN(item.quantity)) {
+          throw new Error('Invalid product ID or quantity');
+        }
+      }
 
       await db.insert(saleItems).values(saleItemsData);
 
