@@ -7,6 +7,7 @@ import type { Product } from "../../../db/schema";
 import { usePos } from "../hooks/use-pos";
 
 interface PriceUnit {
+  id?: number;
   unit_type: string;
   quantity: number;
   selling_price: string;
@@ -97,21 +98,30 @@ export default function PosPage() {
     change: number;
     items: CartItem[];
   }) => {
-    await createSale({
-      items: cartItems.map(item => ({
-        product_id: item.id,
-        quantity: item.quantity,
-        unit: item.selectedUnit,
-        price: item.unitPrice,
-      })),
-      total: cartItems.reduce((sum, item) => sum + item.total, 0).toString(),
-      paymentMethod: 'cash',
-      paymentStatus: 'paid',
-      amountPaid: paymentDetails.amountPaid.toString(),
-      changeAmount: paymentDetails.change.toString(),
-    });
-    setCartItems([]);
-    setIsPaymentOpen(false);
+    try {
+      const saleData = {
+        items: cartItems.map(item => ({
+          product_id: item.id,
+          quantity: item.quantity,
+          price: item.unitPrice.toString(),
+          name: item.name,
+          unit_pricing_id: item.price_units.find(p => p.unit_type === item.selectedUnit)?.id
+        })),
+        total: cartItems.reduce((sum, item) => sum + item.total, 0).toString(),
+        paymentMethod: 'cash',
+        paymentStatus: 'paid',
+        amountPaid: paymentDetails.amountPaid.toString(),
+        changeAmount: paymentDetails.change.toString(),
+        cashAmount: paymentDetails.amountPaid,
+      };
+      
+      console.log('Sending sale data:', saleData); // Debug log
+      await createSale(saleData);
+      setCartItems([]);
+      setIsPaymentOpen(false);
+    } catch (error) {
+      console.error('Error completing sale:', error);
+    }
   };
 
   return (
