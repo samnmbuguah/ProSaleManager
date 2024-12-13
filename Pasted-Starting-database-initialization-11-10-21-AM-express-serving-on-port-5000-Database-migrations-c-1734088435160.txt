@@ -1,0 +1,230 @@
+Starting database initialization...
+11:10:21 AM [express] serving on port 5000
+Database migrations completed successfully
+Database connection verified
+
+ ERROR(TypeScript)  Type 'Product[]' is not assignable to type 'ExtendedProduct[]'.
+  Type 'Product' is not assignable to type 'ExtendedProduct'.
+    Types of property 'price_units' are incompatible.
+      Type '{ unit_type: string; quantity: number; buying_price: string; selling_price: string; is_default: boolean; }[] | undefined' is not assignable to type 'PriceUnit[] | undefined'.
+        Type '{ unit_type: string; quantity: number; buying_price: string; selling_price: string; is_default: boolean; }[]' is not assignable to type 'PriceUnit[]'.
+          Type '{ unit_type: string; quantity: number; buying_price: string; selling_price: string; is_default: boolean; }' is missing the following properties from type 'PriceUnit': id, product_id, created_at, updated_at
+ FILE  /home/runner/ProSaleManager/client/src/pages/PosPage.tsx:212:13
+
+    210 |         <SaleTerminal>
+    211 |           <ProductSearch
+  > 212 |             products={products || []}
+        |             ^^^^^^^^
+    213 |             onSelect={handleAddToCart}
+    214 |             searchProducts={searchProducts}
+    215 |           />
+
+ ERROR(TypeScript)  Type 'CartItem[]' is not assignable to type 'CartItem[]'. Two different types with this name exist, but they are unrelated.
+  Property 'priceUnits' is missing in type 'CartItem' but required in type 'CartItem'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/PosPage.tsx:221:11
+
+    219 |       <div className="bg-card rounded-lg border p-4">
+    220 |         <Cart
+  > 221 |           items={cartItems}
+        |           ^^^^^
+    222 |           onUpdateQuantity={handleUpdateQuantity}
+    223 |           onCheckout={handleCheckout}
+    224 |           total={cartItems.reduce((sum, item) => sum + item.total, 0)}
+
+ ERROR(TypeScript)  Type '(paymentDetails: {    amountPaid: number;    change: number;    items: CartItem[];}) => Promise<void>' is not assignable to type '(paymentDetails: { amountPaid: number; change: number; items: CartItem[]; }) => Promise<void>'.
+  Types of parameters 'paymentDetails' and 'paymentDetails' are incompatible.
+    Type '{ amountPaid: number; change: number; items: CartItem[]; }' is not assignable to type '{ amountPaid: number; change: number; items: CartItem[]; }'. Two different types with this name exist, but they are unrelated.
+      Types of property 'items' are incompatible.
+        Type 'CartItem[]' is not assignable to type 'CartItem[]'. Two different types with this name exist, but they are unrelated.
+          Type 'CartItem' is not assignable to type 'CartItem'. Two different types with this name exist, but they are unrelated.
+            Types of property 'price_units' are incompatible.
+              Type 'PriceUnit[] | undefined' is not assignable to type 'PriceUnit[]'.
+                Type 'undefined' is not assignable to type 'PriceUnit[]'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/PosPage.tsx:232:9
+
+    230 |         onClose={() => setIsPaymentOpen(false)}
+    231 |         cartItems={cartItems}
+  > 232 |         onProcessPayment={handlePaymentComplete}
+        |         ^^^^^^^^^^^^^^^^
+    233 |       />
+    234 |     </div>
+    235 |   );
+
+[TypeScript] Found 3 errors. Watching for file changes.
+Fetching products with pricing information...
+Found 3 products
+Fetching pricing for product 89
+Fetching pricing for product 88
+Fetching pricing for product 90
+Found pricing: [
+  {
+    id: 109,
+    unit_type: 'per_piece',
+    quantity: 1,
+    buying_price: '200.00',
+    selling_price: '250.00',
+    is_default: true
+  },
+  {
+    id: 110,
+    unit_type: 'three_piece',
+    quantity: 3,
+    buying_price: '540.00',
+    selling_price: '675.00',
+    is_default: false
+  },
+  {
+    id: 111,
+    unit_type: 'dozen',
+    quantity: 12,
+    buying_price: '2040.00',
+    selling_price: '2550.00',
+    is_default: false
+  }
+]
+Found 3 price units for product 89
+11:11:42 AM [express] GET /api/suppliers 304 in 173ms :: [{"id":1,"name":"Samuel Mbugua Nyambura","em…
+11:11:42 AM [express] GET /api/purchase-orders 304 in 174ms :: []
+11:11:42 AM [express] GET /api/product-suppliers 304 in 172ms :: []
+Found pricing: [
+  {
+    id: 106,
+    unit_type: 'per_piece',
+    quantity: 1,
+    buying_price: '120.00',
+    selling_price: '150.00',
+    is_default: true
+  },
+  {
+    id: 107,
+    unit_type: 'three_piece',
+    quantity: 3,
+    buying_price: '324.00',
+    selling_price: '405.00',
+    is_default: false
+  },
+  {
+    id: 108,
+    unit_type: 'dozen',
+    quantity: 12,
+    buying_price: '1224.00',
+    selling_price: '1530.00',
+    is_default: false
+  }
+]
+Found 3 price units for product 88
+Found pricing: [
+  {
+    id: 112,
+    unit_type: 'per_piece',
+    quantity: 1,
+    buying_price: '150.00',
+    selling_price: '180.00',
+    is_default: true
+  },
+  {
+    id: 113,
+    unit_type: 'three_piece',
+    quantity: 3,
+    buying_price: '405.00',
+    selling_price: '486.00',
+    is_default: false
+  },
+  {
+    id: 114,
+    unit_type: 'dozen',
+    quantity: 12,
+    buying_price: '1530.00',
+    selling_price: '1836.00',
+    is_default: false
+  }
+]
+Found 3 price units for product 90
+11:11:42 AM [express] GET /api/products 304 in 688ms :: [{"id":89,"name":"Cooking Oil","stock":50,"ca…
+Fetching products with pricing information...
+Found 3 products
+Fetching pricing for product 89
+Fetching pricing for product 88
+Fetching pricing for product 90
+Found pricing: [
+  {
+    id: 112,
+    unit_type: 'per_piece',
+    quantity: 1,
+    buying_price: '150.00',
+    selling_price: '180.00',
+    is_default: true
+  },
+  {
+    id: 113,
+    unit_type: 'three_piece',
+    quantity: 3,
+    buying_price: '405.00',
+    selling_price: '486.00',
+    is_default: false
+  },
+  {
+    id: 114,
+    unit_type: 'dozen',
+    quantity: 12,
+    buying_price: '1530.00',
+    selling_price: '1836.00',
+    is_default: false
+  }
+]
+Found 3 price units for product 90
+Found pricing: [
+  {
+    id: 106,
+    unit_type: 'per_piece',
+    quantity: 1,
+    buying_price: '120.00',
+    selling_price: '150.00',
+    is_default: true
+  },
+  {
+    id: 107,
+    unit_type: 'three_piece',
+    quantity: 3,
+    buying_price: '324.00',
+    selling_price: '405.00',
+    is_default: false
+  },
+  {
+    id: 108,
+    unit_type: 'dozen',
+    quantity: 12,
+    buying_price: '1224.00',
+    selling_price: '1530.00',
+    is_default: false
+  }
+]
+Found 3 price units for product 88
+Found pricing: [
+  {
+    id: 109,
+    unit_type: 'per_piece',
+    quantity: 1,
+    buying_price: '200.00',
+    selling_price: '250.00',
+    is_default: true
+  },
+  {
+    id: 110,
+    unit_type: 'three_piece',
+    quantity: 3,
+    buying_price: '540.00',
+    selling_price: '675.00',
+    is_default: false
+  },
+  {
+    id: 111,
+    unit_type: 'dozen',
+    quantity: 12,
+    buying_price: '2040.00',
+    selling_price: '2550.00',
+    is_default: false
+  }
+]
+Found 3 price units for product 89
+11:12:00 AM [express] GET /api/products 304 in 282ms :: [{"id":89,"name":"Cooking Oil","stock":50,"ca…

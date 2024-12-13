@@ -3,30 +3,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Product } from "../../../../db/schema";
+import type { Product, UnitPricing } from "../../../../db/schema";
 import { Card, CardContent } from "@/components/ui/card";
 
-interface PriceUnit {
-  id: number;
-  product_id: number;
-  unit_type: string;
-  quantity: number;
-  selling_price: string;
-  buying_price: string;
-  is_default: boolean;
-  created_at: Date;
-  updated_at: Date;
-}
-
-interface ExtendedProduct extends Omit<Product, 'price_units' | 'default_unit_pricing'> {
-  price_units?: PriceUnit[];
-  default_unit_pricing?: PriceUnit | null;
-}
+type PriceUnit = UnitPricing;
 
 interface ProductSearchProps {
-  products: ExtendedProduct[];
-  onSelect: (product: ExtendedProduct, selectedUnit: string) => void;
-  searchProducts: (query: string) => Promise<ExtendedProduct[]>;
+  products: Product[];
+  onSelect: (product: Product, selectedUnit: string) => void;
+  searchProducts: (query: string) => Promise<Product[]>;
 }
 
 export function ProductSearch({ products, onSelect, searchProducts }: ProductSearchProps) {
