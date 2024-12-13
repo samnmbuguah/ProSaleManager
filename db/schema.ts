@@ -244,35 +244,8 @@ export const insertProductSchema = createInsertSchema(products);
 export const selectProductSchema = createSelectSchema(products);
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Product = z.infer<typeof selectProductSchema> & {
-  unit_pricing?: Array<{
-    id: number;
-    product_id: number;
-    unit_type: string;
-    quantity: number;
-    buying_price: string | number;
-    selling_price: string | number;
-    is_default: boolean;
-    created_at: Date;
-    updated_at: Date;
-  }>;
-  default_unit_pricing?: {
-    id: number;
-    product_id: number;
-    unit_type: string;
-    quantity: number;
-    buying_price: string | number;
-    selling_price: string | number;
-    is_default: boolean;
-    created_at: Date;
-    updated_at: Date;
-  } | null;
-  price_units?: Array<{
-    unit_type: string;
-    quantity: number;
-    buying_price: string;
-    selling_price: string;
-    is_default: boolean;
-  }>;
+  price_units?: Array<UnitPricing>;
+  default_unit_pricing?: UnitPricing | null;
 };
 
 export const insertUnitPricingSchema = createInsertSchema(unitPricing);
