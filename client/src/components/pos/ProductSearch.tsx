@@ -67,6 +67,17 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
       console.error("No unit selected");
       return;
     }
+
+    // Verify that the selected price unit exists and has all required fields
+    const selectedPriceUnit = product.price_units?.find(p => 
+      p.unit_type === selectedUnit && p.id && p.product_id
+    );
+
+    if (!selectedPriceUnit) {
+      console.error("Selected price unit is invalid or missing required fields");
+      return;
+    }
+
     onSelect(product, selectedUnit);
   };
 
@@ -99,7 +110,14 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
             displayProducts.map((product) => {
               const selectedUnit = selectedUnits[product.id] || (product.price_units?.[0]?.unit_type);
               const selectedPrice = product.price_units?.find(
-                (p: PriceUnit) => p.unit_type === selectedUnit
+                (p: PriceUnit) => {
+                  // Ensure price unit has all required fields
+                  if (!p.id || !p.product_id) {
+                    console.error('Invalid price unit:', p);
+                    return false;
+                  }
+                  return p.unit_type === selectedUnit;
+                }
               );
 
               return (
@@ -121,7 +139,7 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {product.price_units?.map((pricing: PriceUnit) => (
+                        {product.price_units?.filter((p: PriceUnit) => p.id && p.product_id).map((pricing: PriceUnit) => (
                           <SelectItem key={pricing.unit_type} value={pricing.unit_type}>
                             {formatPrice(pricing.selling_price)} per {pricing.unit_type}
                           </SelectItem>
