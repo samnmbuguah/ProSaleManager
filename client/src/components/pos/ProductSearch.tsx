@@ -27,7 +27,12 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
 
     setIsSearching(true);
     try {
-      const results = await searchProducts(value);
+      const response = await fetch(`/api/products/search?q=${encodeURIComponent(value)}`);
+      if (!response.ok) {
+        throw new Error(`Search failed: ${response.statusText}`);
+      }
+      const results = await response.json();
+      console.log('Search results:', results);
       setSearchResults(results);
     } catch (error) {
       console.error("Search failed:", error);

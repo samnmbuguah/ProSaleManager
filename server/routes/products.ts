@@ -137,7 +137,6 @@ router.get('/search', async (req, res) => {
         max_stock: products.max_stock,
         reorder_point: products.reorder_point,
         stock_unit: products.stock_unit,
-        is_active: products.is_active,
         default_unit_pricing_id: products.default_unit_pricing_id
       })
       .from(products)
