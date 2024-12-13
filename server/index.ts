@@ -189,64 +189,71 @@ const app = express();
 // Initialize database tables and start server
 async function initializeApp() {
   try {
-    console.log('Starting database initialization...');
-    await migrate(db, {
-      migrationsFolder: './migrations',
-    });
-    console.log('Database migrations completed successfully');
+    log('Starting database initialization...');
     
-    // Verify database connection
-    await db.execute(sql`SELECT 1`);
-    console.log('Database connection verified');
-
-    const server = createServer(app);
-    let port = Number(process.env.PORT) || 5000;
-    const maxRetries = 3;
-    let retryCount = 0;
-
-    // Setup Vite in development
-    if (app.get("env") === "development") {
-      await setupVite(app, server);
-    } else {
-      serveStatic(app);
+    // Step 1: Initialize database
+    try {
+      await migrate(db, {
+        migrationsFolder: './migrations',
+      });
+      log('Database migrations completed successfully');
+      
+      // Verify database connection
+      await db.execute(sql`SELECT 1`);
+      log('Database connection verified successfully');
+    } catch (dbError) {
+      console.error('Database initialization failed:', dbError);
+      throw new Error(`Database initialization failed: ${dbError instanceof Error ? dbError.message : 'Unknown error'}`);
     }
 
-    // Function to try binding to a port
-    const tryBind = (port: number): Promise<void> => {
-      return new Promise((resolve, reject) => {
-        server.listen(port, "0.0.0.0")
+    // Step 2: Create HTTP server
+    const server = createServer(app);
+    const port = Number(process.env.PORT) || 5000;
+    
+    // Step 3: Setup environment-specific middleware
+    try {
+      if (app.get("env") === "development") {
+        await setupVite(app, server);
+        log('Development middleware configured');
+      } else {
+        serveStatic(app);
+        log('Production static serving configured');
+      }
+    } catch (middlewareError) {
+      console.error('Middleware setup failed:', middlewareError);
+      throw new Error(`Middleware setup failed: ${middlewareError instanceof Error ? middlewareError.message : 'Unknown error'}`);
+    }
+
+    // Step 4: Start server with retry logic
+    return new Promise<typeof server>((resolve, reject) => {
+      const maxRetries = 3;
+      let retryCount = 0;
+      
+      function attemptListen() {
+        server
+          .listen(port, "0.0.0.0")
           .once('listening', () => {
             log(`Server started successfully on port ${port}`);
-            resolve();
+            resolve(server);
           })
           .once('error', (error: NodeJS.ErrnoException) => {
-            if (error.code === 'EADDRINUSE') {
+            if (error.code === 'EADDRINUSE' && retryCount < maxRetries) {
+              retryCount++;
+              log(`Port ${port} in use, retrying in 1 second...`);
               server.close();
-              reject(new Error(`Port ${port} is in use`));
+              setTimeout(attemptListen, 1000);
             } else {
+              console.error('Server startup failed:', error);
               reject(error);
             }
           });
-      });
-    };
-
-    // Try to bind to ports with retry logic
-    while (retryCount < maxRetries) {
-      try {
-        await tryBind(port);
-        return server;
-      } catch (error) {
-        retryCount++;
-        if (retryCount === maxRetries) {
-          throw error;
-        }
-        port++; // Try next port
-        log(`Retrying with port ${port}...`);
       }
-    }
+
+      attemptListen();
+    });
   } catch (error) {
-    console.error('Initialization error:', error);
-    throw error;
+    console.error('Critical initialization error:', error);
+    process.exit(1);
   }
 }
 

@@ -119,13 +119,13 @@ router.get('/', async (req, res) => {
 // Search products endpoint
 router.get('/search', async (req, res) => {
   try {
-    // Set JSON content type and CORS headers
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    
     const query = req.query.q as string;
     if (!query || query.trim().length === 0) {
-      return res.json({ products: [], message: "No search query provided" });
+      return res.status(200).json({ 
+        success: true,
+        products: [], 
+        message: "No search query provided" 
+      });
     }
 
     console.log('Searching for products with query:', query);
@@ -144,25 +144,31 @@ router.get('/search', async (req, res) => {
           reorder_point: products.reorder_point,
           stock_unit: products.stock_unit,
           default_unit_pricing_id: products.default_unit_pricing_id,
-          buying_price: products.buying_price,
-          selling_price: products.selling_price
+          created_at: products.created_at,
+          updated_at: products.updated_at
         })
         .from(products)
         .where(ilike(products.name, `%${query}%`))
         .orderBy(products.name);
 
-      // Then fetch price units for all found products in one query
-      const product_ids = products_found.map(p => p.id);
-      const all_price_units = product_ids.length > 0 
-        ? await tx
-            .select()
-            .from(unitPricing)
-            .where(sql`${unitPricing.product_id} = ANY(ARRAY[${product_ids}]::int[])`)
-        : [];
+      if (!products_found.length) {
+        return {
+          success: true,
+          products: [],
+          message: "No products found"
+        };
+      }
+
+      // Fetch price units for all found products in one query
+      const productIds = products_found.map(p => p.id);
+      const priceUnits = await tx
+        .select()
+        .from(unitPricing)
+        .where(sql`${unitPricing.product_id} = ANY(ARRAY[${productIds}]::int[])`);
 
       // Map price units to their products
-      return products_found.map(product => {
-        const product_price_units = all_price_units
+      const productsWithPricing = products_found.map(product => {
+        const productPriceUnits = priceUnits
           .filter(unit => unit.product_id === product.id)
           .map(unit => ({
             id: unit.id,
@@ -177,27 +183,32 @@ router.get('/search', async (req, res) => {
           }));
 
         // Find default pricing unit
-        const defaultUnit = product_price_units.find(unit => unit.is_default);
+        const defaultUnit = productPriceUnits.find(unit => unit.is_default);
 
         return {
           ...product,
-          price_units: product_price_units,
+          price_units: productPriceUnits,
           default_unit_pricing: defaultUnit || null
         };
       });
+
+      return {
+        success: true,
+        products: productsWithPricing,
+        message: `Found ${productsWithPricing.length} products`
+      };
     });
 
-    console.log(`Found ${searchResults.length} products with pricing information`);
-    return res.json(searchResults);
+    console.log(`Found ${searchResults.products.length} products with pricing information`);
+    return res.status(200).json(searchResults);
 
   } catch (error) {
     console.error('Error searching products:', error);
-    // Always return a structured JSON response
     return res.status(500).json({ 
       success: false,
-      error: 'Failed to search products',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      products: []
+      products: [],
+      message: error instanceof Error ? error.message : 'Failed to search products',
+      error: error instanceof Error ? error.stack : 'Unknown error'
     });
   }
 });
