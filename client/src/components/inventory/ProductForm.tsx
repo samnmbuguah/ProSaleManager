@@ -43,8 +43,6 @@ const productSchema = z.object({
 });
 
 export interface PriceUnit {
-  id?: number;
-  product_id?: number;
   unit_type: UnitTypeValues;
   quantity: number;
   buying_price: string;

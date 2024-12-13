@@ -186,145 +186,27 @@ function log(message: string) {
 
 const app = express();
 
-// Initialize database tables and start server
-async function initializeApp() {
-  const port = Number(process.env.PORT) || 5000;
-  let server: ReturnType<typeof createServer>;
-
+// Initialize database tables
+(async () => {
   try {
-    log('Starting database initialization...');
-    
-    // Step 1: Initialize database
-    try {
-      await migrate(db, {
-        migrationsFolder: './migrations',
-      });
-      log('Database migrations completed successfully');
-      
-      // Verify database connection
-      await db.execute(sql`SELECT 1`);
-      log('Database connection verified successfully');
-    } catch (dbError) {
-      console.error('Database initialization failed:', dbError);
-      throw new Error(`Database initialization failed: ${dbError instanceof Error ? dbError.message : 'Unknown error'}`);
-    }
-
-    // Step 2: Create HTTP server
-    server = createServer(app);
-    
-    // Set timeout for server operations
-    server.timeout = 30000;
-    
-    // Handle server shutdown gracefully
-    const shutdown = () => {
-      log('Shutting down server...');
-      server.close(() => {
-        log('Server closed');
-        process.exit(0);
-      });
-    };
-
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
-    
-    // Step 3: Setup environment-specific middleware
-    try {
-      if (app.get("env") === "development") {
-        await setupVite(app, server);
-        log('Development middleware configured');
-      } else {
-        serveStatic(app);
-        log('Production static serving configured');
-      }
-    } catch (middlewareError) {
-      console.error('Middleware setup failed:', middlewareError);
-      throw new Error(`Middleware setup failed: ${middlewareError instanceof Error ? middlewareError.message : 'Unknown error'}`);
-    }
-
-    // Step 4: Start server with retry logic
-    return new Promise<typeof server>((resolve, reject) => {
-      const maxRetries = 3;
-      let retryCount = 0;
-      let currentPort = port;
-      
-      function attemptListen() {
-        // Clear any existing listeners
-        server.removeAllListeners();
-        
-        server
-          .listen(currentPort, "0.0.0.0")
-          .once('listening', () => {
-            log(`Server started successfully on port ${currentPort}`);
-            resolve(server);
-          })
-          .once('error', (error: NodeJS.ErrnoException) => {
-            if (error.code === 'EADDRINUSE' && retryCount < maxRetries) {
-              retryCount++;
-              currentPort++;
-              log(`Port ${currentPort - 1} in use, trying port ${currentPort}...`);
-              server.close();
-              setTimeout(attemptListen, 1000);
-            } else {
-              const errorMessage = `Server startup failed: ${error.message}`;
-              console.error(errorMessage);
-              reject(new Error(errorMessage));
-            }
-          });
-      }
-
-      attemptListen();
+    console.log('Starting database initialization...');
+    await migrate(db, {
+      migrationsFolder: './migrations',
     });
+    console.log('Database migrations completed successfully');
+    
+    // Verify database connection
+    await db.execute(sql`SELECT 1`);
+    console.log('Database connection verified');
   } catch (error) {
-    console.error('Critical initialization error:', error);
-    process.exit(1);
+    console.error('Database initialization error:', error);
+    process.exit(1); // Exit if database initialization fails
   }
-}
+})();
 
-// Start the application
-initializeApp().catch((error) => {
-  console.error('Critical error during startup:', error);
-  process.exit(1);
-});
-
-// Setup core middleware
+// Setup middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Setup CORS
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
-
-// Ensure JSON responses for API routes
-app.use('/api', (req, res, next) => {
-  res.setHeader('Content-Type', 'application/json');
-  
-  // Catch errors in JSON responses
-  const originalJson = res.json;
-  res.json = function(body) {
-    if (body && body.error) {
-      console.error('API Error:', body.error);
-    }
-    return originalJson.call(this, body);
-  };
-  
-  next();
-});
-
-// Global error handler for API routes
-app.use('/api', (err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error('API Error:', err);
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: err.message
-  });
-});
 
 // Setup authentication before routes
 setupAuth(app);
@@ -531,5 +413,45 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
 });
 
-// Application initialization is handled at the top level
-// No need for duplicate initialization here
+(async () => {
+  const server = createServer(app);
+
+  // Setup Vite in development
+  if (app.get("env") === "development") {
+    await setupVite(app, server);
+  } else {
+    serveStatic(app);
+  }
+
+  // Set environment variables before any deployment checks
+  process.env.PORT = process.env.PORT || '5000';
+
+  // Initialize backup schedule before server start
+  /* try {
+    initializeBackupSchedule();
+    console.log('Backup schedule initialized');
+  } catch (error) {
+    console.error('Backup schedule initialization error:', error);
+  } */
+
+  server.listen(Number(process.env.PORT), "0.0.0.0", () => {
+    log(`serving on port ${process.env.PORT}`);
+    
+    // Comment out deployment process
+    /* Promise.resolve().then(async () => {
+      try {
+        const deployment = await handleDeployment();
+        if (!deployment.success) {
+          console.error('Deployment warning:', deployment.error);
+        } else {
+          log('Server deployment completed successfully');
+        }
+      } catch (error) {
+        console.error('Deployment process error:', error);
+      }
+    }); */
+  }).on('error', (error) => {
+    console.error('Error starting server:', error);
+    process.exit(1);
+  });
+})();
