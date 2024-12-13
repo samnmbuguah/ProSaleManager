@@ -244,14 +244,29 @@ export const insertProductSchema = createInsertSchema(products);
 export const selectProductSchema = createSelectSchema(products);
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Product = z.infer<typeof selectProductSchema> & {
-  price_units?: Array<UnitPricing>;
-  default_unit_pricing?: UnitPricing | null;
+  price_units?: Array<PriceUnit>;
+  default_unit_pricing?: PriceUnit | null;
 };
 
 export const insertUnitPricingSchema = createInsertSchema(unitPricing);
 export const selectUnitPricingSchema = createSelectSchema(unitPricing);
 export type InsertUnitPricing = z.infer<typeof insertUnitPricingSchema>;
-export type UnitPricing = z.infer<typeof selectUnitPricingSchema>;
+export interface PriceUnit {
+  id: number;
+  product_id: number;
+  unit_type: UnitTypeValues;
+  quantity: number;
+  buying_price: string;
+  selling_price: string;
+  is_default: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export type UnitPricing = z.infer<typeof selectUnitPricingSchema> & {
+  created_at: Date;
+  updated_at: Date;
+};
 
 export const insertCustomerSchema = createInsertSchema(customers);
 export const selectCustomerSchema = createSelectSchema(customers);
