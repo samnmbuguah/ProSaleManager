@@ -36,10 +36,10 @@ const productSchema = z.object({
   price_units: z.array(z.object({
     unit_type: z.enum(UnitTypes),
     quantity: z.number(),
-    buying_price: z.string(),
-    selling_price: z.string(),
+    buying_price: z.string().min(1, "Buying price is required"),
+    selling_price: z.string().min(1, "Selling price is required"),
     is_default: z.boolean()
-  }))
+  })).min(1, "At least one price unit is required")
 });
 
 export interface PriceUnit {
@@ -138,10 +138,17 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
         price_units: data.price_units.map(unit => ({
           ...unit,
           quantity: Number(unit.quantity),
-          buying_price: String(unit.buying_price),
-          selling_price: String(unit.selling_price)
+          buying_price: unit.buying_price.toString(),
+          selling_price: unit.selling_price.toString(),
+          is_default: Boolean(unit.is_default)
         }))
       };
+      
+      // Validate that at least one price unit is marked as default
+      const hasDefaultUnit = formattedData.price_units.some(unit => unit.is_default);
+      if (!hasDefaultUnit) {
+        formattedData.price_units[0].is_default = true;
+      }
       
       console.log('Submitting form data:', formattedData);
       await onSubmit(formattedData);
