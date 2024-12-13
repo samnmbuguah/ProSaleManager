@@ -1,0 +1,196 @@
+Starting database initialization...
+10:57:09 AM [express] serving on port 5000
+Database migrations completed successfully
+Database connection verified
+
+ ERROR(TypeScript)  Interface 'ExtendedProduct' incorrectly extends interface 'Product'.
+  Type 'ExtendedProduct' is not assignable to type '{ unit_pricing?: { id: number; product_id: number; unit_type: string; quantity: number; buying_price: string | number; selling_price: string | number; is_default: boolean; created_at: Date; updated_at: Date; }[] | undefined; default_unit_pricing?: { ...; } | ... 1 more ... | undefined; price_units?: { ...; }[] | und...'.
+    Types of property 'default_unit_pricing' are incompatible.
+      Type 'PriceUnit | null | undefined' is not assignable to type '{ id: number; product_id: number; unit_type: string; quantity: number; buying_price: string | number; selling_price: string | number; is_default: boolean; created_at: Date; updated_at: Date; } | null | undefined'.
+        Type 'PriceUnit' is missing the following properties from type '{ id: number; product_id: number; unit_type: string; quantity: number; buying_price: string | number; selling_price: string | number; is_default: boolean; created_at: Date; updated_at: Date; }': product_id, created_at, updated_at
+ FILE  /home/runner/ProSaleManager/client/src/components/pos/ProductSearch.tsx:18:11
+
+    16 | }
+    17 |
+  > 18 | interface ExtendedProduct extends Product {
+       |           ^^^^^^^^^^^^^^^
+    19 |   price_units?: PriceUnit[];
+    20 |   default_unit_pricing?: PriceUnit | null;
+    21 | }
+
+ ERROR(TypeScript)  Argument of type '(items: CartItem[]) => (CartItem | { id: number; name: string; quantity: number; selectedUnit: string; unitPrice: number; total: number; price_units: { id: number; unit_type: string; quantity: number; selling_price: string; buying_price: string; is_default: boolean; }[]; })[]' is not assignable to parameter of type 'SetStateAction<CartItem[]>'.
+  Type '(items: CartItem[]) => (CartItem | { id: number; name: string; quantity: number; selectedUnit: string; unitPrice: number; total: number; price_units: { id: number; unit_type: string; quantity: number; selling_price: string; buying_price: string; is_default: boolean; }[]; })[]' is not assignable to type '(prevState: CartItem[]) => CartItem[]'.
+    Type '(CartItem | { id: number; name: string; quantity: number; selectedUnit: string; unitPrice: number; total: number; price_units: { id: number; unit_type: string; quantity: number; selling_price: string; buying_price: string; is_default: boolean; }[]; })[]' is not assignable to type 'CartItem[]'.
+      Type 'CartItem | { id: number; name: string; quantity: number; selectedUnit: string; unitPrice: number; total: number; price_units: { id: number; unit_type: string; quantity: number; selling_price: string; buying_price: string; is_default: boolean; }[]; }' is not assignable to type 'CartItem'.
+        Type '{ id: number; name: string; quantity: number; selectedUnit: string; unitPrice: number; total: number; price_units: { id: number; unit_type: string; quantity: number; selling_price: string; buying_price: string; is_default: boolean; }[]; }' is not assignable to type 'CartItem'.
+          Types of property 'price_units' are incompatible.
+            Type '{ id: number; unit_type: string; quantity: number; selling_price: string; buying_price: string; is_default: boolean; }[]' is not assignable to type 'PriceUnit[]'.
+              Property 'product_id' is missing in type '{ id: number; unit_type: string; quantity: number; selling_price: string; buying_price: string; is_default: boolean; }' but required in type 'PriceUnit'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/PosPage.tsx:60:18
+
+    58 |
+    59 |   const handleAddToCart = (product: ExtendedProduct, selectedUnit: string) => {
+  > 60 |     setCartItems(items => {
+       |                  ^^^^^^^^^^
+    61 |       const priceUnit = product.price_units?.find(p => p.unit_type === selectedUnit);
+    62 |       if (!priceUnit) {
+    63 |         console.error("Selected price unit not found", { selectedUnit, availableUnits: product.price_units });
+
+ ERROR(TypeScript)  Type 'Product[]' is not assignable to type 'ExtendedProduct[]'.
+  Type 'Product' is not assignable to type 'ExtendedProduct'.
+    Types of property 'default_unit_pricing' are incompatible.
+      Type '{ id: number; product_id: number; unit_type: string; quantity: number; buying_price: string | number; selling_price: string | number; is_default: boolean; created_at: Date; updated_at: Date; } | null | undefined' is not assignable to type 'PriceUnit | null | undefined'.
+        Type '{ id: number; product_id: number; unit_type: string; quantity: number; buying_price: string | number; selling_price: string | number; is_default: boolean; created_at: Date; updated_at: Date; }' is not assignable to type 'PriceUnit'.
+          Types of property 'selling_price' are incompatible.
+            Type 'string | number' is not assignable to type 'string'.
+              Type 'number' is not assignable to type 'string'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/PosPage.tsx:202:13
+
+    200 |         <SaleTerminal>
+    201 |           <ProductSearch
+  > 202 |             products={products || []}
+        |             ^^^^^^^^
+    203 |             onSelect={handleAddToCart}
+    204 |             searchProducts={searchProducts}
+    205 |           />
+
+ ERROR(TypeScript)  Type '(product: ExtendedProduct, selectedUnit: string) => void' is not assignable to type '(product: ExtendedProduct, selectedUnit: string) => void'. Two different types with this name exist, but they are unrelated.
+  Types of parameters 'product' and 'product' are incompatible.
+    Type 'ExtendedProduct' is not assignable to type 'ExtendedProduct'. Two different types with this name exist, but they are unrelated.
+      Types of property 'price_units' are incompatible.
+        Type 'PriceUnit[] | undefined' is not assignable to type 'PriceUnit[] | undefined'. Two different types with this name exist, but they are unrelated.
+          Type 'PriceUnit[]' is not assignable to type 'PriceUnit[]'. Two different types with this name exist, but they are unrelated.
+            Property 'product_id' is missing in type 'PriceUnit' but required in type 'PriceUnit'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/PosPage.tsx:203:13
+
+    201 |           <ProductSearch
+    202 |             products={products || []}
+  > 203 |             onSelect={handleAddToCart}
+        |             ^^^^^^^^
+    204 |             searchProducts={searchProducts}
+    205 |           />
+    206 |         </SaleTerminal>
+
+ ERROR(TypeScript)  Type 'CartItem[]' is not assignable to type 'CartItem[]'. Two different types with this name exist, but they are unrelated.
+  Property 'priceUnits' is missing in type 'CartItem' but required in type 'CartItem'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/PosPage.tsx:211:11
+
+    209 |       <div className="bg-card rounded-lg border p-4">
+    210 |         <Cart
+  > 211 |           items={cartItems}
+        |           ^^^^^
+    212 |           onUpdateQuantity={handleUpdateQuantity}
+    213 |           onCheckout={handleCheckout}
+    214 |           total={cartItems.reduce((sum, item) => sum + item.total, 0)}
+
+ ERROR(TypeScript)  Type '(paymentDetails: {    amountPaid: number;    change: number;    items: CartItem[];}) => Promise<void>' is not assignable to type '(paymentDetails: { amountPaid: number; change: number; items: CartItem[]; }) => Promise<void>'.
+  Types of parameters 'paymentDetails' and 'paymentDetails' are incompatible.
+    Type '{ amountPaid: number; change: number; items: CartItem[]; }' is not assignable to type '{ amountPaid: number; change: number; items: CartItem[]; }'. Two different types with this name exist, but they are unrelated.
+      Types of property 'items' are incompatible.
+        Type 'CartItem[]' is not assignable to type 'CartItem[]'. Two different types with this name exist, but they are unrelated.
+          Type 'CartItem' is not assignable to type 'CartItem'. Two different types with this name exist, but they are unrelated.
+            Types of property 'price_units' are incompatible.
+              Type 'PriceUnit[] | undefined' is not assignable to type 'PriceUnit[] | undefined'. Two different types with this name exist, but they are unrelated.
+                Type 'PriceUnit[]' is not assignable to type 'PriceUnit[]'. Two different types with this name exist, but they are unrelated.
+                  Property 'product_id' is missing in type 'PriceUnit' but required in type 'PriceUnit'.
+ FILE  /home/runner/ProSaleManager/client/src/pages/PosPage.tsx:222:9
+
+    220 |         onClose={() => setIsPaymentOpen(false)}
+    221 |         cartItems={cartItems}
+  > 222 |         onProcessPayment={handlePaymentComplete}
+        |         ^^^^^^^^^^^^^^^^
+    223 |       />
+    224 |     </div>
+    225 |   );
+
+[TypeScript] Found 6 errors. Watching for file changes.
+Fetching products with pricing information...
+Found 3 products
+Fetching pricing for product 86
+Fetching pricing for product 85
+Fetching pricing for product 87
+Found pricing: [
+  {
+    id: 100,
+    unit_type: 'per_piece',
+    quantity: 1,
+    buying_price: '200.00',
+    selling_price: '250.00',
+    is_default: true
+  },
+  {
+    id: 101,
+    unit_type: 'three_piece',
+    quantity: 3,
+    buying_price: '540.00',
+    selling_price: '675.00',
+    is_default: false
+  },
+  {
+    id: 102,
+    unit_type: 'dozen',
+    quantity: 12,
+    buying_price: '2040.00',
+    selling_price: '2550.00',
+    is_default: false
+  }
+]
+Found 3 price units for product 86
+Found pricing: [
+  {
+    id: 103,
+    unit_type: 'per_piece',
+    quantity: 1,
+    buying_price: '150.00',
+    selling_price: '180.00',
+    is_default: true
+  },
+  {
+    id: 104,
+    unit_type: 'three_piece',
+    quantity: 3,
+    buying_price: '405.00',
+    selling_price: '486.00',
+    is_default: false
+  },
+  {
+    id: 105,
+    unit_type: 'dozen',
+    quantity: 12,
+    buying_price: '1530.00',
+    selling_price: '1836.00',
+    is_default: false
+  }
+]
+Found 3 price units for product 87
+Found pricing: [
+  {
+    id: 97,
+    unit_type: 'per_piece',
+    quantity: 1,
+    buying_price: '120.00',
+    selling_price: '150.00',
+    is_default: true
+  },
+  {
+    id: 98,
+    unit_type: 'three_piece',
+    quantity: 3,
+    buying_price: '324.00',
+    selling_price: '405.00',
+    is_default: false
+  },
+  {
+    id: 99,
+    unit_type: 'dozen',
+    quantity: 12,
+    buying_price: '1224.00',
+    selling_price: '1530.00',
+    is_default: false
+  }
+]
+Found 3 price units for product 85
+10:58:27 AM [express] GET /api/products 304 in 686ms :: [{"id":86,"name":"Cooking Oil","stock":50,"ca…
+10:58:27 AM [express] GET /api/suppliers 304 in 172ms :: [{"id":1,"name":"Samuel Mbugua Nyambura","em…
+10:58:27 AM [express] GET /api/purchase-orders 304 in 173ms :: []
+10:58:27 AM [express] GET /api/product-suppliers 304 in 174ms :: []
