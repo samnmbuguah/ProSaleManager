@@ -114,15 +114,40 @@ router.post("/", async (req, res) => {
   if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
   try {
     const { items, customerId, total, paymentMethod, usePoints = 0 } = req.body;
-    
-    // Create sale record
-    const [sale] = await db.insert(sales).values({
-      customerId,
-      userId: req.user!.id,
-      total,
-      paymentMethod,
-      paymentStatus: 'paid',
-    }).returning();
+      
+      // Validate items data
+      if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: "Invalid sale items data" });
+      }
+
+      for (const item of items) {
+        if (!item.product_id || !item.quantity || !item.price) {
+          return res.status(400).json({ 
+            error: "Invalid item data",
+            details: "Each item must have product_id, quantity, and price"
+          });
+        }
+      }
+      
+      // Create sale record
+      const [sale] = await db.insert(sales).values({
+        customerId,
+        userId: req.user!.id,
+        total,
+        paymentMethod,
+        paymentStatus: 'paid',
+      }).returning();
+
+      // Create sale items with validated data
+      const saleItemsData = items.map((item: any) => ({
+        saleId: sale.id,
+        productId: parseInt(item.product_id),
+        quantity: parseInt(item.quantity),
+        price: parseFloat(item.price),
+        unitPricingId: item.unit_pricing_id ? parseInt(item.unit_pricing_id) : null,
+      }));
+
+      await db.insert(saleItems).values(saleItemsData);
 
     // Get product details for receipt
     const productDetails = await Promise.all(
@@ -143,15 +168,6 @@ router.post("/", async (req, res) => {
       })
     );
 
-    // Create sale items
-    await db.insert(saleItems).values(
-      items.map((item: any) => ({
-        saleId: sale.id,
-        productId: item.productId,
-        quantity: item.quantity,
-        price: item.price,
-      }))
-    );
 
     // Update product stock
     for (const item of items) {
