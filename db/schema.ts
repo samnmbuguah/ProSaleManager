@@ -234,6 +234,28 @@ export const loyaltyTransactions = pgTable("loyalty_transactions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Expenses schema
+export const expenses = pgTable("expenses", {
+  id: serial("id").primaryKey(),
+  description: text("description").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  category: text("category").notNull(),
+  date: timestamp("date").notNull().defaultNow(),
+  paymentMethod: text("payment_method").notNull(),
+  receiptNumber: text("receipt_number"),
+  userId: integer("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Relations for expenses
+export const expensesRelations = relations(expenses, ({ one }) => ({
+  user: one(users, {
+    fields: [expenses.userId],
+    references: [users.id],
+  }),
+}));
+
 // Schema validations with updated types
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
@@ -288,10 +310,27 @@ export const selectPurchaseOrderSchema = createSelectSchema(purchaseOrders);
 export type InsertPurchaseOrder = z.infer<typeof insertPurchaseOrderSchema>;
 export type PurchaseOrder = z.infer<typeof selectPurchaseOrderSchema>;
 
+// Purchase Order Items Schema
 export const insertPurchaseOrderItemSchema = createInsertSchema(purchaseOrderItems);
 export const selectPurchaseOrderItemSchema = createSelectSchema(purchaseOrderItems);
 export type InsertPurchaseOrderItem = z.infer<typeof insertPurchaseOrderItemSchema>;
 export type PurchaseOrderItem = z.infer<typeof selectPurchaseOrderItemSchema>;
+
+
+// Expense validation and types
+export const expenseValidationSchema = z.object({
+  description: z.string().min(1, "Description is required"),
+  amount: z.number().positive("Amount must be greater than 0"),
+  category: z.string().min(1, "Category is required"),
+  date: z.date(),
+  paymentMethod: z.string().min(1, "Payment method is required"),
+  receiptNumber: z.string().optional(),
+});
+
+export const insertExpenseSchema = createInsertSchema(expenses);
+export const selectExpenseSchema = createSelectSchema(expenses);
+export type InsertExpense = z.infer<typeof insertExpenseSchema>;
+export type Expense = z.infer<typeof selectExpenseSchema>;
 
 export const insertSaleSchema = createInsertSchema(sales);
 export const selectSaleSchema = createSelectSchema(sales);
