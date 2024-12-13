@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Product } from "@db/schema";
 import type { UnitTypeValues } from "@/types/pos";
-import type { PriceUnit } from "@/components/inventory/ProductForm";
+import type { PriceUnit } from "@/types/pos";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface ProductSearchProps {
@@ -134,6 +134,11 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
               const selectedUnit = selectedUnits[product.id] || (product.price_units?.[0]?.unit_type);
               const selectedPrice = product.price_units?.find(
                 (p: PriceUnit) => {
+                  // Ensure price unit has all required fields
+                  if (!p.id || !p.product_id) {
+                    console.error('Invalid price unit:', p);
+                    return false;
+                  }
                   return p.unit_type === selectedUnit;
                 }
               );
