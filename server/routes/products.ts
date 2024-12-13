@@ -119,12 +119,13 @@ router.get('/', async (req, res) => {
 // Search products endpoint
 router.get('/search', async (req, res) => {
   try {
-    // Always set JSON content type
+    // Set JSON content type and CORS headers
     res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Access-Control-Allow-Origin', '*');
     
     const query = req.query.q as string;
-    if (!query) {
-      return res.json([]);
+    if (!query || query.trim().length === 0) {
+      return res.json({ products: [], message: "No search query provided" });
     }
 
     console.log('Searching for products with query:', query);
@@ -191,10 +192,12 @@ router.get('/search', async (req, res) => {
 
   } catch (error) {
     console.error('Error searching products:', error);
-    // Ensure we still send JSON even for errors
+    // Always return a structured JSON response
     return res.status(500).json({ 
+      success: false,
       error: 'Failed to search products',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      message: error instanceof Error ? error.message : 'Unknown error',
+      products: []
     });
   }
 });
