@@ -64,6 +64,12 @@ export default function PosPage() {
         return items;
       }
 
+      // Verify the price unit has all required fields
+      if (!priceUnit.id || !priceUnit.product_id) {
+        console.error("Price unit missing required fields:", priceUnit);
+        return items;
+      }
+
       const existing = items.find(item => 
         item.id === product.id && item.selectedUnit === selectedUnit
       );
@@ -82,18 +88,18 @@ export default function PosPage() {
       
       const sellingPrice = parseFloat(priceUnit.selling_price);
 
-      // Ensure we have all required PriceUnit properties
-      const processedPriceUnits: PriceUnit[] = (product.price_units || []).map(pu => ({
-        id: pu.id,
-        product_id: pu.product_id,
-        unit_type: pu.unit_type,
-        quantity: pu.quantity,
-        selling_price: pu.selling_price,
-        buying_price: pu.buying_price,
-        is_default: pu.is_default,
-        created_at: pu.created_at,
-        updated_at: pu.updated_at
-      }));
+      // Create a complete PriceUnit object for the selected unit
+      const selectedPriceUnit: PriceUnit = {
+        id: priceUnit.id,
+        product_id: priceUnit.product_id,
+        unit_type: priceUnit.unit_type,
+        quantity: priceUnit.quantity,
+        selling_price: priceUnit.selling_price,
+        buying_price: priceUnit.buying_price,
+        is_default: priceUnit.is_default,
+        created_at: priceUnit.created_at,
+        updated_at: priceUnit.updated_at
+      };
 
       const newCartItem: CartItem = {
         id: product.id,
@@ -102,7 +108,7 @@ export default function PosPage() {
         selectedUnit: selectedUnit,
         unitPrice: sellingPrice,
         total: sellingPrice,
-        price_units: processedPriceUnits,
+        price_units: [selectedPriceUnit], // Only include the selected price unit
       };
 
       return [...items, newCartItem];
@@ -144,23 +150,24 @@ export default function PosPage() {
         }
 
         // Find and validate the selected price unit
-        if (!item.price_units || !Array.isArray(item.price_units)) {
+        if (!item.price_units || !Array.isArray(item.price_units) || item.price_units.length === 0) {
           console.error('No price units available for item:', item);
           throw new Error(`No price units available for ${item.name}`);
         }
 
-        const priceUnit = item.price_units.find(p => p.unit_type === item.selectedUnit);
-        if (!priceUnit) {
-          console.error('Selected unit not found among available units:', {
+        // Since we now store only the selected price unit in the cart item
+        const priceUnit = item.price_units[0];
+        if (!priceUnit || priceUnit.unit_type !== item.selectedUnit) {
+          console.error('Invalid price unit in cart item:', {
             selectedUnit: item.selectedUnit,
-            availableUnits: item.price_units.map(pu => pu.unit_type)
+            priceUnit
           });
-          throw new Error(`Price unit '${item.selectedUnit}' not found for ${item.name}`);
+          throw new Error(`Invalid price unit for ${item.name}`);
         }
 
-        if (!priceUnit.id) {
-          console.error('Price unit missing ID:', priceUnit);
-          throw new Error(`Price unit ${item.selectedUnit} for ${item.name} is missing an ID`);
+        if (!priceUnit.id || !priceUnit.product_id) {
+          console.error('Price unit missing required fields:', priceUnit);
+          throw new Error(`Price unit ${item.selectedUnit} for ${item.name} is missing required fields`);
         }
 
         return {
