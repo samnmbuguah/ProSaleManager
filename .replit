@@ -34,6 +34,10 @@ args = "Generate Migration"
 task = "workflow.run"
 args = "Development Server"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Backend API"
+
 [[workflows.workflow]]
 name = "Generate Migration"
 author = "agent"
@@ -61,4 +65,19 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "tsx watch --clear-screen=false --exclude vite.config.ts server/index.ts"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Backend API"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
 waitForPort = 5000
