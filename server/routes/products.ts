@@ -355,4 +355,36 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// Add this endpoint after the update endpoint
+router.delete('/:id', async (req, res) => {
+  try {
+    const productId = parseInt(req.params.id);
+
+    await db.transaction(async (tx) => {
+      // First delete all unit pricing records
+      await tx
+        .delete(unitPricing)
+        .where(eq(unitPricing.product_id, productId));
+
+      // Then delete the product
+      const [deletedProduct] = await tx
+        .delete(products)
+        .where(eq(products.id, productId))
+        .returning();
+
+      if (!deletedProduct) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+    });
+
+    res.json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    res.status(500).json({ 
+      error: 'Failed to delete product',
+      details: error instanceof Error ? error.message : undefined
+    });
+  }
+});
+
 export default router;
