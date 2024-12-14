@@ -129,6 +129,19 @@ router.post("/", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "Name is required" });
     }
 
+    // Check for duplicate phone number if provided
+    if (phone) {
+      const existingCustomer = await db
+        .select()
+        .from(customers)
+        .where(eq(customers.phone, phone))
+        .limit(1);
+
+      if (existingCustomer.length > 0) {
+        return res.status(400).json({ error: "A customer with this phone number already exists" });
+      }
+    }
+
     const [customer] = await db
       .insert(customers)
       .values({
