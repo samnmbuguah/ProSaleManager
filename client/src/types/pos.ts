@@ -37,4 +37,5 @@ export interface PaymentDetails {
   amountPaid: number;
   change: number;
   items: CartItem[];
+  paymentMethod: 'cash' | 'mpesa';
 }
