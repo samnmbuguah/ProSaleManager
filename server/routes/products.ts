@@ -73,7 +73,7 @@ router.get('/', async (req, res) => {
             .from(unitPricing)
             .where(eq(unitPricing.product_id, product.id));
 
-          console.log(`Found ${pricing.length} price units for product ${product.id}`);
+          // console.log(`Found ${pricing.length} price units for product ${product.id}`);
 
           // Transform pricing data to match frontend expectations
           const price_units = pricing.map(unit => ({
