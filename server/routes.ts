@@ -173,13 +173,13 @@ export function registerRoutes(app: Express) {
         .from(products)
         .orderBy(products.name);
 
-      console.log(`Found ${allProducts.length} products`);
+      // console.log(`Found ${allProducts.length} products`);
       
       // Fetch unit pricing for each product
       const productsWithPricing = await Promise.all(
         allProducts.map(async (product) => {
           try {
-            console.log(`Fetching pricing for product ${product.id}`);
+            // console.log(`Fetching pricing for product ${product.id}`);
             const pricing = await db
               .select({
                 id: unitPricing.id,
@@ -191,7 +191,7 @@ export function registerRoutes(app: Express) {
               })
               .from(unitPricing)
               .where(eq(unitPricing.product_id, product.id));
-            console.log('Found pricing:', pricing);
+            // console.log('Found pricing:', pricing);
 
             console.log(`Found ${pricing.length} price units for product ${product.id}`);
 
