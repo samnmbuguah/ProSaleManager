@@ -76,19 +76,26 @@ export function useCustomers() {
         throw error;
       }
     },
-    initialData: [],
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 5000),
   });
 
   const createCustomerMutation = useMutation<Customer, Error, InsertCustomer>({
-    mutationFn: (customer) =>
-      fetch('/api/customers', {
+    mutationFn: async (customer) => {
+      const res = await fetch('/api/customers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(customer),
         credentials: 'include',
-      }).then(res => res.json()),
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to create customer');
+      }
+      
+      return res.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       toast({
@@ -117,6 +124,7 @@ export function useCustomers() {
   return {
     customers,
     isLoading,
+    error,
     createCustomer: createCustomerMutation.mutateAsync,
     isCreating: createCustomerMutation.isPending,
     searchCustomers,
