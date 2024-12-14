@@ -28,18 +28,6 @@ args = "Generate Migration"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Frontend Dev Server"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Backend API"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Run Migration"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "Development Server"
 
 [[workflows.workflow]]
@@ -55,20 +43,6 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx drizzle-kit generate:pg"
-
-[[workflows.workflow]]
-name = "Run Migration"
-author = "agent"
-
-[workflows.workflow.metadata]
-agentRequireRestartOnSave = false
-
-[[workflows.workflow.tasks]]
-task = "packager.installForAll"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "tsx db/migrate.ts"
 
 [[workflows.workflow]]
 name = "Development Server"

@@ -423,22 +423,35 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     serveStatic(app);
   }
 
-  try {
-    const port = process.env.PORT || 5000;
-    log('Starting server initialization...');
-    
-    // Verify database connection before starting server
-    await db.execute(sql`SELECT 1`);
-    log('Database connection verified');
-    
-    server.listen(Number(port), "0.0.0.0", () => {
-      log(`Server is running on http://0.0.0.0:${port}`);
-    }).on('error', (error) => {
-      console.error('Error starting server:', error);
-      process.exit(1);
-    });
+  // Set environment variables before any deployment checks
+  process.env.PORT = process.env.PORT || '5000';
+
+  // Initialize backup schedule before server start
+  /* try {
+    initializeBackupSchedule();
+    console.log('Backup schedule initialized');
   } catch (error) {
-    console.error('Server initialization error:', error);
+    console.error('Backup schedule initialization error:', error);
+  } */
+
+  server.listen(Number(process.env.PORT), "0.0.0.0", () => {
+    log(`serving on port ${process.env.PORT}`);
+    
+    // Comment out deployment process
+    /* Promise.resolve().then(async () => {
+      try {
+        const deployment = await handleDeployment();
+        if (!deployment.success) {
+          console.error('Deployment warning:', deployment.error);
+        } else {
+          log('Server deployment completed successfully');
+        }
+      } catch (error) {
+        console.error('Deployment process error:', error);
+      }
+    }); */
+  }).on('error', (error) => {
+    console.error('Error starting server:', error);
     process.exit(1);
-  }
+  });
 })();
