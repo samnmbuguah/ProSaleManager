@@ -12,12 +12,17 @@
     "db:generate": "drizzle-kit generate:pg --schema=./db/schema.ts",
     "db:migrate": "tsx db/migrate.ts",
     "db:studio": "drizzle-kit studio",
-    "seed": "tsx db/seed.ts"
+    "db:reset": "tsx db/reset.ts",
+    "seed": "tsx db/seed.ts",
+    "migrate": "tsx db/migrate.ts"
   },
   "dependencies": {
     "@auth/core": "^0.37.4",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@hookform/resolvers": "^3.3.2",
     "@jridgewell/trace-mapping": "^0.3.25",
+    "@mui/material": "^6.2.0",
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -82,7 +87,10 @@
     "wouter": "^3.3.5",
     "ws": "^8.18.0",
     "zod": "^3.22.4",
-    "zustand": "^5.0.2"
+    "zustand": "^5.0.2",
+    "multer": "^1.4.5-lts.1",
+    "csv-parse": "^5.3.0",
+    "@supabase/supabase-js": "^2.21.0"
   },
   "devDependencies": {
     "@replit/vite-plugin-runtime-error-modal": "^0.0.3",
@@ -105,7 +113,8 @@
     "tsx": "^4.19.2",
     "typescript": "^5.3.3",
     "vite": "^5.4.11",
-    "vite-plugin-checker": "^0.8.0"
+    "vite-plugin-checker": "^0.8.0",
+    "@types/multer": "^1.4.7"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
