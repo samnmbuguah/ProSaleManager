@@ -11,6 +11,20 @@ import {
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Unit Type Values (moved to top)
+export const UnitTypeValues = ['per_piece', 'three_piece', 'dozen'] as const;
+export type UnitTypeValues = (typeof UnitTypeValues)[number];
+
+// Expenses schema
+export const expenses = pgTable("expenses", {
+  id: serial("id").primaryKey(),
+  description: text("description").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  date: timestamp("date").notNull().defaultNow(),
+  category: text("category").notNull(),
+  created_at: timestamp("created_at").notNull().defaultNow(),
+});
+
 // User schema
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -38,13 +52,11 @@ export const products = pgTable("products", {
   updated_at: timestamp("updated_at").defaultNow().notNull(),
   stock_unit: text("stock_unit").default("per_piece").notNull(),
   default_unit_pricing_id: integer("default_unit_pricing_id"),
+  imageUrl: text(),
 });
 
 // Unit Pricing schema with references to products
 // Define unit type values
-export const UnitTypeValues = ['per_piece', 'three_piece', 'dozen'] as const;
-export type UnitTypeValues = (typeof UnitTypeValues)[number];
-
 export const defaultUnitQuantities: Record<UnitTypeValues, number> = {
   per_piece: 1,
   three_piece: 3,
@@ -312,3 +324,8 @@ export const insertLoyaltyTransactionSchema = createInsertSchema(loyaltyTransact
 export const selectLoyaltyTransactionSchema = createSelectSchema(loyaltyTransactions);
 export type InsertLoyaltyTransaction = z.infer<typeof insertLoyaltyTransactionSchema>;
 export type LoyaltyTransaction = z.infer<typeof selectLoyaltyTransactionSchema>;
+
+export const insertExpenseSchema = createInsertSchema(expenses);
+export const selectExpenseSchema = createSelectSchema(expenses);
+export type InsertExpense = z.infer<typeof insertExpenseSchema>;
+export type Expense = z.infer<typeof selectExpenseSchema>;
