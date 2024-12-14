@@ -26,17 +26,19 @@ export function PaymentDialog({
   onProcessPayment,
 }: PaymentDialogProps) {
   const [amountPaid, setAmountPaid] = useState<string>("");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "mpesa">("cash");
 
   const total = cartItems.reduce((sum, item) => sum + item.total, 0);
   const change = parseFloat(amountPaid) - total;
-  const isValidPayment = parseFloat(amountPaid) >= total;
+  const isValidPayment = paymentMethod === "mpesa" || parseFloat(amountPaid) >= total;
 
   const handlePayment = async () => {
     if (isValidPayment) {
       await onProcessPayment({
-        amountPaid: parseFloat(amountPaid),
-        change,
+        amountPaid: paymentMethod === "mpesa" ? total : parseFloat(amountPaid),
+        change: paymentMethod === "mpesa" ? 0 : change,
         items: cartItems,
+        paymentMethod,
       });
       onClose();
     }
@@ -73,19 +75,39 @@ export function PaymentDialog({
             <span>{formatCurrency(total)}</span>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="amount-paid">Amount Paid</Label>
-            <Input
-              id="amount-paid"
-              type="number"
-              step="0.01"
-              value={amountPaid}
-              onChange={(e) => setAmountPaid(e.target.value)}
-              className="text-right"
-            />
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant={paymentMethod === "cash" ? "default" : "outline"}
+              onClick={() => setPaymentMethod("cash")}
+            >
+              Cash Payment
+            </Button>
+            <Button
+              variant={paymentMethod === "mpesa" ? "default" : "outline"}
+              onClick={() => {
+                setPaymentMethod("mpesa");
+                setAmountPaid("");
+              }}
+            >
+              M-Pesa
+            </Button>
           </div>
 
-          {parseFloat(amountPaid) > 0 && (
+          {paymentMethod === "cash" && (
+            <div className="space-y-2">
+              <Label htmlFor="amount-paid">Amount Paid</Label>
+              <Input
+                id="amount-paid"
+                type="number"
+                step="0.01"
+                value={amountPaid}
+                onChange={(e) => setAmountPaid(e.target.value)}
+                className="text-right"
+              />
+            </div>
+          )}
+
+          {paymentMethod === "cash" && parseFloat(amountPaid) > 0 && (
             <div className="flex justify-between font-medium">
               <span>Change</span>
               <span>{formatCurrency(change)}</span>
@@ -97,7 +119,7 @@ export function PaymentDialog({
             onClick={handlePayment}
             disabled={!isValidPayment}
           >
-            Complete Payment
+            {paymentMethod === "mpesa" ? "Complete M-Pesa Payment" : "Complete Cash Payment"}
           </Button>
         </div>
       </DialogContent>
