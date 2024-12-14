@@ -63,11 +63,11 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
         )}
         
         <div className="space-y-2">
-          {receipt.items.map((item: { name: string; quantity: number; unit_price: number; total: number }, index: number) => (
+          {receipt.items.map((item: { name: string; quantity: number; unit_price: number; total: number; unit_type?: string }, index: number) => (
             <div key={index} className="flex justify-between text-sm">
               <div>
                 <span>{item.quantity}x </span>
-                <span>{item.name}</span>
+                <span>{item.name} {item.unit_type ? `(${item.unit_type})` : ''}</span>
               </div>
               <div className="text-right">
                 <div>{formatCurrency(item.unit_price)}</div>
@@ -83,8 +83,8 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
             <span>{formatCurrency(receipt.total)}</span>
           </div>
           <div className="text-sm text-muted-foreground">
-            Paid via {receipt.payment_method}
-            {receipt.payment_method.toLowerCase() === "cash" && (
+            Paid via {receipt.payment_method || "Unknown"}
+            {receipt.payment_method === "cash" && (
               <div className="mt-2">
                 {typeof receipt.cash_amount === 'number' && (
                   <>
