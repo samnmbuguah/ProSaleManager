@@ -126,7 +126,10 @@ export default function PosPage() {
           quantity: Math.max(0, Math.round(item.quantity)),
           price: Number(item.unitPrice.toFixed(2)),
           name: item.name,
-          unit_pricing_id: priceUnit.id
+          unit_pricing_id: priceUnit.id,
+          unit_type: item.selectedUnit,
+          unit_price: item.unitPrice,
+          total: item.total
         };
       });
 
@@ -139,14 +142,33 @@ export default function PosPage() {
       const saleData: SaleData = {
         items: saleItems,
         total: total.toFixed(2),
-        paymentMethod: 'cash',
+        paymentMethod: paymentDetails.paymentMethod || 'cash',
         paymentStatus: 'paid',
         amountPaid: paymentDetails.amountPaid.toFixed(2),
         changeAmount: paymentDetails.change.toFixed(2),
-        cashAmount: paymentDetails.amountPaid,
+        cashAmount: paymentDetails.paymentMethod === 'mpesa' ? total : paymentDetails.amountPaid,
       };
 
-      await createSale(saleData);
+      const response = await createSale(saleData);
+      
+      // Set receipt data immediately after sale
+      if (window._setReceiptState && response.receipt) {
+        // Transform the receipt data to include all required fields
+        const receiptData = {
+          ...response.receipt,
+          items: saleItems.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            total: item.total,
+            unit_type: item.unit_type
+          })),
+          payment_method: paymentDetails.paymentMethod,
+          cash_amount: paymentDetails.paymentMethod === 'cash' ? paymentDetails.amountPaid : undefined
+        };
+        window._setReceiptState(receiptData);
+      }
+      
       setCartItems([]);
       setIsPaymentOpen(false);
     } catch (error) {
