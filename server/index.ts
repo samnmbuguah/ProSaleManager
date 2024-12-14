@@ -4,6 +4,7 @@ import { setupVite, serveStatic } from "./vite";
 import { createServer } from "http";
 import customersRouter from "./routes/customers";
 import salesRouter from "./routes/sales";
+import productsRouter from "./routes/products";
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { db } from "../db";
 import { sql } from 'drizzle-orm';
@@ -403,6 +404,7 @@ app.get("/api/metrics", (req, res) => {
 // Register API routes
 app.use("/api/customers", customersRouter);
 app.use("/api/sales", salesRouter);
+app.use("/api/products", productsRouter);
 registerRoutes(app);
 
 // Error handling middleware
