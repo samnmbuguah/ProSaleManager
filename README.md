@@ -9,18 +9,22 @@ A modern Point of Sale (POS) system built with React, Express, and PostgreSQL. P
   - Stock tracking
   - Category management
   - Supplier management
+
 - 💰 Sales Management
   - Purchase orders
   - Dynamic pricing based on unit types
   - Real-time stock updates
+
 - 🎨 Modern UI
   - Professional theme with light/dark mode support
   - Responsive design using Tailwind CSS
   - Beautiful component library with Radix UI
+
 - 🔒 Secure Authentication
   - Session-based authentication
   - Role-based access control
   - Secure password handling with bcrypt
+
 
 ## Prerequisites
 
@@ -28,15 +32,17 @@ A modern Point of Sale (POS) system built with React, Express, and PostgreSQL. P
 - PostgreSQL (v16)
 - npm or yarn
 
+
 ## Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/yourusername/ProSaleManager.git
-cd ProSaleManager
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 # or
@@ -44,17 +50,20 @@ yarn install
 ```
 
 3. Set up environment variables:
+
 ```env
 DATABASE_URL=postgresql://username:password@localhost:5432/prosalemanager
 PORT=5000
 ```
 
 4. Initialize the database:
+
 ```bash
 npm run db:generate   # Generate migrations
-npm run db:migrate   # Run migrations
-npm run seed         # (Optional) Seed demo data
+npm run db:migrate    # Run migrations
+npm run seed          # (Optional) Seed demo data
 ```
+
 
 ## Development
 
@@ -108,6 +117,7 @@ The application includes a robust deployment pipeline with:
   - Zod (Validation)
   - Passport.js (Authentication)
 
+
 ## Project Structure
 
 ```
@@ -115,7 +125,7 @@ The application includes a robust deployment pipeline with:
 ├── server/              # Express backend
 ├── db/                  # Database schema and migrations
 ├── migrations/          # Generated database migrations
-└── dist/               # Production build output
+└── dist/                # Production build output
 ```
 
 ## Contributing
