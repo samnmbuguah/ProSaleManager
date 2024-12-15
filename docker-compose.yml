@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgres://prosalemanager:prosalepassword@db:5432/prosaledatabase
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - JWT_SECRET=8Aj4Uo1JTa6C+0NL0N1AyP6O9aq7e4hyHzR9Ygev+3E=
+      - SESSION_SECRET=8Aj4Uo1JTa6C+0NL0N1AyP6O9aq7e4hyHzR9Ygev+3E=
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=prosalemanager
+      - POSTGRES_PASSWORD=prosalepassword
+      - POSTGRES_DB=prosaledatabase
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data: 
