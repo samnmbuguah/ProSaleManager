@@ -7,12 +7,22 @@ services:
       - "5000:5000"
     environment:
       - DATABASE_URL=postgres://prosalemanager:prosalepassword@db:5432/prosaledatabase
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=prosalemanager
+      - DB_PASSWORD=prosalepassword
+      - DB_NAME=prosaledatabase
       - NODE_ENV=production
       - HOST=0.0.0.0
+      - PORT=5000
       - JWT_SECRET=8Aj4Uo1JTa6C+0NL0N1AyP6O9aq7e4hyHzR9Ygev+3E=
       - SESSION_SECRET=8Aj4Uo1JTa6C+0NL0N1AyP6O9aq7e4hyHzR9Ygev+3E=
+    volumes:
+      - ./drizzle:/app/drizzle
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
   db:
     image: postgres:15
@@ -24,6 +34,12 @@ services:
       - POSTGRES_DB=prosaledatabase
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prosalemanager -d prosaledatabase"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
 volumes:
   postgres_data: 
