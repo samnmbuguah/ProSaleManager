@@ -5,12 +5,10 @@ import { createServer } from "http";
 import customersRouter from "./routes/customers";
 import salesRouter from "./routes/sales";
 import productsRouter from "./routes/products";
-import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { db } from "../db";
 import { sql } from 'drizzle-orm';
 import { setupAuth } from "./auth";
-// import { initializeBackupSchedule } from "./db/backup";
-// import { handleDeployment } from "./deployment/deploy";
+import { initializeDatabase } from "../db/init";
 
 // Monitoring metrics
 const metrics = {
@@ -189,19 +187,10 @@ const app = express();
 
 // Initialize database tables
 (async () => {
-  try {
-    console.log('Starting database initialization...');
-    await migrate(db, {
-      migrationsFolder: './migrations',
-    });
-    console.log('Database migrations completed successfully');
-    
-    // Verify database connection
-    await db.execute(sql`SELECT 1`);
-    console.log('Database connection verified');
-  } catch (error) {
-    console.error('Database initialization error:', error);
-    process.exit(1); // Exit if database initialization fails
+  const success = await initializeDatabase();
+  if (!success) {
+    console.error('Failed to initialize database');
+    process.exit(1);
   }
 })();
 
