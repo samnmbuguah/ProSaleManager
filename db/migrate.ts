@@ -1,16 +1,34 @@
+import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { db } from "./index";
+import pkg from 'pg';
+const { Pool } = pkg;
+import * as dotenv from "dotenv";
 
-// This will run migrations on the database, skipping the ones already applied
+dotenv.config();
+
+const pool = new Pool({
+  host: process.env.DB_HOST || "localhost",
+  port: parseInt(process.env.DB_PORT || "5432"),
+  user: process.env.DB_USER || "prosalemanager",
+  password: process.env.DB_PASSWORD || "prosalepassword",
+  database: process.env.DB_NAME || "prosaledatabase",
+  ssl: false,
+});
+
+const db = drizzle(pool);
+
 async function main() {
+  console.log("Running migrations...");
+  
   try {
-    await migrate(db, { migrationsFolder: "./drizzle" });
+    await migrate(db, { migrationsFolder: "db/migrations" });
     console.log("Migrations completed successfully");
-    process.exit(0);
   } catch (error) {
-    console.error("Error performing migrations:", error);
+    console.error("Error running migrations:", error);
     process.exit(1);
   }
+  
+  await pool.end();
 }
 
 main(); 
