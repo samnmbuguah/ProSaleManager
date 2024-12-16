@@ -9,6 +9,7 @@ import {
   User,
   Receipt,
   Menu,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +46,7 @@ export default function MainNav() {
     { href: "/customers", icon: Users, label: "Customers" },
     { href: "/sales", icon: Receipt, label: "Sales" },
     { href: "/reports", icon: BarChart3, label: "Reports" },
+    { href: "/expenses", icon: Wallet, label: "Expenses" },
   ];
 
   const NavLinks = () => (
