@@ -124,3 +124,45 @@ export const saleItems = pgTable('sale_items', {
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow()
 });
+
+// Expense category enum
+export const ExpenseCategory = {
+  FOOD: 'food' as const,
+  TRANSPORTATION: 'transportation' as const,
+  HOUSING: 'housing' as const,
+  UTILITIES: 'utilities' as const,
+  ENTERTAINMENT: 'entertainment' as const,
+  OTHER: 'other' as const,
+} as const;
+
+export type ExpenseCategoryValues = typeof ExpenseCategory[keyof typeof ExpenseCategory];
+
+// Expenses table
+export const expenses = pgTable('expenses', {
+  id: serial('id').primaryKey(),
+  description: varchar('description').notNull(),
+  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  category: varchar('category', { length: 50 }).notNull().default('other'),
+  date: timestamp('date').notNull(),
+  userId: integer('user_id').notNull(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow()
+});
+
+// Expense validation schema
+export const expenseSchema = z.object({
+  description: z.string().min(1, "Description is required"),
+  amount: z.number().positive("Amount must be positive"),
+  category: z.enum([
+    ExpenseCategory.FOOD,
+    ExpenseCategory.TRANSPORTATION,
+    ExpenseCategory.HOUSING,
+    ExpenseCategory.UTILITIES,
+    ExpenseCategory.ENTERTAINMENT,
+    ExpenseCategory.OTHER
+  ]),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Use YYYY-MM-DD"),
+});
+
+export type Expense = typeof expenses.$inferSelect;
+export type InsertExpense = typeof expenses.$inferInsert;

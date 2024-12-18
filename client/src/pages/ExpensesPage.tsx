@@ -1,22 +1,72 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import ExpenseForm from '../components/ExpenseForm';
 import ExpenseList from '../components/ExpenseList';
-import type { Expense } from '../components/ExpenseForm';
-
-interface ExpenseWithId extends Expense {
-  id: number;
-}
+import type { Expense } from '@/types/expense';
+import { expenseService } from '@/services/expenseService';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 export default function ExpensesPage() {
-  const [expenses, setExpenses] = useState<ExpenseWithId[]>([]);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
-  const handleAddExpense = (newExpense: Expense) => {
-    setExpenses([...expenses, { ...newExpense, id: Date.now() }]);
+  const { data: expenses, isLoading } = useQuery({
+    queryKey: ['expenses'],
+    queryFn: expenseService.getAll,
+  });
+
+  const createExpenseMutation = useMutation({
+    mutationFn: expenseService.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      toast({
+        title: "Success",
+        description: "Expense added successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add expense",
+      });
+    },
+  });
+
+  const deleteExpenseMutation = useMutation({
+    mutationFn: expenseService.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      toast({
+        title: "Success",
+        description: "Expense deleted successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete expense",
+      });
+    },
+  });
+
+  const handleAddExpense = (newExpense: Omit<Expense, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
+    createExpenseMutation.mutate(newExpense);
   };
 
   const handleDeleteExpense = (expenseId: number) => {
-    setExpenses(expenses.filter((expense) => expense.id !== expenseId));
+    deleteExpenseMutation.mutate(expenseId);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -27,7 +77,10 @@ export default function ExpensesPage() {
         </p>
       </div>
       <ExpenseForm onAddExpense={handleAddExpense} />
-      <ExpenseList expenses={expenses} onDeleteExpense={handleDeleteExpense} />
+      <ExpenseList 
+        expenses={expenses || []} 
+        onDeleteExpense={handleDeleteExpense}
+      />
     </div>
   );
 } 

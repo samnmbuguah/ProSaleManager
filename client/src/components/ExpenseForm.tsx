@@ -10,24 +10,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import type { Expense, ExpenseCategory } from "@/types/expense";
 
-const categories = [
+const categories: ExpenseCategory[] = [
   "Food",
   "Transportation",
   "Housing",
   "Utilities",
   "Entertainment",
   "Other",
-] as const;
-
-export type ExpenseCategory = (typeof categories)[number];
-
-export interface Expense {
-  description: string;
-  amount: number;
-  category: ExpenseCategory;
-  date: string;
-}
+];
 
 interface FormExpense {
   description: string;
@@ -37,7 +29,7 @@ interface FormExpense {
 }
 
 interface ExpenseFormProps {
-  onAddExpense: (expense: Expense) => void;
+  onAddExpense: (expense: Omit<Expense, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => void;
 }
 
 export default function ExpenseForm({ onAddExpense }: ExpenseFormProps) {

@@ -15,14 +15,10 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import type { Expense } from "./ExpenseForm";
-
-interface ExpenseWithId extends Expense {
-  id: number;
-}
+import type { Expense } from "@/types/expense";
 
 interface ExpenseListProps {
-  expenses: ExpenseWithId[];
+  expenses: Expense[];
   onDeleteExpense: (id: number) => void;
 }
 
