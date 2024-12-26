@@ -1,256 +1,523 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ProductForm } from "@/components/inventory/ProductForm";
-import { ProductTable, type ProductWithPricing } from "@/components/inventory/ProductTable";
-import { PurchaseOrderForm } from "@/components/inventory/PurchaseOrderForm";
-import { PurchaseOrderList } from "@/components/inventory/PurchaseOrderList";
-import { SupplierForm } from "@/components/inventory/SupplierForm";
-import { SupplierList } from "@/components/inventory/SupplierList";
-import { useProducts } from "@/hooks/use-products";
-import { usePurchaseOrders } from "@/hooks/use-purchase-orders";
-import { useSuppliers } from "@/hooks/use-suppliers";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useUser } from "@/hooks/use-user";
-import { Button } from "@/components/ui/button";
-import { Plus, Database } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import type { ProductFormData } from "@/components/inventory/ProductForm";
+import React, { useState, useEffect } from 'react';
+import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Product, PriceUnit, ProductFormData } from '@/types/product';
+import { PRODUCT_CATEGORIES } from '@/constants/categories';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-function generateSKU(name: string): string {
-  return name
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, '')
-    .slice(0, 6)
-    .padEnd(6, '0') + 
-    Math.random().toString(36).substring(2, 5).toUpperCase();
-}
-
-export default function InventoryPage() {
-  const { user } = useUser();
+const InventoryPage: React.FC = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
-  const [isProductFormOpen, setIsProductFormOpen] = useState(false);
-  const [isPurchaseOrderFormOpen, setIsPurchaseOrderFormOpen] = useState(false);
-  const [isSupplierFormOpen, setIsSupplierFormOpen] = useState(false);
-  const [isLoadingDemo, setIsLoadingDemo] = useState(false);
-  const { 
-    products, 
-    isLoading: isLoadingProducts, 
-    createProduct, 
-    updateProduct,
-    isCreating: isCreatingProduct,
-    isUpdating: isUpdatingProduct
-  } = useProducts();
-  const { createPurchaseOrder, createPurchaseOrderItem, isCreating: isCreatingPO } = usePurchaseOrders();
-  const { createSupplier, isCreating: isCreatingSupplier } = useSuppliers();
 
-  const loadDemoData = async () => {
+  const initialFormData: ProductFormData = {
+    name: '',
+    sku: '',
+    category: '',
+    stock: 0,
+    min_stock: 0,
+    max_stock: 0,
+    reorder_point: 0,
+    stock_unit: 'per_piece',
+    buying_price: '0',
+    selling_price: '0',
+    price_units: [
+      {
+        unit_type: 'per_piece',
+        quantity: 1,
+        buying_price: '0',
+        selling_price: '0',
+        is_default: true,
+      },
+    ],
+  };
+
+  const [formData, setFormData] = useState<ProductFormData>(initialFormData);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
     try {
-      setIsLoadingDemo(true);
-      const response = await fetch('/api/seed-demo-data', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to load demo data');
-      }
-      
-      toast({
-        title: "Success",
-        description: "Demo data loaded successfully",
-      });
-      
-      // Refresh the page to show new data
-      window.location.reload();
+      const response = await fetch('http://localhost:5000/api/products');
+      if (!response.ok) throw new Error('Failed to fetch products');
+      const data = await response.json();
+      setProducts(data);
     } catch (error) {
+      console.error('Error:', error);
       toast({
-        title: "Error",
-        description: "Failed to load demo data",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to fetch products',
+        variant: 'destructive',
       });
-    } finally {
-      setIsLoadingDemo(false);
     }
   };
 
-  const handleUpdateProduct = async (id: number, data: any) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'number' ? Number(value) : value,
+    }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData((prev) => ({
+        ...prev,
+        image: file,
+      }));
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+    }
+  };
+
+  const handlePriceUnitChange = (index: number, field: keyof PriceUnit, value: string | number | boolean) => {
+    setFormData((prev) => {
+      const newPriceUnits = [...prev.price_units];
+      newPriceUnits[index] = {
+        ...newPriceUnits[index],
+        [field]: value,
+      };
+      return {
+        ...prev,
+        price_units: newPriceUnits,
+      };
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      await updateProduct({ id, ...data });
-      toast({
-        title: "Success",
-        description: "Product updated successfully",
+      const formDataToSend = new FormData();
+      
+      // Append all product data except price_units and image
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key !== 'price_units' && key !== 'image') {
+          formDataToSend.append(key, value.toString());
+        }
       });
-    } catch (error) {
+
+      // Append price units as JSON string
+      formDataToSend.append('price_units', JSON.stringify(formData.price_units));
+
+      // Append image if exists
+      if (formData.image) {
+        formDataToSend.append('image', formData.image);
+      }
+
+      const url = selectedProduct
+        ? `http://localhost:5000/api/products/${selectedProduct.id}`
+        : 'http://localhost:5000/api/products';
+
+      const response = await fetch(url, {
+        method: selectedProduct ? 'PUT' : 'POST',
+        body: formDataToSend,
+      });
+
+      if (!response.ok) throw new Error('Failed to save product');
+
       toast({
-        title: "Error",
-        description: "Failed to update product",
-        variant: "destructive",
+        title: 'Success',
+        description: `Product ${selectedProduct ? 'updated' : 'created'} successfully`,
+      });
+
+      setFormData(initialFormData);
+      setIsAddDialogOpen(false);
+      setIsEditDialogOpen(false);
+      fetchProducts();
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: 'Error',
+        description: `Failed to ${selectedProduct ? 'update' : 'create'} product`,
+        variant: 'destructive',
       });
     }
+  };
+
+  const handleEdit = (product: Product) => {
+    setSelectedProduct(product);
+    setFormData({
+      ...product,
+      price_units: product.price_units || [],
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/products/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete product');
+
+      toast({
+        title: 'Success',
+        description: 'Product deleted successfully',
+      });
+
+      fetchProducts();
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete product',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSearch = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/products/search?query=${searchQuery}`
+      );
+      if (!response.ok) throw new Error('Failed to search products');
+      const data = await response.json();
+      setProducts(data);
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to search products',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const ProductForm = () => {
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        setFormData((prev) => ({
+          ...prev,
+          image: file,
+        }));
+        // Create preview URL
+        const previewUrl = URL.createObjectURL(file);
+        setImagePreview(previewUrl);
+      }
+    };
+
+    // Cleanup preview URL when component unmounts
+    useEffect(() => {
+      return () => {
+        if (imagePreview) {
+          URL.revokeObjectURL(imagePreview);
+        }
+      };
+    }, [imagePreview]);
+
+    return (
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="image">Product Image</Label>
+          <Input
+            id="image"
+            name="image"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="mt-1"
+          />
+          {(imagePreview || formData.image_url || selectedProduct?.image_url) && (
+            <div className="mt-2">
+              <img
+                src={imagePreview || formData.image_url || selectedProduct?.image_url}
+                alt="Product Preview"
+                className="w-32 h-32 object-cover rounded-md"
+              />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <Label htmlFor="name">Name</Label>
+          <Input
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="sku">SKU</Label>
+          <Input
+            id="sku"
+            name="sku"
+            value={formData.sku}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="category">Category</Label>
+          <Select 
+            value={formData.category} 
+            onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a category" />
+            </SelectTrigger>
+            <SelectContent>
+              {PRODUCT_CATEGORIES.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="stock">Stock</Label>
+            <Input
+              id="stock"
+              name="stock"
+              type="number"
+              value={formData.stock}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="stock_unit">Stock Unit</Label>
+            <Input
+              id="stock_unit"
+              name="stock_unit"
+              value={formData.stock_unit}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="min_stock">Min Stock</Label>
+            <Input
+              id="min_stock"
+              name="min_stock"
+              type="number"
+              value={formData.min_stock}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="max_stock">Max Stock</Label>
+            <Input
+              id="max_stock"
+              name="max_stock"
+              type="number"
+              value={formData.max_stock}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="reorder_point">Reorder Point</Label>
+          <Input
+            id="reorder_point"
+            name="reorder_point"
+            type="number"
+            value={formData.reorder_point}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+
+        {formData.price_units.map((unit, index) => (
+          <div key={index} className="space-y-4 p-4 border rounded-md">
+            <h4 className="font-medium">Price Unit {index + 1}</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor={`unit_type_${index}`}>Unit Type</Label>
+                <Input
+                  id={`unit_type_${index}`}
+                  value={unit.unit_type}
+                  onChange={(e) =>
+                    handlePriceUnitChange(index, 'unit_type', e.target.value)
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor={`quantity_${index}`}>Quantity</Label>
+                <Input
+                  id={`quantity_${index}`}
+                  type="number"
+                  value={unit.quantity}
+                  onChange={(e) =>
+                    handlePriceUnitChange(index, 'quantity', Number(e.target.value))
+                  }
+                  required
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor={`buying_price_${index}`}>Buying Price</Label>
+                <Input
+                  id={`buying_price_${index}`}
+                  value={unit.buying_price}
+                  onChange={(e) =>
+                    handlePriceUnitChange(index, 'buying_price', e.target.value)
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor={`selling_price_${index}`}>Selling Price</Label>
+                <Input
+                  id={`selling_price_${index}`}
+                  value={unit.selling_price}
+                  onChange={(e) =>
+                    handlePriceUnitChange(index, 'selling_price', e.target.value)
+                  }
+                  required
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id={`is_default_${index}`}
+                checked={unit.is_default}
+                onChange={(e) =>
+                  handlePriceUnitChange(index, 'is_default', e.target.checked)
+                }
+              />
+              <Label htmlFor={`is_default_${index}`}>Default Unit</Label>
+            </div>
+          </div>
+        ))}
+
+        <Button type="submit" className="w-full">
+          {selectedProduct ? 'Update Product' : 'Add Product'}
+        </Button>
+      </form>
+    );
   };
 
   return (
-    <div className="container py-6 space-y-6">
-      <Tabs defaultValue="products">
-        <TabsList>
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="purchase-orders">Purchase Orders</TabsTrigger>
-          <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="products" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline"
-                onClick={loadDemoData}
-                disabled={isLoadingDemo}
-              >
-                <Database className="mr-2 h-4 w-4" />
-                {isLoadingDemo ? "Loading..." : "Load Demo Data"}
-              </Button>
-            </div>
-            <Button onClick={() => setIsProductFormOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
+    <div className="container mx-auto p-4">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex gap-2">
+          <Input
+            placeholder="Search products..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-64"
+          />
+          <Button onClick={handleSearch}>Search</Button>
+        </div>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button
+              onClick={() => {
+                setSelectedProduct(null);
+                setFormData(initialFormData);
+              }}
+            >
               Add Product
             </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Add New Product</DialogTitle>
+            </DialogHeader>
+            <ProductForm />
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {products.map((product) => (
+          <div
+            key={product.id}
+            className="border rounded-lg p-4 flex flex-col space-y-2"
+          >
+            {product.image_url && (
+              <img
+                src={product.image_url}
+                alt={product.name}
+                className="w-full h-48 object-cover rounded-md mb-2"
+              />
+            )}
+            <h3 className="text-lg font-semibold">{product.name}</h3>
+            <p className="text-sm text-gray-600">SKU: {product.sku}</p>
+            <p className="text-sm text-gray-600">Category: {product.category}</p>
+            <p className="text-sm text-gray-600">
+              Stock: {product.stock} {product.stock_unit}
+            </p>
+            <div className="mt-2 space-y-1">
+              <h4 className="font-medium">Price Units:</h4>
+              {product.price_units?.map((unit, index) => (
+                <div key={index} className="text-sm">
+                  {unit.unit_type} ({unit.quantity}): Buy - ${unit.buying_price},
+                  Sell - ${unit.selling_price}
+                  {unit.is_default && ' (Default)'}
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end space-x-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => handleEdit(product)}
+                size="sm"
+              >
+                Edit
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => product.id && handleDelete(product.id)}
+                size="sm"
+              >
+                Delete
+              </Button>
+            </div>
           </div>
-          <ProductTable 
-            products={(products as ProductWithPricing[]) || []} 
-            isLoading={isLoadingProducts} 
-            onUpdateProduct={handleUpdateProduct}
-          />
-        </TabsContent>
+        ))}
+      </div>
 
-        <TabsContent value="purchase-orders" className="space-y-4">
-          <PurchaseOrderList onCreateOrder={() => setIsPurchaseOrderFormOpen(true)} />
-        </TabsContent>
-
-        <TabsContent value="suppliers" className="space-y-4">
-          <div className="flex justify-end">
-            <Button onClick={() => setIsSupplierFormOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Supplier
-            </Button>
-          </div>
-          <SupplierList />
-        </TabsContent>
-      </Tabs>
-
-      <Dialog open={isProductFormOpen} onOpenChange={setIsProductFormOpen}>
-        <DialogContent className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add Product</DialogTitle>
+            <DialogTitle>Edit Product</DialogTitle>
           </DialogHeader>
-          <ProductForm
-            onSubmit={async (data: ProductFormData) => {
-              // Get the default pricing unit
-              const defaultUnit = data.price_units.find(unit => unit.is_default);
-              if (!defaultUnit) {
-                toast({
-                  title: "Error",
-                  description: "A default pricing unit is required",
-                  variant: "destructive",
-                });
-                return;
-              }
-
-              const productData = {
-                name: data.name,
-                sku: generateSKU(data.name),
-                buying_price: defaultUnit.buying_price,
-                selling_price: defaultUnit.selling_price,
-                stock: data.stock,
-                category: data.category,
-                min_stock: data.min_stock,
-                max_stock: data.max_stock,
-                reorder_point: data.reorder_point,
-                stock_unit: data.stock_unit,
-                price_units: data.price_units.map(unit => ({
-                  unit_type: unit.unit_type,
-                  quantity: unit.quantity,
-                  buying_price: unit.buying_price,
-                  selling_price: unit.selling_price,
-                  is_default: unit.is_default
-                }))
-              };
-              
-              try {
-                console.log('Creating product with data:', productData);
-                await createProduct(productData);
-                toast({
-                  title: "Success",
-                  description: "Product created successfully",
-                });
-                setIsProductFormOpen(false);
-              } catch (error) {
-                console.error('Failed to create product:', error);
-                toast({
-                  variant: "destructive",
-                  title: "Error",
-                  description: error instanceof Error ? error.message : "Failed to create product",
-                });
-                // Don't close the form on error
-                return;
-              }
-            }}
-            isSubmitting={isCreatingProduct}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isPurchaseOrderFormOpen} onOpenChange={setIsPurchaseOrderFormOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Create Purchase Order</DialogTitle>
-          </DialogHeader>
-          <PurchaseOrderForm
-            onSubmit={async (data) => {
-              const total = data.items.reduce((sum, item) => 
-                sum + (Number(item.buying_price) * item.quantity), 0
-              ).toFixed(2);
-
-              const order = await createPurchaseOrder({
-                supplierId: data.supplierId,
-                userId: user?.id || 0,
-                orderDate: new Date(),
-                status: "pending",
-                total,
-              });
-
-              if (order?.id) {
-                await Promise.all(data.items.map(item => 
-                  createPurchaseOrderItem({
-                    purchaseOrderId: order.id,
-                    productId: item.productId,
-                    quantity: item.quantity,
-                    buyingPrice: item.buying_price.toString(),
-                    sellingPrice: item.selling_price.toString(),
-                  })
-                ));
-              }
-
-              setIsPurchaseOrderFormOpen(false);
-            }}
-            isSubmitting={isCreatingPO}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isSupplierFormOpen} onOpenChange={setIsSupplierFormOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Add Supplier</DialogTitle>
-          </DialogHeader>
-          <SupplierForm
-            onSubmit={async (data) => {
-              await createSupplier(data);
-              setIsSupplierFormOpen(false);
-            }}
-            isSubmitting={isCreatingSupplier}
-          />
+          <ProductForm />
         </DialogContent>
       </Dialog>
     </div>
   );
-}
+};
+
+export default InventoryPage;
