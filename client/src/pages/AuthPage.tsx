@@ -18,95 +18,78 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
+import { type InsertUser } from "@/types/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertUserSchema, type InsertUser } from "@db/schema";
-import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
-import { z } from "zod";
+import * as z from "zod";
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-type FormData = {
-  username: string;
-  password: string;
-  email?: string;
-};
+const registerSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [isRegister, setIsRegister] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
   const { login, register } = useUser();
-  const { toast } = useToast();
-  const [, setLocation] = useLocation();
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(isRegister ? insertUserSchema : loginSchema),
+  const loginForm = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
-      ...(isRegister ? { email: "" } : {}),
     },
   });
 
-  const onSubmit = async (data: FormData) => {
-    if (isLoading) return;
-    
-    setIsLoading(true);
+  const registerForm = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      email: "",
+      name: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = async (data: LoginFormData | RegisterFormData) => {
     try {
-      console.log('Submitting form:', data);
-      const result = await (isRegister 
-        ? register({ ...data, email: data.email! } as InsertUser)
-        : login({ username: data.username, password: data.password })
-      );
-      console.log('Got result:', result);
-      
-      if (!result.ok) {
-        toast({
-          variant: "destructive",
-          title: isRegister ? "Registration failed" : "Login failed",
-          description: result.message,
-        });
+      if (isLogin) {
+        await login(data as LoginFormData);
       } else {
-        toast({
-          title: isRegister ? "Registration successful" : "Login successful",
-          description: result.data?.message,
-        });
-        setLocation("/inventory");
+        await register(data as RegisterFormData);
       }
-    } catch (error: any) {
-      console.error('Auth error:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
+    } catch (error) {
+      console.error("Auth error:", error);
+      const form = isLogin ? loginForm : registerForm;
+      form.setError("root", {
+        message: "Authentication failed. Please check your credentials.",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  // Reset form when switching between login and register
   const toggleMode = () => {
-    form.reset({
-      username: "",
-      password: "",
-      ...(isRegister ? {} : { email: "" }),
-    });
-    setIsRegister(!isRegister);
+    setIsLogin(!isLogin);
+    loginForm.reset();
+    registerForm.reset();
   };
 
+  const form = isLogin ? loginForm : registerForm;
+
   return (
-    <div className="container flex items-center justify-center min-h-screen">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>{isRegister ? "Register" : "Login"}</CardTitle>
+          <CardTitle>{isLogin ? "Login" : "Register"}</CardTitle>
           <CardDescription>
-            {isRegister
-              ? "Create a new account to continue"
-              : "Login to access the POS system"}
+            {isLogin
+              ? "Welcome back! Please login to continue."
+              : "Create an account to get started."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -114,34 +97,39 @@ export default function AuthPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="username"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input 
+                        type="email" 
+                        autoComplete="email"
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              {isRegister && (
+              {!isLogin && (
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>Name</FormLabel>
                       <FormControl>
-                        <Input type="email" {...field} />
+                        <Input 
+                          autoComplete="name"
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               )}
-
               <FormField
                 control={form.control}
                 name="password"
@@ -149,27 +137,27 @@ export default function AuthPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input 
+                        type="password" 
+                        autoComplete={isLogin ? "current-password" : "new-password"}
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <div className="space-y-2">
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Loading..." : (isRegister ? "Register" : "Login")}
+                <Button type="submit" className="w-full">
+                  {isLogin ? "Login" : "Register"}
                 </Button>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="outline"
                   className="w-full"
                   onClick={toggleMode}
-                  disabled={isLoading}
                 >
-                  {isRegister
-                    ? "Already have an account? Login"
-                    : "Don't have an account? Register"}
+                  {isLogin ? "Need an account?" : "Already have an account?"}
                 </Button>
               </div>
             </form>
