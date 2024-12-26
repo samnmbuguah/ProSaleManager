@@ -1,23 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Product } from '@db/schema';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import type { Product, PriceUnit } from "@/types/product";
 
-interface SaleItem {
-  product_id: number;
-  quantity: number;
-  price: number;
-  name: string;
-  unit_pricing_id: number;
-}
-
-interface SaleData {
-  items: SaleItem[];
-  total: string;
-  paymentMethod: string;
-  paymentStatus: string;
-  amountPaid: string;
-  changeAmount: string;
-  cashAmount: number;
+interface ProductWithPriceUnits extends Product {
+  price_units: PriceUnit[];
 }
 
 export interface ReceiptData {
@@ -27,6 +12,7 @@ export interface ReceiptData {
     quantity: number;
     unit_price: number;
     total: number;
+    unit_type: string;
   }[];
   customer?: {
     name?: string;
@@ -51,69 +37,98 @@ declare global {
   }
 }
 
+interface SaleData {
+  items: {
+    product_id: number;
+    quantity: number;
+    price: number;
+    name: string;
+    unit_type: string;
+    unit_price: number;
+    total: number;
+    unit_pricing_id: number;
+  }[];
+  total: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  amountPaid: string;
+  changeAmount: string;
+  cashAmount: number;
+}
+
 export function usePos() {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const [products, setProducts] = useState<ProductWithPriceUnits[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data: products, isLoading } = useQuery<Product[]>({
-    queryKey: ["products"],
-    queryFn: async () => {
-      const response = await fetch("/api/products");
+  useEffect(() => {
+    fetchAllProducts();
+  }, []);
+
+  const fetchAllProducts = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/products');
       if (!response.ok) {
-        throw new Error("Failed to fetch products");
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      return response.json();
-    },
-  });
-
-  const searchProducts = async (query: string) => {
-    const response = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`);
-    if (!response.ok) {
-      throw new Error("Failed to search products");
+      const data = await response.json();
+      setProducts(data);
+      setError(null);
+    } catch (error) {
+      setProducts([]);
+      setError(error instanceof Error ? error.message : 'Failed to fetch products');
     }
-    return response.json();
   };
 
-  const createSaleMutation = useMutation({
-    mutationFn: async (data: SaleData) => {
-      const response = await fetch("/api/sales", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to create sale");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      toast({
-        title: "Success",
-        description: "Sale completed successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    },
-  });
+  const searchProducts = async (query: string) => {
+    if (!query.trim()) {
+      fetchAllProducts();
+      return;
+    }
 
-  const calculateTotal = (items: Array<{ quantity: number; selected_unit_price: { selling_price: string | number } }>) => {
-    return Number(items.reduce((sum, item) => {
-      return sum + (item.quantity * Number(item.selected_unit_price.selling_price));
-    }, 0).toFixed(2));
+    try {
+      const response = await fetch(`http://localhost:5000/api/products/search?q=${encodeURIComponent(query)}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setProducts(data);
+      setError(null);
+    } catch (error) {
+      setProducts([]);
+      setError(error instanceof Error ? error.message : 'Failed to search products');
+    }
+  };
+
+  const createSale = async (saleData: SaleData) => {
+    setIsProcessing(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/sales', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(saleData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return {
     products,
-    isLoading,
     searchProducts,
-    createSale: createSaleMutation.mutateAsync,
-    isProcessing: createSaleMutation.isPending,
-    calculateTotal,
+    createSale,
+    isProcessing,
+    error,
   };
 }

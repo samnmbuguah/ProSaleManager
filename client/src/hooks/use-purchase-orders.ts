@@ -1,5 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { PurchaseOrder, InsertPurchaseOrder, PurchaseOrderItem, InsertPurchaseOrderItem } from "@db/schema";
+import type { 
+  PurchaseOrder, 
+  PurchaseOrderFormData, 
+  PurchaseOrderItem,
+  PurchaseOrderSubmitData 
+} from "@/types/purchase-order";
 import { useToast } from "@/hooks/use-toast";
 
 export function usePurchaseOrders() {
@@ -18,7 +23,7 @@ export function usePurchaseOrders() {
   });
 
   const createPurchaseOrderMutation = useMutation({
-    mutationFn: async (data: InsertPurchaseOrder) => {
+    mutationFn: async (data: PurchaseOrderSubmitData) => {
       const response = await fetch("/api/purchase-orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -67,7 +72,7 @@ export function usePurchaseOrders() {
   });
 
   const createPurchaseOrderItemMutation = useMutation({
-    mutationFn: async (data: InsertPurchaseOrderItem) => {
+    mutationFn: async (data: PurchaseOrderItem) => {
       const response = await fetch("/api/purchase-order-items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

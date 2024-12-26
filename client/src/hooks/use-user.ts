@@ -1,120 +1,110 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { User, InsertUser } from "@db/schema";
-import { useToast } from '@/hooks/use-toast';
+import { create } from "zustand";
+import type { User, InsertUser } from "@/types/schema";
 
-type AuthResponse = {
-  message: string;
-  user: User;
-};
-
-type RequestResult = {
-  ok: true;
-  data?: AuthResponse;
-} | {
-  ok: false;
-  message: string;
-};
-
-type LoginData = {
-  username: string;
-  password: string;
-};
-
-async function handleRequest(
-  url: string,
-  method: string,
-  body?: LoginData | InsertUser
-): Promise<RequestResult> {
-  try {
-    const response = await fetch(url, {
-      method,
-      headers: body ? { "Content-Type": "application/json" } : undefined,
-      body: body ? JSON.stringify(body) : undefined,
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      if (response.status >= 500) {
-        return { ok: false, message: response.statusText };
-      }
-
-      const message = await response.text();
-      return { ok: false, message };
-    }
-
-    const data = await response.json();
-    return { ok: true, data };
-  } catch (e: any) {
-    return { ok: false, message: e.toString() };
-  }
+interface UserState {
+  user: User | null;
+  isLoading: boolean;
+  error: string | null;
+  setUser: (user: User | null) => void;
+  login: (credentials: { email: string; password: string }) => Promise<void>;
+  register: (userData: InsertUser) => Promise<void>;
+  logout: () => Promise<void>;
+  checkSession: () => Promise<void>;
 }
 
-async function fetchUser(): Promise<User | null> {
-  try {
-    const response = await fetch('/api/user', {
-      credentials: 'include'
-    });
+export const useUser = create<UserState>((set) => ({
+  user: null,
+  isLoading: false,
+  error: null,
+  setUser: (user) => set({ user }),
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        return null;
-      }
-      throw new Error(`${response.status}: ${await response.text()}`);
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error('Error fetching user:', error);
-    return null;
-  }
-}
-
-export function useUser() {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  const { data: user, error, isLoading } = useQuery<User | null, Error>({
-    queryKey: ['user'],
-    queryFn: fetchUser,
-    staleTime: Infinity,
-    retry: false
-  });
-
-  const loginMutation = useMutation({
-    mutationFn: (userData: LoginData) => handleRequest('/api/login', 'POST', userData),
-    onSuccess: (result) => {
-      if (result.ok && result.data) {
-        queryClient.setQueryData(['user'], result.data.user);
-      }
-    },
-  });
-
-  const logoutMutation = useMutation({
-    mutationFn: () => handleRequest('/api/logout', 'POST'),
-    onSuccess: () => {
-      queryClient.setQueryData(['user'], null);
-      toast({
-        title: "Logged out",
-        description: "You have been logged out successfully",
+  login: async (credentials) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+        credentials: "include",
       });
-    },
-  });
 
-  const registerMutation = useMutation({
-    mutationFn: (userData: InsertUser) => handleRequest('/api/register', 'POST', userData),
-    onSuccess: (result) => {
-      if (result.ok && result.data) {
-        queryClient.setQueryData(['user'], result.data.user);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Login failed");
       }
-    },
-  });
 
-  return {
-    user,
-    isLoading,
-    error,
-    login: loginMutation.mutateAsync,
-    logout: logoutMutation.mutateAsync,
-    register: registerMutation.mutateAsync,
-  };
-}
+      const { data } = await response.json();
+      set({ user: data, isLoading: false });
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : "Login failed",
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+
+  register: async (userData) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Registration failed");
+      }
+
+      const { data } = await response.json();
+      set({ user: data, isLoading: false });
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : "Registration failed",
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+
+  logout: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      set({ user: null, isLoading: false });
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : "Logout failed",
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+
+  checkSession: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch("/api/auth/me", {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const { data } = await response.json();
+        set({ user: data, isLoading: false });
+      } else {
+        set({ user: null, isLoading: false });
+      }
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : "Session check failed",
+        isLoading: false,
+        user: null
+      });
+    }
+  }
+}));
