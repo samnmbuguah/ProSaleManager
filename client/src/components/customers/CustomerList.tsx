@@ -1,101 +1,239 @@
-import React from 'react';
-import { type Customer } from "@db/schema";
+import { useState } from "react";
+import { type Customer } from "@/types/schema";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Mail, Phone, User } from "lucide-react";
-import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { format } from "date-fns";
 
 interface CustomerListProps {
   customers: Customer[];
-  isLoading: boolean;
+  onAdd: (customer: Omit<Customer, "id" | "createdAt" | "updatedAt">) => Promise<void>;
+  onEdit: (id: number, customer: Partial<Customer>) => Promise<void>;
+  onDelete: (id: number) => Promise<void>;
+  onSelect?: (customer: Customer) => void;
 }
 
-function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
-  React.useEffect(() => {
-    console.error("[CustomerList] Error:", error);
-    
-    // Report error to health monitoring system
-    fetch('/api/client-error', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        error: error.message,
-        component: 'CustomerList',
-        stack: error.stack
-      })
-    }).catch(err => {
-      console.error('Failed to report error:', err);
+export default function CustomerList({
+  customers,
+  onAdd,
+  onEdit,
+  onDelete,
+  onSelect,
+}: CustomerListProps) {
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingId !== null) {
+        await onEdit(editingId, formData);
+        setEditingId(null);
+      } else {
+        await onAdd(formData);
+        setIsAdding(false);
+      }
+      setFormData({ name: "", email: "", phone: "", address: "" });
+    } catch (error) {
+      console.error("Error saving customer:", error);
+    }
+  };
+
+  const startEdit = (customer: Customer) => {
+    setEditingId(customer.id);
+    setFormData({
+      name: customer.name,
+      email: customer.email || "",
+      phone: customer.phone || "",
+      address: customer.address || "",
     });
-  }, [error]);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setFormData({ name: "", email: "", phone: "", address: "" });
+  };
 
   return (
-    <div className="text-center py-8 text-red-500">
-      <p>Something went wrong:</p>
-      <pre>{error.message}</pre>
-      <button 
-        onClick={resetErrorBoundary}
-        className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
-      >
-        Try again
-      </button>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Customers</h2>
+        <Button onClick={() => setIsAdding(true)} disabled={isAdding}>
+          Add Customer
+        </Button>
+      </div>
+
+      {isAdding && (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              placeholder="Name"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              required
+            />
+            <Input
+              placeholder="Email"
+              type="email"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Phone"
+              value={formData.phone}
+              onChange={(e) =>
+                setFormData({ ...formData, phone: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Address"
+              value={formData.address}
+              onChange={(e) =>
+                setFormData({ ...formData, address: e.target.value })
+              }
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button type="submit">Save</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsAdding(false);
+                setFormData({ name: "", email: "", phone: "", address: "" });
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      )}
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Phone</TableHead>
+            <TableHead>Address</TableHead>
+            <TableHead>Created</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {customers.map((customer) => (
+            <TableRow
+              key={customer.id}
+              className={onSelect ? "cursor-pointer hover:bg-muted/50" : ""}
+              onClick={() => onSelect?.(customer)}
+            >
+              <TableCell>
+                {editingId === customer.id ? (
+                  <Input
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                  />
+                ) : (
+                  customer.name
+                )}
+              </TableCell>
+              <TableCell>
+                {editingId === customer.id ? (
+                  <Input
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                  />
+                ) : (
+                  customer.email
+                )}
+              </TableCell>
+              <TableCell>
+                {editingId === customer.id ? (
+                  <Input
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
+                  />
+                ) : (
+                  customer.phone
+                )}
+              </TableCell>
+              <TableCell>
+                {editingId === customer.id ? (
+                  <Input
+                    value={formData.address}
+                    onChange={(e) =>
+                      setFormData({ ...formData, address: e.target.value })
+                    }
+                  />
+                ) : (
+                  customer.address
+                )}
+              </TableCell>
+              <TableCell>
+                {format(new Date(customer.createdAt), "MMM d, yyyy")}
+              </TableCell>
+              <TableCell>
+                {editingId === customer.id ? (
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleSubmit}>
+                      Save
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={cancelEdit}>
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        startEdit(customer);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(customer.id);
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
-  );
-}
-
-export function CustomerList({ customers, isLoading }: CustomerListProps) {
-  if (isLoading) {
-    return <div className="text-center py-8">Loading customers...</div>;
-  }
-
-  if (!Array.isArray(customers) || customers.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        No customers found
-      </div>
-    );
-  }
-
-  return (
-    <ErrorBoundary 
-      FallbackComponent={ErrorFallback}
-      onError={(error) => {
-        console.error("[CustomerList] Error boundary caught:", error);
-      }}
-    >
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {customers.map((customer) => (
-          <Card key={customer.id}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                {customer.name}
-              </CardTitle>
-              <CardDescription>Customer ID: #{customer.id}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {customer.email && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    {customer.email}
-                  </div>
-                )}
-                {customer.phone && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    {customer.phone}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </ErrorBoundary>
   );
 }
