@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+import { StrictMode, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { Switch, Route } from "wouter";
 import "./index.css";
@@ -17,7 +17,11 @@ import { useUser } from "./hooks/use-user";
 import { Loader2 } from "lucide-react";
 
 function Router() {
-  const { user, isLoading } = useUser();
+  const { user, isLoading, checkSession } = useUser();
+
+  useEffect(() => {
+    checkSession();
+  }, [checkSession]);
 
   if (isLoading) {
     return (
