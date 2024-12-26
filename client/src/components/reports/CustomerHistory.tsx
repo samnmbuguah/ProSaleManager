@@ -1,4 +1,5 @@
-import type { Customer } from "@db/schema";
+import { useState } from "react";
+import type { Customer } from "@/types/schema";
 import {
   Table,
   TableBody,
@@ -7,61 +8,107 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 
-interface SaleHistory {
-  saleId: number;
-  date: string;
-  total: number;
-  paymentMethod: string;
+interface Transaction {
+  id: number;
+  customerId: number;
+  amount: number;
+  date: Date;
+  items: number;
 }
 
 interface CustomerHistoryProps {
-  data: SaleHistory[];
-  customer: Customer | null;
+  customer: Customer;
+  transactions: Transaction[];
+  onDateRangeChange: (startDate: Date, endDate: Date) => void;
 }
 
-export function CustomerHistory({ data, customer }: CustomerHistoryProps) {
-  if (!customer) {
-    return (
-      <div className="text-center p-4">
-        <p>Select a customer to view their purchase history</p>
-      </div>
-    );
-  }
+export default function CustomerHistory({
+  customer,
+  transactions,
+  onDateRangeChange,
+}: CustomerHistoryProps) {
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+
+  const handleDateRangeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (startDate && endDate) {
+      onDateRangeChange(new Date(startDate), new Date(endDate));
+    }
+  };
+
+  const totalSpent = transactions.reduce((sum, t) => sum + t.amount, 0);
+  const averageTransaction = transactions.length
+    ? totalSpent / transactions.length
+    : 0;
 
   return (
-    <div className="space-y-4">
-      <div className="font-semibold">Purchase History for {customer.name}</div>
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Payment Method</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((sale) => (
-              <TableRow key={sale.saleId}>
-                <TableCell>
-                  {format(new Date(sale.date), "MMM d, yyyy")}
-                </TableCell>
-                <TableCell>
-                  KSh {Number(sale.total).toLocaleString("en-KE", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </TableCell>
-                <TableCell className="capitalize">
-                  {sale.paymentMethod}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+    <div className="space-y-6">
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-bold">{customer.name}</h2>
+          <p className="text-muted-foreground">
+            Customer since {format(new Date(customer.createdAt), "MMM d, yyyy")}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-lg">
+            Total Spent: <span className="font-bold">${totalSpent.toFixed(2)}</span>
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Average Transaction: ${averageTransaction.toFixed(2)}
+          </p>
+        </div>
       </div>
+
+      <form onSubmit={handleDateRangeSubmit} className="flex gap-4 items-end">
+        <div className="grid w-full max-w-sm items-center gap-1.5">
+          <label htmlFor="startDate">Start Date</label>
+          <Input
+            type="date"
+            id="startDate"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+        </div>
+        <div className="grid w-full max-w-sm items-center gap-1.5">
+          <label htmlFor="endDate">End Date</label>
+          <Input
+            type="date"
+            id="endDate"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+        </div>
+        <Button type="submit">Filter</Button>
+      </form>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Date</TableHead>
+            <TableHead>Items</TableHead>
+            <TableHead className="text-right">Amount</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {transactions.map((transaction) => (
+            <TableRow key={transaction.id}>
+              <TableCell>
+                {format(new Date(transaction.date), "MMM d, yyyy")}
+              </TableCell>
+              <TableCell>{transaction.items}</TableCell>
+              <TableCell className="text-right">
+                ${transaction.amount.toFixed(2)}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
