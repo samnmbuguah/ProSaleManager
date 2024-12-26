@@ -17,7 +17,8 @@
     "types": ["node", "vite/client"],
     "paths": {
       "@/*": ["./client/src/*"],
-      "@db/*": ["./db/*"]
+      "@db/*": ["./server/src/db/*"],
+      "@types/*": ["./server/src/types/*"]
     }
   }
 }
