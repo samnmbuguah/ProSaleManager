@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Product, InsertProduct } from '@db/schema';
+import type { Product, ProductFormData } from '@/types/product';
 import { useToast } from '@/hooks/use-toast';
 
 export function useInventory() {
@@ -28,7 +28,7 @@ export function useInventory() {
     },
   });
 
-  const createProductMutation = useMutation<Product, Error, InsertProduct>({
+  const createProductMutation = useMutation<Product, Error, ProductFormData>({
     mutationFn: (product) =>
       fetch('/api/products', {
         method: 'POST',
@@ -52,7 +52,7 @@ export function useInventory() {
     },
   });
 
-  const updateProductMutation = useMutation<Product, Error, Partial<Product> & { id: number }>({
+  const updateProductMutation = useMutation<Product, Error, Partial<ProductFormData> & { id: number }>({
     mutationFn: (product) =>
       fetch(`/api/products/${product.id}`, {
         method: 'PUT',
