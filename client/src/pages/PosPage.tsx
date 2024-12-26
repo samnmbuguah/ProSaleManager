@@ -3,10 +3,11 @@ import { SaleTerminal } from "../components/pos/SaleTerminal";
 import { ProductSearch } from "../components/pos/ProductSearch";
 import { Cart } from "../components/pos/Cart";
 import { PaymentDialog } from "../components/pos/PaymentDialog";
-import type { Product } from "../../../db/schema";
+import type { Product, PriceUnit, UnitTypeValues } from "@/types/product";
 import { usePos } from "../hooks/use-pos";
 import type { CartItem, SaleItem, PaymentDetails } from "../types/pos";
-import type { UnitTypeValues } from "../../../db/schema";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface SaleData {
   items: SaleItem[];
@@ -18,23 +19,21 @@ interface SaleData {
   cashAmount: number;
 }
 
+interface ProductWithPriceUnits extends Product {
+  price_units: PriceUnit[];
+}
+
 export default function PosPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  const { products, searchProducts, createSale, isProcessing } = usePos();
+  const { products, searchProducts, createSale, isProcessing, error } = usePos();
 
-  const handleAddToCart = (product: Product, selectedUnit: UnitTypeValues) => {
+  const handleAddToCart = (product: ProductWithPriceUnits, selectedUnit: UnitTypeValues) => {
     setCartItems(items => {
       // Find the complete price unit with all required fields
       const priceUnit = product.price_units?.find(p => p.unit_type === selectedUnit);
       if (!priceUnit) {
         console.error("Selected price unit not found", { selectedUnit, availableUnits: product.price_units });
-        return items;
-      }
-
-      // Verify price unit has all required fields
-      if (!priceUnit.id || !priceUnit.product_id) {
-        console.error("Price unit missing required fields:", priceUnit);
         return items;
       }
 
@@ -63,7 +62,7 @@ export default function PosPage() {
         selectedUnit: selectedUnit,
         unitPrice: sellingPrice,
         total: sellingPrice,
-        price_units: [priceUnit], // Use the price unit directly from the product
+        price_units: [priceUnit],
       };
 
       return [...items, newCartItem];
@@ -100,36 +99,15 @@ export default function PosPage() {
           throw new Error(`Invalid item data for ${item.name || 'unknown item'}`);
         }
 
-        // Find and validate the selected price unit
-        if (!item.price_units || !Array.isArray(item.price_units) || item.price_units.length === 0) {
-          console.error('No price units available for item:', item);
-          throw new Error(`No price units available for ${item.name}`);
-        }
-
-        // Since we now store only the selected price unit in the cart item
-        const priceUnit = item.price_units[0];
-        if (!priceUnit || priceUnit.unit_type !== item.selectedUnit) {
-          console.error('Invalid price unit in cart item:', {
-            selectedUnit: item.selectedUnit,
-            priceUnit
-          });
-          throw new Error(`Invalid price unit for ${item.name}`);
-        }
-
-        if (!priceUnit.id || !priceUnit.product_id) {
-          console.error('Price unit missing required fields:', priceUnit);
-          throw new Error(`Price unit ${item.selectedUnit} for ${item.name} is missing required fields`);
-        }
-
         return {
           product_id: item.id,
           quantity: Math.max(0, Math.round(item.quantity)),
           price: Number(item.unitPrice.toFixed(2)),
           name: item.name,
-          unit_pricing_id: priceUnit.id,
           unit_type: item.selectedUnit,
           unit_price: item.unitPrice,
-          total: item.total
+          total: item.total,
+          unit_pricing_id: item.price_units[0]?.id || 0
         };
       });
 
@@ -181,8 +159,22 @@ export default function PosPage() {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 h-[calc(100vh-5rem)]">
       <div className="lg:col-span-2">
         <SaleTerminal>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <ProductSearch
-            products={products || []}
+            products={products?.map(p => ({
+              ...p,
+              min_stock: p.min_stock ?? 0,
+              max_stock: p.max_stock ?? 0,
+              reorder_point: p.reorder_point ?? 0,
+              category: p.category ?? '',
+              price_units: p.price_units ?? [],
+              stock_unit: p.stock_unit as UnitTypeValues
+            })) || []}
             onSelect={handleAddToCart}
             searchProducts={searchProducts}
           />

@@ -1,25 +1,10 @@
-import type { PriceUnit as SchemaPriceUnit } from "../../../db/schema";
-import type { UnitTypeValues as SchemaUnitTypeValues } from "../../../db/schema";
-
-export type UnitTypeValues = SchemaUnitTypeValues;
-
-export interface PriceUnit {
-  id: number;
-  product_id: number;
-  unit_type: UnitTypeValues;
-  quantity: number;
-  buying_price: string;
-  selling_price: string;
-  is_default: boolean;
-  created_at?: Date;
-  updated_at?: Date;
-}
+import type { PriceUnit } from "./product";
 
 export interface CartItem {
   id: number;
   name: string;
   quantity: number;
-  selectedUnit: UnitTypeValues;
+  selectedUnit: string;
   unitPrice: number;
   total: number;
   price_units: PriceUnit[];
@@ -30,12 +15,14 @@ export interface SaleItem {
   quantity: number;
   price: number;
   name: string;
+  unit_type: string;
+  unit_price: number;
+  total: number;
   unit_pricing_id: number;
 }
 
 export interface PaymentDetails {
+  paymentMethod: string;
   amountPaid: number;
   change: number;
-  items: CartItem[];
-  paymentMethod: 'cash' | 'mpesa';
 }
