@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Customer, InsertCustomer } from '@db/schema';
+import type { Customer, CustomerInsert } from '@/types/customer';
 import { useToast } from '@/hooks/use-toast';
 
 interface APIError {
@@ -80,7 +80,7 @@ export function useCustomers() {
     retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 5000),
   });
 
-  const createCustomerMutation = useMutation<Customer, Error, InsertCustomer>({
+  const createCustomerMutation = useMutation<Customer, Error, CustomerInsert>({
     mutationFn: async (customer) => {
       const res = await fetch('/api/customers', {
         method: 'POST',

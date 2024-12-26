@@ -1,35 +1,84 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { LoyaltyPoints, LoyaltyTransaction } from "@db/schema";
-import { useToast } from "@/hooks/use-toast";
+import type { LoyaltyPoints, LoyaltyTransaction } from "@/types/schema";
+import { create } from "zustand";
 
-export function useLoyalty(customerId?: number) {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  const { data: points } = useQuery<LoyaltyPoints>({
-    queryKey: ["loyalty-points", customerId],
-    queryFn: async () => {
-      if (!customerId) return null;
-      const response = await fetch(`/api/customers/${customerId}/loyalty`);
-      if (!response.ok) throw new Error("Failed to fetch loyalty points");
-      return response.json();
-    },
-    enabled: !!customerId,
-  });
-
-  const { data: transactions } = useQuery<LoyaltyTransaction[]>({
-    queryKey: ["loyalty-transactions", customerId],
-    queryFn: async () => {
-      if (!customerId) return [];
-      const response = await fetch(`/api/customers/${customerId}/loyalty/transactions`);
-      if (!response.ok) throw new Error("Failed to fetch loyalty transactions");
-      return response.json();
-    },
-    enabled: !!customerId,
-  });
-
-  return {
-    points: points?.points || 0,
-    transactions: transactions || [],
-  };
+interface LoyaltyState {
+  points: LoyaltyPoints | null;
+  transactions: LoyaltyTransaction[];
+  isLoading: boolean;
+  error: string | null;
+  fetchPoints: (customerId: number) => Promise<void>;
+  fetchTransactions: (customerId: number) => Promise<void>;
+  addPoints: (customerId: number, points: number) => Promise<void>;
+  redeemPoints: (customerId: number, points: number) => Promise<void>;
 }
+
+export const useLoyalty = create<LoyaltyState>((set) => ({
+  points: null,
+  transactions: [],
+  isLoading: false,
+  error: null,
+
+  fetchPoints: async (customerId: number) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch(`/api/loyalty/points/${customerId}`);
+      if (!response.ok) throw new Error("Failed to fetch loyalty points");
+      const points = await response.json();
+      set({ points, isLoading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+    }
+  },
+
+  fetchTransactions: async (customerId: number) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch(`/api/loyalty/transactions/${customerId}`);
+      if (!response.ok) throw new Error("Failed to fetch loyalty transactions");
+      const transactions = await response.json();
+      set({ transactions, isLoading: false });
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+    }
+  },
+
+  addPoints: async (customerId: number, points: number) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch("/api/loyalty/points/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId, points }),
+      });
+      if (!response.ok) throw new Error("Failed to add loyalty points");
+      const updatedPoints = await response.json();
+      set((state) => ({
+        points: updatedPoints,
+        transactions: [updatedPoints, ...state.transactions],
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+    }
+  },
+
+  redeemPoints: async (customerId: number, points: number) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch("/api/loyalty/points/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId, points }),
+      });
+      if (!response.ok) throw new Error("Failed to redeem loyalty points");
+      const updatedPoints = await response.json();
+      set((state) => ({
+        points: updatedPoints,
+        transactions: [updatedPoints, ...state.transactions],
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+    }
+  },
+}));
