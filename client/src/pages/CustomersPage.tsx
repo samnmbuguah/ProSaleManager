@@ -1,38 +1,60 @@
 import { useState } from "react";
-import { CustomerList } from "../components/customers/CustomerList";
-import { CustomerForm } from "../components/customers/CustomerForm";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useCustomers } from "../hooks/use-customers";
+import CustomerList from "../components/customers/CustomerList";
+import type { Customer } from "@/types/schema";
 
 export default function CustomersPage() {
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const { customers, isLoading, createCustomer, isCreating } = useCustomers();
+  const [customers, setCustomers] = useState<Customer[]>([]);
+
+  const handleAddCustomer = async (customer: Omit<Customer, "id" | "createdAt" | "updatedAt">) => {
+    try {
+      const response = await fetch("/api/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(customer),
+      });
+      if (!response.ok) throw new Error("Failed to add customer");
+      const newCustomer = await response.json();
+      setCustomers([...customers, newCustomer]);
+    } catch (error) {
+      console.error("Error adding customer:", error);
+    }
+  };
+
+  const handleEditCustomer = async (id: number, customer: Partial<Customer>) => {
+    try {
+      const response = await fetch(`/api/customers/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(customer),
+      });
+      if (!response.ok) throw new Error("Failed to update customer");
+      const updatedCustomer = await response.json();
+      setCustomers(customers.map(c => c.id === id ? updatedCustomer : c));
+    } catch (error) {
+      console.error("Error updating customer:", error);
+    }
+  };
+
+  const handleDeleteCustomer = async (id: number) => {
+    try {
+      const response = await fetch(`/api/customers/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Failed to delete customer");
+      setCustomers(customers.filter(c => c.id !== id));
+    } catch (error) {
+      console.error("Error deleting customer:", error);
+    }
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Customer Management</h1>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Customer
-        </Button>
-      </div>
-
-      <CustomerList customers={customers || []} isLoading={isLoading} />
-
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <CustomerForm
-            onSubmit={async (data) => {
-              await createCustomer(data);
-              setIsFormOpen(false);
-            }}
-            isSubmitting={isCreating}
-          />
-        </DialogContent>
-      </Dialog>
+    <div className="container mx-auto py-6">
+      <CustomerList
+        customers={customers}
+        onAdd={handleAddCustomer}
+        onEdit={handleEditCustomer}
+        onDelete={handleDeleteCustomer}
+      />
     </div>
   );
 }
