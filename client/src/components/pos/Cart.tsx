@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, ShoppingCart } from "lucide-react";
-import { CartItem, UnitTypeValues } from "../../types/pos";
+import { CartItem } from "../../types/pos";
 
 interface CartProps {
   items: CartItem[];
-  onUpdateQuantity: (productId: number, selectedUnit: UnitTypeValues, quantity: number) => void;
+  onUpdateQuantity: (productId: number, selectedUnit: string, quantity: number) => void;
   onCheckout: () => void;
   total: number;
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLoyalty } from "@/hooks/use-loyalty";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,54 +11,55 @@ interface LoyaltyPointsSectionProps {
 }
 
 export function LoyaltyPointsSection({ customerId, total, onPointsUse }: LoyaltyPointsSectionProps) {
-  const { points } = useLoyalty(customerId);
+  const { points, fetchPoints } = useLoyalty();
   const [pointsToUse, setPointsToUse] = useState(0);
+
+  useEffect(() => {
+    if (customerId) {
+      fetchPoints(customerId);
+    }
+  }, [customerId, fetchPoints]);
   
-  // Each point is worth KSh 1
-  const maxPoints = Math.min(points, Math.floor(total));
+  // Each point is worth $1
+  const maxPoints = points?.points ? Math.min(points.points, Math.floor(total)) : 0;
 
   const handlePointsChange = (value: string) => {
-    const numPoints = Math.min(Number(value) || 0, maxPoints);
-    setPointsToUse(numPoints);
-    onPointsUse(numPoints);
+    const numPoints = Number(value);
+    if (isNaN(numPoints) || numPoints < 0) {
+      setPointsToUse(0);
+    } else if (numPoints > maxPoints) {
+      setPointsToUse(maxPoints);
+    } else {
+      setPointsToUse(numPoints);
+    }
   };
 
-  if (!customerId || points === 0) {
+  const handleApplyPoints = () => {
+    onPointsUse(pointsToUse);
+  };
+
+  if (!customerId || !points) {
     return null;
   }
 
   return (
-    <div className="space-y-4 border-t pt-4">
-      <div className="flex justify-between text-sm">
-        <span>Available Points:</span>
-        <span>{points} points (KSh {points})</span>
+    <div className="space-y-4">
+      <div>
+        <Label>Available Points: {points.points}</Label>
+        <div className="flex gap-2">
+          <Input
+            type="number"
+            min={0}
+            max={maxPoints}
+            value={pointsToUse}
+            onChange={(e) => handlePointsChange(e.target.value)}
+          />
+          <Button onClick={handleApplyPoints}>Apply Points</Button>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {pointsToUse > 0 && `This will reduce the total by $${pointsToUse.toFixed(2)}`}
+        </p>
       </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="points">Use Points</Label>
-        <Input
-          id="points"
-          type="number"
-          min="0"
-          max={maxPoints}
-          value={pointsToUse}
-          onChange={(e) => handlePointsChange(e.target.value)}
-        />
-        {pointsToUse > 0 && (
-          <div className="text-sm text-muted-foreground">
-            Discount: KSh {pointsToUse}
-          </div>
-        )}
-      </div>
-
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        onClick={() => handlePointsChange(maxPoints.toString())}
-      >
-        Use Maximum Points
-      </Button>
     </div>
   );
 }
