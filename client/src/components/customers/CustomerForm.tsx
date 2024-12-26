@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { insertCustomerSchema, type InsertCustomer } from "@db/schema";
+import type { CustomerInsert } from "@/types/customer";
+import { customerSchema } from "@/types/customer";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -13,13 +14,13 @@ import {
 import { Input } from "@/components/ui/input";
 
 interface CustomerFormProps {
-  onSubmit: (data: InsertCustomer) => Promise<void>;
+  onSubmit: (data: CustomerInsert) => Promise<void>;
   isSubmitting: boolean;
 }
 
 export function CustomerForm({ onSubmit, isSubmitting }: CustomerFormProps) {
-  const form = useForm<InsertCustomer>({
-    resolver: zodResolver(insertCustomerSchema),
+  const form = useForm<CustomerInsert>({
+    resolver: zodResolver(customerSchema),
     defaultValues: {
       name: "",
       email: "",
