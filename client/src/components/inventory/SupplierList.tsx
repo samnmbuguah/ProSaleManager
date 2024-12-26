@@ -1,5 +1,5 @@
-import type { Supplier } from "@db/schema";
-import { useSuppliers } from "@/hooks/use-suppliers";
+import { useState } from "react";
+import type { Supplier } from "@/types/schema";
 import {
   Table,
   TableBody,
@@ -9,63 +9,211 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Building2, Mail, Phone, MapPin } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
-export function SupplierList() {
-  const { suppliers, isLoading } = useSuppliers();
+const supplierSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+});
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+type FormData = z.infer<typeof supplierSchema>;
+
+interface SupplierListProps {
+  suppliers: Supplier[];
+  onAdd: (supplier: FormData) => Promise<void>;
+  onEdit: (id: number, supplier: FormData) => Promise<void>;
+  onDelete: (id: number) => Promise<void>;
+}
+
+export default function SupplierList({
+  suppliers,
+  onAdd,
+  onEdit,
+  onDelete,
+}: SupplierListProps) {
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(supplierSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      address: "",
+    },
+  });
+
+  const onSubmit = async (data: FormData) => {
+    try {
+      if (editingId !== null) {
+        await onEdit(editingId, data);
+        setEditingId(null);
+      } else {
+        await onAdd(data);
+        setIsAdding(false);
+      }
+      form.reset();
+    } catch (error) {
+      console.error("Error saving supplier:", error);
+    }
+  };
+
+  const startEdit = (supplier: Supplier) => {
+    setEditingId(supplier.id);
+    form.reset({
+      name: supplier.name,
+      email: supplier.email || "",
+      phone: supplier.phone || "",
+      address: supplier.address || "",
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    form.reset();
+  };
 
   return (
-    <div className="rounded-md border">
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Suppliers</h2>
+        <Button onClick={() => setIsAdding(true)} disabled={isAdding}>
+          Add Supplier
+        </Button>
+      </div>
+
+      {isAdding && (
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              {...form.register("name")}
+              placeholder="Name"
+              className="w-full"
+            />
+            <Input
+              {...form.register("email")}
+              placeholder="Email"
+              type="email"
+              className="w-full"
+            />
+            <Input
+              {...form.register("phone")}
+              placeholder="Phone"
+              className="w-full"
+            />
+            <Input
+              {...form.register("address")}
+              placeholder="Address"
+              className="w-full"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button type="submit">Save</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsAdding(false);
+                form.reset();
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      )}
+
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Contact</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Phone</TableHead>
             <TableHead>Address</TableHead>
-            <TableHead>Products</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {suppliers?.map((supplier) => (
+          {suppliers.map((supplier) => (
             <TableRow key={supplier.id}>
               <TableCell>
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{supplier.name}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  {supplier.email && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      {supplier.email}
-                    </div>
-                  )}
-                  {supplier.phone && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      {supplier.phone}
-                    </div>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                {supplier.address && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    {supplier.address}
-                  </div>
+                {editingId === supplier.id ? (
+                  <Input {...form.register("name")} defaultValue={supplier.name} />
+                ) : (
+                  supplier.name
                 )}
               </TableCell>
               <TableCell>
-                <Button variant="outline" size="sm">
-                  View Products
-                </Button>
+                {editingId === supplier.id ? (
+                  <Input
+                    {...form.register("email")}
+                    defaultValue={supplier.email}
+                  />
+                ) : (
+                  supplier.email
+                )}
+              </TableCell>
+              <TableCell>
+                {editingId === supplier.id ? (
+                  <Input
+                    {...form.register("phone")}
+                    defaultValue={supplier.phone}
+                  />
+                ) : (
+                  supplier.phone
+                )}
+              </TableCell>
+              <TableCell>
+                {editingId === supplier.id ? (
+                  <Input
+                    {...form.register("address")}
+                    defaultValue={supplier.address}
+                  />
+                ) : (
+                  supplier.address
+                )}
+              </TableCell>
+              <TableCell>
+                {editingId === supplier.id ? (
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={form.handleSubmit(onSubmit)}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={cancelEdit}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => startEdit(supplier)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => onDelete(supplier.id)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                )}
               </TableCell>
             </TableRow>
           ))}

@@ -1,4 +1,4 @@
-import type { PurchaseOrder } from "@db/schema";
+import type { PurchaseOrder } from "@/types/purchase-order";
 import {
   Table,
   TableBody,
@@ -84,24 +84,24 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
                 }}
               >
                 <TableCell>
-                  {formatDate(order.orderDate)}
+                  {formatDate(order?.created_at)}
                 </TableCell>
                 <TableCell>
-                  {getSupplier(order.supplierId)?.name || "Unknown Supplier"}
+                  {getSupplier(order?.supplier_id)?.name || "Unknown Supplier"}
                 </TableCell>
                 <TableCell>
-                  KSh {Number(order.total).toLocaleString("en-KE", {
+                  KSh {Number(order?.total_amount).toLocaleString("en-KE", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={getStatusColor(order.status)}>
-                    {order.status}
+                  <Badge variant={getStatusColor(order?.status)}>
+                    {order?.status}
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {order.status === "pending" && (
+                  {order?.status === "pending" && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -111,7 +111,7 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
                       Approve
                     </Button>
                   )}
-                  {order.status === "approved" && (
+                  {order?.status === "approved" && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -132,7 +132,11 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
         orderId={selectedOrder?.id ?? null}
         isOpen={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
-        supplier={selectedOrder ? getSupplier(selectedOrder.supplierId) : undefined}
+        supplier={selectedOrder ? {
+          name: getSupplier(selectedOrder.supplier_id)?.name || "",
+          email: getSupplier(selectedOrder.supplier_id)?.email || null,
+          phone: getSupplier(selectedOrder.supplier_id)?.phone || null
+        } : undefined}
       />
     </div>
   );

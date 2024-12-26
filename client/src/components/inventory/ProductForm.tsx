@@ -18,53 +18,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { z } from "zod";
-import { UnitTypeValues, defaultUnitQuantities } from "@db/schema";
-
-const UnitTypes = ['per_piece', 'three_piece', 'dozen'] as const;
-
-// Define the product schema for form validation
-const productSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  sku: z.string(),
-  stock: z.number().min(0, "Stock cannot be negative"),
-  category: z.string().min(1, "Category is required"),
-  min_stock: z.number().min(0, "Minimum stock cannot be negative"),
-  max_stock: z.number().min(0, "Maximum stock cannot be negative"),
-  reorder_point: z.number().min(0, "Reorder point cannot be negative"),
-  stock_unit: z.enum(UnitTypes),
-  price_units: z.array(z.object({
-    unit_type: z.enum(UnitTypes),
-    quantity: z.number(),
-    buying_price: z.string().min(1, "Buying price is required"),
-    selling_price: z.string().min(1, "Selling price is required"),
-    is_default: z.boolean()
-  })).min(1, "At least one price unit is required")
-});
-
-export interface PriceUnit {
-  unit_type: UnitTypeValues;
-  quantity: number;
-  buying_price: string;
-  selling_price: string;
-  is_default: boolean;
-}
-
-export interface ProductFormData {
-  name: string;
-  sku: string;
-  stock: number;
-  category: string;
-  min_stock: number;
-  max_stock: number;
-  reorder_point: number;
-  stock_unit: UnitTypeValues;
-  price_units: PriceUnit[];
-}
+import { 
+  UnitTypes, 
+  defaultUnitQuantities, 
+  type UnitTypeValues,
+  type PriceUnit,
+  type ProductFormData,
+  productSchema
+} from "@/types/product";
 
 interface ProductFormProps {
   onSubmit: (data: ProductFormData) => Promise<void>;
-  isSubmitting: boolean;
+  isSubmitting?: boolean;
   initialData?: Partial<ProductFormData>;
 }
 

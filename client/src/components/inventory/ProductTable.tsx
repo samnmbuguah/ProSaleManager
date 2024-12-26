@@ -1,16 +1,5 @@
 import { useState } from "react";
-import type { Product, UnitTypeValues } from "@db/schema";
-
-import { PriceUnit } from "./ProductForm";
-export type ProductWithPricing = Product & {
-  price_units?: Array<{
-    unit_type: UnitTypeValues;
-    quantity: number;
-    buying_price: string;
-    selling_price: string;
-    is_default: boolean;
-  }>;
-};
+import type { Product, UnitTypeValues, PriceUnit } from "@/types/product";
 import {
   Table,
   TableBody,
@@ -22,8 +11,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ProductForm, type ProductFormData } from "./ProductForm";
+import { ProductForm } from "./ProductForm";
+import type { ProductFormData } from "@/types/product";
 import { Settings, Edit } from "lucide-react";
+
+export type ProductWithPricing = Product & {
+  price_units?: PriceUnit[];
+};
 
 interface ProductTableProps {
   products: ProductWithPricing[];
