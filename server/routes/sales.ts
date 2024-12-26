@@ -1,345 +1,277 @@
-import { Router } from "express";
-import { db } from "../../db";
-import { sales, saleItems, products, customers, users, loyaltyTransactions, loyaltyPoints } from "../../db/schema";
-import { eq, desc, sql, and, gte, lte } from "drizzle-orm";
-import { startOfDay, startOfWeek, startOfMonth, startOfYear, endOfDay } from "date-fns";
+import { Router } from 'express';
+import { db } from '../src/db';
+import { 
+  sales, 
+  saleItems,
+  type Sale,
+  type SaleItem
+} from '../src/db/schema/sale/schema';
+import { products, productPricing } from '../src/db/schema/product/schema';
+import { customers } from '../src/db/schema/customer/schema';
+import { eq, sql, desc, and } from 'drizzle-orm';
+import { z } from 'zod';
 
 const router = Router();
 
-// Development only - Delete all sales
-router.delete("/all", async (req, res) => {
-  if (process.env.NODE_ENV === "production") {
-    return res.status(403).json({ error: "Not allowed in production" });
-  }
-  
-  try {
-    // Delete in order of dependencies
-    await db.delete(loyaltyTransactions);
-    await db.delete(saleItems);
-    await db.delete(sales);
-    
-    res.json({ message: "All sales and related records deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting sales:", error);
-    res.status(500).json({ error: "Failed to delete sales" });
-  }
+// Define the sale item schema for validation
+const saleItemSchema = z.object({
+  product_id: z.number(),
+  unit_type: z.string(),
+  quantity: z.number(),
+  unit_price: z.string(),
+  total_amount: z.string()
 });
 
-// Get paginated sales with customer and user information
-router.get("/", async (req, res) => {
-  try {
-    const page = parseInt(req.query.page as string) || 1;
-    const pageSize = parseInt(req.query.pageSize as string) || 10;
-    const offset = (page - 1) * pageSize;
-
-    const [salesData, totalCount] = await Promise.all([
-      db
-        .select({
-          id: sales.id,
-          customerId: sales.customerId,
-          total: sales.total,
-          paymentMethod: sales.paymentMethod,
-          paymentStatus: sales.paymentStatus,
-          createdAt: sales.createdAt,
-          customer: {
-            name: customers.name,
-            email: customers.email,
-            phone: customers.phone,
-          },
-          user: {
-            username: users.username,
-          },
-        })
-        .from(sales)
-        .leftJoin(customers, eq(sales.customerId, customers.id))
-        .leftJoin(users, eq(sales.userId, users.id))
-        .orderBy(desc(sales.createdAt))
-        .limit(pageSize)
-        .offset(offset),
-      db.select({ count: sales.id }).from(sales),
-    ]);
-
-    // Add default payment status for older records
-    const salesWithStatus = salesData.map(sale => ({
-      ...sale,
-      paymentStatus: sale.paymentStatus || 'paid'
-    }));
-
-    res.json({
-      sales: salesWithStatus,
-      total: totalCount.length,
-    });
-  } catch (error) {
-    console.error("Error fetching sales:", error);
-    res.status(500).json({ error: "Failed to fetch sales" });
-  }
+// Define the sale schema for validation
+const saleSchema = z.object({
+  customer_id: z.number().optional(),
+  items: z.array(saleItemSchema),
+  total_amount: z.string(),
+  payment_method: z.enum(['cash', 'card', 'mobile_money']),
+  payment_status: z.enum(['paid', 'pending', 'cancelled']),
+  notes: z.string().optional()
 });
 
-// Get sale items for a specific sale
-router.get("/:id/items", async (req, res) => {
-  try {
-    const { id } = req.params;
+type SaleFormData = z.infer<typeof saleSchema>;
 
-    const items = await db
+// Get all sales
+router.get('/', async (req, res) => {
+  try {
+    const allSales = await db
       .select({
-        id: saleItems.id,
-        productId: saleItems.productId,
-        quantity: saleItems.quantity,
-        price: saleItems.price,
-        unitPricingId: saleItems.unitPricingId,
-        product: {
-          name: products.name,
-          stock_unit: products.stock_unit,
-        },
+        id: sales.id,
+        customer_id: sales.customer_id,
+        total_amount: sales.total_amount,
+        payment_method: sales.payment_method,
+        payment_status: sales.payment_status,
+        notes: sales.notes,
+        created_at: sales.created_at,
+        updated_at: sales.updated_at,
+        customer: {
+          id: customers.id,
+          name: customers.name,
+          phone: customers.phone,
+          email: customers.email
+        }
       })
-      .from(saleItems)
-      .leftJoin(products, eq(saleItems.productId, products.id))
-      .where(eq(saleItems.saleId, parseInt(id)));
+      .from(sales)
+      .leftJoin(customers, eq(sales.customer_id, customers.id))
+      .orderBy(desc(sales.created_at));
 
-    // Calculate total for each item
-    const itemsWithTotal = items.map(item => ({
-      ...item,
-      total: (Number(item.price) * item.quantity).toString(),
-    }));
-
-    res.json(itemsWithTotal);
-  } catch (error) {
-    console.error("Error fetching sale items:", error);
-    res.status(500).json({ error: "Failed to fetch sale items" });
-  }
-});
-
-// POST /api/sales - Create new sale
-router.post("/", async (req, res) => {
-  if (!req.isAuthenticated()) return res.status(401).json({ error: "Unauthorized" });
-  try {
-    const { items, customerId, total, paymentMethod, usePoints = 0 } = req.body;
-      
-      // Validate items data
-      if (!Array.isArray(items) || items.length === 0) {
-        return res.status(400).json({ error: "Invalid sale items data" });
-      }
-
-      for (const item of items) {
-        if (!item.product_id || !item.quantity || !item.price) {
-          return res.status(400).json({ 
-            error: "Invalid item data",
-            details: "Each item must have product_id, quantity, and price"
-          });
-        }
-      }
-      
-      // Create sale record
-      const [sale] = await db.insert(sales).values({
-        customerId,
-        userId: req.user!.id,
-        total,
-        paymentMethod,
-        paymentStatus: 'paid',
-      }).returning();
-
-      // Create sale items with validated data
-      const saleItemsData = items.map((item: any) => ({
-        saleId: sale.id,
-        productId: parseInt(item.product_id),
-        quantity: parseInt(item.quantity),
-        price: item.price,
-        unitPricingId: item.unit_pricing_id ? parseInt(item.unit_pricing_id) : null,
-      }));
-
-      // Validate all data before insert
-      for (const item of saleItemsData) {
-        if (isNaN(item.productId) || isNaN(item.quantity)) {
-          throw new Error('Invalid product ID or quantity');
-        }
-      }
-
-      await db.insert(saleItems).values(saleItemsData);
-
-    // Get product details for receipt
-    const productDetails = await Promise.all(
-      items.map(async (item: any) => {
-        const [product] = await db
+    const salesWithItems = await Promise.all(
+      allSales.map(async (sale) => {
+        const items = await db
           .select({
-            id: products.id,
-            name: products.name,
-            stock_unit: products.stock_unit,
+            id: saleItems.id,
+            sale_id: saleItems.sale_id,
+            product_id: saleItems.product_id,
+            unit_type: saleItems.unit_type,
+            quantity: saleItems.quantity,
+            unit_price: saleItems.unit_price,
+            total_amount: saleItems.total_amount,
+            product: {
+              id: products.id,
+              name: products.name,
+              sku: products.sku
+            }
           })
-          .from(products)
-          .where(eq(products.id, item.productId))
-          .limit(1);
+          .from(saleItems)
+          .leftJoin(products, eq(saleItems.product_id, products.id))
+          .where(eq(saleItems.sale_id, sale.id));
+
         return {
-          ...item,
-          name: product?.name || 'Unknown Product',
+          ...sale,
+          items
         };
       })
     );
 
-
-    // Update product stock
-    for (const item of items) {
-      await db.update(products)
-        .set({ 
-          stock: sql`${products.stock} - ${item.quantity}`
-        })
-        .where(eq(products.id, item.productId));
-    }
-
-    // Handle loyalty points
-    if (customerId) {
-      const pointsToAward = Math.floor(Number(total) / 100);
-      const [existingPoints] = await db
-        .select()
-        .from(loyaltyPoints)
-        .where(eq(loyaltyPoints.customerId, customerId));
-
-      if (existingPoints) {
-        await db
-          .update(loyaltyPoints)
-          .set({ 
-            points: sql`${loyaltyPoints.points} + ${pointsToAward} - ${usePoints}`,
-            updatedAt: new Date()
-          })
-          .where(eq(loyaltyPoints.customerId, customerId));
-      } else {
-        await db
-          .insert(loyaltyPoints)
-          .values({
-            customerId,
-            points: pointsToAward,
-          });
-      }
-
-      await db.insert(loyaltyTransactions).values({
-        customerId,
-        saleId: sale.id,
-        points: pointsToAward,
-        type: 'earn',
-      });
-
-      if (usePoints > 0) {
-        await db.insert(loyaltyTransactions).values({
-          customerId,
-          saleId: sale.id,
-          points: -usePoints,
-          type: 'redeem',
-        });
-      }
-    }
-
-    // Fetch customer data if customerId exists
-    let customerData;
-    if (customerId) {
-      const [customer] = await db
-        .select()
-        .from(customers)
-        .where(eq(customers.id, customerId))
-        .limit(1);
-      customerData = customer;
-    }
-
-    // Prepare receipt data with proper type handling and validation
-    const receipt = {
-      id: sale.id,
-      items: productDetails.map(item => ({
-        name: item.name || 'Unknown Product',
-        quantity: Number(item.quantity) || 0,
-        unitPrice: Number(item.price) || 0,
-        total: (Number(item.quantity) * Number(item.price)) || 0,
-      })),
-      customer: customerData ? {
-        name: customerData.name || '',
-        phone: customerData.phone || '',
-        email: customerData.email || '',
-      } : undefined,
-      total: Number(total) || 0,
-      paymentMethod: paymentMethod || 'cash',
-      timestamp: sale.createdAt?.toISOString() || new Date().toISOString(),
-      transactionId: `TXN-${sale.id}`,
-      receiptStatus: {
-        sms: false,
-        whatsapp: false,
-      },
-    };
-
-    res.json({
-      sale: {
-        id: sale.id,
-        customerId: sale.customerId,
-        userId: sale.userId,
-        total: sale.total,
-        paymentMethod: sale.paymentMethod,
-        paymentStatus: sale.paymentStatus,
-        createdAt: sale.createdAt,
-        updatedAt: sale.updatedAt,
-      },
-      receipt
-    });
+    res.json(salesWithItems);
   } catch (error) {
-    console.error('Sale error:', error);
-    res.status(500).json({ error: "Failed to create sale" });
+    console.error('Error fetching sales:', error);
+    res.status(500).json({ error: 'Failed to fetch sales' });
   }
 });
 
-// Get sales summary by payment method for a period
-router.get("/summary", async (req, res) => {
+// Get a single sale by ID
+router.get('/:id', async (req, res) => {
   try {
-    const { period = 'today' } = req.query;
-    let startDate;
-    const now = new Date();
-
-    switch (period) {
-      case 'today':
-        startDate = startOfDay(now);
-        break;
-      case 'week':
-        startDate = startOfWeek(now);
-        break;
-      case 'month':
-        startDate = startOfMonth(now);
-        break;
-      case 'year':
-        startDate = startOfYear(now);
-        break;
-      default:
-        startDate = startOfDay(now);
-    }
-
-    const result = await db
+    const { id } = req.params;
+    const sale = await db
       .select({
-        paymentMethod: sales.paymentMethod,
-        total: sql<string>`sum(${sales.total})::text`,
+        id: sales.id,
+        customer_id: sales.customer_id,
+        total_amount: sales.total_amount,
+        payment_method: sales.payment_method,
+        payment_status: sales.payment_status,
+        notes: sales.notes,
+        created_at: sales.created_at,
+        updated_at: sales.updated_at,
+        customer: {
+          id: customers.id,
+          name: customers.name,
+          phone: customers.phone,
+          email: customers.email
+        }
       })
       .from(sales)
-      .where(
-        and(
-          gte(sales.createdAt, startDate),
-          lte(sales.createdAt, endOfDay(now))
-        )
-      )
-      .groupBy(sales.paymentMethod);
+      .leftJoin(customers, eq(sales.customer_id, customers.id))
+      .where(eq(sales.id, parseInt(id)))
+      .limit(1);
 
-    // Transform the data into summary format
-    const summary = {
-      mpesa: 0,
-      cash: 0,
-      total: 0,
-    };
+    if (!sale.length) {
+      return res.status(404).json({ error: 'Sale not found' });
+    }
 
-    result.forEach((row) => {
-      const amount = Number(row.total) || 0;
-      if (row.paymentMethod === 'mpesa') {
-        summary.mpesa = amount;
-      } else if (row.paymentMethod === 'cash') {
-        summary.cash = amount;
+    const items = await db
+      .select({
+        id: saleItems.id,
+        sale_id: saleItems.sale_id,
+        product_id: saleItems.product_id,
+        unit_type: saleItems.unit_type,
+        quantity: saleItems.quantity,
+        unit_price: saleItems.unit_price,
+        total_amount: saleItems.total_amount,
+        product: {
+          id: products.id,
+          name: products.name,
+          sku: products.sku
+        }
+      })
+      .from(saleItems)
+      .leftJoin(products, eq(saleItems.product_id, products.id))
+      .where(eq(saleItems.sale_id, parseInt(id)));
+
+    res.json({
+      ...sale[0],
+      items
+    });
+  } catch (error) {
+    console.error('Error fetching sale:', error);
+    res.status(500).json({ error: 'Failed to fetch sale' });
+  }
+});
+
+// Create a new sale
+router.post('/', async (req, res) => {
+  try {
+    const validatedData = saleSchema.parse(req.body) as SaleFormData;
+
+    await db.transaction(async (tx) => {
+      // Create the sale
+      const [newSale] = await tx
+        .insert(sales)
+        .values({
+          customer_id: validatedData.customer_id,
+          total_amount: validatedData.total_amount,
+          payment_method: validatedData.payment_method,
+          payment_status: validatedData.payment_status,
+          notes: validatedData.notes || ''
+        })
+        .returning();
+
+      // Create sale items
+      const saleItemsData = validatedData.items.map((item) => ({
+        sale_id: newSale.id,
+        product_id: item.product_id,
+        unit_type: item.unit_type,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        total_amount: item.total_amount
+      }));
+
+      await tx.insert(saleItems).values(saleItemsData);
+
+      // Update product stock
+      for (const item of validatedData.items) {
+        const [product] = await tx
+          .select()
+          .from(products)
+          .where(eq(products.id, item.product_id))
+          .limit(1);
+
+        if (product) {
+          await tx
+            .update(products)
+            .set({
+              stock: sql`${products.stock} - ${item.quantity}`,
+              updated_at: new Date()
+            })
+            .where(eq(products.id, item.product_id));
+        }
       }
     });
 
-    summary.total = summary.mpesa + summary.cash;
-    res.json(summary);
+    res.status(201).json({ message: 'Sale created successfully' });
   } catch (error) {
-    console.error("Error fetching sales summary:", error);
-    res.status(500).json({ error: "Failed to fetch sales summary" });
+    console.error('Error creating sale:', error);
+    res.status(400).json({ error: 'Failed to create sale' });
+  }
+});
+
+// Update a sale's payment status
+router.patch('/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { payment_status } = req.body;
+
+    if (!['paid', 'pending', 'cancelled'].includes(payment_status)) {
+      return res.status(400).json({ error: 'Invalid payment status' });
+    }
+
+    await db
+      .update(sales)
+      .set({
+        payment_status,
+        updated_at: new Date()
+      })
+      .where(eq(sales.id, parseInt(id)));
+
+    res.json({ message: 'Sale status updated successfully' });
+  } catch (error) {
+    console.error('Error updating sale status:', error);
+    res.status(500).json({ error: 'Failed to update sale status' });
+  }
+});
+
+// Delete a sale
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await db.transaction(async (tx) => {
+      // Get sale items to restore product stock
+      const saleItemsList = await tx
+        .select()
+        .from(saleItems)
+        .where(eq(saleItems.sale_id, parseInt(id)));
+
+      // Restore product stock
+      for (const item of saleItemsList) {
+        await tx
+          .update(products)
+          .set({
+            stock: sql`${products.stock} + ${item.quantity}`,
+            updated_at: new Date()
+          })
+          .where(eq(products.id, item.product_id));
+      }
+
+      // Delete sale items
+      await tx
+        .delete(saleItems)
+        .where(eq(saleItems.sale_id, parseInt(id)));
+
+      // Delete sale
+      await tx
+        .delete(sales)
+        .where(eq(sales.id, parseInt(id)));
+    });
+
+    res.json({ message: 'Sale deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting sale:', error);
+    res.status(500).json({ error: 'Failed to delete sale' });
   }
 });
 

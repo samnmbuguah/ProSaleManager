@@ -1,15 +1,12 @@
 import { Router } from 'express';
-import { db } from '../../db';
-import { 
-  products, 
-  unitPricing,
-  type UnitTypeValues,
-  defaultUnitQuantities
-} from '../../db/schema';
-import { eq, sql, ilike } from 'drizzle-orm';
+import { Product, PriceUnit } from '../models';
+import { Op } from 'sequelize';
 import { z } from "zod";
+import multer from 'multer';
+import cloudinary from '../config/cloudinary';
 
 const router = Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Define the product schema for validation
 const productSchema = z.object({
@@ -20,9 +17,9 @@ const productSchema = z.object({
   min_stock: z.number().min(0).optional(),
   max_stock: z.number().min(0).optional(),
   reorder_point: z.number().min(0).optional(),
-  stock_unit: z.enum(['per_piece', 'three_piece', 'dozen']),
+  stock_unit: z.enum(['piece', 'box', 'carton', 'pack', 'kg', 'g', 'l', 'ml']),
   price_units: z.array(z.object({
-    unit_type: z.enum(['per_piece', 'three_piece', 'dozen']),
+    unit_type: z.enum(['piece', 'box', 'carton', 'pack', 'kg', 'g', 'l', 'ml']),
     quantity: z.number(),
     buying_price: z.string(),
     selling_price: z.string(),
@@ -44,70 +41,13 @@ router.get('/', async (req, res) => {
   try {
     console.log('Fetching all products with pricing information...');
     
-    const allProducts = await db
-      .select({
-        id: products.id,
-        name: products.name,
-        sku: products.sku,
-        category: products.category,
-        stock: products.stock,
-        min_stock: products.min_stock,
-        max_stock: products.max_stock,
-        reorder_point: products.reorder_point,
-        stock_unit: products.stock_unit,
-        default_unit_pricing_id: products.default_unit_pricing_id,
-        created_at: products.created_at,
-        updated_at: products.updated_at,
-      })
-      .from(products)
-      .orderBy(products.name);
+    const products = await Product.findAll({
+      include: [{ model: PriceUnit }],
+      order: [['name', 'ASC']]
+    });
 
-    console.log(`Found ${allProducts.length} products`);
-    
-    // Fetch price units for each product
-    const productsWithPricing = await Promise.all(
-      allProducts.map(async (product) => {
-        try {
-          const pricing = await db
-            .select()
-            .from(unitPricing)
-            .where(eq(unitPricing.product_id, product.id));
-
-          // console.log(`Found ${pricing.length} price units for product ${product.id}`);
-
-          // Transform pricing data to match frontend expectations
-          const price_units = pricing.map(unit => ({
-            id: unit.id,
-            product_id: product.id,
-            unit_type: unit.unit_type as UnitTypeValues,
-            quantity: unit.quantity,
-            buying_price: unit.buying_price.toString(),
-            selling_price: unit.selling_price.toString(),
-            is_default: unit.is_default,
-            created_at: unit.created_at || new Date(),
-            updated_at: unit.updated_at || new Date()
-          }));
-
-          // Find default pricing unit
-          const defaultUnit = price_units.find(unit => unit.is_default);
-
-          return {
-            ...product,
-            price_units,
-            default_unit_pricing: defaultUnit || null,
-          };
-        } catch (error) {
-          console.error(`Error fetching pricing for product ${product.id}:`, error);
-          return {
-            ...product,
-            price_units: [],
-            default_unit_pricing: null,
-          };
-        }
-      })
-    );
-    
-    res.json(productsWithPricing);
+    console.log(`Found ${products.length} products`);
+    res.json(products);
   } catch (error) {
     console.error('Error fetching products:', error);
     res.status(500).json({ 
@@ -116,10 +56,9 @@ router.get('/', async (req, res) => {
     });
   }
 });
+
 // Search products endpoint
 router.get('/search', async (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  
   try {
     const query = req.query.q as string;
     if (!query || typeof query !== 'string') {
@@ -128,69 +67,17 @@ router.get('/search', async (req, res) => {
 
     console.log('Searching for products with query:', query);
 
-    const searchResults = await db
-      .select({
-        id: products.id,
-        name: products.name,
-        sku: products.sku,
-        category: products.category,
-        stock: products.stock,
-        min_stock: products.min_stock,
-        max_stock: products.max_stock,
-        reorder_point: products.reorder_point,
-        stock_unit: products.stock_unit,
-        default_unit_pricing_id: products.default_unit_pricing_id,
-        buying_price: products.buying_price,
-        selling_price: products.selling_price
-      })
-      .from(products)
-      .where(ilike(products.name, `%${query}%`))
-      .orderBy(products.name);
-
-    if (!Array.isArray(searchResults)) {
-      throw new Error('Database query did not return an array');
-    }
-
-    // Fetch price units for each product
-    const productsWithPricing = await Promise.all(
-      searchResults.map(async (product) => {
-        try {
-          const pricing = await db
-            .select()
-            .from(unitPricing)
-            .where(eq(unitPricing.product_id, product.id));
-
-          if (!Array.isArray(pricing)) {
-            console.error(`Invalid pricing data for product ${product.id}`);
-            return {
-              ...product,
-              price_units: []
-            };
-          }
-
-          return {
-            ...product,
-            price_units: pricing.map(unit => ({
-              id: unit.id,
-              product_id: product.id,
-              unit_type: unit.unit_type,
-              quantity: unit.quantity,
-              buying_price: unit.buying_price.toString(),
-              selling_price: unit.selling_price.toString(),
-              is_default: unit.is_default
-            }))
-          };
-        } catch (err) {
-          console.error(`Error fetching pricing for product ${product.id}:`, err);
-          return {
-            ...product,
-            price_units: []
-          };
+    const products = await Product.findAll({
+      where: {
+        name: {
+          [Op.iLike]: `%${query}%`
         }
-      })
-    );
+      },
+      include: [{ model: PriceUnit }],
+      order: [['name', 'ASC']]
+    });
 
-    return res.json(productsWithPricing);
+    return res.json(products);
   } catch (error) {
     console.error('Error searching products:', error);
     return res.status(500).json({ 
@@ -201,46 +88,53 @@ router.get('/search', async (req, res) => {
 });
 
 // Create a new product with unit pricing
-router.post('/', async (req, res) => {
+router.post('/', upload.single('image'), async (req, res) => {
   try {
     const validatedData = productSchema.parse(req.body) as ProductFormData;
+    let imageUrl = null;
 
-    await db.transaction(async (tx) => {
-      const [newProduct] = await tx
-        .insert(products)
-        .values({
-          name: validatedData.name,
-          sku: validatedData.sku,
-          stock: validatedData.stock,
-          category: validatedData.category || "",
-          min_stock: validatedData.min_stock || 0,
-          max_stock: validatedData.max_stock || 0,
-          reorder_point: validatedData.reorder_point || 0,
-          stock_unit: validatedData.stock_unit,
-          buying_price: validatedData.price_units[0].buying_price,
-          selling_price: validatedData.price_units[0].selling_price
-        })
-        .returning();
+    // Upload image to Cloudinary if provided
+    if (req.file) {
+      const result = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'products' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
 
-      const unitPricingData = validatedData.price_units.map((unit: {
-        unit_type: UnitTypeValues;
-        quantity: number;
-        buying_price: string;
-        selling_price: string;
-        is_default: boolean;
-      }) => ({
-        product_id: newProduct.id,
+        uploadStream.end(req.file.buffer);
+      });
+
+      imageUrl = result.secure_url;
+    }
+
+    const product = await Product.create({
+      name: validatedData.name,
+      sku: validatedData.sku,
+      stock: validatedData.stock,
+      category: validatedData.category || "",
+      min_stock: validatedData.min_stock || 0,
+      max_stock: validatedData.max_stock || 0,
+      reorder_point: validatedData.reorder_point || 0,
+      stock_unit: validatedData.stock_unit,
+      image_url: imageUrl
+    });
+
+    // Create price units
+    await PriceUnit.bulkCreate(
+      validatedData.price_units.map(unit => ({
+        product_id: product.id,
         unit_type: unit.unit_type,
-        quantity: defaultUnitQuantities[unit.unit_type as keyof typeof defaultUnitQuantities],
+        quantity: unit.quantity,
         buying_price: unit.buying_price,
         selling_price: unit.selling_price,
         is_default: unit.is_default
-      }));
+      }))
+    );
 
-      await tx.insert(unitPricing).values(unitPricingData);
-    });
-
-    res.status(201).json({ message: "Product created successfully" });
+    res.status(201).json({ message: "Product created successfully", product });
   } catch (error) {
     console.error("Error creating product:", error);
     res.status(400).json({ error: "Failed to create product" });
@@ -250,140 +144,116 @@ router.post('/', async (req, res) => {
 // Get a single product by ID
 router.get('/:id', async (req, res) => {
   try {
-    const productId = parseInt(req.params.id);
-    console.log('\n=== Retrieving Product ===');
-    console.log('1. Product ID:', productId);
-
-    const [product] = await db
-      .select()
-      .from(products)
-      .where(eq(products.id, productId))
-      .limit(1);
+    const { id } = req.params;
+    const product = await Product.findByPk(id, {
+      include: [{ model: PriceUnit }]
+    });
 
     if (!product) {
-      console.log('Product not found with ID:', productId);
-      return res.status(404).json({ error: 'Product not found' });
+      return res.status(404).json({ error: "Product not found" });
     }
 
-    console.log('Found product:', JSON.stringify(product, null, 2));
-
-    // Get all unit pricing for the product
-    const priceUnits = await db
-      .select()
-      .from(unitPricing)
-      .where(eq(unitPricing.product_id, product.id));
-
-    console.log('Found price units:', JSON.stringify(priceUnits, null, 2));
-
-    const response = {
-      ...product,
-      price_units: priceUnits.map(unit => ({
-        ...unit,
-        buying_price: unit.buying_price.toString(),
-        selling_price: unit.selling_price.toString()
-      }))
-    };
-
-    console.log('Sending response:', response);
-    res.json(response);
+    res.json(product);
   } catch (error) {
-    console.error('Error fetching product:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch product',
-      details: error instanceof Error ? error.message : undefined
-    });
+    console.error("Error fetching product:", error);
+    res.status(500).json({ error: "Failed to fetch product" });
   }
 });
 
 // Update a product
-router.put('/:id', async (req, res) => {
+router.put('/:id', upload.single('image'), async (req, res) => {
   try {
-    const productId = parseInt(req.params.id);
-    const validatedData = productSchema.parse(req.body);
+    const { id } = req.params;
+    const validatedData = productSchema.parse(req.body) as ProductFormData;
 
-    const defaultUnit = validatedData.price_units.find((unit: { is_default: boolean }) => unit.is_default);
-    
-    if (!defaultUnit) {
-      return res.status(400).json({ error: "No default unit pricing provided" });
+    const product = await Product.findByPk(id);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
     }
 
-    const unitPricingData = validatedData.price_units.map((unit: {
-      unit_type: UnitTypeValues;
-      quantity: number;
-      buying_price: string;
-      selling_price: string;
-      is_default: boolean;
-    }) => ({
-      product_id: productId,
-      unit_type: unit.unit_type,
-      quantity: defaultUnitQuantities[unit.unit_type as keyof typeof defaultUnitQuantities],
-      buying_price: unit.buying_price,
-      selling_price: unit.selling_price,
-      is_default: unit.is_default
-    }));
+    let imageUrl = product.image_url;
 
-    // Update product and unit pricing in a transaction
-    await db.transaction(async (tx) => {
-      // Update product
-      await tx
-        .update(products)
-        .set({
-          name: validatedData.name,
-          sku: validatedData.sku,
-          stock: validatedData.stock,
-          category: validatedData.category,
-          min_stock: validatedData.min_stock,
-          max_stock: validatedData.max_stock,
-          reorder_point: validatedData.reorder_point,
-          stock_unit: validatedData.stock_unit
-        })
-        .where(eq(products.id, productId));
+    // Upload new image to Cloudinary if provided
+    if (req.file) {
+      // Delete old image from Cloudinary if exists
+      if (product.image_url) {
+        const publicId = product.image_url.split('/').pop()?.split('.')[0];
+        if (publicId) {
+          await cloudinary.uploader.destroy(`products/${publicId}`);
+        }
+      }
 
-      // Delete existing unit pricing
-      await tx
-        .delete(unitPricing)
-        .where(eq(unitPricing.product_id, productId));
+      const result = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          { folder: 'products' },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
 
-      // Insert new unit pricing
-      await tx.insert(unitPricing).values(unitPricingData);
+        uploadStream.end(req.file.buffer);
+      });
+
+      imageUrl = result.secure_url;
+    }
+
+    // Update product
+    await product.update({
+      name: validatedData.name,
+      sku: validatedData.sku,
+      stock: validatedData.stock,
+      category: validatedData.category || "",
+      min_stock: validatedData.min_stock || 0,
+      max_stock: validatedData.max_stock || 0,
+      reorder_point: validatedData.reorder_point || 0,
+      stock_unit: validatedData.stock_unit,
+      image_url: imageUrl
     });
 
-    res.json({ message: "Product updated successfully" });
+    // Update price units
+    await PriceUnit.destroy({ where: { product_id: id } });
+    await PriceUnit.bulkCreate(
+      validatedData.price_units.map(unit => ({
+        product_id: product.id,
+        unit_type: unit.unit_type,
+        quantity: unit.quantity,
+        buying_price: unit.buying_price,
+        selling_price: unit.selling_price,
+        is_default: unit.is_default
+      }))
+    );
+
+    res.json({ message: "Product updated successfully", product });
   } catch (error) {
     console.error("Error updating product:", error);
-    res.status(500).json({ error: "Failed to update product" });
+    res.status(400).json({ error: "Failed to update product" });
   }
 });
 
-// Add this endpoint after the update endpoint
+// Delete a product
 router.delete('/:id', async (req, res) => {
   try {
-    const productId = parseInt(req.params.id);
+    const { id } = req.params;
+    const product = await Product.findByPk(id);
 
-    await db.transaction(async (tx) => {
-      // First delete all unit pricing records
-      await tx
-        .delete(unitPricing)
-        .where(eq(unitPricing.product_id, productId));
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
 
-      // Then delete the product
-      const [deletedProduct] = await tx
-        .delete(products)
-        .where(eq(products.id, productId))
-        .returning();
-
-      if (!deletedProduct) {
-        return res.status(404).json({ error: 'Product not found' });
+    // Delete image from Cloudinary if exists
+    if (product.image_url) {
+      const publicId = product.image_url.split('/').pop()?.split('.')[0];
+      if (publicId) {
+        await cloudinary.uploader.destroy(`products/${publicId}`);
       }
-    });
+    }
 
-    res.json({ message: 'Product deleted successfully' });
+    await product.destroy();
+    res.json({ message: "Product deleted successfully" });
   } catch (error) {
-    console.error('Error deleting product:', error);
-    res.status(500).json({ 
-      error: 'Failed to delete product',
-      details: error instanceof Error ? error.message : undefined
-    });
+    console.error("Error deleting product:", error);
+    res.status(500).json({ error: "Failed to delete product" });
   }
 });
 

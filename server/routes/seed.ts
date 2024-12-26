@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { db } from '../../db';
-import { products, unitPricing, UnitTypeValues, defaultUnitQuantities } from '../../db/schema';
+import { db } from '../src/db';
+import { products, productPricing, type UnitTypeValue, defaultUnitQuantities } from '../src/db/schema/product/schema';
 import { eq } from 'drizzle-orm';
 import { seedProducts } from '../seed/products';
 
@@ -11,14 +11,14 @@ router.post('/seed-demo-data', async (req, res) => {
     // Clear existing data in a separate transaction
     console.log('Starting data cleanup...');
     
-    await db.transaction(async (tx) => {
+    await db.transaction(async (tx: any) => {
       // Step 1: Remove all default_unit_pricing_id references from products
       await tx.update(products)
         .set({ default_unit_pricing_id: null });
       console.log('Removed default_unit_pricing_id references');
       
       // Step 2: Delete all unit pricing entries
-      await tx.delete(unitPricing);
+      await tx.delete(productPricing);
       console.log('Deleted unit pricing entries');
       
       // Step 3: Delete all products
@@ -29,7 +29,7 @@ router.post('/seed-demo-data', async (req, res) => {
     console.log('Starting demo data insertion...');
     
     // Insert new data in a separate transaction
-    const result = await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx: any) => {
       const createdProducts = [];
       
       for (const productData of seedProducts) {
@@ -65,20 +65,20 @@ router.post('/seed-demo-data', async (req, res) => {
         const priceUnitsData = price_units.map(unit => ({
           product_id: newProduct.id,
           unit_type: unit.unit_type,
-          quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValues],
+          quantity: defaultUnitQuantities[unit.unit_type as UnitTypeValue],
           buying_price: unit.buying_price.toString(),
           selling_price: unit.selling_price.toString(),
           is_default: unit.is_default,
         }));
         
-        const insertedPricingUnits = await tx.insert(unitPricing)
+        const insertedPricingUnits = await tx.insert(productPricing)
           .values(priceUnitsData)
           .returning();
           
         console.log(`Created ${insertedPricingUnits.length} price units for product ${newProduct.id}`);
         
         // Find the default pricing unit
-        const defaultPricingUnit = insertedPricingUnits.find(unit => unit.is_default);
+        const defaultPricingUnit = insertedPricingUnits.find((unit: typeof productPricing.$inferSelect) => unit.is_default);
         if (!defaultPricingUnit) {
           throw new Error(`No default pricing unit found for product ${newProduct.name}`);
         }
@@ -91,7 +91,7 @@ router.post('/seed-demo-data', async (req, res) => {
         
         createdProducts.push({
           ...updatedProduct,
-          price_units: insertedPricingUnits.map(unit => ({
+          price_units: insertedPricingUnits.map((unit: typeof productPricing.$inferSelect) => ({
             unit_type: unit.unit_type,
             quantity: unit.quantity,
             buying_price: unit.buying_price,
