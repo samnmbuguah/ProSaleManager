@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Supplier, InsertSupplier, ProductSupplier, InsertProductSupplier } from "@db/schema";
+import type { Supplier, SupplierFormData } from "@/types/supplier";
+import type { ProductSupplier, ProductSupplierFormData } from "@/types/product-supplier";
 import { useToast } from "@/hooks/use-toast";
 
 export function useSuppliers() {
@@ -18,7 +19,7 @@ export function useSuppliers() {
   });
 
   const createSupplierMutation = useMutation({
-    mutationFn: async (data: InsertSupplier) => {
+    mutationFn: async (data: SupplierFormData) => {
       const response = await fetch("/api/suppliers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -52,7 +53,7 @@ export function useSuppliers() {
   });
 
   const linkProductToSupplierMutation = useMutation({
-    mutationFn: async (data: InsertProductSupplier) => {
+    mutationFn: async (data: ProductSupplierFormData) => {
       const response = await fetch("/api/product-suppliers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Product, InsertProduct } from "@db/schema";
+import type { Product } from "@/types/product";
+import type { ProductFormData } from "@/types/product";
 import { useToast } from "@/hooks/use-toast";
 
 export function useProducts() {
@@ -18,13 +19,15 @@ export function useProducts() {
   });
 
   const createProductMutation = useMutation({
-    mutationFn: async (data: InsertProduct & { price_units?: Array<{
-      unit_type: string;
-      quantity: number;
-      buying_price: string;
-      selling_price: string;
-      is_default: boolean;
-    }> }) => {
+    mutationFn: async (data: ProductFormData) => {
+      if (data.price_units?.find(p => p.is_default)) {
+        const defaultUnit = data.price_units.find(p => p.is_default);
+        return {
+          ...data,
+          buying_price: defaultUnit?.buying_price || "0",
+          selling_price: defaultUnit?.selling_price || "0",
+        };
+      }
       const response = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,23 +58,29 @@ export function useProducts() {
   const updateProductMutation = useMutation({
     mutationFn: async (data: Partial<Product> & { id: number }) => {
       // First, update the unit pricing
-      if (data.default_unit_pricing) {
-        await fetch('/api/unit-pricing', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            productId: data.id,
-            prices: {
-              per_piece: {
-                buying_price: data.default_unit_pricing.buying_price,
-                selling_price: data.default_unit_pricing.selling_price,
-                quantity: 1
-              }
-            }
-          }),
+      const defaultUnit = data.price_units?.find(p => p.is_default);
+      if (defaultUnit) {
+        const productData = {
+          ...data,
+          buying_price: defaultUnit.buying_price,
+          selling_price: defaultUnit.selling_price,
+        };
+
+        const response = await fetch(`/api/products/${data.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(productData),
         });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          if (errorData.code === '23503') {
+            throw new Error("Cannot update product that has associated sales records");
+          }
+          throw new Error("Failed to update product");
+        }
+
+        return response.json();
       }
 
       // Then update the product details
