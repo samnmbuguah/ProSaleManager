@@ -1,5 +1,7 @@
 import { useState } from "react";
-import type { Product, Supplier, InsertSupplier, InsertProductSupplier } from "@db/schema";
+import type { Product } from "@/types/product";
+import type { Supplier, SupplierFormData } from "@/types/supplier";
+import type { ProductSupplierFormData } from "@/types/product-supplier";
 import { useSuppliers } from "../../hooks/use-suppliers";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +21,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertSupplierSchema } from "@db/schema";
+import { supplierSchema } from "@/types/supplier";
+import { productSupplierSchema } from "@/types/product-supplier";
 import {
   Table,
   TableBody,
@@ -40,8 +43,8 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
   const [isLinkFormOpen, setIsLinkFormOpen] = useState(false);
   const { suppliers, productSuppliers, createSupplier, linkProductToSupplier, isCreating, isLinking } = useSuppliers();
 
-  const form = useForm<InsertSupplier>({
-    resolver: zodResolver(insertSupplierSchema),
+  const form = useForm<SupplierFormData>({
+    resolver: zodResolver(supplierSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -50,34 +53,30 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
     },
   });
 
-  const linkForm = useForm<InsertProductSupplier>({
+  const linkForm = useForm<ProductSupplierFormData>({
+    resolver: zodResolver(productSupplierSchema),
     defaultValues: {
-      productId: product.id,
-      supplierId: undefined,
-      costPrice: "",
-      isPreferred: false,
+      product_id: String(product.id),
+      supplier_id: "",
+      cost_price: "",
+      is_preferred: "false",
     },
   });
 
-  const onSubmit = async (data: InsertSupplier) => {
+  const onSubmit = async (data: SupplierFormData) => {
     await createSupplier(data);
     setIsFormOpen(false);
     form.reset();
   };
 
-  const onLinkSubmit = async (data: InsertProductSupplier) => {
-    await linkProductToSupplier({
-      ...data,
-      costPrice: data.costPrice,
-      productId: product.id,
-      supplierId: Number(data.supplierId),
-    });
+  const onLinkSubmit = async (data: ProductSupplierFormData) => {
+    await linkProductToSupplier(data);
     setIsLinkFormOpen(false);
     linkForm.reset();
   };
 
   const productSuppliersList = productSuppliers?.filter(
-    (ps) => ps.productId === product.id
+    (ps) => Number(ps.product_id) === Number(product.id)
   ) || [];
 
   return (
@@ -108,13 +107,13 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
           {productSuppliersList.map((ps) => (
             <TableRow key={ps.id}>
               <TableCell>
-                {suppliers?.find(s => s.id === ps.supplierId)?.name || "Unknown Supplier"}
+                {suppliers?.find(s => s.id === Number(ps.supplier_id))?.name || "Unknown Supplier"}
               </TableCell>
-              <TableCell>KSh {Number(ps.costPrice).toFixed(2)}</TableCell>
-              <TableCell>{ps.isPreferred ? "Yes" : "No"}</TableCell>
+              <TableCell>KSh {Number(ps.cost_price).toFixed(2)}</TableCell>
+              <TableCell>{ps.is_preferred ? "Yes" : "No"}</TableCell>
               <TableCell>
-                {ps.lastSupplyDate
-                  ? new Date(ps.lastSupplyDate).toLocaleDateString()
+                {ps.last_supply_date
+                  ? new Date(ps.last_supply_date).toLocaleDateString()
                   : "Never"}
               </TableCell>
             </TableRow>
@@ -198,7 +197,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
             <form onSubmit={linkForm.handleSubmit(onLinkSubmit)} className="space-y-4">
               <FormField
                 control={linkForm.control}
-                name="supplierId"
+                name="supplier_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Supplier</FormLabel>
@@ -224,7 +223,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
               />
               <FormField
                 control={linkForm.control}
-                name="costPrice"
+                name="cost_price"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Cost Price</FormLabel>
@@ -237,13 +236,13 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
               />
               <FormField
                 control={linkForm.control}
-                name="isPreferred"
+                name="is_preferred"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center space-x-2">
                     <FormControl>
                       <Checkbox
-                        checked={field.value ?? false}
-                        onCheckedChange={field.onChange}
+                        checked={field.value === "true"}
+                        onCheckedChange={(checked) => field.onChange(String(checked))}
                       />
                     </FormControl>
                     <FormLabel>Preferred Supplier</FormLabel>

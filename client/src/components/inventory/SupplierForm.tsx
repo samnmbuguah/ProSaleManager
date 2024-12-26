@@ -1,7 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import type { InsertSupplier } from "@db/schema";
+import { supplierSchema, type SupplierFormData } from "@/types/supplier";
 import {
   Form,
   FormControl,
@@ -13,20 +12,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-const supplierSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-});
-
 interface SupplierFormProps {
-  onSubmit: (data: InsertSupplier) => Promise<void>;
+  onSubmit: (data: SupplierFormData) => Promise<void>;
   isSubmitting: boolean;
 }
 
 export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
-  const form = useForm<InsertSupplier>({
+  const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
       name: "",
@@ -36,7 +28,7 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
     },
   });
 
-  const handleSubmit = async (data: InsertSupplier) => {
+  const handleSubmit = async (data: SupplierFormData) => {
     try {
       await onSubmit(data);
     } catch (error) {
