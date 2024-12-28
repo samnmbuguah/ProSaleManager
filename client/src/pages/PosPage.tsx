@@ -102,12 +102,9 @@ export default function PosPage() {
         return {
           product_id: item.id,
           quantity: Math.max(0, Math.round(item.quantity)),
-          price: Number(item.unitPrice.toFixed(2)),
-          name: item.name,
-          unit_type: item.selectedUnit,
-          unit_price: item.unitPrice,
-          total: item.total,
-          unit_pricing_id: item.price_units[0]?.id || 0
+          unit_price: Number(item.unitPrice.toFixed(2)),
+          total: Number(item.total.toFixed(2)),
+          unit_type: item.selectedUnit
         };
       });
 
@@ -117,7 +114,7 @@ export default function PosPage() {
         return sum + itemTotal;
       }, 0);
 
-      const saleData: SaleData = {
+      const saleData = {
         items: saleItems,
         total: total.toFixed(2),
         paymentMethod: paymentDetails.paymentMethod || 'cash',
