@@ -104,7 +104,8 @@ export default function PosPage() {
           quantity: Math.max(0, Math.round(item.quantity)),
           unit_price: Number(item.unitPrice.toFixed(2)),
           total: Number(item.total.toFixed(2)),
-          unit_type: item.selectedUnit
+          unit_type: item.selectedUnit,
+          name: item.name // Add name for receipt
         };
       });
 
@@ -117,7 +118,7 @@ export default function PosPage() {
       const saleData = {
         items: saleItems,
         total: total.toFixed(2),
-        paymentMethod: paymentDetails.paymentMethod || 'cash',
+        paymentMethod: paymentDetails.paymentMethod,
         paymentStatus: 'paid',
         amountPaid: paymentDetails.amountPaid.toFixed(2),
         changeAmount: paymentDetails.change.toFixed(2),
@@ -127,10 +128,9 @@ export default function PosPage() {
       const response = await createSale(saleData);
       
       // Set receipt data immediately after sale
-      if (window._setReceiptState && response.receipt) {
-        // Transform the receipt data to include all required fields
+      if (window._setReceiptState) {
         const receiptData = {
-          ...response.receipt,
+          id: response.data.id,
           items: saleItems.map(item => ({
             name: item.name,
             quantity: item.quantity,
@@ -138,7 +138,10 @@ export default function PosPage() {
             total: item.total,
             unit_type: item.unit_type
           })),
+          total: total,
           payment_method: paymentDetails.paymentMethod,
+          timestamp: new Date().toISOString(),
+          transaction_id: response.data.id.toString(),
           cash_amount: paymentDetails.paymentMethod === 'cash' ? paymentDetails.amountPaid : undefined
         };
         window._setReceiptState(receiptData);
