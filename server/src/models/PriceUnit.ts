@@ -61,15 +61,4 @@ PriceUnit.init(
   }
 );
 
-// Set up associations
-PriceUnit.belongsTo(Product, {
-  foreignKey: 'product_id',
-  as: 'product',
-});
-
-Product.hasMany(PriceUnit, {
-  foreignKey: 'product_id',
-  as: 'price_units',
-});
-
 export default PriceUnit; 
