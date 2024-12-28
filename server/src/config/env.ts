@@ -1,15 +1,13 @@
-import * as dotenv from 'dotenv';
+import dotenv from 'dotenv';
 
-// Load environment variables from .env file
 dotenv.config();
 
-export const env = {
+const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
-  PORT: process.env.PORT || 3000,
-  DATABASE_URL: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/prosale',
   JWT_SECRET: process.env.JWT_SECRET || 'your-secret-key',
-  COOKIE_SECRET: process.env.COOKIE_SECRET || 'cookie-secret',
-  // Add other environment variables as needed
+  COOKIE_SECRET: process.env.COOKIE_SECRET || 'your-cookie-secret',
+  CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
+  DATABASE_URL: process.env.DATABASE_URL || 'postgresql://prosalemanager:prosalepassword@localhost:5432/prosale',
 };
 
 export default env; 
