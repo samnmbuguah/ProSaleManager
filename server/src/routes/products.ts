@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import Product from '../models/Product';
-import PriceUnit from '../models/PriceUnit';
+import Product from '../models/Product.js';
+import PriceUnit from '../models/PriceUnit.js';
 import Supplier from '../models/Supplier';
 import ProductSupplier from '../models/ProductSupplier';
 import { Op } from 'sequelize';
-import upload from '../middleware/upload';
-import cloudinary from '../config/cloudinary';
+import upload from '../middleware/upload.js';
+import cloudinary from '../config/cloudinary.js';
 
 const router = Router();
 
@@ -26,37 +26,35 @@ async function uploadToCloudinary(file: Express.Multer.File): Promise<string> {
   });
 }
 
-// Get all products
+// Get all products with their price units
 router.get('/', async (req, res) => {
   try {
-    console.log('Fetching all products...');
     const products = await Product.findAll({
-      include: [
-        {
-          model: PriceUnit,
-          as: 'price_units'
-        },
-        {
-          model: Supplier,
-          through: ProductSupplier,
-        }
-      ]
+      include: [{
+        model: PriceUnit,
+        as: 'price_units',
+        required: false
+      }],
+      order: [['name', 'ASC']]
     });
-    console.log(`Found ${products.length} products`);
     res.json(products);
   } catch (error) {
     console.error('Error fetching products:', error);
     res.status(500).json({ 
-      message: 'Error fetching products', 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+      message: 'Error fetching products',
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
 
-// Search products
+// Search products endpoint
 router.get('/search', async (req, res) => {
-  const { query } = req.query;
   try {
+    const query = req.query.q as string;
+    if (!query || typeof query !== 'string') {
+      return res.json([]);
+    }
+
     const products = await Product.findAll({
       where: {
         [Op.or]: [
@@ -65,20 +63,21 @@ router.get('/search', async (req, res) => {
           { category: { [Op.iLike]: `%${query}%` } }
         ]
       },
-      include: [
-        {
-          model: PriceUnit,
-          as: 'price_units'
-        },
-        {
-          model: Supplier,
-          through: ProductSupplier,
-        }
-      ]
+      include: [{
+        model: PriceUnit,
+        as: 'price_units',
+        required: false
+      }],
+      order: [['name', 'ASC']]
     });
-    res.json(products);
+
+    return res.json(products);
   } catch (error) {
-    res.status(500).json({ message: 'Error searching products', error });
+    console.error('Error searching products:', error);
+    return res.status(500).json({ 
+      message: 'Error searching products',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
