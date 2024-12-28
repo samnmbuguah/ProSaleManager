@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { UserService } from '../services/user.service';
+import { UserService } from '../services/user.service.js';
 import jwt from 'jsonwebtoken';
-import env from '../config/env';
+import env from '../config/env.js';
 
 export class AuthController {
   constructor(private userService: UserService) {}
@@ -9,6 +9,7 @@ export class AuthController {
   async register(req: Request, res: Response) {
     try {
       const { email, password, name, role } = req.body;
+      console.log('Register attempt:', { email, name, role });
 
       // Check if user already exists
       const existingUser = await this.userService.findByEmail(email);
@@ -28,6 +29,7 @@ export class AuthController {
       });
 
       if (!result.success) {
+        console.error('User creation failed:', result.message);
         return res.status(400).json(result);
       }
 
@@ -54,6 +56,7 @@ export class AuthController {
         message: 'User registered successfully',
       });
     } catch (error) {
+      console.error('Registration error:', error);
       return res.status(500).json({
         success: false,
         message: error instanceof Error ? error.message : 'Registration failed',
@@ -64,9 +67,18 @@ export class AuthController {
   async login(req: Request, res: Response) {
     try {
       const { email, password } = req.body;
+      console.log('Login attempt:', { email });
+
+      if (!email || !password) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email and password are required',
+        });
+      }
 
       const result = await this.userService.validateCredentials(email, password);
       if (!result.success) {
+        console.log('Login failed:', result.message);
         return res.status(401).json(result);
       }
 
@@ -93,6 +105,7 @@ export class AuthController {
         message: 'Login successful',
       });
     } catch (error) {
+      console.error('Login error:', error);
       return res.status(500).json({
         success: false,
         message: error instanceof Error ? error.message : 'Login failed',
@@ -101,11 +114,19 @@ export class AuthController {
   }
 
   async logout(_req: Request, res: Response) {
-    res.clearCookie('token');
-    return res.json({
-      success: true,
-      message: 'Logged out successfully',
-    });
+    try {
+      res.clearCookie('token');
+      return res.json({
+        success: true,
+        message: 'Logged out successfully',
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Logout failed',
+      });
+    }
   }
 
   async checkSession(req: Request, res: Response) {
@@ -131,6 +152,7 @@ export class AuthController {
         data: userWithoutPassword,
       });
     } catch (error) {
+      console.error('Session check error:', error);
       return res.status(401).json({
         success: false,
         message: 'Invalid session',
