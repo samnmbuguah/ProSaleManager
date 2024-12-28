@@ -1,13 +1,13 @@
 import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database';
+import sequelize from '../config/database.js';
 
 class Sale extends Model {
   declare id: number;
   declare customer_id: number | null;
   declare total_amount: number;
   declare payment_method: string;
-  declare payment_status: string;
-  declare notes: string | null;
+  declare amount_paid: number;
+  declare status: string;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -22,6 +22,10 @@ Sale.init(
     customer_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      references: {
+        model: 'customers',
+        key: 'id',
+      },
     },
     total_amount: {
       type: DataTypes.DECIMAL(10, 2),
@@ -33,20 +37,22 @@ Sale.init(
       allowNull: false,
       defaultValue: 'cash',
     },
-    payment_status: {
+    amount_paid: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0,
+    },
+    status: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'paid',
-    },
-    notes: {
-      type: DataTypes.TEXT,
-      allowNull: true,
+      defaultValue: 'pending',
     },
   },
   {
     sequelize,
     modelName: 'Sale',
     tableName: 'sales',
+    underscored: true,
   }
 );
 
