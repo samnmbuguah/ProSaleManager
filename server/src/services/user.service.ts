@@ -1,4 +1,4 @@
-import User from '../models/User';
+import User from '../models/User.js';
 import type { ServiceResponse } from '../types/base';
 import bcrypt from 'bcrypt';
 
