@@ -29,12 +29,12 @@ export const useUser = create<UserState>((set) => ({
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Login failed");
+        const errorData = await response.json().catch(() => ({ message: 'Login failed' }));
+        throw new Error(errorData.message || "Login failed");
       }
 
-      const { data } = await response.json();
-      set({ user: data, isLoading: false });
+      const data = await response.json();
+      set({ user: data.data, isLoading: false });
     } catch (error) {
       set({ 
         error: error instanceof Error ? error.message : "Login failed",
@@ -55,12 +55,12 @@ export const useUser = create<UserState>((set) => ({
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Registration failed");
+        const errorData = await response.json().catch(() => ({ message: 'Registration failed' }));
+        throw new Error(errorData.message || "Registration failed");
       }
 
-      const { data } = await response.json();
-      set({ user: data, isLoading: false });
+      const data = await response.json();
+      set({ user: data.data, isLoading: false });
     } catch (error) {
       set({ 
         error: error instanceof Error ? error.message : "Registration failed",
@@ -94,8 +94,8 @@ export const useUser = create<UserState>((set) => ({
         credentials: "include",
       });
       if (response.ok) {
-        const { data } = await response.json();
-        set({ user: data, isLoading: false });
+        const data = await response.json();
+        set({ user: data.data, isLoading: false });
       } else {
         set({ user: null, isLoading: false });
       }
