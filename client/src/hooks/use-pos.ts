@@ -67,7 +67,7 @@ export function usePos() {
 
   const fetchAllProducts = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/products');
+      const response = await fetch('/api/products');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -87,7 +87,7 @@ export function usePos() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/products/search?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -103,7 +103,8 @@ export function usePos() {
   const createSale = async (saleData: SaleData) => {
     setIsProcessing(true);
     try {
-      const response = await fetch('http://localhost:5000/api/sales', {
+      console.log('Creating sale with data:', saleData);
+      const response = await fetch('/api/sales', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,13 +113,18 @@ export function usePos() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create sale');
       }
 
       const result = await response.json();
+      setError(null);
       return result;
     } catch (error) {
-      throw error;
+      console.error('Sale creation error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create sale';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsProcessing(false);
     }
