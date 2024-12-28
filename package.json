@@ -1,21 +1,18 @@
 {
   "name": "prosalemanager",
   "version": "1.0.0",
-  "private": true,
-  "workspaces": [
-    "client",
-    "server"
-  ],
+  "description": "",
+  "type": "module",
   "scripts": {
-    "dev:server": "cd server && npm run dev",
-    "dev:client": "cd client && npm run dev",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "build:client": "cd client && npm run build",
-    "build": "npm run build:client",
-    "check": "tsc"
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "devDependencies": {
-    "concurrently": "^8.2.2",
-    "typescript": "5.3.3"
+    "concurrently": "^8.2.2"
   }
 }
