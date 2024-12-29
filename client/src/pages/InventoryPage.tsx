@@ -13,6 +13,9 @@ import { Label } from '@/components/ui/label';
 import { Product, PriceUnit, ProductFormData } from '@/types/product';
 import { PRODUCT_CATEGORIES } from '@/constants/categories';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Suppliers } from '@/components/inventory/Suppliers';
+import { PurchaseOrders } from '@/components/inventory/PurchaseOrders';
 
 const InventoryPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -20,6 +23,7 @@ const InventoryPage: React.FC = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('products');
   const { toast } = useToast();
 
   const initialFormData: ProductFormData = {
@@ -52,7 +56,9 @@ const InventoryPage: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/products');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/products`, {
+        credentials: 'include'
+      });
       if (!response.ok) throw new Error('Failed to fetch products');
       const data = await response.json();
       setProducts(data);
@@ -122,8 +128,8 @@ const InventoryPage: React.FC = () => {
       }
 
       const url = selectedProduct
-        ? `http://localhost:5000/api/products/${selectedProduct.id}`
-        : 'http://localhost:5000/api/products';
+        ? `${import.meta.env.VITE_API_URL}/products/${selectedProduct.id}`
+        : `${import.meta.env.VITE_API_URL}/products`;
 
       const response = await fetch(url, {
         method: selectedProduct ? 'PUT' : 'POST',
@@ -164,7 +170,7 @@ const InventoryPage: React.FC = () => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/products/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/products/${id}`, {
         method: 'DELETE',
       });
 
@@ -189,7 +195,7 @@ const InventoryPage: React.FC = () => {
   const handleSearch = async () => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/products/search?query=${searchQuery}`
+        `${import.meta.env.VITE_API_URL}/products/search?query=${searchQuery}`
       );
       if (!response.ok) throw new Error('Failed to search products');
       const data = await response.json();
@@ -429,84 +435,106 @@ const InventoryPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex gap-2">
-          <Input
-            placeholder="Search products..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-64"
-          />
-          <Button onClick={handleSearch}>Search</Button>
-        </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button
-              onClick={() => {
-                setSelectedProduct(null);
-                setFormData(initialFormData);
-              }}
-            >
-              Add Product
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add New Product</DialogTitle>
-            </DialogHeader>
-            <ProductForm />
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {products.map((product) => (
-          <div
-            key={product.id}
-            className="border rounded-lg p-4 flex flex-col space-y-2"
-          >
-            {product.image_url && (
-              <img
-                src={product.image_url}
-                alt={product.name}
-                className="w-full h-48 object-cover rounded-md mb-2"
+      <Tabs defaultValue="products" className="w-full" value={activeTab} onValueChange={setActiveTab}>
+        <div className="flex justify-between items-center mb-4">
+          <TabsList>
+            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
+            <TabsTrigger value="purchase-orders">Purchase Orders</TabsTrigger>
+          </TabsList>
+          
+          {activeTab === 'products' && (
+            <div className="flex gap-2">
+              <Input
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-64"
               />
-            )}
-            <h3 className="text-lg font-semibold">{product.name}</h3>
-            <p className="text-sm text-gray-600">SKU: {product.sku}</p>
-            <p className="text-sm text-gray-600">Category: {product.category}</p>
-            <p className="text-sm text-gray-600">
-              Stock: {product.stock} {product.stock_unit}
-            </p>
-            <div className="mt-2 space-y-1">
-              <h4 className="font-medium">Price Units:</h4>
-              {product.price_units?.map((unit, index) => (
-                <div key={index} className="text-sm">
-                  {unit.unit_type} ({unit.quantity}): Buy - ${unit.buying_price},
-                  Sell - ${unit.selling_price}
-                  {unit.is_default && ' (Default)'}
+              <Button onClick={handleSearch}>Search</Button>
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    onClick={() => {
+                      setSelectedProduct(null);
+                      setFormData(initialFormData);
+                    }}
+                  >
+                    Add Product
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Add New Product</DialogTitle>
+                  </DialogHeader>
+                  <ProductForm />
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
+        </div>
+
+        <TabsContent value="products">
+          <div className="rounded-md border">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {products.map((product) => (
+                <div
+                  key={product.id}
+                  className="border rounded-lg p-4 flex flex-col space-y-2"
+                >
+                  {product.image_url && (
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-full h-48 object-cover rounded-md mb-2"
+                    />
+                  )}
+                  <h3 className="text-lg font-semibold">{product.name}</h3>
+                  <p className="text-sm text-gray-600">SKU: {product.sku}</p>
+                  <p className="text-sm text-gray-600">Category: {product.category}</p>
+                  <p className="text-sm text-gray-600">
+                    Stock: {product.stock} {product.stock_unit}
+                  </p>
+                  <div className="mt-2 space-y-1">
+                    <h4 className="font-medium">Price Units:</h4>
+                    {product.price_units?.map((unit, index) => (
+                      <div key={index} className="text-sm">
+                        {unit.unit_type} ({unit.quantity}): Buy - ${unit.buying_price},
+                        Sell - ${unit.selling_price}
+                        {unit.is_default && ' (Default)'}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-end space-x-2 mt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => handleEdit(product)}
+                      size="sm"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => product.id && handleDelete(product.id)}
+                      size="sm"
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
-            <div className="flex justify-end space-x-2 mt-4">
-              <Button
-                variant="outline"
-                onClick={() => handleEdit(product)}
-                size="sm"
-              >
-                Edit
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => product.id && handleDelete(product.id)}
-                size="sm"
-              >
-                Delete
-              </Button>
-            </div>
           </div>
-        ))}
-      </div>
+        </TabsContent>
+
+        <TabsContent value="suppliers">
+          <Suppliers />
+        </TabsContent>
+
+        <TabsContent value="purchase-orders">
+          <PurchaseOrders />
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
