@@ -43,7 +43,9 @@ interface Sale {
     phone: string | null;
   };
   user: {
-    username: string;
+    username?: string;
+    name?: string;
+    email?: string;
   };
   receiptStatus?: {
     sms?: boolean;
@@ -111,7 +113,9 @@ export function SalesPage() {
     })}`;
   };
 
-  const getPaymentStatusColor = (status: string) => {
+  const getPaymentStatusColor = (status: string | undefined) => {
+    if (!status) return "bg-gray-500";
+    
     switch (status.toLowerCase()) {
       case "paid":
         return "bg-green-500";
@@ -173,7 +177,7 @@ export function SalesPage() {
                     <TableCell>
                       {sale.customer?.name || "Walk-in Customer"}
                     </TableCell>
-                    <TableCell>{sale.user.username}</TableCell>
+                    <TableCell>{sale.user?.username || sale.user?.name || sale.user?.email || "Unknown User"}</TableCell>
                     <TableCell className="capitalize">
                       {sale.paymentMethod}
                     </TableCell>
@@ -306,7 +310,7 @@ export function SalesPage() {
                 <div>
                   <h3 className="font-semibold mb-2">Sale Information</h3>
                   <p>Date: {format(new Date(selectedSale.createdAt), "PPp")}</p>
-                  <p>Cashier: {selectedSale.user.username}</p>
+                  <p>Cashier: {selectedSale.user?.username || selectedSale.user?.name || selectedSale.user?.email || "Unknown User"}</p>
                 </div>
               </div>
 
