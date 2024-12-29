@@ -25,7 +25,7 @@ export class AuthController {
         email,
         password,
         name,
-        role,
+        role: 'user',
       });
 
       if (!result.success) {
@@ -67,7 +67,7 @@ export class AuthController {
   async login(req: Request, res: Response) {
     try {
       const { email, password } = req.body;
-      console.log('Login attempt:', { email });
+      console.log('Login attempt details:', { email, password });
 
       if (!email || !password) {
         return res.status(400).json({
@@ -76,7 +76,13 @@ export class AuthController {
         });
       }
 
+      // Find user first to check stored password
+      const user = await this.userService.findByEmail(email);
+      console.log('Found user:', user.success, user.data ? 'User exists' : 'User not found');
+
       const result = await this.userService.validateCredentials(email, password);
+      console.log('Validation result:', result.success, result.message);
+
       if (!result.success) {
         console.log('Login failed:', result.message);
         return res.status(401).json(result);
@@ -89,12 +95,13 @@ export class AuthController {
         { expiresIn: '24h' }
       );
 
-      // Set cookie
+      // Set cookie with more permissive settings for development
       res.cookie('token', token, {
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: env.NODE_ENV === 'production' ? 'strict' : 'lax',
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        path: '/'
       });
 
       // Return success without password
