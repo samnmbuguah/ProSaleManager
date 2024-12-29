@@ -17,15 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-import { 
-  UnitTypes, 
-  defaultUnitQuantities, 
-  type UnitTypeValues,
-  type PriceUnit,
-  type ProductFormData,
-  productSchema
-} from "@/types/product";
+import { Checkbox } from "@/components/ui/checkbox";
+import { PRICE_UNITS } from "@/constants/priceUnits";
+import { PRODUCT_CATEGORIES } from "@/constants/categories";
+import { type ProductFormData, productSchema } from "@/types/product";
 
 interface ProductFormProps {
   onSubmit: (data: ProductFormData) => Promise<void>;
@@ -33,30 +28,7 @@ interface ProductFormProps {
   initialData?: Partial<ProductFormData>;
 }
 
-const PRODUCT_CATEGORIES = [
-  { value: "bra", label: "Bra" },
-  { value: "shoes", label: "Shoes" },
-  { value: "panties", label: "Panties" },
-  { value: "oil", label: "Oil" },
-  { value: "boxers", label: "Boxers" },
-] as const;
-
-const STOCK_UNITS = [
-  { value: "per_piece", label: "Per Piece" },
-  { value: "three_piece", label: "Three Piece" },
-  { value: "dozen", label: "Dozen" },
-] as const;
-
 export function ProductForm({ onSubmit, isSubmitting = false, initialData }: ProductFormProps) {
-  // Initialize default values for price units
-  const defaultPriceUnits: PriceUnit[] = UnitTypes.map((unitType) => ({
-    unit_type: unitType as UnitTypeValues,
-    quantity: defaultUnitQuantities[unitType as UnitTypeValues],
-    buying_price: "0",
-    selling_price: "0",
-    is_default: unitType === 'per_piece'
-  }));
-
   // Initialize form with proper default values
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -69,25 +41,13 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
       max_stock: initialData?.max_stock ?? 0,
       reorder_point: initialData?.reorder_point ?? 0,
       stock_unit: initialData?.stock_unit ?? "per_piece",
-      price_units: initialData?.price_units 
-        ? UnitTypes.map(unitType => {
-            const existingUnit = initialData.price_units?.find(u => u.unit_type === unitType);
-            if (existingUnit) {
-              return {
-                ...existingUnit,
-                buying_price: String(existingUnit.buying_price),
-                selling_price: String(existingUnit.selling_price)
-              };
-            }
-            return defaultPriceUnits.find(u => u.unit_type === unitType) || {
-              unit_type: unitType as UnitTypeValues,
-              quantity: defaultUnitQuantities[unitType as UnitTypeValues],
-              buying_price: "0",
-              selling_price: "0",
-              is_default: unitType === 'per_piece'
-            };
-          })
-        : defaultPriceUnits,
+      price_units: initialData?.price_units ?? PRICE_UNITS.map(unit => ({
+        unit_type: unit.value,
+        quantity: unit.quantity,
+        buying_price: "0",
+        selling_price: "0",
+        is_default: unit.value === 'per_piece'
+      }))
     },
   });
 
@@ -114,12 +74,17 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
       if (!hasDefaultUnit) {
         formattedData.price_units[0].is_default = true;
       }
+
+      // Adjust stock based on selected unit
+      const selectedUnit = formattedData.price_units.find(unit => unit.unit_type === formattedData.stock_unit);
+      if (selectedUnit) {
+        formattedData.stock = formattedData.stock * selectedUnit.quantity;
+      }
       
       console.log('Submitting form data:', formattedData);
       await onSubmit(formattedData);
     } catch (error) {
       console.error('Form submission error:', error);
-      // Keep the form open on error
       return;
     }
   };
@@ -127,15 +92,29 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Name</FormLabel>
+                <FormLabel>Product Name</FormLabel>
                 <FormControl>
-                  <Input {...field} value={field.value || ""} />
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="sku"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>SKU</FormLabel>
+                <FormControl>
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -148,7 +127,7 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || ""}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
@@ -156,8 +135,8 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
                   </FormControl>
                   <SelectContent>
                     {PRODUCT_CATEGORIES.map((category) => (
-                      <SelectItem key={category.value} value={category.value}>
-                        {category.label}
+                      <SelectItem key={category} value={category}>
+                        {category}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -192,14 +171,14 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Stock Unit</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || "per_piece"}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select stock unit" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {STOCK_UNITS.map((unit) => (
+                    {PRICE_UNITS.map((unit) => (
                       <SelectItem key={unit.value} value={unit.value}>
                         {unit.label}
                       </SelectItem>
@@ -213,12 +192,36 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
 
           <div className="col-span-2">
             <h3 className="text-lg font-semibold mb-4">Price Units</h3>
-            {defaultPriceUnits.map((unit, index) => (
-              <div key={unit.unit_type} className="grid grid-cols-2 gap-4 mb-6 p-4 border rounded-lg">
-                <div className="col-span-2">
-                  <h4 className="font-medium mb-2 capitalize">
-                    {unit.unit_type.replace('_', ' ')} ({unit.quantity} {unit.quantity === 1 ? 'piece' : 'pieces'})
+            {PRICE_UNITS.map((unit, index) => (
+              <div key={unit.value} className="grid grid-cols-2 gap-4 mb-6 p-4 border rounded-lg">
+                <div className="col-span-2 flex justify-between items-center">
+                  <h4 className="font-medium mb-2">
+                    {unit.label} ({unit.quantity} {unit.quantity === 1 ? 'piece' : 'pieces'})
                   </h4>
+                  <FormField
+                    control={form.control}
+                    name={`price_units.${index}.is_default`}
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={(checked) => {
+                              // Uncheck other units when this one is checked
+                              if (checked) {
+                                form.setValue('price_units', form.getValues('price_units').map((pu, i) => ({
+                                  ...pu,
+                                  is_default: i === index
+                                })));
+                              }
+                              field.onChange(checked);
+                            }}
+                          />
+                        </FormControl>
+                        <FormLabel className="text-sm">Default Unit</FormLabel>
+                      </FormItem>
+                    )}
+                  />
                 </div>
                 
                 <FormField
@@ -262,17 +265,12 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
                 <input 
                   type="hidden" 
                   {...form.register(`price_units.${index}.unit_type`)}
-                  value={unit.unit_type}
+                  value={unit.value}
                 />
                 <input 
                   type="hidden" 
                   {...form.register(`price_units.${index}.quantity`)}
                   value={unit.quantity}
-                />
-                <input 
-                  type="hidden" 
-                  {...form.register(`price_units.${index}.is_default`)}
-                  value={String(index === 0)}
                 />
               </div>
             ))}
