@@ -1,5 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database';
+import sequelize from '../config/database.js';
 
 class Product extends Model {
   declare id: number;
@@ -80,10 +80,6 @@ Product.init(
     default_unit_pricing_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      references: {
-        model: 'price_units',
-        key: 'id',
-      },
     },
   },
   {

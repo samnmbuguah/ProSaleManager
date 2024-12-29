@@ -12,7 +12,11 @@ class User extends Model {
   declare readonly updatedAt: Date;
 
   async comparePassword(candidatePassword: string): Promise<boolean> {
-    return bcrypt.compare(candidatePassword, this.password);
+    console.log('Comparing passwords:');
+    console.log('Stored hash:', this.password);
+    const isMatch = await bcrypt.compare(candidatePassword, this.password);
+    console.log('Password match:', isMatch);
+    return isMatch;
   }
 }
 
@@ -40,9 +44,12 @@ User.init(
       allowNull: false,
     },
     role: {
-      type: DataTypes.ENUM('admin', 'user'),
+      type: DataTypes.STRING,
       allowNull: false,
       defaultValue: 'user',
+      validate: {
+        isIn: [['admin', 'user']]
+      }
     },
   },
   {
