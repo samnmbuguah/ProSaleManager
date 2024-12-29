@@ -19,10 +19,12 @@ interface UpdateUserDTO {
 export class UserService {
   async create(data: CreateUserDTO): Promise<ServiceResponse<User>> {
     try {
+      console.log('Creating user with data:', { ...data, password: '***' });
       const user = await User.create({
         ...data,
         role: data.role || 'user',
       });
+      console.log('User created with hash:', user.password);
 
       return {
         success: true,
