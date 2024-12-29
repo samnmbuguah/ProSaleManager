@@ -54,6 +54,7 @@ interface SaleData {
   amountPaid: string;
   changeAmount: string;
   cashAmount: number;
+  customer_id?: number | null;
 }
 
 export function usePos() {
@@ -67,7 +68,12 @@ export function usePos() {
 
   const fetchAllProducts = async () => {
     try {
-      const response = await fetch('/api/products');
+      const response = await fetch('/api/products', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -87,7 +93,12 @@ export function usePos() {
     }
 
     try {
-      const response = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -109,7 +120,11 @@ export function usePos() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(saleData),
+        body: JSON.stringify({
+          ...saleData,
+          customer_id: saleData.customer_id || null
+        }),
+        credentials: 'include'
       });
 
       if (!response.ok) {
