@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { useUser } from "@/hooks/use-user";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Store,
   PackageSearch,
@@ -22,15 +22,39 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
+const ROLE_ROUTES = {
+  user: [
+    { path: '/pos', label: 'POS', icon: Store },
+    { path: '/inventory', label: 'Inventory', icon: PackageSearch },
+    { path: '/expenses', label: 'Expenses', icon: Wallet },
+  ],
+  admin: [
+    { path: '/pos', label: 'POS', icon: Store },
+    { path: '/inventory', label: 'Inventory', icon: PackageSearch },
+    { path: '/customers', label: 'Customers', icon: Users },
+    { path: '/sales', label: 'Sales', icon: Receipt },
+    { path: '/reports', label: 'Reports', icon: BarChart3 },
+    { path: '/expenses', label: 'Expenses', icon: Wallet },
+  ]
+};
+
 export default function MainNav() {
   const [location] = useLocation();
-  const { user, logout } = useUser();
+  const { user, logout } = useAuth();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+
+  if (!user) return null;
+
+  const routes = ROLE_ROUTES[user.role];
 
   const handleLogout = async () => {
     try {
       await logout();
+      toast({
+        title: "Success",
+        description: "Logged out successfully"
+      });
     } catch (error) {
       toast({
         variant: "destructive",
@@ -40,21 +64,12 @@ export default function MainNav() {
     }
   };
 
-  const navItems = [
-    { href: "/", icon: Store, label: "POS" },
-    { href: "/inventory", icon: PackageSearch, label: "Inventory" },
-    { href: "/customers", icon: Users, label: "Customers" },
-    { href: "/sales", icon: Receipt, label: "Sales" },
-    { href: "/reports", icon: BarChart3, label: "Reports" },
-    { href: "/expenses", icon: Wallet, label: "Expenses" },
-  ];
-
   const NavLinks = () => (
     <>
-      {navItems.map(({ href, icon: Icon, label }) => (
-        <Link key={href} href={href}>
+      {routes.map(({ path, label, icon: Icon }) => (
+        <Link key={path} href={path}>
           <Button
-            variant={location === href ? "default" : "ghost"}
+            variant={location === path ? "default" : "ghost"}
             className="flex items-center space-x-2"
             onClick={() => setIsOpen(false)}
           >
@@ -97,7 +112,7 @@ export default function MainNav() {
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex items-center space-x-2">
               <User className="h-4 w-4" />
-              <span>{user?.username}</span>
+              <span>{user.name}</span>
             </div>
             <Button variant="ghost" size="icon" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
