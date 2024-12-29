@@ -4,6 +4,7 @@ import sequelize from '../config/database.js';
 class Sale extends Model {
   declare id: number;
   declare customer_id: number | null;
+  declare user_id: number;
   declare total_amount: number;
   declare payment_method: string;
   declare amount_paid: number;
@@ -24,6 +25,14 @@ Sale.init(
       allowNull: true,
       references: {
         model: 'customers',
+        key: 'id',
+      },
+    },
+    user_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'users',
         key: 'id',
       },
     },
@@ -52,7 +61,7 @@ Sale.init(
     sequelize,
     modelName: 'Sale',
     tableName: 'sales',
-    underscored: true,
+    timestamps: true,
   }
 );
 
