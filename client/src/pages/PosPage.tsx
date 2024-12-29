@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { SaleTerminal } from "../components/pos/SaleTerminal";
 import { ProductSearch } from "../components/pos/ProductSearch";
+import { CustomerSearch } from "../components/pos/CustomerSearch";
 import { Cart } from "../components/pos/Cart";
 import { PaymentDialog } from "../components/pos/PaymentDialog";
 import type { Product, PriceUnit, UnitTypeValues } from "@/types/product";
@@ -8,6 +9,13 @@ import { usePos } from "../hooks/use-pos";
 import type { CartItem, SaleItem, PaymentDetails } from "../types/pos";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+
+interface Customer {
+  id: number;
+  name: string;
+  email: string | null;
+  phone: string;
+}
 
 interface SaleData {
   items: SaleItem[];
@@ -17,6 +25,7 @@ interface SaleData {
   amountPaid: string;
   changeAmount: string;
   cashAmount: number;
+  customer_id?: number;
 }
 
 interface ProductWithPriceUnits extends Product {
@@ -26,6 +35,7 @@ interface ProductWithPriceUnits extends Product {
 export default function PosPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const { products, searchProducts, createSale, isProcessing, error } = usePos();
 
   const handleAddToCart = (product: ProductWithPriceUnits, selectedUnit: UnitTypeValues) => {
@@ -115,7 +125,7 @@ export default function PosPage() {
         return sum + itemTotal;
       }, 0);
 
-      const saleData = {
+      const saleData: SaleData = {
         items: saleItems,
         total: total.toFixed(2),
         paymentMethod: paymentDetails.paymentMethod,
@@ -123,6 +133,7 @@ export default function PosPage() {
         amountPaid: paymentDetails.amountPaid.toFixed(2),
         changeAmount: paymentDetails.change.toFixed(2),
         cashAmount: paymentDetails.paymentMethod === 'mpesa' ? total : paymentDetails.amountPaid,
+        customer_id: selectedCustomer?.id || null
       };
 
       const response = await createSale(saleData);
@@ -142,7 +153,12 @@ export default function PosPage() {
           payment_method: paymentDetails.paymentMethod,
           timestamp: new Date().toISOString(),
           transaction_id: response.data.id.toString(),
-          cash_amount: paymentDetails.paymentMethod === 'cash' ? paymentDetails.amountPaid : undefined
+          cash_amount: paymentDetails.paymentMethod === 'cash' ? paymentDetails.amountPaid : undefined,
+          customer: selectedCustomer ? {
+            name: selectedCustomer.name,
+            phone: selectedCustomer.phone,
+            email: selectedCustomer.email
+          } : undefined
         };
         window._setReceiptState(receiptData);
       }
@@ -165,19 +181,25 @@ export default function PosPage() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          <ProductSearch
-            products={products?.map(p => ({
-              ...p,
-              min_stock: p.min_stock ?? 0,
-              max_stock: p.max_stock ?? 0,
-              reorder_point: p.reorder_point ?? 0,
-              category: p.category ?? '',
-              price_units: p.price_units ?? [],
-              stock_unit: p.stock_unit as UnitTypeValues
-            })) || []}
-            onSelect={handleAddToCart}
-            searchProducts={searchProducts}
-          />
+          <div className="space-y-4">
+            <CustomerSearch
+              onSelect={setSelectedCustomer}
+              selectedCustomer={selectedCustomer}
+            />
+            <ProductSearch
+              products={products?.map(p => ({
+                ...p,
+                min_stock: p.min_stock ?? 0,
+                max_stock: p.max_stock ?? 0,
+                reorder_point: p.reorder_point ?? 0,
+                category: p.category ?? '',
+                price_units: p.price_units ?? [],
+                stock_unit: p.stock_unit as UnitTypeValues
+              })) || []}
+              onSelect={handleAddToCart}
+              searchProducts={searchProducts}
+            />
+          </div>
         </SaleTerminal>
       </div>
       
