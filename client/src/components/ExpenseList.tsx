@@ -22,7 +22,7 @@ interface ExpenseListProps {
   onDeleteExpense: (id: number) => void;
 }
 
-export default function ExpenseList({ expenses, onDeleteExpense }: ExpenseListProps) {
+export default function ExpenseList({ expenses = [], onDeleteExpense }: ExpenseListProps) {
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString();
   };
@@ -34,7 +34,7 @@ export default function ExpenseList({ expenses, onDeleteExpense }: ExpenseListPr
     }).format(amount);
   };
 
-  if (expenses.length === 0) {
+  if (!Array.isArray(expenses) || expenses.length === 0) {
     return (
       <Card>
         <CardHeader>
