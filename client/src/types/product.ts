@@ -1,54 +1,32 @@
 import { z } from 'zod';
+import { PRICE_UNITS } from '@/constants/priceUnits';
 import { PRODUCT_CATEGORIES } from '@/constants/categories';
 
-export const UnitTypes = ['per_piece', 'three_piece', 'dozen'] as const;
-export type UnitTypeValues = typeof UnitTypes[number];
-
-export const defaultUnitQuantities: Record<UnitTypeValues, number> = {
-  per_piece: 1,
-  three_piece: 3,
-  dozen: 12,
-};
-
-export interface PriceUnit {
-  id?: number;
-  product_id?: number;
-  unit_type: string;
-  quantity: number;
-  buying_price: string;
-  selling_price: string;
-  is_default: boolean;
-}
-
 export const priceUnitSchema = z.object({
-  unit_type: z.enum(UnitTypes),
-  quantity: z.number().min(1),
+  unit_type: z.enum(PRICE_UNITS.map(unit => unit.value) as [string, ...string[]]),
+  quantity: z.number(),
   buying_price: z.string(),
   selling_price: z.string(),
-  is_default: z.boolean(),
+  is_default: z.boolean()
 });
 
 export const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  sku: z.string().optional(),
-  category: z.enum(PRODUCT_CATEGORIES),
+  sku: z.string().min(1, "SKU is required"),
+  category: z.enum(PRODUCT_CATEGORIES as [string, ...string[]]),
   stock: z.number().min(0, "Stock cannot be negative"),
-  min_stock: z.number().min(0).optional(),
-  max_stock: z.number().min(0).optional(),
-  reorder_point: z.number().min(0).optional(),
-  stock_unit: z.enum(UnitTypes),
-  price_units: z.array(priceUnitSchema),
-  image_url: z.string().optional().nullable(),
-  buying_price: z.string().optional(),
-  selling_price: z.string().optional(),
+  min_stock: z.number().min(0, "Minimum stock cannot be negative"),
+  max_stock: z.number().min(0, "Maximum stock cannot be negative"),
+  reorder_point: z.number().min(0, "Reorder point cannot be negative"),
+  stock_unit: z.enum(PRICE_UNITS.map(unit => unit.value) as [string, ...string[]]),
+  price_units: z.array(priceUnitSchema).min(1, "At least one price unit is required")
 });
 
-export type ProductFormData = z.infer<typeof productSchema> & {
-  image?: File;
-};
+export type PriceUnit = z.infer<typeof priceUnitSchema>;
+export type ProductFormData = z.infer<typeof productSchema>;
 
 export interface Product {
-  id?: number;
+  id: number;
   name: string;
   sku: string;
   category: string;
@@ -57,11 +35,7 @@ export interface Product {
   max_stock: number;
   reorder_point: number;
   stock_unit: string;
-  buying_price: string;
-  selling_price: string;
-  image_url?: string | null;
-  default_unit_pricing_id?: number | null;
   price_units?: PriceUnit[];
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: string;
+  updatedAt: string;
 } 
