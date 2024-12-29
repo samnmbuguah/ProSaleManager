@@ -7,7 +7,13 @@
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:client": "cd client && npm run dev",
     "dev:server": "cd server && npm run dev",
-    "install:all": "npm install && cd client && npm install && cd ../server && npm install"
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
+    "db:migrate": "cd server && npx sequelize-cli db:migrate",
+    "db:migrate:undo": "cd server && npx sequelize-cli db:migrate:undo",
+    "db:migrate:undo:all": "cd server && npx sequelize-cli db:migrate:undo:all",
+    "db:seed:all": "cd server && npx sequelize-cli db:seed:all",
+    "db:seed:undo:all": "cd server && npx sequelize-cli db:seed:undo:all",
+    "db:migrate:status": "cd server && npx sequelize-cli db:migrate:status"
   },
   "keywords": [],
   "author": "",
