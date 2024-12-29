@@ -10,9 +10,14 @@ export interface Expense {
   id: number;
   description: string;
   amount: number;
-  category: ExpenseCategory;
+  category: string;
   date: string;
-  userId: number;
+  payment_method: string;
+  user_id: number;
   createdAt: string;
   updatedAt: string;
+  user?: {
+    id: number;
+    name: string;
+  };
 } 
