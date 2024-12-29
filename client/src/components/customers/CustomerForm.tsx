@@ -1,7 +1,6 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import type { CustomerInsert } from "@/types/customer";
-import { customerSchema } from "@/types/customer";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -12,19 +11,31 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import type { CustomerInsert } from "@/types/schema";
+
+const customerSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address").nullable(),
+  phone: z.string()
+    .regex(/^\+?[0-9]{10,}$/, "Phone number must be at least 10 digits")
+    .nullable(),
+  address: z.string().optional(),
+});
 
 interface CustomerFormProps {
   onSubmit: (data: CustomerInsert) => Promise<void>;
-  isSubmitting: boolean;
+  isSubmitting?: boolean;
+  defaultValues?: Partial<CustomerInsert>;
 }
 
-export function CustomerForm({ onSubmit, isSubmitting }: CustomerFormProps) {
+export function CustomerForm({ onSubmit, isSubmitting = false, defaultValues }: CustomerFormProps) {
   const form = useForm<CustomerInsert>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
+      name: defaultValues?.name || "",
+      email: defaultValues?.email || null,
+      phone: defaultValues?.phone || null,
+      address: defaultValues?.address || "",
     },
   });
 
@@ -74,6 +85,7 @@ export function CustomerForm({ onSubmit, isSubmitting }: CustomerFormProps) {
                 <Input 
                   value={value || ""} 
                   onChange={e => onChange(e.target.value || null)} 
+                  placeholder="+254700000000"
                   {...field} 
                 />
               </FormControl>
@@ -82,8 +94,22 @@ export function CustomerForm({ onSubmit, isSubmitting }: CustomerFormProps) {
           )}
         />
 
+        <FormField
+          control={form.control}
+          name="address"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Address</FormLabel>
+              <FormControl>
+                <Input {...field} value={field.value || ""} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          Add Customer
+          {isSubmitting ? "Adding..." : "Add Customer"}
         </Button>
       </form>
     </Form>
