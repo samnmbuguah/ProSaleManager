@@ -1,7 +1,7 @@
 export const seedProducts = [
   {
     name: 'Classic Sneakers',
-    sku: 'SHOE001',
+    product_number: 'SHOE001',
     category: 'Shoes',
     stock: 50,
     min_stock: 10,
@@ -34,7 +34,7 @@ export const seedProducts = [
   },
   {
     name: 'Cotton Boxers',
-    sku: 'BOX001',
+    product_number: 'BOX001',
     category: 'Boxers',
     stock: 100,
     min_stock: 20,
@@ -67,7 +67,7 @@ export const seedProducts = [
   },
   {
     name: 'Lace Panties',
-    sku: 'PAN001',
+    product_number: 'PAN001',
     category: 'Panties',
     stock: 150,
     min_stock: 30,
@@ -100,7 +100,7 @@ export const seedProducts = [
   },
   {
     name: 'Push-up Bra',
-    sku: 'BRA001',
+    product_number: 'BRA001',
     category: 'Bras',
     stock: 80,
     min_stock: 15,
@@ -133,7 +133,7 @@ export const seedProducts = [
   },
   {
     name: 'Coconut Oil',
-    sku: 'OIL001',
+    product_number: 'OIL001',
     category: 'Oil',
     stock: 60,
     min_stock: 12,
@@ -189,31 +189,31 @@ export const seedSuppliers = [
 
 export const seedProductSuppliers = [
   {
-    product_sku: 'SHOE001',
+    product_number: 'SHOE001',
     supplier_email: 'sales@fashionfootwear.com',
     cost_price: '1400',
     is_preferred: true
   },
   {
-    product_sku: 'BOX001',
+    product_number: 'BOX001',
     supplier_email: 'sales@ugwholesale.com',
     cost_price: '280',
     is_preferred: true
   },
   {
-    product_sku: 'PAN001',
+    product_number: 'PAN001',
     supplier_email: 'sales@ugwholesale.com',
     cost_price: '180',
     is_preferred: true
   },
   {
-    product_sku: 'BRA001',
+    product_number: 'BRA001',
     supplier_email: 'sales@ugwholesale.com',
     cost_price: '750',
     is_preferred: true
   },
   {
-    product_sku: 'OIL001',
+    product_number: 'OIL001',
     supplier_email: 'sales@beautydist.com',
     cost_price: '230',
     is_preferred: true
