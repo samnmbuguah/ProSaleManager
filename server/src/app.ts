@@ -14,15 +14,38 @@ const __dirname = dirname(__filename);
 
 const app = express();
 
+// Development URLs
+const developmentOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+  'http://34.131.30.62:5173',
+  'http://34.131.30.62:5174'
+];
+
 // Middleware
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? process.env.CLIENT_URL 
-    : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://34.131.30.62:5173', 'http://34.131.30.62:5174'],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (process.env.NODE_ENV === 'production') {
+      const allowedOrigin = process.env.CLIENT_URL;
+      return callback(null, allowedOrigin);
+    } else {
+      if (developmentOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      }
+      return callback(null, origin);
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
+
+// Parse JSON bodies and cookies before any routes
 app.use(express.json());
 app.use(cookieParser());
 
@@ -34,7 +57,6 @@ try {
   
   if (process.env.NODE_ENV === 'development') {
     console.log('Running in development mode');
-    console.log('Note: Use `npm run seed` to sync and seed the database');
   }
 } catch (error) {
   console.error('Unable to connect to the database:', error);
