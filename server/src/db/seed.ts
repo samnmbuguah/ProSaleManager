@@ -1,28 +1,18 @@
 import { syncDatabase } from './sync.js';
-import { seedProducts } from '../../seed/products.js';
-import { seedUsers } from '../../seed/users.js';
 
 async function seed() {
   try {
-    // First sync the database
-    const syncResult = await syncDatabase();
-    if (!syncResult) {
-      throw new Error('Database sync failed');
+    // Sync the database
+    const synced = await syncDatabase();
+    if (!synced) {
+      throw new Error('Failed to sync database');
     }
 
-    // Seed users first
-    await seedUsers();
-
-    // Seed products and their price units
-    await seedProducts();
-
-    console.log('Database seeded successfully');
-    process.exit(0);
+    console.log('Database synced successfully');
   } catch (error) {
-    console.error('Error seeding database:', error);
+    console.error('Error syncing database:', error);
     process.exit(1);
   }
 }
 
-// Run the seed function
 seed(); 
