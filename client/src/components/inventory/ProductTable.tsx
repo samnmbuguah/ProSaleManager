@@ -90,7 +90,7 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
                   <TableCell>{product.category}</TableCell>
                   <TableCell>{product.stock_unit}</TableCell>
                   <TableCell>
-                    {`KSh ${Number(defaultPricing.buying_price).toFixed(2)} / ${Number(defaultPricing.selling_price).toFixed(2)}`}
+                    {`KSh ${Number(defaultPricing.buying_price).toLocaleString('en-KE')} / KSh ${Number(defaultPricing.selling_price).toLocaleString('en-KE')}`}
                   </TableCell>
                   <TableCell>
                     {calculateProfitMargin(defaultPricing.buying_price, defaultPricing.selling_price)}
