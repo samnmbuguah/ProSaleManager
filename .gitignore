@@ -11,6 +11,14 @@ node_modules/
 /.pnp
 .pnp.js
 
+# Package lock files
+package-lock.json
+**/package-lock.json
+yarn.lock
+**/yarn.lock
+pnpm-lock.yaml
+**/pnpm-lock.yaml
+
 # Environment variables
 .env
 .env.local
@@ -54,3 +62,12 @@ Thumbs.db
 # Replit specific
 .agent_state*
 client/.env.production
+
+# Cache and temp directories
+.cache/
+.config/
+.local/
+.upm/
+
+# Server public directory
+server/public
