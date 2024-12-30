@@ -26,7 +26,20 @@ const dbConfig = {
   },
 };
 
-const sequelize = new Sequelize(dbConfig);
+const sequelize = new Sequelize(
+  dbConfig.database,
+  dbConfig.username,
+  dbConfig.password,
+  {
+    host: dbConfig.host,
+    port: dbConfig.port,
+    dialect: dbConfig.dialect,
+    logging: dbConfig.logging,
+    define: dbConfig.define,
+    dialectOptions: dbConfig.dialectOptions,
+    pool: dbConfig.pool,
+  }
+);
 
 // Log database connection info
 console.log('\nDatabase Configuration:');
