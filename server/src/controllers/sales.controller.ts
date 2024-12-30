@@ -110,7 +110,7 @@ export const getSales = async (req: Request, res: Response) => {
           model: SaleItem,
           include: [{
             model: Product,
-            attributes: ['id', 'name', 'sku'],
+            attributes: ['id', 'name', 'product_number'],
           }],
         },
       ],
@@ -126,7 +126,7 @@ export const getSales = async (req: Request, res: Response) => {
       currentPage: page,
     });
   } catch (error) {
-    console.error('Error fetching sales:', error);
-    res.status(500).json({ message: 'Failed to fetch sales' });
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch sales';
+    res.status(500).json({ message: errorMessage });
   }
 }; 
