@@ -1,7 +1,6 @@
 import { syncDatabase } from './sync.js';
 import { seedProducts } from '../../seed/products.js';
 import { seedUsers } from '../../seed/users.js';
-import { setupProductImages } from '../utils/setupImages.js';
 
 async function seed() {
   try {
@@ -10,9 +9,6 @@ async function seed() {
     if (!syncResult) {
       throw new Error('Database sync failed');
     }
-
-    // Setup product images directory and sample images
-    await setupProductImages();
 
     // Seed users first
     await seedUsers();
