@@ -95,7 +95,7 @@ export default function InventoryStatus({
         <TableHeader>
           <TableRow>
             <TableHead>Product</TableHead>
-            <TableHead>SKU</TableHead>
+            <TableHead>Product Code</TableHead>
             <TableHead>Category</TableHead>
             <TableHead className="text-right">Price</TableHead>
             <TableHead className="text-right">Quantity</TableHead>

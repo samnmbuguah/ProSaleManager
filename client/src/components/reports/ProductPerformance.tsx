@@ -114,7 +114,7 @@ export default function ProductPerformance({
         <TableHeader>
           <TableRow>
             <TableHead>Product</TableHead>
-            <TableHead>SKU</TableHead>
+            <TableHead>Product Code</TableHead>
             <TableHead className="text-right">Quantity Sold</TableHead>
             <TableHead className="text-right">Revenue</TableHead>
             <TableHead className="text-right">Profit</TableHead>
