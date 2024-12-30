@@ -53,3 +53,4 @@ Thumbs.db
 
 # Replit specific
 .agent_state*
+client/.env.production
