@@ -270,7 +270,7 @@ const InventoryPage: React.FC = () => {
         </div>
 
         <div>
-          <Label htmlFor="sku">SKU</Label>
+          <Label htmlFor="sku">Product Code</Label>
           <Input
             id="sku"
             name="sku"
@@ -490,7 +490,7 @@ const InventoryPage: React.FC = () => {
                     />
                   )}
                   <h3 className="text-lg font-semibold">{product.name}</h3>
-                  <p className="text-sm text-gray-600">SKU: {product.sku}</p>
+                  <p className="text-sm text-gray-600">Product Code: {product.sku}</p>
                   <p className="text-sm text-gray-600">Category: {product.category}</p>
                   <p className="text-sm text-gray-600">
                     Stock: {product.stock} {product.stock_unit}
@@ -499,8 +499,8 @@ const InventoryPage: React.FC = () => {
                     <h4 className="font-medium">Price Units:</h4>
                     {product.price_units?.map((unit, index) => (
                       <div key={index} className="text-sm">
-                        {unit.unit_type} ({unit.quantity}): Buy - ${unit.buying_price},
-                        Sell - ${unit.selling_price}
+                        {unit.unit_type} ({unit.quantity}): Buy - KSh {unit.buying_price.toLocaleString('en-KE')},
+                        Sell - KSh {unit.selling_price.toLocaleString('en-KE')}
                         {unit.is_default && ' (Default)'}
                       </div>
                     ))}
