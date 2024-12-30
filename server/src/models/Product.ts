@@ -4,7 +4,7 @@ import sequelize from '../config/database.js';
 class Product extends Model {
   declare id: number;
   declare name: string;
-  declare sku: string;
+  declare product_number: string;
   declare category: string;
   declare stock: number;
   declare min_stock: number;
@@ -30,7 +30,7 @@ Product.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    sku: {
+    product_number: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
