@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { api } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 import { useLocation } from 'wouter';
+import axios from 'axios';
 
 interface User {
   id: number;
@@ -34,11 +35,37 @@ const useAuthStore = create<AuthState>((set) => ({
 
 export const useAuth = () => {
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user, isAuthenticated, isLoading, lastCheck, setUser, setIsAuthenticated, setIsLoading, setLastCheck } = useAuthStore();
+
+  const handleAuthError = (error: any, redirectToAuth: boolean = true) => {
+    console.error('Auth error:', error);
+    setUser(null);
+    setIsAuthenticated(false);
+    
+    // Only show toast for non-401 errors or when explicitly logging out
+    if (!axios.isAxiosError(error) || error.response?.status !== 401 || !redirectToAuth) {
+      toast({
+        variant: 'destructive',
+        title: 'Authentication Error',
+        description: error.response?.data?.message || 'Session expired. Please log in again.',
+      });
+    }
+
+    // Only redirect if we're not already on the auth page and redirection is requested
+    if (redirectToAuth && location !== '/auth') {
+      setLocation('/auth');
+    }
+  };
 
   const checkSession = async () => {
     try {
+      // Skip check if we're on the auth page
+      if (location === '/auth') {
+        setIsLoading(false);
+        return;
+      }
+
       // Skip check if we've checked recently (within 5 minutes) and have a user
       const now = Date.now();
       if (now - lastCheck < 5 * 60 * 1000 && user) {
@@ -51,21 +78,13 @@ export const useAuth = () => {
       
       if (response.data.success && response.data.data) {
         setUser(response.data.data);
+        setIsAuthenticated(true);
         setLastCheck(now);
       } else {
-        setUser(null);
-        // Only redirect to auth if we're not already there
-        if (window.location.pathname !== '/auth') {
-          setLocation('/auth');
-        }
+        handleAuthError(new Error('Session invalid'), true);
       }
     } catch (error: any) {
-      console.error('Session check error:', error);
-      setUser(null);
-      // Only redirect to auth if we're not already there
-      if (window.location.pathname !== '/auth') {
-        setLocation('/auth');
-      }
+      handleAuthError(error, true);
     } finally {
       setIsLoading(false);
     }
@@ -76,11 +95,16 @@ export const useAuth = () => {
       setIsLoading(true);
       const response = await api.post('/auth/login', { email, password });
       
-      if (!response.data.success || !response.data.data) {
-        throw new Error(response.data.message || 'Invalid response from server');
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Invalid credentials');
+      }
+      
+      if (!response.data.data) {
+        throw new Error('No user data received');
       }
       
       setUser(response.data.data);
+      setIsAuthenticated(true);
       setLastCheck(Date.now());
       setLocation('/pos');
       
@@ -89,15 +113,14 @@ export const useAuth = () => {
         description: response.data.message || 'Logged in successfully',
       });
     } catch (error: any) {
-      console.error('Login error:', error);
-      setUser(null);
-      
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.response?.data?.message || error.message || 'Invalid credentials',
-      });
-      
+      // Don't show error toast for 401 responses as it will be handled by the form
+      if (!axios.isAxiosError(error) || error.response?.status !== 401) {
+        toast({
+          variant: 'destructive',
+          title: 'Login Failed',
+          description: error.response?.data?.message || error.message || 'Failed to log in',
+        });
+      }
       throw error;
     } finally {
       setIsLoading(false);
@@ -109,20 +132,18 @@ export const useAuth = () => {
       setIsLoading(true);
       await api.post('/auth/logout');
       setUser(null);
-      setLastCheck(0);
-      setLocation('/auth');
+      setIsAuthenticated(false);
+      
+      if (location !== '/auth') {
+        setLocation('/auth');
+      }
       
       toast({
         title: 'Success',
         description: 'Logged out successfully',
       });
     } catch (error: any) {
-      console.error('Logout error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.response?.data?.message || 'Error logging out',
-      });
+      handleAuthError(error, true);
     } finally {
       setIsLoading(false);
     }
