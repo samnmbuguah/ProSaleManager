@@ -12,7 +12,7 @@ export const priceUnitSchema = z.object({
 
 export const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  sku: z.string().min(1, "SKU is required"),
+  product_number: z.string().min(1, "Product number is required"),
   category: z.enum(PRODUCT_CATEGORIES as [string, ...string[]]),
   stock: z.number().min(0, "Stock cannot be negative"),
   min_stock: z.number().min(0, "Minimum stock cannot be negative"),
@@ -28,7 +28,7 @@ export type ProductFormData = z.infer<typeof productSchema>;
 export interface Product {
   id: number;
   name: string;
-  sku: string;
+  product_number: string;
   category: string;
   stock: number;
   min_stock: number;
