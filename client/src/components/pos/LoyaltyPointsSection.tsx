@@ -57,7 +57,7 @@ export function LoyaltyPointsSection({ customerId, total, onPointsUse }: Loyalty
           <Button onClick={handleApplyPoints}>Apply Points</Button>
         </div>
         <p className="text-sm text-muted-foreground">
-          {pointsToUse > 0 && `This will reduce the total by $${pointsToUse.toFixed(2)}`}
+          {pointsToUse > 0 && `This will reduce the total by KSh ${pointsToUse.toLocaleString('en-KE')}`}
         </p>
       </div>
     </div>
