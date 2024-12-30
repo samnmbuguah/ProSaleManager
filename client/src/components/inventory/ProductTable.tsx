@@ -70,7 +70,7 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>SKU</TableHead>
+              <TableHead>Product Number</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Stock Unit</TableHead>
               <TableHead>Default Price (Buy/Sell)</TableHead>

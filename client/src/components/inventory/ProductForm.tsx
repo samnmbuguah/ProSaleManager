@@ -109,10 +109,10 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
 
           <FormField
             control={form.control}
-            name="sku"
+            name="product_number"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>SKU</FormLabel>
+                <FormLabel>Product Number</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
