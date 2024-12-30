@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Product, ProductFormData } from '@/types/product';
 import { useToast } from '@/hooks/use-toast';
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 export function useInventory() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -15,15 +17,20 @@ export function useInventory() {
       }
       const data = await response.json();
       // Add detailed debug logging for price data
-      console.log('Fetched products data:', JSON.stringify(data, null, 2));
+      // console.log('Fetched products data:', JSON.stringify(data, null, 2));
       const productsWithPricing = data.map((product: any) => {
-        console.log('Processing product:', product.name, 'Price units:', product.price_units);
+        // console.log('Processing product:', product.name, 'Price units:', product.price_units);
         return {
           ...product,
           price_units: product.price_units || [],
           default_unit_pricing: product.price_units?.find((unit: any) => unit.is_default) || null
         };
       });
+
+      if (isDevelopment && productsWithPricing.length === 0) {
+        console.debug('No products found');
+      }
+
       return productsWithPricing;
     },
   });
