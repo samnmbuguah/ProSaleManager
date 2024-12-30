@@ -12,7 +12,7 @@ export async function seedProducts() {
     const products = [
       {
         name: 'Rice',
-        sku: 'RICE001',
+        product_number: 'RICE001',
         category: 'Grains',
         stock: 100,
         min_stock: 20,
@@ -21,11 +21,11 @@ export async function seedProducts() {
         stock_unit: 'kg',
         buying_price: 100,
         selling_price: 120,
-        image_url: '/images/products/rice.jpg'
+        image_url: '/images/products/placeholder.svg'
       },
       {
         name: 'Sugar',
-        sku: 'SUGAR001',
+        product_number: 'SUGAR001',
         category: 'Groceries',
         stock: 150,
         min_stock: 30,
@@ -34,11 +34,11 @@ export async function seedProducts() {
         stock_unit: 'kg',
         buying_price: 80,
         selling_price: 95,
-        image_url: '/images/products/sugar.jpg'
+        image_url: '/images/products/placeholder.svg'
       },
       {
         name: 'Cooking Oil',
-        sku: 'OIL001',
+        product_number: 'OIL001',
         category: 'Groceries',
         stock: 80,
         min_stock: 15,
@@ -47,11 +47,11 @@ export async function seedProducts() {
         stock_unit: 'L',
         buying_price: 200,
         selling_price: 240,
-        image_url: '/images/products/cooking-oil.jpg'
+        image_url: '/images/products/placeholder.svg'
       },
       {
         name: 'Maize Flour',
-        sku: 'FLOUR001',
+        product_number: 'FLOUR001',
         category: 'Grains',
         stock: 120,
         min_stock: 25,
@@ -60,11 +60,11 @@ export async function seedProducts() {
         stock_unit: 'kg',
         buying_price: 90,
         selling_price: 110,
-        image_url: '/images/products/maize-flour.jpg'
+        image_url: '/images/products/placeholder.svg'
       },
       {
         name: 'Milk',
-        sku: 'MILK001',
+        product_number: 'MILK001',
         category: 'Dairy',
         stock: 50,
         min_stock: 10,
@@ -73,11 +73,11 @@ export async function seedProducts() {
         stock_unit: 'L',
         buying_price: 50,
         selling_price: 65,
-        image_url: '/images/products/milk.jpg'
+        image_url: '/images/products/placeholder.svg'
       },
       {
         name: 'Bread',
-        sku: 'BREAD001',
+        product_number: 'BREAD001',
         category: 'Bakery',
         stock: 30,
         min_stock: 5,
@@ -86,11 +86,11 @@ export async function seedProducts() {
         stock_unit: 'piece',
         buying_price: 45,
         selling_price: 55,
-        image_url: '/images/products/bread.jpg'
+        image_url: '/images/products/placeholder.svg'
       },
       {
         name: 'Eggs',
-        sku: 'EGGS001',
+        product_number: 'EGGS001',
         category: 'Dairy',
         stock: 200,
         min_stock: 40,
@@ -99,11 +99,11 @@ export async function seedProducts() {
         stock_unit: 'tray',
         buying_price: 300,
         selling_price: 360,
-        image_url: '/images/products/eggs.jpg'
+        image_url: '/images/products/placeholder.svg'
       },
       {
         name: 'Tea Leaves',
-        sku: 'TEA001',
+        product_number: 'TEA001',
         category: 'Beverages',
         stock: 75,
         min_stock: 15,
@@ -112,7 +112,7 @@ export async function seedProducts() {
         stock_unit: 'kg',
         buying_price: 400,
         selling_price: 480,
-        image_url: '/images/products/tea.jpg'
+        image_url: '/images/products/placeholder.svg'
       }
     ];
 
