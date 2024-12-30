@@ -10,12 +10,15 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  define: {
+    'process.env.VITE_API_URL': JSON.stringify('http://localhost:5000/api'),
+  },
   server: {
-    host: '0.0.0.0',
     proxy: {
       '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,
+        secure: false
       },
     },
   },
