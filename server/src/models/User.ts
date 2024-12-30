@@ -12,11 +12,12 @@ class User extends Model {
   declare readonly updatedAt: Date;
 
   async comparePassword(candidatePassword: string): Promise<boolean> {
-    console.log('Comparing passwords:');
-    console.log('Stored hash:', this.password);
-    const isMatch = await bcrypt.compare(candidatePassword, this.password);
-    console.log('Password match:', isMatch);
-    return isMatch;
+    try {
+      return await bcrypt.compare(candidatePassword, this.password);
+    } catch (error) {
+      console.error('Error comparing passwords:', error);
+      return false;
+    }
   }
 }
 
@@ -37,7 +38,7 @@ User.init(
     },
     password: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: false,
     },
     name: {
       type: DataTypes.STRING,
@@ -56,18 +57,12 @@ User.init(
     sequelize,
     modelName: 'User',
     hooks: {
-      beforeCreate: async (user: User) => {
-        if (user.changed('password')) {
+      beforeSave: async (user: User) => {
+        if (user.changed('password') && user.password && !user.password.startsWith('$2b$')) {
           const salt = await bcrypt.genSalt(10);
           user.password = await bcrypt.hash(user.password, salt);
         }
-      },
-      beforeUpdate: async (user: User) => {
-        if (user.changed('password')) {
-          const salt = await bcrypt.genSalt(10);
-          user.password = await bcrypt.hash(user.password, salt);
-        }
-      },
+      }
     },
   }
 );
