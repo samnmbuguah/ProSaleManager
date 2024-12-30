@@ -139,7 +139,7 @@ export function SalesChart({ data = [], period, onPeriodChange }: SalesChartProp
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
-            <YAxis tickFormatter={(value) => `KSh ${value.toLocaleString()}`} />
+            <YAxis tickFormatter={(value) => `KSh ${value.toLocaleString('en-KE')}`} />
             <Tooltip
               formatter={(value: number) => formatCurrency(value)}
               labelFormatter={(label) => `Date: ${label}`}
