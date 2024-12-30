@@ -32,10 +32,10 @@ import { Loader2 } from "lucide-react";
 
 interface Sale {
   id: number;
-  customerId: number | null;
-  total: string;
-  paymentMethod: string;
-  paymentStatus: string;
+  customer_id: number | null;
+  total_amount: string;
+  payment_method: string;
+  status: string;
   createdAt: string;
   customer?: {
     name: string;
@@ -43,27 +43,20 @@ interface Sale {
     phone: string | null;
   };
   user: {
-    username?: string;
-    name?: string;
-    email?: string;
-  };
-  receiptStatus?: {
-    sms?: boolean;
-    whatsapp?: boolean;
-    lastSentAt?: string;
-  };
-}
-
-interface SaleItem {
-  id: number;
-  productId: number;
-  quantity: number;
-  unitPrice: string;
-  total: string;
-  product: {
     name: string;
-    sku: string;
+    email: string;
   };
+  items: {
+    id: number;
+    product_id: number;
+    quantity: number;
+    unit_price: string;
+    total: string;
+    product: {
+      name: string;
+      product_number: string;
+    };
+  }[];
 }
 
 export function SalesPage() {
@@ -177,15 +170,15 @@ export function SalesPage() {
                     <TableCell>
                       {sale.customer?.name || "Walk-in Customer"}
                     </TableCell>
-                    <TableCell>{sale.user?.username || sale.user?.name || sale.user?.email || "Unknown User"}</TableCell>
+                    <TableCell>{sale.user?.name || sale.user?.email || "Unknown User"}</TableCell>
                     <TableCell className="capitalize">
-                      {sale.paymentMethod}
+                      {sale.payment_method}
                     </TableCell>
                     <TableCell>
                       <Badge
-                        className={getPaymentStatusColor(sale.paymentStatus)}
+                        className={getPaymentStatusColor(sale.status)}
                       >
-                        {sale.paymentStatus}
+                        {sale.status}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -203,7 +196,7 @@ export function SalesPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      {formatCurrency(sale.total)}
+                      {formatCurrency(sale.total_amount)}
                     </TableCell>
                     <TableCell>
                       <Button
@@ -293,24 +286,24 @@ export function SalesPage() {
                 <div>
                   <h3 className="font-semibold mb-2">Payment Information</h3>
                   <p className="capitalize">
-                    Method: {selectedSale.paymentMethod}
+                    Method: {selectedSale.payment_method}
                   </p>
                   <p>
                     Status:{" "}
                     <Badge
                       className={getPaymentStatusColor(
-                        selectedSale.paymentStatus
+                        selectedSale.status
                       )}
                     >
-                      {selectedSale.paymentStatus}
+                      {selectedSale.status}
                     </Badge>
                   </p>
-                  <p>Total: {formatCurrency(selectedSale.total)}</p>
+                  <p>Total: {formatCurrency(selectedSale.total_amount)}</p>
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">Sale Information</h3>
                   <p>Date: {format(new Date(selectedSale.createdAt), "PPp")}</p>
-                  <p>Cashier: {selectedSale.user?.username || selectedSale.user?.name || selectedSale.user?.email || "Unknown User"}</p>
+                  <p>Cashier: {selectedSale.user?.name || selectedSale.user?.email || "Unknown User"}</p>
                 </div>
               </div>
 
@@ -326,7 +319,7 @@ export function SalesPage() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Product</TableHead>
-                          <TableHead>SKU</TableHead>
+                          <TableHead>Product Number</TableHead>
                           <TableHead className="text-right">
                             Unit Price
                           </TableHead>
@@ -337,12 +330,12 @@ export function SalesPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {saleItems?.map((item) => (
+                        {selectedSale.items?.map((item) => (
                           <TableRow key={item.id}>
                             <TableCell>{item.product.name}</TableCell>
-                            <TableCell>{item.product.sku}</TableCell>
+                            <TableCell>{item.product.product_number}</TableCell>
                             <TableCell className="text-right">
-                              {formatCurrency(item.unitPrice)}
+                              {formatCurrency(item.unit_price)}
                             </TableCell>
                             <TableCell className="text-right">
                               {item.quantity}
