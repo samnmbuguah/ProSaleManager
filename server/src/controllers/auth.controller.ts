@@ -9,7 +9,6 @@ export class AuthController {
   async register(req: Request, res: Response) {
     try {
       const { email, password, name, role } = req.body;
-      console.log('Register attempt:', { email, name, role });
 
       // Check if user already exists
       const existingUser = await this.userService.findByEmail(email);
@@ -29,7 +28,6 @@ export class AuthController {
       });
 
       if (!result.success) {
-        console.error('User creation failed:', result.message);
         return res.status(400).json(result);
       }
 
@@ -56,10 +54,9 @@ export class AuthController {
         message: 'User registered successfully',
       });
     } catch (error) {
-      console.error('Registration error:', error);
       return res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Registration failed',
+        message: 'Registration failed. Please try again.',
       });
     }
   }
@@ -67,7 +64,6 @@ export class AuthController {
   async login(req: Request, res: Response) {
     try {
       const { email, password } = req.body;
-      console.log('Login attempt details:', { email, password });
 
       if (!email || !password) {
         return res.status(400).json({
@@ -76,16 +72,13 @@ export class AuthController {
         });
       }
 
-      // Find user first to check stored password
-      const user = await this.userService.findByEmail(email);
-      console.log('Found user:', user.success, user.data ? 'User exists' : 'User not found');
-
       const result = await this.userService.validateCredentials(email, password);
-      console.log('Validation result:', result.success, result.message);
 
       if (!result.success) {
-        console.log('Login failed:', result.message);
-        return res.status(401).json(result);
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid email or password',
+        });
       }
 
       // Generate JWT token
@@ -95,7 +88,7 @@ export class AuthController {
         { expiresIn: '24h' }
       );
 
-      // Set cookie with more permissive settings for development
+      // Set cookie
       res.cookie('token', token, {
         httpOnly: true,
         secure: env.NODE_ENV === 'production',
@@ -112,10 +105,9 @@ export class AuthController {
         message: 'Login successful',
       });
     } catch (error) {
-      console.error('Login error:', error);
       return res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Login failed',
+        message: 'Login failed. Please try again.',
       });
     }
   }
@@ -128,10 +120,9 @@ export class AuthController {
         message: 'Logged out successfully',
       });
     } catch (error) {
-      console.error('Logout error:', error);
       return res.status(500).json({
         success: false,
-        message: 'Logout failed',
+        message: 'Logout failed. Please try again.',
       });
     }
   }
@@ -142,7 +133,7 @@ export class AuthController {
       if (!token) {
         return res.status(401).json({
           success: false,
-          message: 'No session found',
+          message: 'Please log in to continue',
         });
       }
 
@@ -150,7 +141,10 @@ export class AuthController {
       const result = await this.userService.findById(decoded.userId);
 
       if (!result.success) {
-        return res.status(401).json(result);
+        return res.status(401).json({
+          success: false,
+          message: 'Session expired. Please log in again.',
+        });
       }
 
       const { password: _, ...userWithoutPassword } = result.data!.toJSON();
@@ -159,10 +153,9 @@ export class AuthController {
         data: userWithoutPassword,
       });
     } catch (error) {
-      console.error('Session check error:', error);
       return res.status(401).json({
         success: false,
-        message: 'Invalid session',
+        message: 'Invalid session. Please log in again.',
       });
     }
   }
