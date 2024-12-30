@@ -18,7 +18,7 @@ const app = express();
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? process.env.CLIENT_URL 
-    : ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://34.131.30.62:5173', 'http://34.131.30.62:5174'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
