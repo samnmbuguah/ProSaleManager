@@ -13,12 +13,23 @@
     "db:migrate:undo:all": "cd server && npx sequelize-cli db:migrate:undo:all",
     "db:seed:all": "cd server && npx sequelize-cli db:seed:all",
     "db:seed:undo:all": "cd server && npx sequelize-cli db:seed:undo:all",
-    "db:migrate:status": "cd server && npx sequelize-cli db:migrate:status"
+    "db:migrate:status": "cd server && npx sequelize-cli db:migrate:status",
+    "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest tests/e2e",
+    "test:e2e:watch": "NODE_OPTIONS=--experimental-vm-modules jest tests/e2e --watch"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@types/jest": "^29.5.12",
+    "@types/selenium-webdriver": "^4.1.25",
+    "concurrently": "^8.2.2",
+    "dotenv": "^16.4.5",
+    "jest": "^29.7.0",
+    "selenium-webdriver": "^4.18.1",
+    "ts-jest": "^29.1.2"
+  },
+  "dependencies": {
+    "@radix-ui/react-separator": "^1.1.7"
   }
 }

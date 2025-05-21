@@ -9,6 +9,12 @@ class Sale extends Model {
   declare payment_method: string;
   declare amount_paid: number;
   declare status: string;
+  declare payment_status: string;
+  declare receipt_status: {
+    whatsapp?: boolean;
+    sms?: boolean;
+    last_sent_at?: Date;
+  };
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -56,6 +62,19 @@ Sale.init(
       allowNull: false,
       defaultValue: 'pending',
     },
+    payment_status: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'pending',
+    },
+    receipt_status: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: {
+        whatsapp: false,
+        sms: false
+      }
+    }
   },
   {
     sequelize,

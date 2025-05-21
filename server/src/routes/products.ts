@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import Product from '../models/Product.js';
-import PriceUnit from '../models/PriceUnit.js';
 import Supplier from '../models/Supplier';
 import ProductSupplier from '../models/ProductSupplier';
 import { Op } from 'sequelize';
@@ -26,15 +25,10 @@ async function uploadToCloudinary(file: Express.Multer.File): Promise<string> {
   });
 }
 
-// Get all products with their price units
+// Get all products
 router.get('/', async (req, res) => {
   try {
     const products = await Product.findAll({
-      include: [{
-        model: PriceUnit,
-        as: 'price_units',
-        required: false
-      }],
       order: [['name', 'ASC']]
     });
     res.json(products);
@@ -59,15 +53,10 @@ router.get('/search', async (req, res) => {
       where: {
         [Op.or]: [
           { name: { [Op.iLike]: `%${query}%` } },
-          { sku: { [Op.iLike]: `%${query}%` } },
+          { product_code: { [Op.iLike]: `%${query}%` } },
           { category: { [Op.iLike]: `%${query}%` } }
         ]
       },
-      include: [{
-        model: PriceUnit,
-        as: 'price_units',
-        required: false
-      }],
       order: [['name', 'ASC']]
     });
 
@@ -87,10 +76,6 @@ router.get('/:id', async (req, res) => {
     const product = await Product.findByPk(req.params.id, {
       include: [
         {
-          model: PriceUnit,
-          as: 'price_units'
-        },
-        {
           model: Supplier,
           through: ProductSupplier,
         }
@@ -109,7 +94,7 @@ router.get('/:id', async (req, res) => {
 // Create a new product
 router.post('/', upload.single('image'), async (req, res) => {
   try {
-    const { price_units, ...productData } = req.body;
+    const productData = req.body;
     
     // Upload image if provided
     let image_url = null;
@@ -121,25 +106,8 @@ router.post('/', upload.single('image'), async (req, res) => {
       ...productData,
       image_url
     });
-    
-    if (price_units && price_units.length > 0) {
-      const priceUnitsWithProductId = price_units.map(unit => ({
-        ...unit,
-        product_id: product.id
-      }));
-      await PriceUnit.bulkCreate(priceUnitsWithProductId);
-    }
 
-    const productWithPriceUnits = await Product.findByPk(product.id, {
-      include: [
-        {
-          model: PriceUnit,
-          as: 'price_units'
-        }
-      ]
-    });
-
-    res.status(201).json(productWithPriceUnits);
+    res.status(201).json(product);
   } catch (error) {
     res.status(500).json({ message: 'Error creating product', error });
   }
@@ -148,7 +116,7 @@ router.post('/', upload.single('image'), async (req, res) => {
 // Update a product
 router.put('/:id', upload.single('image'), async (req, res) => {
   try {
-    const { price_units, ...productData } = req.body;
+    const productData = req.body;
     const product = await Product.findByPk(req.params.id);
     
     if (!product) {
@@ -163,26 +131,8 @@ router.put('/:id', upload.single('image'), async (req, res) => {
 
     await product.update(productData);
 
-    if (price_units && price_units.length > 0) {
-      // Delete existing price units
-      await PriceUnit.destroy({
-        where: { product_id: product.id }
-      });
-
-      // Create new price units
-      const priceUnitsWithProductId = price_units.map(unit => ({
-        ...unit,
-        product_id: product.id
-      }));
-      await PriceUnit.bulkCreate(priceUnitsWithProductId);
-    }
-
     const updatedProduct = await Product.findByPk(product.id, {
       include: [
-        {
-          model: PriceUnit,
-          as: 'price_units'
-        },
         {
           model: Supplier,
           through: ProductSupplier,
@@ -209,9 +159,6 @@ router.delete('/:id', async (req, res) => {
         }
       }
 
-      await PriceUnit.destroy({
-        where: { product_id: product.id }
-      });
       await product.destroy();
       res.json({ message: 'Product deleted successfully' });
     } else {
