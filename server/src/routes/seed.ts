@@ -1,126 +1,197 @@
 import { Router } from 'express';
-import Product from '../models/Product';
-import Supplier from '../models/Supplier';
-import ProductSupplier from '../models/ProductSupplier';
-import PriceUnit from '../models/PriceUnit';
-import { seedProducts, seedSuppliers, seedProductSuppliers } from '../../seed/products';
+import Product from '../models/Product.js';
+import Supplier from '../models/Supplier.js';
+import Customer from '../models/Customer.js';
+import User from '../models/User.js';
+import bcrypt from 'bcrypt';
 
 const router = Router();
 
-router.post('/seed', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     // Clear existing data
-    await ProductSupplier.destroy({ where: {} });
-    await PriceUnit.destroy({ where: {} });
     await Product.destroy({ where: {} });
     await Supplier.destroy({ where: {} });
+    await Customer.destroy({ where: {} });
+    await User.destroy({ where: {} });
 
-    console.log('Starting demo data seeding...');
-
-    // Create suppliers first
-    const suppliers = await Promise.all(
-      seedSuppliers.map(async (supplierData) => {
-        const supplier = await Supplier.create(supplierData);
-        return supplier;
-      })
-    );
-
-    // Create products with price units
-    const products = await Promise.all(
-      seedProducts.map(async (productData) => {
-        // Create the product
-        const product = await Product.create({
-          name: productData.name,
-          sku: productData.sku,
-          category: productData.category,
-          stock: productData.stock,
-          min_stock: productData.min_stock,
-          max_stock: productData.max_stock,
-          reorder_point: productData.reorder_point,
-          stock_unit: productData.stock_unit,
-        });
-
-        // Create price units for the product
-        const priceUnits = [
-          {
-            product_id: product.id,
-            unit_type: 'per_piece',
-            quantity: 1,
-            buying_price: productData.buying_price,
-            selling_price: productData.selling_price,
-            is_default: true
-          },
-          {
-            product_id: product.id,
-            unit_type: 'three_piece',
-            quantity: 3,
-            buying_price: (Number(productData.buying_price) * 3 * 0.95).toString(), // 5% discount
-            selling_price: (Number(productData.selling_price) * 3 * 0.95).toString(),
-            is_default: false
-          },
-          {
-            product_id: product.id,
-            unit_type: 'dozen',
-            quantity: 12,
-            buying_price: (Number(productData.buying_price) * 12 * 0.9).toString(), // 10% discount
-            selling_price: (Number(productData.selling_price) * 12 * 0.9).toString(),
-            is_default: false
-          }
-        ];
-
-        await PriceUnit.bulkCreate(priceUnits);
-        return product;
-      })
-    );
-
-    // Create product-supplier relationships
-    await Promise.all(
-      seedProductSuppliers.map(async (psData) => {
-        const product = await Product.findOne({
-          where: { sku: psData.product_sku },
-        });
-        const supplier = await Supplier.findOne({
-          where: { email: psData.supplier_email },
-        });
-
-        if (product && supplier) {
-          await ProductSupplier.create({
-            product_id: product.id,
-            supplier_id: supplier.id,
-            cost_price: psData.cost_price,
-            is_preferred: psData.is_preferred,
-          });
-        }
-      })
-    );
-
-    // Fetch all data with associations
-    const productsWithData = await Product.findAll({
-      include: [
-        {
-          model: PriceUnit,
-          as: 'price_units',
-        },
-        {
-          model: Supplier,
-          through: ProductSupplier,
-        }
-      ]
+    // Create admin user
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    await User.create({
+      email: 'admin@example.com',
+      name: 'Admin User',
+      password: hashedPassword,
+      role: 'admin'
     });
 
-    res.json({
-      message: 'Database seeded successfully',
-      data: {
-        products: productsWithData,
-        suppliers: await Supplier.findAll(),
+    // Create sample products
+    const products = [
+      // Shoes
+      {
+        name: 'Nike Air Max',
+        product_code: 'SHOE001',
+        category: 'Shoes',
+        stock_unit: 'piece',
+        quantity: 20,
+        min_stock: 5,
+        buying_price: 4500,
+        selling_price: 6000,
       },
-    });
+      {
+        name: 'Adidas Ultraboost',
+        product_code: 'SHOE002',
+        category: 'Shoes',
+        stock_unit: 'piece',
+        quantity: 15,
+        min_stock: 5,
+        buying_price: 5000,
+        selling_price: 7000,
+      },
+      // Panties
+      {
+        name: 'Victoria Secret Pink Panty',
+        product_code: 'PAN001',
+        category: 'Panties',
+        stock_unit: 'dozen',
+        quantity: 10,
+        min_stock: 3,
+        buying_price: 3600,
+        selling_price: 4800,
+      },
+      {
+        name: 'Cotton Hipster Panty',
+        product_code: 'PAN002',
+        category: 'Panties',
+        stock_unit: 'pack',
+        quantity: 20,
+        min_stock: 5,
+        buying_price: 1500,
+        selling_price: 2100,
+      },
+      // Boxers
+      {
+        name: 'Calvin Klein Boxer Brief',
+        product_code: 'BOX001',
+        category: 'Boxers',
+        stock_unit: 'pack',
+        quantity: 15,
+        min_stock: 5,
+        buying_price: 2400,
+        selling_price: 3000,
+      },
+      {
+        name: 'Nike Dri-FIT Boxer',
+        product_code: 'BOX002',
+        category: 'Boxers',
+        stock_unit: 'dozen',
+        quantity: 8,
+        min_stock: 2,
+        buying_price: 4800,
+        selling_price: 6000,
+      },
+      // Bras
+      {
+        name: 'Victoria Secret Push-Up Bra',
+        product_code: 'BRA001',
+        category: 'Bras',
+        stock_unit: 'piece',
+        quantity: 30,
+        min_stock: 10,
+        buying_price: 1500,
+        selling_price: 2500,
+      },
+      {
+        name: 'Sports Bra',
+        product_code: 'BRA002',
+        category: 'Bras',
+        stock_unit: 'pack',
+        quantity: 12,
+        min_stock: 4,
+        buying_price: 1800,
+        selling_price: 2400,
+      },
+      // Oil
+      {
+        name: 'Coconut Oil',
+        product_code: 'OIL001',
+        category: 'Oil',
+        stock_unit: 'dozen',
+        quantity: 5,
+        min_stock: 2,
+        buying_price: 3600,
+        selling_price: 4800,
+      },
+      {
+        name: 'Olive Oil',
+        product_code: 'OIL002',
+        category: 'Oil',
+        stock_unit: 'piece',
+        quantity: 25,
+        min_stock: 8,
+        buying_price: 350,
+        selling_price: 450,
+      },
+      // Add delivery service
+      {
+        name: 'Delivery Service',
+        product_code: 'SRV001',
+        category: 'Services',
+        stock_unit: 'piece',
+        quantity: 999999, // Large number since this is a service
+        min_stock: 0,    // No minimum stock needed for service
+        buying_price: 0, // No buying price for service
+        selling_price: 200,
+      }
+    ];
+
+    await Product.bulkCreate(products);
+
+    // Create sample suppliers
+    const suppliers = [
+      {
+        name: 'Nike Kenya',
+        email: 'info@nike.co.ke',
+        phone: '+254700000001',
+        address: 'Westlands, Nairobi'
+      },
+      {
+        name: 'Victoria Secret Kenya',
+        email: 'info@vs.co.ke',
+        phone: '+254700000002',
+        address: 'Kilimani, Nairobi'
+      },
+      {
+        name: 'Oil Distributors Ltd',
+        email: 'info@oildist.co.ke',
+        phone: '+254700000003',
+        address: 'Industrial Area, Nairobi'
+      }
+    ];
+
+    await Supplier.bulkCreate(suppliers);
+
+    // Create sample customers
+    const customers = [
+      {
+        name: 'John Doe',
+        email: 'john@example.com',
+        phone: '+254700000003',
+        loyalty_points: 100
+      },
+      {
+        name: 'Jane Smith',
+        email: 'jane@example.com',
+        phone: '+254700000004',
+        loyalty_points: 50
+      }
+    ];
+
+    await Customer.bulkCreate(customers);
+
+    res.json({ message: 'Database seeded successfully' });
   } catch (error) {
-    console.error('Seeding error:', error);
-    res.status(500).json({
-      message: 'Error seeding database',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    console.error('Error seeding database:', error);
+    res.status(500).json({ message: 'Error seeding database', error });
   }
 });
 

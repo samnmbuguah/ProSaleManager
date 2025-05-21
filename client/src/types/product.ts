@@ -1,41 +1,36 @@
 import { z } from 'zod';
-import { PRICE_UNITS } from '@/constants/priceUnits';
 import { PRODUCT_CATEGORIES } from '@/constants/categories';
 
-export const priceUnitSchema = z.object({
-  unit_type: z.enum(PRICE_UNITS.map(unit => unit.value) as [string, ...string[]]),
-  quantity: z.number(),
-  buying_price: z.string(),
-  selling_price: z.string(),
-  is_default: z.boolean()
-});
+export const STOCK_UNITS = ['piece', 'pack', 'dozen'] as const;
 
 export const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  product_number: z.string().min(1, "Product number is required"),
+  product_code: z.string().optional(),
   category: z.enum(PRODUCT_CATEGORIES as [string, ...string[]]),
-  stock: z.number().min(0, "Stock cannot be negative"),
+  stock_unit: z.enum(STOCK_UNITS),
+  quantity: z.number().min(0, "Quantity cannot be negative"),
   min_stock: z.number().min(0, "Minimum stock cannot be negative"),
-  max_stock: z.number().min(0, "Maximum stock cannot be negative"),
-  reorder_point: z.number().min(0, "Reorder point cannot be negative"),
-  stock_unit: z.enum(PRICE_UNITS.map(unit => unit.value) as [string, ...string[]]),
-  price_units: z.array(priceUnitSchema).min(1, "At least one price unit is required")
+  buying_price: z.string().min(1, "Buying price is required"),
+  selling_price: z.string().min(1, "Selling price is required"),
+  image: z.instanceof(File).optional()
 });
 
-export type PriceUnit = z.infer<typeof priceUnitSchema>;
-export type ProductFormData = z.infer<typeof productSchema>;
+export type ProductFormData = z.infer<typeof productSchema> & {
+  image?: File;
+};
 
 export interface Product {
   id: number;
   name: string;
-  product_number: string;
+  product_code: string | null;
   category: string;
-  stock: number;
+  stock_unit: typeof STOCK_UNITS[number];
+  quantity: number;
+  available_units: number;
   min_stock: number;
-  max_stock: number;
-  reorder_point: number;
-  stock_unit: string;
-  price_units?: PriceUnit[];
+  buying_price: string;
+  selling_price: string;
+  image_url: string | null;
   createdAt: string;
   updatedAt: string;
 } 

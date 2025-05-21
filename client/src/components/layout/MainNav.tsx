@@ -83,8 +83,8 @@ export default function MainNav() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b">
-      <div className="container mx-auto px-4">
-        <div className="h-16 flex items-center justify-between">
+      <div className="w-full px-4">
+        <div className="h-16 flex items-center justify-center space-x-4">
           {/* Mobile Menu */}
           <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -108,11 +108,15 @@ export default function MainNav() {
           <div className="hidden md:flex items-center space-x-4">
             <NavLinks />
           </div>
-          
+
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex items-center space-x-2">
-              <User className="h-4 w-4" />
-              <span>{user.name}</span>
+              <Link href="/profile">
+                <Button variant="ghost" size="icon" className="flex items-center space-x-2">
+                  <User className="h-4 w-4" />
+                  <span>{user.name}</span>
+                </Button>
+              </Link>
             </div>
             <Button variant="ghost" size="icon" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />

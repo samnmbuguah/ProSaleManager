@@ -71,7 +71,8 @@ export function SalesPage() {
     queryKey: ["sales", currentPage],
     queryFn: async () => {
       const response = await fetch(
-        `/api/sales?page=${currentPage}&pageSize=${pageSize}`
+        `${import.meta.env.VITE_API_URL}/sales?page=${currentPage}&pageSize=${pageSize}`,
+        { credentials: 'include' }
       );
       if (!response.ok) {
         throw new Error("Failed to fetch sales");
@@ -86,7 +87,10 @@ export function SalesPage() {
     queryKey: ["sale-items", selectedSale?.id],
     queryFn: async () => {
       if (!selectedSale) return [];
-      const response = await fetch(`/api/sales/${selectedSale.id}/items`);
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/sales/${selectedSale.id}/items`,
+        { credentials: 'include' }
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch sale items");
       }

@@ -1,15 +1,11 @@
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
+import env from './env.js';
 
 dotenv.config();
 
-const dbConfig = {
-  database: 'prosale',
-  username: 'prosalemanager',
-  password: 'prosalepassword',
-  host: 'localhost',
-  port: 5432,
-  dialect: 'postgres' as const,
+const sequelize = new Sequelize(env.DATABASE_URL, {
+  dialect: 'postgres',
   logging: false,
   define: {
     timestamps: true,
@@ -24,28 +20,14 @@ const dbConfig = {
     acquire: 30000,
     idle: 10000,
   },
-};
-
-const sequelize = new Sequelize(
-  dbConfig.database,
-  dbConfig.username,
-  dbConfig.password,
-  {
-    host: dbConfig.host,
-    port: dbConfig.port,
-    dialect: dbConfig.dialect,
-    logging: dbConfig.logging,
-    define: dbConfig.define,
-    dialectOptions: dbConfig.dialectOptions,
-    pool: dbConfig.pool,
-  }
-);
+});
 
 // Log database connection info
+const dbConfig = new URL(env.DATABASE_URL);
 console.log('\nDatabase Configuration:');
 console.log('---------------------');
-console.log(`Database: ${dbConfig.database}`);
-console.log(`Host: ${dbConfig.host}`);
+console.log(`Database: ${dbConfig.pathname.slice(1)}`);
+console.log(`Host: ${dbConfig.hostname}`);
 console.log(`Port: ${dbConfig.port}`);
 console.log(`User: ${dbConfig.username}`);
 console.log('---------------------\n');

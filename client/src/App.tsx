@@ -13,6 +13,7 @@ import { SalesPage } from '@/pages/SalesPage';
 import CustomersPage from '@/pages/CustomersPage';
 import SuppliersPage from '@/pages/SuppliersPage';
 import POSPage from '@/pages/POSPage';
+import ProfilePage from '@/pages/ProfilePage';
 
 function App() {
   const { checkSession } = useAuth();
@@ -25,7 +26,7 @@ function App() {
     <>
       <Switch>
         <Route path="/auth" component={AuthPage} />
-        
+
         <Route path="/">
           <RoleBasedRoute allowedRoles={['admin', 'user']}>
             <DashboardPage />
@@ -65,6 +66,12 @@ function App() {
         <Route path="/suppliers">
           <RoleBasedRoute allowedRoles={['admin']}>
             <SuppliersPage />
+          </RoleBasedRoute>
+        </Route>
+
+        <Route path="/profile">
+          <RoleBasedRoute allowedRoles={['admin', 'user']}>
+            <ProfilePage />
           </RoleBasedRoute>
         </Route>
       </Switch>

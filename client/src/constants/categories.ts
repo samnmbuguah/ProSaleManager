@@ -3,7 +3,8 @@ export const PRODUCT_CATEGORIES = [
   'Boxers',
   'Panties',
   'Bras',
-  'Oil'
+  'Oil',
+  'Services'
 ] as const;
 
 export type ProductCategory = typeof PRODUCT_CATEGORIES[number]; 

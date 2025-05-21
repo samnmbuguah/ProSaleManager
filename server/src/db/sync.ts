@@ -3,7 +3,6 @@ import User from '../models/User.js';
 import Product from '../models/Product.js';
 import Supplier from '../models/Supplier.js';
 import ProductSupplier from '../models/ProductSupplier.js';
-import PriceUnit from '../models/PriceUnit.js';
 import Customer from '../models/Customer.js';
 import Sale from '../models/Sale.js';
 import SaleItem from '../models/SaleItem.js';
@@ -18,7 +17,6 @@ const modelSequence = [
   Customer,     // No dependencies
   Supplier,     // No dependencies
   Product,      // Create products first
-  PriceUnit,    // Then price units
   ProductSupplier, // Depends on Product and Supplier
   Sale,         // Depends on Customer and User
   SaleItem,     // Depends on Sale and Product

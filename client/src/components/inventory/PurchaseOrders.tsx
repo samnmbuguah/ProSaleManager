@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -235,13 +236,13 @@ export function PurchaseOrders() {
   const getStatusBadgeVariant = (status: PurchaseOrder['status']) => {
     switch (status) {
       case 'pending':
-        return 'warning';
+        return 'secondary';
       case 'approved':
-        return 'success';
+        return 'default';
       case 'ordered':
         return 'default';
       case 'received':
-        return 'success';
+        return 'default';
       case 'cancelled':
         return 'destructive';
       default:
@@ -372,75 +373,38 @@ export function PurchaseOrders() {
               <TableHead>Expected Delivery</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Total Amount</TableHead>
+              <TableHead>Notes</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {purchaseOrders.map((order) => (
               <TableRow key={order.id}>
-                <TableCell className="font-medium">{order.order_number}</TableCell>
-                <TableCell>{order.supplier.name}</TableCell>
-                <TableCell>{format(new Date(order.order_date), 'MMM d, yyyy')}</TableCell>
+                <TableCell>{order.order_number}</TableCell>
+                <TableCell>{order.supplier?.name || 'Unknown Supplier'}</TableCell>
+                <TableCell>{format(new Date(order.order_date), 'PPP')}</TableCell>
+                <TableCell>{order.expected_delivery_date ? format(new Date(order.expected_delivery_date), 'PPP') : 'Not set'}</TableCell>
                 <TableCell>
-                  {order.expected_delivery_date
-                    ? format(new Date(order.expected_delivery_date), 'MMM d, yyyy')
-                    : '-'}
+                  <Badge variant={getStatusBadgeVariant(order.status)}>{order.status}</Badge>
                 </TableCell>
+                <TableCell>KSh {order.total_amount.toLocaleString()}</TableCell>
+                <TableCell>{order.notes || 'No notes'}</TableCell>
                 <TableCell>
-                  <Badge variant={getStatusBadgeVariant(order.status)}>
-                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                  </Badge>
-                </TableCell>
-                <TableCell>KSh {order.total_amount.toLocaleString('en-KE')}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedOrder(order);
-                        setIsViewDialogOpen(true);
-                      }}
-                    >
-                      View
-                    </Button>
-                    {order.status === 'pending' && (
-                      <>
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => handleStatusChange(order.id, 'approved')}
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleStatusChange(order.id, 'cancelled')}
-                        >
-                          Cancel
-                        </Button>
-                      </>
-                    )}
-                    {order.status === 'approved' && (
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => handleStatusChange(order.id, 'ordered')}
-                      >
-                        Mark as Ordered
-                      </Button>
-                    )}
-                    {order.status === 'ordered' && (
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => handleStatusChange(order.id, 'received')}
-                      >
-                        Mark as Received
-                      </Button>
-                    )}
-                  </div>
+                  <Select
+                    value={order.status}
+                    onValueChange={(value) => handleStatusChange(order.id, value as PurchaseOrder['status'])}
+                  >
+                    <SelectTrigger className="w-[130px]">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="ordered">Ordered</SelectItem>
+                      <SelectItem value="received">Received</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </TableCell>
               </TableRow>
             ))}
@@ -449,18 +413,20 @@ export function PurchaseOrders() {
       </div>
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create Purchase Order</DialogTitle>
+            <DialogDescription>Fill in the purchase order details below.</DialogDescription>
           </DialogHeader>
           <PurchaseOrderForm />
         </DialogContent>
       </Dialog>
 
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Purchase Order Details</DialogTitle>
+            <DialogTitle>View Purchase Order</DialogTitle>
+            <DialogDescription>Purchase order details and status.</DialogDescription>
           </DialogHeader>
           {selectedOrder && (
             <div className="space-y-4">

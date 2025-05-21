@@ -3,7 +3,6 @@ import Customer from './Customer.js';
 import Sale from './Sale.js';
 import SaleItem from './SaleItem.js';
 import Product from './Product.js';
-import PriceUnit from './PriceUnit.js';
 import Expense from './Expense.js';
 import Supplier from './Supplier.js';
 import PurchaseOrder from './PurchaseOrder.js';
@@ -25,15 +24,6 @@ export function setupAssociations() {
   // Product - SaleItem association
   Product.hasMany(SaleItem, { foreignKey: 'product_id' });
   SaleItem.belongsTo(Product, { foreignKey: 'product_id' });
-
-  // Product - PriceUnit association
-  Product.hasMany(PriceUnit, { 
-    foreignKey: 'product_id',
-    as: 'price_units'
-  });
-  PriceUnit.belongsTo(Product, { 
-    foreignKey: 'product_id'
-  });
 
   // User - Expense association
   User.hasMany(Expense, { foreignKey: 'user_id', as: 'expenses' });
