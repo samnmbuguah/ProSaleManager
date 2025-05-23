@@ -1,0 +1,15 @@
+{
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "install": "npm install && cd client && npm install && cd ../server && npm install",
+  "start": "docker compose up --build -d && docker compose exec app npm run db:migrate && docker compose exec app npm run db:seed:all",
+  "terminals": [
+    {
+      "name": "dev",
+      "command": "docker compose up",
+      "description": "Run the app and database in development mode"
+    }
+  ]
+}

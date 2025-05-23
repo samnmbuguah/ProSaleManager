@@ -5,8 +5,5 @@ Dockerfile
 .git
 .gitignore
 README.md
-.env
-.env.local
-.env.*
 docker-compose.yml
 postgres_data 

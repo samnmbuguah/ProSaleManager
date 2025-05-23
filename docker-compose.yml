@@ -5,6 +5,7 @@ services:
     build: .
     ports:
       - "5000:5000"
+      - "5173:5173"
     environment:
       - DATABASE_URL=postgres://prosalemanager:prosalepassword@db:5432/prosaledatabase
       - DB_HOST=db
@@ -12,20 +13,23 @@ services:
       - DB_USER=prosalemanager
       - DB_PASSWORD=prosalepassword
       - DB_NAME=prosaledatabase
-      - NODE_ENV=production
+      - NODE_ENV=development
       - HOST=0.0.0.0
       - PORT=5000
       - JWT_SECRET=8Aj4Uo1JTa6C+0NL0N1AyP6O9aq7e4hyHzR9Ygev+3E=
       - SESSION_SECRET=8Aj4Uo1JTa6C+0NL0N1AyP6O9aq7e4hyHzR9Ygev+3E=
     volumes:
-      - ./drizzle:/app/drizzle
+      - .:/app
+      - /app/node_modules
+      - /app/client/node_modules
+      - /app/server/node_modules
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
 
   db:
-    image: postgres:15
+    image: postgres:17
     ports:
       - "5432:5432"
     environment:

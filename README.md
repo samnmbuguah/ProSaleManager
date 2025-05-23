@@ -113,9 +113,7 @@ The application includes a robust deployment pipeline with:
 - **Backend**
   - Express.js
   - PostgreSQL
-  - Drizzle ORM
-  - Zod (Validation)
-  - Passport.js (Authentication)
+
 
 
 ## Project Structure
