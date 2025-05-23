@@ -1,4 +1,4 @@
-FROM node:22-slim
+FROM node:24-slim
 
 # Install PostgreSQL client for health checks
 RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
@@ -12,11 +12,13 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Copy .env files if present
+COPY client/.env ./client/.env
+COPY server/.env ./server/.env
 
-# Expose port
+# Expose ports for server and client
 EXPOSE 5000
+EXPOSE 5173
 
-# Start the application
-CMD ["npm", "start"] 
+# Start the application in development mode
+CMD ["npm", "run", "dev"] 
