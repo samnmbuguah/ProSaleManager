@@ -15,7 +15,7 @@ interface AuthResponse {
     id: number;
     email: string;
     name: string;
-    role: 'admin' | 'user';
+    role: "admin" | "user";
   };
 }
 
@@ -47,4 +47,4 @@ export const authService = {
       throw error;
     }
   },
-}; 
+};

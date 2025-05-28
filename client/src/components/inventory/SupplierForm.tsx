@@ -34,11 +34,11 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
     } catch (error) {
       // Don't reset form or close dialog on error
       if (error instanceof Error) {
-        form.setError("email", { 
+        form.setError("email", {
           type: "manual",
-          message: error.message.includes("email already exists") 
-            ? "This email is already registered" 
-            : "Failed to create supplier"
+          message: error.message.includes("email already exists")
+            ? "This email is already registered"
+            : "Failed to create supplier",
         });
       }
     }
@@ -68,7 +68,12 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input {...field} value={field.value || ''} type="email" placeholder="Enter email address" />
+                <Input
+                  {...field}
+                  value={field.value || ""}
+                  type="email"
+                  placeholder="Enter email address"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -82,7 +87,12 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
             <FormItem>
               <FormLabel>Phone Number</FormLabel>
               <FormControl>
-                <Input {...field} value={field.value || ''} type="tel" placeholder="Enter phone number" />
+                <Input
+                  {...field}
+                  value={field.value || ""}
+                  type="tel"
+                  placeholder="Enter phone number"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -96,7 +106,11 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
             <FormItem>
               <FormLabel>Address</FormLabel>
               <FormControl>
-                <Input {...field} value={field.value || ''} placeholder="Enter address" />
+                <Input
+                  {...field}
+                  value={field.value || ""}
+                  placeholder="Enter address"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

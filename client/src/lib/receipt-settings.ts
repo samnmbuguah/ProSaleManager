@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface ReceiptSettings {
   businessName: string;
@@ -9,8 +9,8 @@ export interface ReceiptSettings {
   website: string;
   thankYouMessage: string;
   showLogo: boolean;
-  fontSize: 'small' | 'medium' | 'large';
-  paperSize: 'standard' | 'thermal';
+  fontSize: "small" | "medium" | "large";
+  paperSize: "standard" | "thermal";
 }
 
 export interface ReceiptTemplate {
@@ -30,15 +30,15 @@ interface ReceiptSettingsStore {
 }
 
 const defaultSettings: ReceiptSettings = {
-  businessName: 'My Business',
-  address: '',
-  phone: '',
-  email: '',
-  website: '',
-  thankYouMessage: 'Thank you for your business!',
+  businessName: "My Business",
+  address: "",
+  phone: "",
+  email: "",
+  website: "",
+  thankYouMessage: "Thank you for your business!",
   showLogo: true,
-  fontSize: 'medium',
-  paperSize: 'thermal',
+  fontSize: "medium",
+  paperSize: "thermal",
 };
 
 export const useReceiptSettings = create<ReceiptSettingsStore>()(
@@ -67,7 +67,8 @@ export const useReceiptSettings = create<ReceiptSettingsStore>()(
       deleteTemplate: (id) =>
         set((state) => ({
           templates: state.templates.filter((t) => t.id !== id),
-          activeTemplateId: state.activeTemplateId === id ? null : state.activeTemplateId,
+          activeTemplateId:
+            state.activeTemplateId === id ? null : state.activeTemplateId,
         })),
       loadTemplate: (id) =>
         set((state) => {
@@ -80,7 +81,7 @@ export const useReceiptSettings = create<ReceiptSettingsStore>()(
         }),
     }),
     {
-      name: 'receipt-settings',
-    }
-  )
+      name: "receipt-settings",
+    },
+  ),
 );

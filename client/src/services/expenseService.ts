@@ -26,7 +26,7 @@ export const expenseService = {
   create: async (data: CreateExpenseData): Promise<Expense> => {
     const response = await api.post("/expenses", {
       ...data,
-      payment_method: data.payment_method || 'cash'
+      payment_method: data.payment_method || "cash",
     });
     return response.data.data;
   },
@@ -34,4 +34,4 @@ export const expenseService = {
   delete: async (id: number): Promise<void> => {
     await api.delete(`/expenses/${id}`);
   },
-}; 
+};

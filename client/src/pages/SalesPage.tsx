@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Receipt } from "lucide-react";
+import { Receipt, Loader2 } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from "lucide-react";
 
 interface Sale {
   id: number;
@@ -72,7 +71,7 @@ export function SalesPage() {
     queryFn: async () => {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/sales?page=${currentPage}&pageSize=${pageSize}`,
-        { credentials: 'include' }
+        { credentials: "include" },
       );
       if (!response.ok) {
         throw new Error("Failed to fetch sales");
@@ -89,7 +88,7 @@ export function SalesPage() {
       if (!selectedSale) return [];
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/sales/${selectedSale.id}/items`,
-        { credentials: 'include' }
+        { credentials: "include" },
       );
       if (!response.ok) {
         throw new Error("Failed to fetch sale items");
@@ -99,9 +98,7 @@ export function SalesPage() {
     enabled: !!selectedSale,
   });
 
-  const totalPages = salesData
-    ? Math.ceil(salesData.total / pageSize)
-    : 1;
+  const totalPages = salesData ? Math.ceil(salesData.total / pageSize) : 1;
 
   const formatCurrency = (amount: string) => {
     return `KSh ${Number(amount).toLocaleString("en-KE", {
@@ -112,7 +109,7 @@ export function SalesPage() {
 
   const getPaymentStatusColor = (status: string | undefined) => {
     if (!status) return "bg-gray-500";
-    
+
     switch (status.toLowerCase()) {
       case "paid":
         return "bg-green-500";
@@ -174,29 +171,41 @@ export function SalesPage() {
                     <TableCell>
                       {sale.customer?.name || "Walk-in Customer"}
                     </TableCell>
-                    <TableCell>{sale.user?.name || sale.user?.email || "Unknown User"}</TableCell>
+                    <TableCell>
+                      {sale.user?.name || sale.user?.email || "Unknown User"}
+                    </TableCell>
                     <TableCell className="capitalize">
                       {sale.payment_method}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        className={getPaymentStatusColor(sale.status)}
-                      >
+                      <Badge className={getPaymentStatusColor(sale.status)}>
                         {sale.status}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       {sale.receiptStatus ? (
                         <div className="flex gap-2">
-                          <Badge variant={sale.receiptStatus.sms ? "default" : "outline"}>
+                          <Badge
+                            variant={
+                              sale.receiptStatus.sms ? "default" : "outline"
+                            }
+                          >
                             SMS
                           </Badge>
-                          <Badge variant={sale.receiptStatus.whatsapp ? "default" : "outline"}>
+                          <Badge
+                            variant={
+                              sale.receiptStatus.whatsapp
+                                ? "default"
+                                : "outline"
+                            }
+                          >
                             WhatsApp
                           </Badge>
                         </div>
                       ) : (
-                        <span className="text-muted-foreground text-sm">Not sent</span>
+                        <span className="text-muted-foreground text-sm">
+                          Not sent
+                        </span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -222,7 +231,9 @@ export function SalesPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
                   disabled={currentPage === 1}
                 >
                   Previous
@@ -238,16 +249,14 @@ export function SalesPage() {
                       {page}
                     </PaginationLink>
                   </PaginationItem>
-                )
+                ),
               )}
               <PaginationItem>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() =>
-                    setCurrentPage((prev) =>
-                      Math.min(prev + 1, totalPages)
-                    )
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                   }
                   disabled={currentPage === totalPages}
                 >
@@ -273,9 +282,7 @@ export function SalesPage() {
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <h3 className="font-semibold mb-2">Customer Information</h3>
-                  <p>
-                    {selectedSale.customer?.name || "Walk-in Customer"}
-                  </p>
+                  <p>{selectedSale.customer?.name || "Walk-in Customer"}</p>
                   {selectedSale.customer?.email && (
                     <p className="text-sm text-muted-foreground">
                       {selectedSale.customer.email}
@@ -295,9 +302,7 @@ export function SalesPage() {
                   <p>
                     Status:{" "}
                     <Badge
-                      className={getPaymentStatusColor(
-                        selectedSale.status
-                      )}
+                      className={getPaymentStatusColor(selectedSale.status)}
                     >
                       {selectedSale.status}
                     </Badge>
@@ -307,7 +312,12 @@ export function SalesPage() {
                 <div>
                   <h3 className="font-semibold mb-2">Sale Information</h3>
                   <p>Date: {format(new Date(selectedSale.createdAt), "PPp")}</p>
-                  <p>Cashier: {selectedSale.user?.name || selectedSale.user?.email || "Unknown User"}</p>
+                  <p>
+                    Cashier:{" "}
+                    {selectedSale.user?.name ||
+                      selectedSale.user?.email ||
+                      "Unknown User"}
+                  </p>
                 </div>
               </div>
 
@@ -327,9 +337,7 @@ export function SalesPage() {
                           <TableHead className="text-right">
                             Unit Price
                           </TableHead>
-                          <TableHead className="text-right">
-                            Quantity
-                          </TableHead>
+                          <TableHead className="text-right">Quantity</TableHead>
                           <TableHead className="text-right">Total</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -360,4 +368,4 @@ export function SalesPage() {
       </Dialog>
     </div>
   );
-} 
+}

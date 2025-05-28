@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { VariantProps } from "class-variance-authority";
 
 interface InventoryStatusProps {
   products: Product[];
@@ -35,12 +36,12 @@ export default function InventoryStatus({
   };
 
   const categories = Array.from(
-    new Set(products.map((p) => p.category).filter(Boolean))
+    new Set(products.map((p) => p.category).filter(Boolean)),
   );
 
   const totalValue = products.reduce(
     (sum, product) => sum + product.price * product.quantity,
-    0
+    0,
   );
 
   const handleFilterChange = (value: string) => {
@@ -48,7 +49,7 @@ export default function InventoryStatus({
   };
 
   const formatCurrency = (amount: number | null | undefined) => {
-    if (amount === null || amount === undefined) return 'KSh 0.00';
+    if (amount === null || amount === undefined) return "KSh 0.00";
     return `KSh ${Number(amount).toFixed(2)}`;
   };
 
@@ -117,11 +118,19 @@ export default function InventoryStatus({
                 </TableCell>
                 <TableCell className="text-right">{product.quantity}</TableCell>
                 <TableCell>
-                  <Badge variant={status.variant as any}>
+                  <Badge
+                    variant={
+                      status.variant as VariantProps<
+                        typeof badgeVariants
+                      >["variant"]
+                    }
+                  >
                     {status.label}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">{formatCurrency(value)}</TableCell>
+                <TableCell className="text-right">
+                  {formatCurrency(value)}
+                </TableCell>
               </TableRow>
             );
           })}

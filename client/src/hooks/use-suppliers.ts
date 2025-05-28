@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Supplier, SupplierFormData } from "@/types/supplier";
-import type { ProductSupplier, ProductSupplierFormData } from "@/types/product-supplier";
+import type {
+  ProductSupplier,
+  ProductSupplierFormData,
+} from "@/types/product-supplier";
 import { useToast } from "@/hooks/use-toast";
 
 export function useSuppliers() {
@@ -27,7 +30,7 @@ export function useSuppliers() {
       });
       if (!response.ok) {
         const error = await response.json();
-        if (error.code === '23505') {
+        if (error.code === "23505") {
           throw new Error("This email is already registered");
         }
         throw new Error(error.message || "Failed to create supplier");

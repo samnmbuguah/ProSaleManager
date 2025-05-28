@@ -5,12 +5,21 @@ import { CartItem } from "../../types/pos";
 
 interface CartProps {
   items: CartItem[];
-  onUpdateQuantity: (productId: number, selectedUnit: string, quantity: number) => void;
+  onUpdateQuantity: (
+    productId: number,
+    selectedUnit: string,
+    quantity: number,
+  ) => void;
   onCheckout: () => void;
   total: number;
 }
 
-export function Cart({ items, onUpdateQuantity, onCheckout, total }: CartProps) {
+export function Cart({
+  items,
+  onUpdateQuantity,
+  onCheckout,
+  total,
+}: CartProps) {
   const formatPrice = (price: string | number) => {
     return `KSh ${Number(price).toLocaleString("en-KE", {
       minimumFractionDigits: 2,
@@ -40,27 +49,45 @@ export function Cart({ items, onUpdateQuantity, onCheckout, total }: CartProps) 
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2 ml-4">
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => onUpdateQuantity(item.id, item.selectedUnit, item.quantity - 1)}
+                onClick={() =>
+                  onUpdateQuantity(
+                    item.id,
+                    item.selectedUnit,
+                    item.quantity - 1,
+                  )
+                }
               >
                 <Minus className="h-4 w-4" />
               </Button>
-              
+
               <Input
                 type="number"
                 value={item.quantity}
-                onChange={(e) => onUpdateQuantity(item.id, item.selectedUnit, parseInt(e.target.value) || 0)}
+                onChange={(e) =>
+                  onUpdateQuantity(
+                    item.id,
+                    item.selectedUnit,
+                    parseInt(e.target.value) || 0,
+                  )
+                }
                 className="w-16 text-center"
               />
-              
+
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => onUpdateQuantity(item.id, item.selectedUnit, item.quantity + 1)}
+                onClick={() =>
+                  onUpdateQuantity(
+                    item.id,
+                    item.selectedUnit,
+                    item.quantity + 1,
+                  )
+                }
               >
                 <Plus className="h-4 w-4" />
               </Button>

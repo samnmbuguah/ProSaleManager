@@ -1,16 +1,31 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import CustomerList from "../components/customers/CustomerList";
 import type { Customer } from "@/types/schema";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState, AppDispatch } from "@/store";
+import { fetchCustomers } from "@/store/customersSlice";
+import { Customer as CustomerType } from "@/types/customer";
 
-export default function CustomersPage() {
+const CustomersPage = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const dispatch = useDispatch<AppDispatch>();
+  const customers = useSelector((state: RootState) => state.customers.items);
+  const customersStatus = useSelector(
+    (state: RootState) => state.customers.status,
+  );
 
-  const { data: customers = [], isLoading } = useQuery({
-    queryKey: ['customers'],
+  useEffect(() => {
+    if (customersStatus === "idle") {
+      dispatch(fetchCustomers());
+    }
+  }, [dispatch, customersStatus]);
+
+  const { data: customersData = [], isLoading } = useQuery({
+    queryKey: ["customers"],
     queryFn: async () => {
       const response = await api.get("/customers");
       return response.data;
@@ -18,19 +33,24 @@ export default function CustomersPage() {
   });
 
   const createCustomerMutation = useMutation({
-    mutationFn: async (customer: Omit<Customer, "id" | "createdAt" | "updatedAt">) => {
+    mutationFn: async (
+      customer: Omit<CustomerType, "id" | "createdAt" | "updatedAt">,
+    ) => {
       const response = await api.post("/customers", customer);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
       toast({
         title: "Success",
         description: "Customer added successfully.",
       });
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || error.message || "Failed to add customer";
+    onError: (error: unknown) => {
+      const message =
+        (error as any)?.response?.data?.message ||
+        (error as Error).message ||
+        "Failed to add customer";
       toast({
         title: "Error",
         description: message,
@@ -40,19 +60,28 @@ export default function CustomersPage() {
   });
 
   const updateCustomerMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<Customer> }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: Partial<CustomerType>;
+    }) => {
       const response = await api.put(`/customers/${id}`, data);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
       toast({
         title: "Success",
         description: "Customer updated successfully.",
       });
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || error.message || "Failed to update customer";
+    onError: (error: unknown) => {
+      const message =
+        (error as any)?.response?.data?.message ||
+        (error as Error).message ||
+        "Failed to update customer";
       toast({
         title: "Error",
         description: message,
@@ -66,14 +95,17 @@ export default function CustomersPage() {
       await api.delete(`/customers/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
       toast({
         title: "Success",
         description: "Customer deleted successfully.",
       });
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.message || error.message || "Failed to delete customer";
+    onError: (error: unknown) => {
+      const message =
+        (error as any)?.response?.data?.message ||
+        (error as Error).message ||
+        "Failed to delete customer";
       toast({
         title: "Error",
         description: message,
@@ -82,12 +114,16 @@ export default function CustomersPage() {
     },
   });
 
-  const handleAddCustomer = async (customer: Omit<Customer, "id" | "createdAt" | "updatedAt">) => {
+  const handleAddCustomer = async (
+    customer: Omit<CustomerType, "id" | "createdAt" | "updatedAt">,
+  ) => {
     await createCustomerMutation.mutateAsync(customer);
   };
 
-  const handleEditCustomer = async (id: number, customer: Partial<Customer>) => {
-    await updateCustomerMutation.mutateAsync({ id, data: customer });
+  const handleEditCustomer = (customer: CustomerType) => {
+    setSelectedCustomer(customer);
+    setFormData(customer);
+    setIsEditDialogOpen(true);
   };
 
   const handleDeleteCustomer = async (id: number) => {
@@ -112,8 +148,12 @@ export default function CustomersPage() {
         onAdd={handleAddCustomer}
         onEdit={handleEditCustomer}
         onDelete={handleDeleteCustomer}
-        isSubmitting={createCustomerMutation.isPending || updateCustomerMutation.isPending}
+        isSubmitting={
+          createCustomerMutation.isPending || updateCustomerMutation.isPending
+        }
       />
     </div>
   );
-}
+};
+
+export default CustomersPage;

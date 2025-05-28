@@ -21,28 +21,32 @@ interface SalesData {
 
 interface SalesChartProps {
   data: SalesData[];
-  period: 'today' | 'week' | 'month' | 'year';
-  onPeriodChange: (period: 'today' | 'week' | 'month' | 'year') => void;
+  period: "today" | "week" | "month" | "year";
+  onPeriodChange: (period: "today" | "week" | "month" | "year") => void;
 }
 
 // Format number as KSh currency
 function formatCurrency(amount: number): string {
-  return `KSh ${amount.toLocaleString('en-KE', {
+  return `KSh ${amount.toLocaleString("en-KE", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
 }
 
-export function SalesChart({ data = [], period, onPeriodChange }: SalesChartProps) {
+export function SalesChart({
+  data = [],
+  period,
+  onPeriodChange,
+}: SalesChartProps) {
   const getDateFormat = (period: string) => {
     switch (period) {
-      case 'today':
+      case "today":
         return "HH:mm";
-      case 'week':
+      case "week":
         return "EEE";
-      case 'month':
+      case "month":
         return "MMM d";
-      case 'year':
+      case "year":
         return "MMM";
       default:
         return "HH:mm";
@@ -50,10 +54,12 @@ export function SalesChart({ data = [], period, onPeriodChange }: SalesChartProp
   };
 
   // Add proper type checking and default value
-  const chartData = Array.isArray(data) ? data.map((sale) => ({
-    ...sale,
-    date: format(new Date(sale.date), getDateFormat(period)),
-  })) : [];
+  const chartData = Array.isArray(data)
+    ? data.map((sale) => ({
+        ...sale,
+        date: format(new Date(sale.date), getDateFormat(period)),
+      }))
+    : [];
 
   if (chartData.length === 0) {
     return (
@@ -62,29 +68,29 @@ export function SalesChart({ data = [], period, onPeriodChange }: SalesChartProp
           <h2 className="text-lg font-semibold">Sales Overview</h2>
           <div className="flex gap-2">
             <Button
-              variant={period === 'today' ? 'default' : 'outline'}
-              onClick={() => onPeriodChange('today')}
+              variant={period === "today" ? "default" : "outline"}
+              onClick={() => onPeriodChange("today")}
               size="sm"
             >
               Today
             </Button>
             <Button
-              variant={period === 'week' ? 'default' : 'outline'}
-              onClick={() => onPeriodChange('week')}
+              variant={period === "week" ? "default" : "outline"}
+              onClick={() => onPeriodChange("week")}
               size="sm"
             >
               This Week
             </Button>
             <Button
-              variant={period === 'month' ? 'default' : 'outline'}
-              onClick={() => onPeriodChange('month')}
+              variant={period === "month" ? "default" : "outline"}
+              onClick={() => onPeriodChange("month")}
               size="sm"
             >
               This Month
             </Button>
             <Button
-              variant={period === 'year' ? 'default' : 'outline'}
-              onClick={() => onPeriodChange('year')}
+              variant={period === "year" ? "default" : "outline"}
+              onClick={() => onPeriodChange("year")}
               size="sm"
             >
               This Year
@@ -92,7 +98,9 @@ export function SalesChart({ data = [], period, onPeriodChange }: SalesChartProp
           </div>
         </div>
         <div className="h-[300px] flex items-center justify-center">
-          <p className="text-muted-foreground">No sales data available for this period</p>
+          <p className="text-muted-foreground">
+            No sales data available for this period
+          </p>
         </div>
       </Card>
     );
@@ -104,29 +112,29 @@ export function SalesChart({ data = [], period, onPeriodChange }: SalesChartProp
         <h2 className="text-lg font-semibold">Sales Overview</h2>
         <div className="flex gap-2">
           <Button
-            variant={period === 'today' ? 'default' : 'outline'}
-            onClick={() => onPeriodChange('today')}
+            variant={period === "today" ? "default" : "outline"}
+            onClick={() => onPeriodChange("today")}
             size="sm"
           >
             Today
           </Button>
           <Button
-            variant={period === 'week' ? 'default' : 'outline'}
-            onClick={() => onPeriodChange('week')}
+            variant={period === "week" ? "default" : "outline"}
+            onClick={() => onPeriodChange("week")}
             size="sm"
           >
             This Week
           </Button>
           <Button
-            variant={period === 'month' ? 'default' : 'outline'}
-            onClick={() => onPeriodChange('month')}
+            variant={period === "month" ? "default" : "outline"}
+            onClick={() => onPeriodChange("month")}
             size="sm"
           >
             This Month
           </Button>
           <Button
-            variant={period === 'year' ? 'default' : 'outline'}
-            onClick={() => onPeriodChange('year')}
+            variant={period === "year" ? "default" : "outline"}
+            onClick={() => onPeriodChange("year")}
             size="sm"
           >
             This Year
@@ -139,7 +147,9 @@ export function SalesChart({ data = [], period, onPeriodChange }: SalesChartProp
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
-            <YAxis tickFormatter={(value) => `KSh ${value.toLocaleString('en-KE')}`} />
+            <YAxis
+              tickFormatter={(value) => `KSh ${value.toLocaleString("en-KE")}`}
+            />
             <Tooltip
               formatter={(value: number) => formatCurrency(value)}
               labelFormatter={(label) => `Date: ${label}`}

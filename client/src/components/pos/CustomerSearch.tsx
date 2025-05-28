@@ -35,7 +35,10 @@ interface CustomerSearchProps {
   selectedCustomer?: Customer | null;
 }
 
-export function CustomerSearch({ onSelect, selectedCustomer }: CustomerSearchProps) {
+export function CustomerSearch({
+  onSelect,
+  selectedCustomer,
+}: CustomerSearchProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [isNewCustomerDialogOpen, setIsNewCustomerDialogOpen] = useState(false);
@@ -43,7 +46,9 @@ export function CustomerSearch({ onSelect, selectedCustomer }: CustomerSearchPro
   const { data: customers, isLoading } = useQuery<Customer[]>({
     queryKey: ["customers", search],
     queryFn: async () => {
-      const response = await fetch(`/api/customers/search?q=${encodeURIComponent(search)}`);
+      const response = await fetch(
+        `/api/customers/search?q=${encodeURIComponent(search)}`,
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch customers");
       }
@@ -67,8 +72,8 @@ export function CustomerSearch({ onSelect, selectedCustomer }: CustomerSearchPro
         </PopoverTrigger>
         <PopoverContent className="w-[400px] p-0">
           <Command>
-            <CommandInput 
-              placeholder="Search customers..." 
+            <CommandInput
+              placeholder="Search customers..."
               value={search}
               onValueChange={setSearch}
             />
@@ -104,7 +109,7 @@ export function CustomerSearch({ onSelect, selectedCustomer }: CustomerSearchPro
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
-                        !selectedCustomer ? "opacity-100" : "opacity-0"
+                        !selectedCustomer ? "opacity-100" : "opacity-0",
                       )}
                     />
                     Walk-in Customer
@@ -124,7 +129,7 @@ export function CustomerSearch({ onSelect, selectedCustomer }: CustomerSearchPro
                             "mr-2 h-4 w-4",
                             selectedCustomer?.id === customer.id
                               ? "opacity-100"
-                              : "opacity-0"
+                              : "opacity-0",
                           )}
                         />
                         <div>
@@ -151,7 +156,10 @@ export function CustomerSearch({ onSelect, selectedCustomer }: CustomerSearchPro
         <Plus className="h-4 w-4" />
       </Button>
 
-      <Dialog open={isNewCustomerDialogOpen} onOpenChange={setIsNewCustomerDialogOpen}>
+      <Dialog
+        open={isNewCustomerDialogOpen}
+        onOpenChange={setIsNewCustomerDialogOpen}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Customer</DialogTitle>
@@ -177,4 +185,4 @@ export function CustomerSearch({ onSelect, selectedCustomer }: CustomerSearchPro
       </Dialog>
     </div>
   );
-} 
+}

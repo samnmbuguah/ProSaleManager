@@ -22,7 +22,10 @@ interface ExpenseListProps {
   onDeleteExpense: (id: number) => void;
 }
 
-export default function ExpenseList({ expenses = [], onDeleteExpense }: ExpenseListProps) {
+export default function ExpenseList({
+  expenses = [],
+  onDeleteExpense,
+}: ExpenseListProps) {
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString();
   };
@@ -39,7 +42,9 @@ export default function ExpenseList({ expenses = [], onDeleteExpense }: ExpenseL
       <Card>
         <CardHeader>
           <CardTitle>Expenses</CardTitle>
-          <CardDescription>Your recent expenses will appear here</CardDescription>
+          <CardDescription>
+            Your recent expenses will appear here
+          </CardDescription>
         </CardHeader>
         <CardContent className="text-center text-muted-foreground py-8">
           No expenses recorded yet
@@ -90,4 +95,4 @@ export default function ExpenseList({ expenses = [], onDeleteExpense }: ExpenseL
       </CardContent>
     </Card>
   );
-} 
+}

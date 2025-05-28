@@ -57,10 +57,14 @@ export default function CustomerHistory({
         </div>
         <div className="text-right">
           <p className="text-lg">
-            Total Spent: <span className="font-bold">KSh {totalSpent.toLocaleString('en-KE')}</span>
+            Total Spent:{" "}
+            <span className="font-bold">
+              KSh {totalSpent.toLocaleString("en-KE")}
+            </span>
           </p>
           <p className="text-sm text-muted-foreground">
-            Average Transaction: KSh {averageTransaction.toLocaleString('en-KE')}
+            Average Transaction: KSh{" "}
+            {averageTransaction.toLocaleString("en-KE")}
           </p>
         </div>
       </div>
@@ -103,7 +107,7 @@ export default function CustomerHistory({
               </TableCell>
               <TableCell>{transaction.items}</TableCell>
               <TableCell className="text-right">
-                KSh {transaction.amount.toLocaleString('en-KE')}
+                KSh {transaction.amount.toLocaleString("en-KE")}
               </TableCell>
             </TableRow>
           ))}

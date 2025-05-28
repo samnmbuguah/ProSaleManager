@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProductPerformance from "../components/reports/ProductPerformance";
 import CustomerHistory from "../components/reports/CustomerHistory";
 import InventoryStatus from "../components/reports/InventoryStatus";
@@ -14,8 +9,12 @@ import { useInventory } from "@/hooks/use-inventory";
 export default function ReportsPage() {
   const { products, isLoading } = useInventory();
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [dateRange, setDateRange] = useState<{ start: Date; end: Date } | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null,
+  );
+  const [dateRange, setDateRange] = useState<{ start: Date; end: Date } | null>(
+    null,
+  );
   const [sortBy, setSortBy] = useState<string>("revenue");
 
   const handleDateRangeChange = (start: Date, end: Date) => {
@@ -28,7 +27,9 @@ export default function ReportsPage() {
 
   const handleSearch = async (query: string) => {
     try {
-      const response = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`);
+      const response = await fetch(
+        `/api/products/search?q=${encodeURIComponent(query)}`,
+      );
       if (!response.ok) throw new Error("Failed to search products");
       const data = await response.json();
       setProducts(data);

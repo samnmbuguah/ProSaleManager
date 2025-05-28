@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { 
-  PurchaseOrder, 
-  PurchaseOrderFormData, 
+import type {
+  PurchaseOrder,
   PurchaseOrderItem,
-  PurchaseOrderSubmitData 
+  PurchaseOrderSubmitData,
 } from "@/types/purchase-order";
 import { useToast } from "@/hooks/use-toast";
 

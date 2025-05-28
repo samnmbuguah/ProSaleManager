@@ -63,7 +63,8 @@ export default function ProductPerformance({
         </div>
         <div className="text-right">
           <p className="text-lg">
-            Total Revenue: <span className="font-bold">${totalRevenue.toFixed(2)}</span>
+            Total Revenue:{" "}
+            <span className="font-bold">${totalRevenue.toFixed(2)}</span>
           </p>
           <p className="text-sm text-muted-foreground">
             Total Profit: ${totalProfit.toFixed(2)}
@@ -95,9 +96,9 @@ export default function ProductPerformance({
         </form>
 
         <div className="grid w-full max-w-sm items-center gap-1.5">
-          <label>Sort By</label>
+          <label htmlFor="sortBy">Sort By</label>
           <Select onValueChange={onSortChange}>
-            <SelectTrigger>
+            <SelectTrigger id="sortBy">
               <SelectValue placeholder="Select sort order" />
             </SelectTrigger>
             <SelectContent>

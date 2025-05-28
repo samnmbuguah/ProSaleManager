@@ -10,7 +10,11 @@ interface LoyaltyPointsSectionProps {
   onPointsUse: (points: number) => void;
 }
 
-export function LoyaltyPointsSection({ customerId, total, onPointsUse }: LoyaltyPointsSectionProps) {
+export function LoyaltyPointsSection({
+  customerId,
+  total,
+  onPointsUse,
+}: LoyaltyPointsSectionProps) {
   const { points, fetchPoints } = useLoyalty();
   const [pointsToUse, setPointsToUse] = useState(0);
 
@@ -19,9 +23,11 @@ export function LoyaltyPointsSection({ customerId, total, onPointsUse }: Loyalty
       fetchPoints(customerId);
     }
   }, [customerId, fetchPoints]);
-  
+
   // Each point is worth $1
-  const maxPoints = points?.points ? Math.min(points.points, Math.floor(total)) : 0;
+  const maxPoints = points?.points
+    ? Math.min(points.points, Math.floor(total))
+    : 0;
 
   const handlePointsChange = (value: string) => {
     const numPoints = Number(value);
@@ -57,7 +63,8 @@ export function LoyaltyPointsSection({ customerId, total, onPointsUse }: Loyalty
           <Button onClick={handleApplyPoints}>Apply Points</Button>
         </div>
         <p className="text-sm text-muted-foreground">
-          {pointsToUse > 0 && `This will reduce the total by KSh ${pointsToUse.toLocaleString('en-KE')}`}
+          {pointsToUse > 0 &&
+            `This will reduce the total by KSh ${pointsToUse.toLocaleString("en-KE")}`}
         </p>
       </div>
     </div>

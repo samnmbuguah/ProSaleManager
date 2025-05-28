@@ -1,5 +1,4 @@
-import { StrictMode, useEffect } from "react";
-import React from "react";
+import React, { StrictMode, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { Switch, Route, useLocation } from "wouter";
 import "./index.css";
@@ -16,27 +15,43 @@ import ExpensesPage from "./pages/ExpensesPage";
 import MainNav from "./components/layout/MainNav";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
-import { useToast } from "./hooks/use-toast";
 import RoleBasedRoute from "./components/auth/RoleBasedRoute";
 import { CartProvider } from "@/contexts/CartContext";
 import ProfilePage from "./pages/ProfilePage";
+import { Provider } from "react-redux";
+import { store } from "./store";
+
+// Force light mode by removing the 'dark' class from html and body
+if (typeof document !== "undefined") {
+  document.documentElement.classList.remove("dark");
+  document.body.classList.remove("dark");
+}
 
 // Custom error boundary for CartProvider
-class CartErrorBoundary extends React.Component {
-  constructor(props) {
+type CartErrorBoundaryProps = {
+  fallback?: React.ReactNode;
+  children: React.ReactNode;
+};
+type CartErrorBoundaryState = {
+  hasError: boolean;
+};
+class CartErrorBoundary extends React.Component<
+  CartErrorBoundaryProps,
+  CartErrorBoundaryState
+> {
+  constructor(props: CartErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(): CartErrorBoundaryState {
     return { hasError: true };
   }
 
-  componentDidCatch(error, errorInfo) {
-    console.error("Cart error:", error, errorInfo);
+  componentDidCatch(): void {
     // Clean up potentially corrupted cart data
-    localStorage.removeItem('pos_cart_v2');
-    localStorage.removeItem('pos_cart_v2_timestamp');
+    localStorage.removeItem("pos_cart_v2");
+    localStorage.removeItem("pos_cart_v2_timestamp");
   }
 
   render() {
@@ -57,7 +72,7 @@ function App() {
     checkSession();
   }, []);
 
-  if (isLoading && location !== '/auth') {
+  if (isLoading && location !== "/auth") {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -77,9 +92,15 @@ function App() {
   );
 }
 
-function ProtectedRoute({ component: Component, roles }: { component: React.ComponentType, roles?: ('admin' | 'user')[] }) {
+function ProtectedRoute({
+  component: Component,
+  roles,
+}: {
+  component: React.ComponentType;
+  roles?: ("admin" | "user")[];
+}) {
   return (
-    <RoleBasedRoute allowedRoles={roles || ['admin', 'user']}>
+    <RoleBasedRoute allowedRoles={roles || ["admin", "user"]}>
       <div className="min-h-screen bg-background flex flex-col">
         <MainNav />
         <main className="flex-1 overflow-hidden">
@@ -94,14 +115,54 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthPage} />
-      <Route path="/" component={() => <ProtectedRoute component={PosPage} roles={['admin', 'user']} />} />
-      <Route path="/pos" component={() => <ProtectedRoute component={PosPage} roles={['admin', 'user']} />} />
-      <Route path="/inventory" component={() => <ProtectedRoute component={InventoryPage} roles={['admin', 'user']} />} />
-      <Route path="/customers" component={() => <ProtectedRoute component={CustomersPage} roles={['admin']} />} />
-      <Route path="/sales" component={() => <ProtectedRoute component={SalesPage} roles={['admin']} />} />
-      <Route path="/reports" component={() => <ProtectedRoute component={ReportsPage} roles={['admin']} />} />
-      <Route path="/expenses" component={() => <ProtectedRoute component={ExpensesPage} roles={['admin', 'user']} />} />
-      <Route path="/profile" component={() => <ProtectedRoute component={ProfilePage} roles={['admin', 'user']} />} />
+      <Route
+        path="/"
+        component={() => (
+          <ProtectedRoute component={PosPage} roles={["admin", "user"]} />
+        )}
+      />
+      <Route
+        path="/pos"
+        component={() => (
+          <ProtectedRoute component={PosPage} roles={["admin", "user"]} />
+        )}
+      />
+      <Route
+        path="/inventory"
+        component={() => (
+          <ProtectedRoute component={InventoryPage} roles={["admin", "user"]} />
+        )}
+      />
+      <Route
+        path="/customers"
+        component={() => (
+          <ProtectedRoute component={CustomersPage} roles={["admin"]} />
+        )}
+      />
+      <Route
+        path="/sales"
+        component={() => (
+          <ProtectedRoute component={SalesPage} roles={["admin"]} />
+        )}
+      />
+      <Route
+        path="/reports"
+        component={() => (
+          <ProtectedRoute component={ReportsPage} roles={["admin"]} />
+        )}
+      />
+      <Route
+        path="/expenses"
+        component={() => (
+          <ProtectedRoute component={ExpensesPage} roles={["admin", "user"]} />
+        )}
+      />
+      <Route
+        path="/profile"
+        component={() => (
+          <ProtectedRoute component={ProfilePage} roles={["admin", "user"]} />
+        )}
+      />
       <Route>404 Page Not Found</Route>
     </Switch>
   );
@@ -110,6 +171,8 @@ function Router() {
 const root = document.getElementById("root") as HTMLElement;
 createRoot(root).render(
   <StrictMode>
-    <App />
-  </StrictMode>
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </StrictMode>,
 );

@@ -20,9 +20,12 @@ interface PurchaseOrderListProps {
 }
 
 export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
-  const { purchaseOrders, updatePurchaseOrderStatus, isUpdating } = usePurchaseOrders();
+  const { purchaseOrders, updatePurchaseOrderStatus, isUpdating } =
+    usePurchaseOrders();
   const { suppliers } = useSuppliers();
-  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(
+    null,
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -51,7 +54,7 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
   };
 
   const getSupplier = (supplierId: number) => {
-    return suppliers?.find(s => s.id === supplierId);
+    return suppliers?.find((s) => s.id === supplierId);
   };
 
   return (
@@ -74,23 +77,22 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
           </TableHeader>
           <TableBody>
             {purchaseOrders?.map((order) => (
-              <TableRow 
-                key={order.id} 
+              <TableRow
+                key={order.id}
                 className="cursor-pointer hover:bg-muted/50"
                 onClick={(e) => {
                   // Don't open details if clicking on action buttons
-                  if ((e.target as HTMLElement).closest('button')) return;
+                  if ((e.target as HTMLElement).closest("button")) return;
                   setSelectedOrder(order);
                 }}
               >
-                <TableCell>
-                  {formatDate(order?.created_at)}
-                </TableCell>
+                <TableCell>{formatDate(order?.created_at)}</TableCell>
                 <TableCell>
                   {getSupplier(order?.supplier_id)?.name || "Unknown Supplier"}
                 </TableCell>
                 <TableCell>
-                  KSh {Number(order?.total_amount).toLocaleString("en-KE", {
+                  KSh{" "}
+                  {Number(order?.total_amount).toLocaleString("en-KE", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -132,11 +134,15 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
         orderId={selectedOrder?.id ?? null}
         isOpen={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
-        supplier={selectedOrder ? {
-          name: getSupplier(selectedOrder.supplier_id)?.name || "",
-          email: getSupplier(selectedOrder.supplier_id)?.email || null,
-          phone: getSupplier(selectedOrder.supplier_id)?.phone || null
-        } : undefined}
+        supplier={
+          selectedOrder
+            ? {
+                name: getSupplier(selectedOrder.supplier_id)?.name || "",
+                email: getSupplier(selectedOrder.supplier_id)?.email || null,
+                phone: getSupplier(selectedOrder.supplier_id)?.phone || null,
+              }
+            : undefined
+        }
       />
     </div>
   );

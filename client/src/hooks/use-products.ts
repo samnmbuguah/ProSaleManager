@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Product } from "@/types/product";
-import type { ProductFormData } from "@/types/product";
+import type { Product, ProductFormData } from "@/types/product";
 import { useToast } from "@/hooks/use-toast";
 
 export function useProducts() {
@@ -20,8 +19,8 @@ export function useProducts() {
 
   const createProductMutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
-      if (data.price_units?.find(p => p.is_default)) {
-        const defaultUnit = data.price_units.find(p => p.is_default);
+      if (data.price_units?.find((p) => p.is_default)) {
+        const defaultUnit = data.price_units.find((p) => p.is_default);
         return {
           ...data,
           buying_price: defaultUnit?.buying_price || "0",
@@ -58,7 +57,7 @@ export function useProducts() {
   const updateProductMutation = useMutation({
     mutationFn: async (data: Partial<Product> & { id: number }) => {
       // First, update the unit pricing
-      const defaultUnit = data.price_units?.find(p => p.is_default);
+      const defaultUnit = data.price_units?.find((p) => p.is_default);
       if (defaultUnit) {
         const productData = {
           ...data,
@@ -74,8 +73,10 @@ export function useProducts() {
 
         if (!response.ok) {
           const errorData = await response.json();
-          if (errorData.code === '23503') {
-            throw new Error("Cannot update product that has associated sales records");
+          if (errorData.code === "23503") {
+            throw new Error(
+              "Cannot update product that has associated sales records",
+            );
           }
           throw new Error("Failed to update product");
         }
@@ -102,8 +103,10 @@ export function useProducts() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        if (errorData.code === '23503') {
-          throw new Error("Cannot update product that has associated sales records");
+        if (errorData.code === "23503") {
+          throw new Error(
+            "Cannot update product that has associated sales records",
+          );
         }
         throw new Error("Failed to update product");
       }
@@ -134,4 +137,4 @@ export function useProducts() {
     isCreating: createProductMutation.isPending,
     isUpdating: updateProductMutation.isPending,
   };
-} 
+}
