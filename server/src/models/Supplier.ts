@@ -1,5 +1,5 @@
-import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database';
+import { Model, DataTypes } from "sequelize";
+import sequelize from "../config/database";
 
 class Supplier extends Model {
   declare id: number;
@@ -41,9 +41,9 @@ Supplier.init(
   },
   {
     sequelize,
-    modelName: 'Supplier',
-    tableName: 'suppliers',
-  }
+    modelName: "Supplier",
+    tableName: "suppliers",
+  },
 );
 
-export default Supplier; 
+export default Supplier;

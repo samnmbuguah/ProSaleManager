@@ -1,5 +1,5 @@
-import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
+import { Model, DataTypes } from "sequelize";
+import sequelize from "../config/database.js";
 
 class PurchaseOrder extends Model {
   declare id: number;
@@ -7,7 +7,7 @@ class PurchaseOrder extends Model {
   declare order_number: string;
   declare order_date: Date;
   declare expected_delivery_date: Date | null;
-  declare status: 'pending' | 'approved' | 'ordered' | 'received' | 'cancelled';
+  declare status: "pending" | "approved" | "ordered" | "received" | "cancelled";
   declare total_amount: number;
   declare notes: string | null;
   declare readonly createdAt: Date;
@@ -25,8 +25,8 @@ PurchaseOrder.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'suppliers',
-        key: 'id',
+        model: "suppliers",
+        key: "id",
       },
     },
     order_number: {
@@ -44,9 +44,15 @@ PurchaseOrder.init(
       allowNull: true,
     },
     status: {
-      type: DataTypes.ENUM('pending', 'approved', 'ordered', 'received', 'cancelled'),
+      type: DataTypes.ENUM(
+        "pending",
+        "approved",
+        "ordered",
+        "received",
+        "cancelled",
+      ),
       allowNull: false,
-      defaultValue: 'pending',
+      defaultValue: "pending",
     },
     total_amount: {
       type: DataTypes.DECIMAL(10, 2),
@@ -60,9 +66,9 @@ PurchaseOrder.init(
   },
   {
     sequelize,
-    modelName: 'PurchaseOrder',
-    tableName: 'purchase_orders',
-  }
+    modelName: "PurchaseOrder",
+    tableName: "purchase_orders",
+  },
 );
 
-export default PurchaseOrder; 
+export default PurchaseOrder;

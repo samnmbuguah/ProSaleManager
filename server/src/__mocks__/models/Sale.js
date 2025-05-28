@@ -1,8 +1,9 @@
+/* global jest */
 const mockSale = {
   create: jest.fn(),
   findByPk: jest.fn(),
   findAndCountAll: jest.fn(),
-  update: jest.fn()
+  update: jest.fn(),
 };
 
-export default mockSale; 
+export default mockSale;

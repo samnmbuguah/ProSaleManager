@@ -1,5 +1,5 @@
-import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
+import { Model, DataTypes } from "sequelize";
+import sequelize from "../config/database.js";
 
 class Sale extends Model {
   declare id: number;
@@ -30,16 +30,16 @@ Sale.init(
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: 'customers',
-        key: 'id',
+        model: "customers",
+        key: "id",
       },
     },
     user_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'users',
-        key: 'id',
+        model: "users",
+        key: "id",
       },
     },
     total_amount: {
@@ -50,7 +50,7 @@ Sale.init(
     payment_method: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'cash',
+      defaultValue: "cash",
     },
     amount_paid: {
       type: DataTypes.DECIMAL(10, 2),
@@ -60,28 +60,28 @@ Sale.init(
     status: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'pending',
+      defaultValue: "pending",
     },
     payment_status: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'pending',
+      defaultValue: "pending",
     },
     receipt_status: {
       type: DataTypes.JSON,
       allowNull: true,
       defaultValue: {
         whatsapp: false,
-        sms: false
-      }
-    }
+        sms: false,
+      },
+    },
   },
   {
     sequelize,
-    modelName: 'Sale',
-    tableName: 'sales',
+    modelName: "Sale",
+    tableName: "sales",
     timestamps: true,
-  }
+  },
 );
 
-export default Sale; 
+export default Sale;

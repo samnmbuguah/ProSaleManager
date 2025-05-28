@@ -5,7 +5,7 @@ export default {
     await queryInterface.addColumn("sales", "payment_status", {
       type: Sequelize.STRING,
       allowNull: false,
-      defaultValue: "pending"
+      defaultValue: "pending",
     });
 
     // Update existing records to set payment_status to 'paid' for completed sales
@@ -18,5 +18,5 @@ export default {
 
   async down(queryInterface, Sequelize) {
     await queryInterface.removeColumn("sales", "payment_status");
-  }
-}; 
+  },
+};

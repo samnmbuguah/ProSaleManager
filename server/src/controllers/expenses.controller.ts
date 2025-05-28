@@ -1,6 +1,6 @@
-import { Request, Response } from 'express';
-import Expense from '../models/Expense.js';
-import sequelize from '../config/database.js';
+import { Request, Response } from "express";
+import Expense from "../models/Expense.js";
+import sequelize from "../config/database.js";
 
 export const getExpenses = async (req: Request, res: Response) => {
   try {
@@ -11,22 +11,24 @@ export const getExpenses = async (req: Request, res: Response) => {
     const { count, rows: expenses } = await Expense.findAndCountAll({
       limit,
       offset,
-      order: [['date', 'DESC']],
-      include: [{
-        association: 'user',
-        attributes: ['name']
-      }]
+      order: [["date", "DESC"]],
+      include: [
+        {
+          association: "user",
+          attributes: ["name"],
+        },
+      ],
     });
 
     res.json({
       expenses,
       total: count,
       totalPages: Math.ceil(count / limit),
-      currentPage: page
+      currentPage: page,
     });
   } catch (error) {
-    console.error('Error fetching expenses:', error);
-    res.status(500).json({ message: 'Failed to fetch expenses' });
+    console.error("Error fetching expenses:", error);
+    res.status(500).json({ message: "Failed to fetch expenses" });
   }
 };
 
@@ -39,28 +41,31 @@ export const createExpense = async (req: Request, res: Response) => {
 
     if (!user_id) {
       await t.rollback();
-      return res.status(401).json({ message: 'User not authenticated' });
+      return res.status(401).json({ message: "User not authenticated" });
     }
 
-    const expense = await Expense.create({
-      description,
-      amount,
-      date: date || new Date(),
-      category,
-      payment_method,
-      user_id
-    }, { transaction: t });
+    const expense = await Expense.create(
+      {
+        description,
+        amount,
+        date: date || new Date(),
+        category,
+        payment_method,
+        user_id,
+      },
+      { transaction: t },
+    );
 
     await t.commit();
 
     res.status(201).json({
-      message: 'Expense created successfully',
-      data: expense
+      message: "Expense created successfully",
+      data: expense,
     });
   } catch (error) {
     await t.rollback();
-    console.error('Error creating expense:', error);
-    res.status(500).json({ message: 'Failed to create expense' });
+    console.error("Error creating expense:", error);
+    res.status(500).json({ message: "Failed to create expense" });
   }
 };
 
@@ -74,33 +79,36 @@ export const updateExpense = async (req: Request, res: Response) => {
 
     if (!user_id) {
       await t.rollback();
-      return res.status(401).json({ message: 'User not authenticated' });
+      return res.status(401).json({ message: "User not authenticated" });
     }
 
     const expense = await Expense.findByPk(id);
     if (!expense) {
       await t.rollback();
-      return res.status(404).json({ message: 'Expense not found' });
+      return res.status(404).json({ message: "Expense not found" });
     }
 
-    await expense.update({
-      description,
-      amount,
-      date,
-      category,
-      payment_method
-    }, { transaction: t });
+    await expense.update(
+      {
+        description,
+        amount,
+        date,
+        category,
+        payment_method,
+      },
+      { transaction: t },
+    );
 
     await t.commit();
 
     res.json({
-      message: 'Expense updated successfully',
-      data: expense
+      message: "Expense updated successfully",
+      data: expense,
     });
   } catch (error) {
     await t.rollback();
-    console.error('Error updating expense:', error);
-    res.status(500).json({ message: 'Failed to update expense' });
+    console.error("Error updating expense:", error);
+    res.status(500).json({ message: "Failed to update expense" });
   }
 };
 
@@ -113,22 +121,22 @@ export const deleteExpense = async (req: Request, res: Response) => {
 
     if (!user_id) {
       await t.rollback();
-      return res.status(401).json({ message: 'User not authenticated' });
+      return res.status(401).json({ message: "User not authenticated" });
     }
 
     const expense = await Expense.findByPk(id);
     if (!expense) {
       await t.rollback();
-      return res.status(404).json({ message: 'Expense not found' });
+      return res.status(404).json({ message: "Expense not found" });
     }
 
     await expense.destroy({ transaction: t });
     await t.commit();
 
-    res.json({ message: 'Expense deleted successfully' });
+    res.json({ message: "Expense deleted successfully" });
   } catch (error) {
     await t.rollback();
-    console.error('Error deleting expense:', error);
-    res.status(500).json({ message: 'Failed to delete expense' });
+    console.error("Error deleting expense:", error);
+    res.status(500).json({ message: "Failed to delete expense" });
   }
-}; 
+};

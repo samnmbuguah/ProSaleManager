@@ -1,6 +1,11 @@
-import express from 'express';
-import { authenticate } from '../middleware/auth.middleware.js';
-import { getExpenses, createExpense, updateExpense, deleteExpense } from '../controllers/expenses.controller.js';
+import express from "express";
+import { authenticate } from "../middleware/auth.middleware.js";
+import {
+  getExpenses,
+  createExpense,
+  updateExpense,
+  deleteExpense,
+} from "../controllers/expenses.controller.js";
 
 const router = express.Router();
 
@@ -8,15 +13,15 @@ const router = express.Router();
 router.use(authenticate);
 
 // Get all expenses with pagination
-router.get('/', getExpenses);
+router.get("/", getExpenses);
 
 // Create a new expense
-router.post('/', createExpense);
+router.post("/", createExpense);
 
 // Update an expense
-router.put('/:id', updateExpense);
+router.put("/:id", updateExpense);
 
 // Delete an expense
-router.delete('/:id', deleteExpense);
+router.delete("/:id", deleteExpense);
 
-export default router; 
+export default router;

@@ -1,12 +1,12 @@
-'use strict';
+"use strict";
 
 /** @type {import('sequelize-cli').Migration} */
 export default {
-  async up (queryInterface, Sequelize) {
+  async up(queryInterface, Sequelize) {
     await queryInterface.addColumn("sales", "payment_status", {
       type: Sequelize.STRING,
       allowNull: false,
-      defaultValue: "pending"
+      defaultValue: "pending",
     });
 
     // Update existing records to set payment_status to 'paid' for completed sales
@@ -17,7 +17,7 @@ export default {
     `);
   },
 
-  async down (queryInterface, Sequelize) {
+  async down(queryInterface, Sequelize) {
     await queryInterface.removeColumn("sales", "payment_status");
-  }
+  },
 };

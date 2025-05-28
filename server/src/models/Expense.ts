@@ -1,5 +1,5 @@
-import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
+import { Model, DataTypes } from "sequelize";
+import sequelize from "../config/database.js";
 
 class Expense extends Model {
   declare id: number;
@@ -40,22 +40,22 @@ Expense.init(
     payment_method: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'cash',
+      defaultValue: "cash",
     },
     user_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'users',
-        key: 'id',
+        model: "users",
+        key: "id",
       },
     },
   },
   {
     sequelize,
-    modelName: 'Expense',
-    tableName: 'expenses',
-  }
+    modelName: "Expense",
+    tableName: "expenses",
+  },
 );
 
-export default Expense; 
+export default Expense;

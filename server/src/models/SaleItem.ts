@@ -1,5 +1,5 @@
-import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
+import { Model, DataTypes } from "sequelize";
+import sequelize from "../config/database.js";
 
 export class SaleItem extends Model {
   declare id: number;
@@ -24,16 +24,16 @@ SaleItem.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'sales',
-        key: 'id',
+        model: "sales",
+        key: "id",
       },
     },
     product_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'products',
-        key: 'id',
+        model: "products",
+        key: "id",
       },
     },
     quantity: {
@@ -55,10 +55,10 @@ SaleItem.init(
   },
   {
     sequelize,
-    modelName: 'SaleItem',
-    tableName: 'sale_items',
+    modelName: "SaleItem",
+    tableName: "sale_items",
     underscored: true,
-  }
+  },
 );
 
-export default SaleItem; 
+export default SaleItem;

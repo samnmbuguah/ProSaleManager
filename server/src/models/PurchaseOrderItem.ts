@@ -1,5 +1,5 @@
-import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
+import { Model, DataTypes } from "sequelize";
+import sequelize from "../config/database.js";
 
 class PurchaseOrderItem extends Model {
   declare id: number;
@@ -23,16 +23,16 @@ PurchaseOrderItem.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'purchase_orders',
-        key: 'id',
+        model: "purchase_orders",
+        key: "id",
       },
     },
     product_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'products',
-        key: 'id',
+        model: "products",
+        key: "id",
       },
     },
     quantity: {
@@ -53,9 +53,9 @@ PurchaseOrderItem.init(
   },
   {
     sequelize,
-    modelName: 'PurchaseOrderItem',
-    tableName: 'purchase_order_items',
-  }
+    modelName: "PurchaseOrderItem",
+    tableName: "purchase_order_items",
+  },
 );
 
-export default PurchaseOrderItem; 
+export default PurchaseOrderItem;
