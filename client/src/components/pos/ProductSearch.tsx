@@ -1,111 +1,49 @@
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
+import React, { useState } from "react";
+import type { Product } from "@/types/product";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
-import type { Product, UnitTypeValues } from "@/types/product";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 interface ProductSearchProps {
   products: Product[];
-  onSelect: (product: Product, selectedUnit: UnitTypeValues) => void;
-  searchProducts: (query: string) => void;
+  onSelect: (product: Product, unitType: string, price: number) => void;
+  searchProducts: (query: string) => Promise<void>;
 }
 
-export function ProductSearch({
+export const ProductSearch: React.FC<ProductSearchProps> = ({
   products,
   onSelect,
   searchProducts,
-}: ProductSearchProps) {
-  const [query, setQuery] = useState("");
-  const [selectedUnits, setSelectedUnits] = useState<
-    Record<number, UnitTypeValues>
-  >({});
+}) => {
+  const [search, setSearch] = useState("");
 
-  const handleSearch = () => {
-    searchProducts(query);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
-
-  const handleProductSelect = (product: Product) => {
-    const selectedUnit =
-      selectedUnits[product.id!] ||
-      (product.price_units?.[0]?.unit_type as UnitTypeValues);
-    if (selectedUnit) {
-      onSelect(product, selectedUnit);
-    }
-  };
-
-  const handleUnitChange = (productId: number, value: UnitTypeValues) => {
-    setSelectedUnits((prev) => ({ ...prev, [productId]: value }));
+  const handleSearch = async () => {
+    await searchProducts(search);
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2">
+    <div>
+      <div className="flex gap-2 mb-4">
         <Input
           placeholder="Search products..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyPress={handleKeyPress}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-1"
         />
-        <Button onClick={handleSearch}>
-          <Search className="h-4 w-4" />
-        </Button>
+        <Button onClick={handleSearch}>Search</Button>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-2">
         {products.map((product) => (
           <div
             key={product.id}
-            className="bg-card rounded-lg border p-4 space-y-2"
+            className="border rounded p-2 cursor-pointer hover:bg-gray-100"
+            onClick={() => onSelect(product, product.stock_unit, Number(product.selling_price))}
           >
-            {product.image_url && (
-              <img
-                src={product.image_url}
-                alt={product.name}
-                className="w-full h-32 object-cover rounded-md"
-              />
-            )}
-            <h3 className="font-semibold">{product.name}</h3>
-            <div className="flex flex-col gap-2">
-              <Select
-                value={
-                  selectedUnits[product.id!] ||
-                  (product.price_units?.[0]?.unit_type as string)
-                }
-                onValueChange={(value) =>
-                  handleUnitChange(product.id!, value as UnitTypeValues)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select unit" />
-                </SelectTrigger>
-                <SelectContent>
-                  {product.price_units?.map((unit) => (
-                    <SelectItem key={unit.id} value={unit.unit_type}>
-                      {unit.unit_type} - {unit.selling_price}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button onClick={() => handleProductSelect(product)}>
-                Add to Cart
-              </Button>
-            </div>
+            <div className="font-bold">{product.name}</div>
+            <div className="text-sm text-gray-500">{product.category}</div>
+            <div className="text-sm">KSh {product.selling_price}</div>
           </div>
         ))}
       </div>
     </div>
   );
-}
+};
