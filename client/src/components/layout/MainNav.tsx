@@ -24,18 +24,18 @@ import {
 
 const ROLE_ROUTES = {
   user: [
-    { path: '/pos', label: 'POS', icon: Store },
-    { path: '/inventory', label: 'Inventory', icon: PackageSearch },
-    { path: '/expenses', label: 'Expenses', icon: Wallet },
+    { path: "/pos", label: "POS", icon: Store },
+    { path: "/inventory", label: "Inventory", icon: PackageSearch },
+    { path: "/expenses", label: "Expenses", icon: Wallet },
   ],
   admin: [
-    { path: '/pos', label: 'POS', icon: Store },
-    { path: '/inventory', label: 'Inventory', icon: PackageSearch },
-    { path: '/customers', label: 'Customers', icon: Users },
-    { path: '/sales', label: 'Sales', icon: Receipt },
-    { path: '/reports', label: 'Reports', icon: BarChart3 },
-    { path: '/expenses', label: 'Expenses', icon: Wallet },
-  ]
+    { path: "/pos", label: "POS", icon: Store },
+    { path: "/inventory", label: "Inventory", icon: PackageSearch },
+    { path: "/customers", label: "Customers", icon: Users },
+    { path: "/sales", label: "Sales", icon: Receipt },
+    { path: "/reports", label: "Reports", icon: BarChart3 },
+    { path: "/expenses", label: "Expenses", icon: Wallet },
+  ],
 };
 
 export default function MainNav() {
@@ -53,13 +53,13 @@ export default function MainNav() {
       await logout();
       toast({
         title: "Success",
-        description: "Logged out successfully"
+        description: "Logged out successfully",
       });
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Logout failed",
-        description: "Please try again later"
+        description: "Please try again later",
       });
     }
   };
@@ -112,7 +112,11 @@ export default function MainNav() {
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex items-center space-x-2">
               <Link href="/profile">
-                <Button variant="ghost" size="icon" className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="flex items-center space-x-2"
+                >
                   <User className="h-4 w-4" />
                   <span>{user.name}</span>
                 </Button>

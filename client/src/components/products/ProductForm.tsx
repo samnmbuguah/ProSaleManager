@@ -11,7 +11,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
 
@@ -26,16 +32,18 @@ const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string(),
   defaultUnit: z.string().min(1, "Default unit is required"),
-  priceUnits: z.array(priceUnitSchema).min(1, "At least one price unit is required"),
+  priceUnits: z
+    .array(priceUnitSchema)
+    .min(1, "At least one price unit is required"),
   // ... other existing fields
 });
 
 type FormData = z.infer<typeof formSchema>;
 
 const defaultPriceUnits = [
-  { stockUnit: 'piece', sellingPrice: 0, buyingPrice: 0, conversionRate: 1 },
-  { stockUnit: 'box', sellingPrice: 0, buyingPrice: 0, conversionRate: 1 },
-  { stockUnit: 'carton', sellingPrice: 0, buyingPrice: 0, conversionRate: 1 },
+  { stockUnit: "piece", sellingPrice: 0, buyingPrice: 0, conversionRate: 1 },
+  { stockUnit: "box", sellingPrice: 0, buyingPrice: 0, conversionRate: 1 },
+  { stockUnit: "carton", sellingPrice: 0, buyingPrice: 0, conversionRate: 1 },
 ];
 
 interface ProductFormProps {
@@ -65,8 +73,8 @@ export function ProductForm({ onSubmit, initialData }: ProductFormProps) {
     },
   });
 
-const { fields, append, remove } = useFieldArray({
-  name: "priceUnits",
+  const { fields, append, remove } = useFieldArray({
+    name: "priceUnits",
     control: form.control,
   });
 
@@ -152,7 +160,10 @@ const { fields, append, remove } = useFieldArray({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Stock Unit</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select unit" />
@@ -160,7 +171,10 @@ const { fields, append, remove } = useFieldArray({
                           </FormControl>
                           <SelectContent>
                             {defaultPriceUnits.map((unit) => (
-                              <SelectItem key={unit.stockUnit} value={unit.stockUnit}>
+                              <SelectItem
+                                key={unit.stockUnit}
+                                value={unit.stockUnit}
+                              >
                                 {unit.stockUnit}
                               </SelectItem>
                             ))}
@@ -182,7 +196,9 @@ const { fields, append, remove } = useFieldArray({
                             type="number"
                             step="0.0001"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value))
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -201,7 +217,9 @@ const { fields, append, remove } = useFieldArray({
                             type="number"
                             step="0.01"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value))
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -220,7 +238,9 @@ const { fields, append, remove } = useFieldArray({
                             type="number"
                             step="0.01"
                             {...field}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value))
+                            }
                           />
                         </FormControl>
                         <FormMessage />

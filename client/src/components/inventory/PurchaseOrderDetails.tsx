@@ -12,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 
@@ -39,7 +38,12 @@ interface OrderItem {
   };
 }
 
-export function PurchaseOrderDetails({ orderId, isOpen, onClose, supplier }: PurchaseOrderDetailsProps) {
+export function PurchaseOrderDetails({
+  orderId,
+  isOpen,
+  onClose,
+  supplier,
+}: PurchaseOrderDetailsProps) {
   const { data: items, isLoading } = useQuery<OrderItem[]>({
     queryKey: ["purchase-order-items", orderId],
     queryFn: async () => {
@@ -102,7 +106,9 @@ export function PurchaseOrderDetails({ orderId, isOpen, onClose, supplier }: Pur
                     <TableCell>{formatCurrency(item.buying_price)}</TableCell>
                     <TableCell>{formatCurrency(item.selling_price)}</TableCell>
                     <TableCell>
-                      {formatCurrency((Number(item.buying_price) * item.quantity).toString())}
+                      {formatCurrency(
+                        (Number(item.buying_price) * item.quantity).toString(),
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -113,4 +119,4 @@ export function PurchaseOrderDetails({ orderId, isOpen, onClose, supplier }: Pur
       </DialogContent>
     </Dialog>
   );
-} 
+}

@@ -68,11 +68,11 @@ export function usePos() {
 
   const fetchAllProducts = async () => {
     try {
-      const response = await fetch('/api/products', {
-        credentials: 'include',
+      const response = await fetch("/api/products", {
+        credentials: "include",
         headers: {
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -82,7 +82,9 @@ export function usePos() {
       setError(null);
     } catch (error) {
       setProducts([]);
-      setError(error instanceof Error ? error.message : 'Failed to fetch products');
+      setError(
+        error instanceof Error ? error.message : "Failed to fetch products",
+      );
     }
   };
 
@@ -93,12 +95,15 @@ export function usePos() {
     }
 
     try {
-      const response = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await fetch(
+        `/api/products/search?q=${encodeURIComponent(query)}`,
+        {
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -107,37 +112,40 @@ export function usePos() {
       setError(null);
     } catch (error) {
       setProducts([]);
-      setError(error instanceof Error ? error.message : 'Failed to search products');
+      setError(
+        error instanceof Error ? error.message : "Failed to search products",
+      );
     }
   };
 
   const createSale = async (saleData: SaleData) => {
     setIsProcessing(true);
     try {
-      console.log('Creating sale with data:', saleData);
-      const response = await fetch('/api/sales', {
-        method: 'POST',
+      console.log("Creating sale with data:", saleData);
+      const response = await fetch("/api/sales", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ...saleData,
-          customer_id: saleData.customer_id || null
+          customer_id: saleData.customer_id || null,
         }),
-        credentials: 'include'
+        credentials: "include",
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create sale');
+        throw new Error(errorData.message || "Failed to create sale");
       }
 
       const result = await response.json();
       setError(null);
       return result;
     } catch (error) {
-      console.error('Sale creation error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create sale';
+      console.error("Sale creation error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to create sale";
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {

@@ -7,11 +7,32 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useReceiptSettings } from "@/lib/receipt-settings";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function ReceiptSettings() {
-  const { settings, updateSettings, templates, saveTemplate, deleteTemplate, loadTemplate, activeTemplateId } = useReceiptSettings();
+  const {
+    settings,
+    updateSettings,
+    templates,
+    saveTemplate,
+    deleteTemplate,
+    loadTemplate,
+    activeTemplateId,
+  } = useReceiptSettings();
   const [newTemplateName, setNewTemplateName] = useState("");
   const [showSaveDialog, setShowSaveDialog] = useState(false);
 
@@ -66,7 +87,10 @@ export function ReceiptSettings() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowSaveDialog(false)}
+                >
                   Cancel
                 </Button>
                 <Button onClick={handleSaveTemplate}>Save</Button>
@@ -75,8 +99,8 @@ export function ReceiptSettings() {
           </Dialog>
 
           {activeTemplateId && (
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={() => deleteTemplate(activeTemplateId)}
             >
               Delete Template
@@ -135,7 +159,9 @@ export function ReceiptSettings() {
             <Input
               id="thankYouMessage"
               value={settings.thankYouMessage}
-              onChange={(e) => updateSettings({ thankYouMessage: e.target.value })}
+              onChange={(e) =>
+                updateSettings({ thankYouMessage: e.target.value })
+              }
             />
           </div>
 
@@ -144,7 +170,9 @@ export function ReceiptSettings() {
             <Switch
               id="showLogo"
               checked={settings.showLogo}
-              onCheckedChange={(checked) => updateSettings({ showLogo: checked })}
+              onCheckedChange={(checked) =>
+                updateSettings({ showLogo: checked })
+              }
             />
           </div>
 
@@ -152,8 +180,10 @@ export function ReceiptSettings() {
             <Label>Font Size</Label>
             <RadioGroup
               value={settings.fontSize}
-              onValueChange={(value) => 
-                updateSettings({ fontSize: value as 'small' | 'medium' | 'large' })
+              onValueChange={(value) =>
+                updateSettings({
+                  fontSize: value as "small" | "medium" | "large",
+                })
               }
             >
               <div className="flex items-center space-x-2">
@@ -175,8 +205,8 @@ export function ReceiptSettings() {
             <Label>Paper Size</Label>
             <RadioGroup
               value={settings.paperSize}
-              onValueChange={(value) => 
-                updateSettings({ paperSize: value as 'standard' | 'thermal' })
+              onValueChange={(value) =>
+                updateSettings({ paperSize: value as "standard" | "thermal" })
               }
             >
               <div className="flex items-center space-x-2">

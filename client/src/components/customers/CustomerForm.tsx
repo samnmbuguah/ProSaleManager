@@ -16,7 +16,8 @@ import type { CustomerInsert } from "@/types/schema";
 const customerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address").nullable(),
-  phone: z.string()
+  phone: z
+    .string()
     .regex(/^\+?[0-9]{10,}$/, "Phone number must be at least 10 digits")
     .nullable(),
   address: z.string().optional(),
@@ -28,7 +29,11 @@ interface CustomerFormProps {
   defaultValues?: Partial<CustomerInsert>;
 }
 
-export function CustomerForm({ onSubmit, isSubmitting = false, defaultValues }: CustomerFormProps) {
+export function CustomerForm({
+  onSubmit,
+  isSubmitting = false,
+  defaultValues,
+}: CustomerFormProps) {
   const form = useForm<CustomerInsert>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
@@ -63,11 +68,11 @@ export function CustomerForm({ onSubmit, isSubmitting = false, defaultValues }: 
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input 
-                  type="email" 
-                  value={value || ""} 
-                  onChange={e => onChange(e.target.value || null)} 
-                  {...field} 
+                <Input
+                  type="email"
+                  value={value || ""}
+                  onChange={(e) => onChange(e.target.value || null)}
+                  {...field}
                 />
               </FormControl>
               <FormMessage />
@@ -82,11 +87,11 @@ export function CustomerForm({ onSubmit, isSubmitting = false, defaultValues }: 
             <FormItem>
               <FormLabel>Phone Number</FormLabel>
               <FormControl>
-                <Input 
-                  value={value || ""} 
-                  onChange={e => onChange(e.target.value || null)} 
+                <Input
+                  value={value || ""}
+                  onChange={(e) => onChange(e.target.value || null)}
                   placeholder="+254700000000"
-                  {...field} 
+                  {...field}
                 />
               </FormControl>
               <FormMessage />

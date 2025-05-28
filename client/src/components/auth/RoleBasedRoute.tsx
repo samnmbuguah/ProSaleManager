@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { useLocation } from 'wouter';
-import { useAuth } from '@/hooks/use-auth';
-import { Loader2 } from 'lucide-react';
+import { useEffect } from "react";
+import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { Loader2 } from "lucide-react";
 
 interface RoleBasedRouteProps {
   children: React.ReactNode;
@@ -21,14 +21,19 @@ const RoleBasedRoute = ({ children, allowedRoles }: RoleBasedRouteProps) => {
 
   useEffect(() => {
     // Redirect to auth page if not authenticated and not already on auth page
-    if (!isLoading && !isAuthenticated && location !== '/auth') {
-      setLocation('/auth');
+    if (!isLoading && !isAuthenticated && location !== "/auth") {
+      setLocation("/auth");
       return;
     }
 
     // Redirect to home if authenticated but not authorized
-    if (!isLoading && isAuthenticated && user && !allowedRoles.includes(user.role)) {
-      setLocation('/');
+    if (
+      !isLoading &&
+      isAuthenticated &&
+      user &&
+      !allowedRoles.includes(user.role)
+    ) {
+      setLocation("/");
     }
   }, [isAuthenticated, isLoading, user, allowedRoles, setLocation, location]);
 
@@ -54,4 +59,4 @@ const RoleBasedRoute = ({ children, allowedRoles }: RoleBasedRouteProps) => {
   return <>{children}</>;
 };
 
-export default RoleBasedRoute; 
+export default RoleBasedRoute;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Product } from "@/types/product";
-import type { Supplier, SupplierFormData } from "@/types/supplier";
+import type { SupplierFormData } from "@/types/supplier";
 import type { ProductSupplierFormData } from "@/types/product-supplier";
 import { useSuppliers } from "../../hooks/use-suppliers";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,14 @@ interface SupplierPricingProps {
 export function SupplierPricing({ product }: SupplierPricingProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isLinkFormOpen, setIsLinkFormOpen] = useState(false);
-  const { suppliers, productSuppliers, createSupplier, linkProductToSupplier, isCreating, isLinking } = useSuppliers();
+  const {
+    suppliers,
+    productSuppliers,
+    createSupplier,
+    linkProductToSupplier,
+    isCreating,
+    isLinking,
+  } = useSuppliers();
 
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
@@ -75,9 +82,10 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
     linkForm.reset();
   };
 
-  const productSuppliersList = productSuppliers?.filter(
-    (ps) => Number(ps.product_id) === Number(product.id)
-  ) || [];
+  const productSuppliersList =
+    productSuppliers?.filter(
+      (ps) => Number(ps.product_id) === Number(product.id),
+    ) || [];
 
   return (
     <div className="space-y-4">
@@ -107,7 +115,8 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
           {productSuppliersList.map((ps) => (
             <TableRow key={ps.id}>
               <TableCell>
-                {suppliers?.find(s => s.id === Number(ps.supplier_id))?.name || "Unknown Supplier"}
+                {suppliers?.find((s) => s.id === Number(ps.supplier_id))
+                  ?.name || "Unknown Supplier"}
               </TableCell>
               <TableCell>KSh {Number(ps.cost_price).toFixed(2)}</TableCell>
               <TableCell>{ps.is_preferred ? "Yes" : "No"}</TableCell>
@@ -148,7 +157,11 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" {...field} value={field.value || ""} />
+                      <Input
+                        type="email"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -194,7 +207,10 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
             <DialogTitle>Link Supplier to Product</DialogTitle>
           </DialogHeader>
           <Form {...linkForm}>
-            <form onSubmit={linkForm.handleSubmit(onLinkSubmit)} className="space-y-4">
+            <form
+              onSubmit={linkForm.handleSubmit(onLinkSubmit)}
+              className="space-y-4"
+            >
               <FormField
                 control={linkForm.control}
                 name="supplier_id"
@@ -206,7 +222,9 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                         {...field}
                         className="w-full p-2 border rounded"
                         onChange={(e) =>
-                          field.onChange(e.target.value ? Number(e.target.value) : undefined)
+                          field.onChange(
+                            e.target.value ? Number(e.target.value) : undefined,
+                          )
                         }
                       >
                         <option value="">Select a supplier</option>
@@ -228,7 +246,12 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                   <FormItem>
                     <FormLabel>Cost Price</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" {...field} value={field.value || ""} />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -242,7 +265,9 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                     <FormControl>
                       <Checkbox
                         checked={field.value === "true"}
-                        onCheckedChange={(checked) => field.onChange(String(checked))}
+                        onCheckedChange={(checked) =>
+                          field.onChange(String(checked))
+                        }
                       />
                     </FormControl>
                     <FormLabel>Preferred Supplier</FormLabel>

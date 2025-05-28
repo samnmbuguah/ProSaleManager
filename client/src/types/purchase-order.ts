@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export interface PurchaseOrderItem {
   product_id: number;
@@ -25,7 +25,7 @@ export interface PurchaseOrder {
   id: number;
   supplier_id: number;
   total_amount: string;
-  status: 'pending' | 'approved' | 'rejected' | 'completed';
+  status: "pending" | "approved" | "rejected" | "completed";
   notes?: string | null;
   created_at: Date | null;
   updated_at: Date | null;
@@ -33,4 +33,4 @@ export interface PurchaseOrder {
 
 export interface PurchaseOrderWithItems extends PurchaseOrder {
   items: PurchaseOrderItem[];
-} 
+}

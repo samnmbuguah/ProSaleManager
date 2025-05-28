@@ -2,8 +2,14 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-import type { Product, PriceUnit, UnitTypeValues } from "@/types/product";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { Product, UnitTypeValues } from "@/types/product";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ProductSearchProps {
   products: Product[];
@@ -11,9 +17,15 @@ interface ProductSearchProps {
   searchProducts: (query: string) => void;
 }
 
-export function ProductSearch({ products, onSelect, searchProducts }: ProductSearchProps) {
+export function ProductSearch({
+  products,
+  onSelect,
+  searchProducts,
+}: ProductSearchProps) {
   const [query, setQuery] = useState("");
-  const [selectedUnits, setSelectedUnits] = useState<Record<number, UnitTypeValues>>({});
+  const [selectedUnits, setSelectedUnits] = useState<
+    Record<number, UnitTypeValues>
+  >({});
 
   const handleSearch = () => {
     searchProducts(query);
@@ -26,14 +38,16 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
   };
 
   const handleProductSelect = (product: Product) => {
-    const selectedUnit = selectedUnits[product.id!] || (product.price_units?.[0]?.unit_type as UnitTypeValues);
+    const selectedUnit =
+      selectedUnits[product.id!] ||
+      (product.price_units?.[0]?.unit_type as UnitTypeValues);
     if (selectedUnit) {
       onSelect(product, selectedUnit);
     }
   };
 
   const handleUnitChange = (productId: number, value: UnitTypeValues) => {
-    setSelectedUnits(prev => ({ ...prev, [productId]: value }));
+    setSelectedUnits((prev) => ({ ...prev, [productId]: value }));
   };
 
   return (
@@ -66,8 +80,13 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
             <h3 className="font-semibold">{product.name}</h3>
             <div className="flex flex-col gap-2">
               <Select
-                value={selectedUnits[product.id!] || (product.price_units?.[0]?.unit_type as string)}
-                onValueChange={(value) => handleUnitChange(product.id!, value as UnitTypeValues)}
+                value={
+                  selectedUnits[product.id!] ||
+                  (product.price_units?.[0]?.unit_type as string)
+                }
+                onValueChange={(value) =>
+                  handleUnitChange(product.id!, value as UnitTypeValues)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select unit" />
@@ -80,7 +99,9 @@ export function ProductSearch({ products, onSelect, searchProducts }: ProductSea
                   ))}
                 </SelectContent>
               </Select>
-              <Button onClick={() => handleProductSelect(product)}>Add to Cart</Button>
+              <Button onClick={() => handleProductSelect(product)}>
+                Add to Cart
+              </Button>
             </div>
           </div>
         ))}

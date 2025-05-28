@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
-import { type InsertUser } from "@/types/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useLocation } from "wouter";
@@ -36,7 +35,6 @@ export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
 
   const loginForm = useForm<LoginFormData>({
@@ -59,24 +57,27 @@ export default function AuthPage() {
   const onSubmit = async (data: LoginFormData | RegisterFormData) => {
     try {
       setIsLoading(true);
-      console.log('Sending auth request with data:', { ...data, password: '***' });
-      
+      console.log("Sending auth request with data:", {
+        ...data,
+        password: "***",
+      });
+
       if (isLogin) {
         await login(data.email, data.password);
       } else {
         const response = await fetch(`/api/auth/register`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
-          credentials: 'include',
+          credentials: "include",
         });
 
         const result = await response.json();
 
         if (!response.ok) {
-          throw new Error(result.message || 'Registration failed');
+          throw new Error(result.message || "Registration failed");
         }
 
         if (result.success) {
@@ -87,23 +88,29 @@ export default function AuthPage() {
           // After successful registration, log in automatically
           await login(data.email, data.password);
         } else {
-          throw new Error(result.message || 'Registration failed');
+          throw new Error(result.message || "Registration failed");
         }
       }
     } catch (error) {
       console.error("Auth error:", error);
       const form = isLogin ? loginForm : registerForm;
-      
+
       // Show error toast
       toast({
         variant: "destructive",
         title: "Authentication Failed",
-        description: error instanceof Error ? error.message : "Please check your credentials and try again",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please check your credentials and try again",
       });
 
       // Set form error
       form.setError("root", {
-        message: error instanceof Error ? error.message : "Authentication failed. Please check your credentials.",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Authentication failed. Please check your credentials.",
       });
     } finally {
       setIsLoading(false);
@@ -208,18 +215,16 @@ export default function AuthPage() {
             )}
 
             <div className="space-y-2">
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
-              >
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     {isLogin ? "Logging in..." : "Creating account..."}
                   </>
+                ) : isLogin ? (
+                  "Login"
                 ) : (
-                  isLogin ? "Login" : "Register"
+                  "Register"
                 )}
               </Button>
               <Button

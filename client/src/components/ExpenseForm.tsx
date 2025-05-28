@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -58,7 +57,9 @@ const formSchema = z.object({
 type ExpenseFormValues = z.infer<typeof formSchema>;
 
 interface ExpenseFormProps {
-  onAddExpense: (expense: Omit<Expense, "id" | "user_id" | "createdAt" | "updatedAt">) => void;
+  onAddExpense: (
+    expense: Omit<Expense, "id" | "user_id" | "createdAt" | "updatedAt">,
+  ) => void;
 }
 
 export default function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
@@ -116,7 +117,8 @@ export default function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
                     placeholder="0.00"
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value === "" ? "0" : e.target.value;
+                      const value =
+                        e.target.value === "" ? "0" : e.target.value;
                       field.onChange(value);
                     }}
                   />
@@ -164,7 +166,7 @@ export default function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
                         variant={"outline"}
                         className={cn(
                           "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
+                          !field.value && "text-muted-foreground",
                         )}
                       >
                         {field.value ? (
@@ -200,4 +202,4 @@ export default function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
       </form>
     </Form>
   );
-} 
+}

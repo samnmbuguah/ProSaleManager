@@ -1,5 +1,10 @@
 import { useState } from "react";
-import type { Product, UnitTypeValues, PriceUnit } from "@/types/product";
+import type {
+  Product,
+  UnitTypeValues,
+  PriceUnit,
+  ProductFormData,
+} from "@/types/product";
 import {
   Table,
   TableBody,
@@ -10,9 +15,13 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ProductForm } from "./ProductForm";
-import type { ProductFormData } from "@/types/product";
 import { Settings, Edit } from "lucide-react";
 
 export type ProductWithPricing = Product & {
@@ -22,10 +31,17 @@ export type ProductWithPricing = Product & {
 interface ProductTableProps {
   products: ProductWithPricing[];
   isLoading: boolean;
-  onUpdateProduct?: (id: number, data: Partial<ProductFormData>) => Promise<void>;
+  onUpdateProduct?: (
+    id: number,
+    data: Partial<ProductFormData>,
+  ) => Promise<void>;
 }
 
-export function ProductTable({ products = [], isLoading, onUpdateProduct }: ProductTableProps) {
+export function ProductTable({
+  products = [],
+  isLoading,
+  onUpdateProduct,
+}: ProductTableProps) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -47,7 +63,10 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
     return { label: "In Stock", variant: "default" as const };
   };
 
-  const calculateProfitMargin = (buyingPrice: number | string, sellingPrice: number | string) => {
+  const calculateProfitMargin = (
+    buyingPrice: number | string,
+    sellingPrice: number | string,
+  ) => {
     const buying = Number(buyingPrice);
     const selling = Number(sellingPrice);
     if (buying <= 0) return "N/A";
@@ -55,12 +74,21 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
   };
 
   const getDefaultPricing = (product: Product) => {
-    const defaultUnit = product.price_units?.find((unit: { unit_type: string; buying_price: string; selling_price: string; is_default: boolean }) => unit.is_default);
-    return defaultUnit || {
-      buying_price: "0",
-      selling_price: "0",
-      unit_type: product.stock_unit
-    };
+    const defaultUnit = product.price_units?.find(
+      (unit: {
+        unit_type: string;
+        buying_price: string;
+        selling_price: string;
+        is_default: boolean;
+      }) => unit.is_default,
+    );
+    return (
+      defaultUnit || {
+        buying_price: "0",
+        selling_price: "0",
+        unit_type: product.stock_unit,
+      }
+    );
   };
 
   return (
@@ -90,10 +118,13 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
                   <TableCell>{product.category}</TableCell>
                   <TableCell>{product.stock_unit}</TableCell>
                   <TableCell>
-                    {`KSh ${Number(defaultPricing.buying_price).toLocaleString('en-KE')} / KSh ${Number(defaultPricing.selling_price).toLocaleString('en-KE')}`}
+                    {`KSh ${Number(defaultPricing.buying_price).toLocaleString("en-KE")} / KSh ${Number(defaultPricing.selling_price).toLocaleString("en-KE")}`}
                   </TableCell>
                   <TableCell>
-                    {calculateProfitMargin(defaultPricing.buying_price, defaultPricing.selling_price)}
+                    {calculateProfitMargin(
+                      defaultPricing.buying_price,
+                      defaultPricing.selling_price,
+                    )}
                   </TableCell>
                   <TableCell>{product.stock}</TableCell>
                   <TableCell>
@@ -128,7 +159,10 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
         </Table>
       </div>
 
-      <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
+      <Dialog
+        open={!!editingProduct}
+        onOpenChange={() => setEditingProduct(null)}
+      >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Product</DialogTitle>
@@ -143,14 +177,15 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
                 min_stock: editingProduct.min_stock || 0,
                 max_stock: editingProduct.max_stock || 0,
                 reorder_point: editingProduct.reorder_point || 0,
-                stock_unit: editingProduct.stock_unit as any,
-                price_units: (editingProduct.price_units || []).map(unit => ({
+                stock_unit:
+                  editingProduct.stock_unit as (typeof import("@/types/product").STOCK_UNITS)[number],
+                price_units: (editingProduct.price_units || []).map((unit) => ({
                   unit_type: unit.unit_type as UnitTypeValues,
                   quantity: Number(unit.quantity),
                   buying_price: String(unit.buying_price),
                   selling_price: String(unit.selling_price),
-                  is_default: Boolean(unit.is_default)
-                }))
+                  is_default: Boolean(unit.is_default),
+                })),
               }}
               onSubmit={async (data: ProductFormData) => {
                 if (onUpdateProduct && editingProduct.id) {
@@ -164,12 +199,17 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
+      <Dialog
+        open={!!selectedProduct}
+        onOpenChange={() => setSelectedProduct(null)}
+      >
         <DialogContent className="max-w-3xl">
           {selectedProduct && (
             <div className="space-y-4">
               <DialogHeader>
-                <DialogTitle>Manage Product: {selectedProduct.name}</DialogTitle>
+                <DialogTitle>
+                  Manage Product: {selectedProduct.name}
+                </DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -177,18 +217,38 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
                   <p>Current Stock: {selectedProduct.stock}</p>
                   <p>Minimum Stock: {selectedProduct.min_stock || "Not set"}</p>
                   <p>Maximum Stock: {selectedProduct.max_stock || "Not set"}</p>
-                  <p>Reorder Point: {selectedProduct.reorder_point || "Not set"}</p>
+                  <p>
+                    Reorder Point: {selectedProduct.reorder_point || "Not set"}
+                  </p>
                 </div>
                 <div>
                   <h3 className="font-medium">Pricing Information</h3>
-                  {selectedProduct.price_units?.map((unit: { unit_type: string; buying_price: string; selling_price: string }) => (
-                    <div key={unit.unit_type} className="mb-2">
-                      <p className="capitalize">{unit.unit_type.replace('_', ' ')}:</p>
-                      <p className="ml-4">Buy: KSh {Number(unit.buying_price).toFixed(2)}</p>
-                      <p className="ml-4">Sell: KSh {Number(unit.selling_price).toFixed(2)}</p>
-                      <p className="ml-4">Margin: {calculateProfitMargin(unit.buying_price, unit.selling_price)}</p>
-                    </div>
-                  ))}
+                  {selectedProduct.price_units?.map(
+                    (unit: {
+                      unit_type: string;
+                      buying_price: string;
+                      selling_price: string;
+                    }) => (
+                      <div key={unit.unit_type} className="mb-2">
+                        <p className="capitalize">
+                          {unit.unit_type.replace("_", " ")}:
+                        </p>
+                        <p className="ml-4">
+                          Buy: KSh {Number(unit.buying_price).toFixed(2)}
+                        </p>
+                        <p className="ml-4">
+                          Sell: KSh {Number(unit.selling_price).toFixed(2)}
+                        </p>
+                        <p className="ml-4">
+                          Margin:{" "}
+                          {calculateProfitMargin(
+                            unit.buying_price,
+                            unit.selling_price,
+                          )}
+                        </p>
+                      </div>
+                    ),
+                  )}
                 </div>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -8,7 +8,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,6 +18,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState, AppDispatch } from "@/store";
+import { fetchSuppliers } from "@/store/suppliersSlice";
 
 interface Supplier {
   id: number;
@@ -27,7 +29,7 @@ interface Supplier {
   phone: string;
   address: string;
   contact_person?: string;
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
 }
 
 interface SupplierFormData {
@@ -38,45 +40,35 @@ interface SupplierFormData {
   contact_person?: string;
 }
 
-export function Suppliers() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+const Suppliers = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const suppliers = useSelector((state: RootState) => state.suppliers.items);
+  const suppliersStatus = useSelector(
+    (state: RootState) => state.suppliers.status,
+  );
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
+    null,
+  );
   const [formData, setFormData] = useState<SupplierFormData>({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    contact_person: '',
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    contact_person: "",
   });
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchSuppliers();
-  }, []);
-
-  const fetchSuppliers = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/suppliers`, {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to fetch suppliers');
-      const data = await response.json();
-      setSuppliers(data);
-    } catch (error) {
-      console.error('Error:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch suppliers',
-        variant: 'destructive',
-      });
+    if (suppliersStatus === "idle") {
+      dispatch(fetchSuppliers());
     }
-  };
+  }, [dispatch, suppliersStatus]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -90,37 +82,36 @@ export function Suppliers() {
         : `${import.meta.env.VITE_API_URL}/suppliers`;
 
       const response = await fetch(url, {
-        method: selectedSupplier ? 'PUT' : 'POST',
+        method: selectedSupplier ? "PUT" : "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
-        credentials: 'include'
+        credentials: "include",
       });
 
-      if (!response.ok) throw new Error('Failed to save supplier');
+      if (!response.ok) throw new Error("Failed to save supplier");
 
       toast({
-        title: 'Success',
-        description: `Supplier ${selectedSupplier ? 'updated' : 'created'} successfully`,
+        title: "Success",
+        description: `Supplier ${selectedSupplier ? "updated" : "created"} successfully`,
       });
 
       setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        address: '',
-        contact_person: '',
+        name: "",
+        email: "",
+        phone: "",
+        address: "",
+        contact_person: "",
       });
       setIsAddDialogOpen(false);
       setIsEditDialogOpen(false);
-      fetchSuppliers();
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
       toast({
-        title: 'Error',
-        description: `Failed to ${selectedSupplier ? 'update' : 'create'} supplier`,
-        variant: 'destructive',
+        title: "Error",
+        description: `Failed to ${selectedSupplier ? "update" : "create"} supplier`,
+        variant: "destructive",
       });
     }
   };
@@ -132,34 +123,36 @@ export function Suppliers() {
       email: supplier.email,
       phone: supplier.phone,
       address: supplier.address,
-      contact_person: supplier.contact_person || '',
+      contact_person: supplier.contact_person || "",
     });
     setIsEditDialogOpen(true);
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this supplier?')) return;
+    if (!window.confirm("Are you sure you want to delete this supplier?"))
+      return;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/suppliers/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/suppliers/${id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        },
+      );
 
-      if (!response.ok) throw new Error('Failed to delete supplier');
+      if (!response.ok) throw new Error("Failed to delete supplier");
 
       toast({
-        title: 'Success',
-        description: 'Supplier deleted successfully',
+        title: "Success",
+        description: "Supplier deleted successfully",
       });
-
-      fetchSuppliers();
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
       toast({
-        title: 'Error',
-        description: 'Failed to delete supplier',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to delete supplier",
+        variant: "destructive",
       });
     }
   };
@@ -223,7 +216,7 @@ export function Suppliers() {
 
       <DialogFooter>
         <Button type="submit">
-          {selectedSupplier ? 'Update Supplier' : 'Add Supplier'}
+          {selectedSupplier ? "Update Supplier" : "Add Supplier"}
         </Button>
       </DialogFooter>
     </form>
@@ -235,7 +228,7 @@ export function Suppliers() {
         <h2 className="text-2xl font-bold">Suppliers</h2>
         <Button onClick={() => setIsAddDialogOpen(true)}>Add Supplier</Button>
       </div>
-      
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -252,7 +245,7 @@ export function Suppliers() {
             {suppliers.map((supplier) => (
               <TableRow key={supplier.id}>
                 <TableCell className="font-medium">{supplier.name}</TableCell>
-                <TableCell>{supplier.contact_person || '-'}</TableCell>
+                <TableCell>{supplier.contact_person || "-"}</TableCell>
                 <TableCell>{supplier.email}</TableCell>
                 <TableCell>{supplier.phone}</TableCell>
                 <TableCell>{supplier.address}</TableCell>
@@ -299,4 +292,6 @@ export function Suppliers() {
       </Dialog>
     </div>
   );
-} 
+};
+
+export default Suppliers;

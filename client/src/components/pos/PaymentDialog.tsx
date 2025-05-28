@@ -10,17 +10,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { CartItem } from "@/types/pos";
 
+export interface PaymentDetails {
+  paymentMethod: "cash" | "mpesa";
+  amountPaid: number;
+  change: number;
+}
+
 interface PaymentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   cartItems: CartItem[];
   onProcessPayment: (details: PaymentDetails) => void;
-}
-
-export interface PaymentDetails {
-  paymentMethod: 'cash' | 'mpesa';
-  amountPaid: number;
-  change: number;
 }
 
 export function PaymentDialog({
@@ -29,14 +29,14 @@ export function PaymentDialog({
   cartItems,
   onProcessPayment,
 }: PaymentDialogProps) {
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'mpesa'>('cash');
-  const [amountPaid, setAmountPaid] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "mpesa">("cash");
+  const [amountPaid, setAmountPaid] = useState<string>("");
 
   const total = cartItems.reduce((sum, item) => sum + item.total, 0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const paid = paymentMethod === 'mpesa' ? total : Number(amountPaid);
+    const paid = paymentMethod === "mpesa" ? total : Number(amountPaid);
     onProcessPayment({
       paymentMethod,
       amountPaid: paid,
@@ -44,12 +44,12 @@ export function PaymentDialog({
     });
   };
 
-  const handlePaymentMethodSelect = (method: 'cash' | 'mpesa') => {
+  const handlePaymentMethodSelect = (method: "cash" | "mpesa") => {
     setPaymentMethod(method);
-    if (method === 'mpesa') {
+    if (method === "mpesa") {
       setAmountPaid(total.toString());
     } else {
-      setAmountPaid('');
+      setAmountPaid("");
     }
   };
 
@@ -63,17 +63,17 @@ export function PaymentDialog({
           <div className="flex gap-2">
             <Button
               type="button"
-              variant={paymentMethod === 'cash' ? 'default' : 'outline'}
+              variant={paymentMethod === "cash" ? "default" : "outline"}
               className="flex-1"
-              onClick={() => handlePaymentMethodSelect('cash')}
+              onClick={() => handlePaymentMethodSelect("cash")}
             >
               Cash
             </Button>
             <Button
               type="button"
-              variant={paymentMethod === 'mpesa' ? 'default' : 'outline'}
+              variant={paymentMethod === "mpesa" ? "default" : "outline"}
               className="flex-1"
-              onClick={() => handlePaymentMethodSelect('mpesa')}
+              onClick={() => handlePaymentMethodSelect("mpesa")}
             >
               M-Pesa
             </Button>
@@ -89,7 +89,7 @@ export function PaymentDialog({
             />
           </div>
 
-          {paymentMethod === 'cash' && (
+          {paymentMethod === "cash" && (
             <div>
               <Label>Amount Paid</Label>
               <Input
@@ -104,7 +104,7 @@ export function PaymentDialog({
             </div>
           )}
 
-          {paymentMethod === 'cash' && amountPaid && (
+          {paymentMethod === "cash" && amountPaid && (
             <div>
               <Label>Change</Label>
               <Input
@@ -119,7 +119,10 @@ export function PaymentDialog({
           <Button
             type="submit"
             className="w-full"
-            disabled={paymentMethod === 'cash' && (!amountPaid || Number(amountPaid) < total)}
+            disabled={
+              paymentMethod === "cash" &&
+              (!amountPaid || Number(amountPaid) < total)
+            }
           >
             Complete Payment
           </Button>

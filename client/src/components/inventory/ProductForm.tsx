@@ -28,7 +28,11 @@ interface ProductFormProps {
   initialData?: Partial<ProductFormData>;
 }
 
-export function ProductForm({ onSubmit, isSubmitting = false, initialData }: ProductFormProps) {
+export function ProductForm({
+  onSubmit,
+  isSubmitting = false,
+  initialData,
+}: ProductFormProps) {
   // Initialize form with proper default values
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -41,13 +45,15 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
       max_stock: initialData?.max_stock ?? 0,
       reorder_point: initialData?.reorder_point ?? 0,
       stock_unit: initialData?.stock_unit ?? "per_piece",
-      price_units: initialData?.price_units ?? PRICE_UNITS.map(unit => ({
-        unit_type: unit.value,
-        quantity: unit.quantity,
-        buying_price: "0",
-        selling_price: "0",
-        is_default: unit.value === 'per_piece'
-      }))
+      price_units:
+        initialData?.price_units ??
+        PRICE_UNITS.map((unit) => ({
+          unit_type: unit.value,
+          quantity: unit.quantity,
+          buying_price: "0",
+          selling_price: "0",
+          is_default: unit.value === "per_piece",
+        })),
     },
   });
 
@@ -60,32 +66,35 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
         min_stock: Number(data.min_stock),
         max_stock: Number(data.max_stock),
         reorder_point: Number(data.reorder_point),
-        price_units: data.price_units.map(unit => ({
+        price_units: data.price_units.map((unit) => ({
           ...unit,
           quantity: Number(unit.quantity),
           buying_price: unit.buying_price.toString(),
           selling_price: unit.selling_price.toString(),
-          is_default: Boolean(unit.is_default)
-        }))
+          is_default: Boolean(unit.is_default),
+        })),
       };
-      
+
       // Validate that at least one price unit is marked as default
-      const hasDefaultUnit = formattedData.price_units.some(unit => unit.is_default);
+      const hasDefaultUnit = formattedData.price_units.some(
+        (unit) => unit.is_default,
+      );
       if (!hasDefaultUnit) {
         formattedData.price_units[0].is_default = true;
       }
 
       // Adjust stock based on selected unit
-      const selectedUnit = formattedData.price_units.find(unit => unit.unit_type === formattedData.stock_unit);
+      const selectedUnit = formattedData.price_units.find(
+        (unit) => unit.unit_type === formattedData.stock_unit,
+      );
       if (selectedUnit) {
         formattedData.stock = formattedData.stock * selectedUnit.quantity;
       }
-      
-      console.log('Submitting form data:', formattedData);
+
+      console.log("Submitting form data:", formattedData);
       await onSubmit(formattedData);
     } catch (error) {
-      console.error('Form submission error:', error);
-      return;
+      console.error("Form submission error:", error);
     }
   };
 
@@ -157,7 +166,11 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
                     type="number"
                     {...field}
                     value={field.value || "0"}
-                    onChange={e => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? Number(e.target.value) : 0,
+                      )
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -193,10 +206,14 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
           <div className="col-span-2">
             <h3 className="text-lg font-semibold mb-4">Price Units</h3>
             {PRICE_UNITS.map((unit, index) => (
-              <div key={unit.value} className="grid grid-cols-2 gap-4 mb-6 p-4 border rounded-lg">
+              <div
+                key={unit.value}
+                className="grid grid-cols-2 gap-4 mb-6 p-4 border rounded-lg"
+              >
                 <div className="col-span-2 flex justify-between items-center">
                   <h4 className="font-medium mb-2">
-                    {unit.label} ({unit.quantity} {unit.quantity === 1 ? 'piece' : 'pieces'})
+                    {unit.label} ({unit.quantity}{" "}
+                    {unit.quantity === 1 ? "piece" : "pieces"})
                   </h4>
                   <FormField
                     control={form.control}
@@ -209,10 +226,15 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
                             onCheckedChange={(checked) => {
                               // Uncheck other units when this one is checked
                               if (checked) {
-                                form.setValue('price_units', form.getValues('price_units').map((pu, i) => ({
-                                  ...pu,
-                                  is_default: i === index
-                                })));
+                                form.setValue(
+                                  "price_units",
+                                  form
+                                    .getValues("price_units")
+                                    .map((pu, i) => ({
+                                      ...pu,
+                                      is_default: i === index,
+                                    })),
+                                );
                               }
                               field.onChange(checked);
                             }}
@@ -223,7 +245,7 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
                     )}
                   />
                 </div>
-                
+
                 <FormField
                   control={form.control}
                   name={`price_units.${index}.buying_price`}
@@ -262,13 +284,13 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
                   )}
                 />
 
-                <input 
-                  type="hidden" 
+                <input
+                  type="hidden"
                   {...form.register(`price_units.${index}.unit_type`)}
                   value={unit.value}
                 />
-                <input 
-                  type="hidden" 
+                <input
+                  type="hidden"
                   {...form.register(`price_units.${index}.quantity`)}
                   value={unit.quantity}
                 />
@@ -287,7 +309,11 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
                     type="number"
                     {...field}
                     value={field.value || "0"}
-                    onChange={e => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? Number(e.target.value) : 0,
+                      )
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -306,7 +332,11 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
                     type="number"
                     {...field}
                     value={field.value || "0"}
-                    onChange={e => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? Number(e.target.value) : 0,
+                      )
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -325,7 +355,11 @@ export function ProductForm({ onSubmit, isSubmitting = false, initialData }: Pro
                     type="number"
                     {...field}
                     value={field.value || "0"}
-                    onChange={e => field.onChange(e.target.value ? Number(e.target.value) : 0)}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? Number(e.target.value) : 0,
+                      )
+                    }
                   />
                 </FormControl>
                 <FormMessage />

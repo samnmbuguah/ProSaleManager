@@ -1,18 +1,23 @@
-import { useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import ExpenseForm from '../components/ExpenseForm';
-import ExpenseList from '../components/ExpenseList';
-import type { Expense } from '@/types/expense';
-import { expenseService } from '@/services/expenseService';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
-import { useLocation } from 'wouter';
+import { useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import ExpenseForm from "../components/ExpenseForm";
+import ExpenseList from "../components/ExpenseList";
+import type { Expense } from "@/types/expense";
+import { expenseService } from "@/services/expenseService";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 
 export default function ExpensesPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { user, isAuthenticated, isLoading: authLoading, checkSession } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    isLoading: authLoading,
+    checkSession,
+  } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -28,12 +33,12 @@ export default function ExpensesPage() {
         title: "Authentication Required",
         description: "Please log in to access this page",
       });
-      setLocation('/auth');
+      setLocation("/auth");
     }
   }, [isAuthenticated, authLoading, setLocation, toast]);
 
   const { data: expenses = [], isLoading: expensesLoading } = useQuery({
-    queryKey: ['expenses'],
+    queryKey: ["expenses"],
     queryFn: expenseService.getAll,
     enabled: isAuthenticated,
   });
@@ -41,14 +46,14 @@ export default function ExpensesPage() {
   const createExpenseMutation = useMutation({
     mutationFn: expenseService.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
       toast({
         title: "Success",
         description: "Expense added successfully",
       });
     },
     onError: (error) => {
-      console.error('Error creating expense:', error);
+      console.error("Error creating expense:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -60,7 +65,7 @@ export default function ExpensesPage() {
   const deleteExpenseMutation = useMutation({
     mutationFn: expenseService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
       toast({
         title: "Success",
         description: "Expense deleted successfully",
@@ -75,7 +80,9 @@ export default function ExpensesPage() {
     },
   });
 
-  const handleAddExpense = (newExpense: Omit<Expense, 'id' | 'user_id' | 'createdAt' | 'updatedAt'>) => {
+  const handleAddExpense = (
+    newExpense: Omit<Expense, "id" | "user_id" | "createdAt" | "updatedAt">,
+  ) => {
     if (!isAuthenticated || !user) {
       toast({
         variant: "destructive",
@@ -87,7 +94,7 @@ export default function ExpensesPage() {
 
     createExpenseMutation.mutate({
       ...newExpense,
-      user_id: user.id
+      user_id: user.id,
     });
   };
 
@@ -128,10 +135,7 @@ export default function ExpensesPage() {
         </p>
       </div>
       <ExpenseForm onAddExpense={handleAddExpense} />
-      <ExpenseList 
-        expenses={expenses} 
-        onDeleteExpense={handleDeleteExpense}
-      />
+      <ExpenseList expenses={expenses} onDeleteExpense={handleDeleteExpense} />
     </div>
   );
-} 
+}
