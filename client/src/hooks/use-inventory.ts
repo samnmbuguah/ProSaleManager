@@ -25,15 +25,19 @@ export function useInventory() {
       const data = await response.json();
       // Add detailed debug logging for price data
       // console.log('Fetched products data:', JSON.stringify(data, null, 2));
-      const productsWithPricing = data.map((product: Product & { price_units?: ProductUnit[] }) => {
-        // console.log('Processing product:', product.name, 'Price units:', product.price_units);
-        return {
-          ...product,
-          price_units: product.price_units || [],
-          default_unit_pricing:
-            product.price_units?.find((unit: ProductUnit) => unit.is_default) || null,
-        };
-      });
+      const productsWithPricing = data.map(
+        (product: Product & { price_units?: ProductUnit[] }) => {
+          // console.log('Processing product:', product.name, 'Price units:', product.price_units);
+          return {
+            ...product,
+            price_units: product.price_units || [],
+            default_unit_pricing:
+              product.price_units?.find(
+                (unit: ProductUnit) => unit.is_default,
+              ) || null,
+          };
+        },
+      );
 
       if (isDevelopment && productsWithPricing.length === 0) {
         console.debug("No products found");

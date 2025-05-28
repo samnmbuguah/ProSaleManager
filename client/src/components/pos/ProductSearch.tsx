@@ -36,7 +36,13 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
           <div
             key={product.id}
             className="border rounded p-2 cursor-pointer hover:bg-gray-100"
-            onClick={() => onSelect(product, product.stock_unit, Number(product.selling_price))}
+            onClick={() =>
+              onSelect(
+                product,
+                product.stock_unit,
+                Number(product.selling_price),
+              )
+            }
           >
             <div className="font-bold">{product.name}</div>
             <div className="text-sm text-gray-500">{product.category}</div>
