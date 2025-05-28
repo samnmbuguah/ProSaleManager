@@ -82,9 +82,12 @@ export default function MainNav() {
   );
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b">
-      <div className="w-full px-4">
-        <div className="h-16 flex items-center justify-center space-x-4">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b shadow-sm">
+      <div className="max-w-7xl mx-auto w-full px-6">
+        <div className="h-16 min-h-16 flex items-center justify-between w-full">
+          {/* Left placeholder for spacing on mobile */}
+          <div className="flex-1 flex items-center md:hidden" />
+
           {/* Mobile Menu */}
           <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -105,24 +108,24 @@ export default function MainNav() {
           </div>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center gap-x-4">
             <NavLinks />
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="hidden md:flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
+            <div className="hidden md:flex items-center gap-x-2">
               <Link href="/profile">
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="flex items-center space-x-2"
+                  size="sm"
+                  className="flex items-center gap-x-2 hover:bg-accent"
                 >
                   <User className="h-4 w-4" />
-                  <span>{user.name}</span>
+                  <span className="truncate align-middle">{user.name}</span>
                 </Button>
               </Link>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleLogout}>
+            <Button variant="ghost" size="icon" onClick={handleLogout} className="hover:bg-accent">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
