@@ -19,6 +19,7 @@ export const createSale = async (req: Request, res: Response) => {
       payment_status,
       amount_paid,
       customer_id,
+      delivery_fee,
     } = req.body;
 
     // Get the user_id from the authenticated session
@@ -45,6 +46,7 @@ export const createSale = async (req: Request, res: Response) => {
         amount_paid: amount_paid || total,
         status: status || "completed", // Default to completed instead of pending
         payment_status: payment_status || "paid", // Explicitly track payment status
+        delivery_fee: delivery_fee || 0,
       },
       { transaction: t },
     );

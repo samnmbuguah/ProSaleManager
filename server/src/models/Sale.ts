@@ -10,6 +10,7 @@ class Sale extends Model {
   declare amount_paid: number;
   declare status: string;
   declare payment_status: string;
+  declare delivery_fee: number;
   declare receipt_status: {
     whatsapp?: boolean;
     sms?: boolean;
@@ -66,6 +67,11 @@ Sale.init(
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: "pending",
+    },
+    delivery_fee: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0,
     },
     receipt_status: {
       type: DataTypes.JSON,
