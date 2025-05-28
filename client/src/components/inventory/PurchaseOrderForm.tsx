@@ -67,7 +67,7 @@ export function PurchaseOrderForm({
           supplierPricing
             ? supplierPricing.cost_price
             : product.price_units?.find((p) => p.is_default)?.buying_price ||
-            "0",
+                "0",
         ),
         selling_price: Number(
           product.price_units?.find((p) => p.is_default)?.selling_price || "0",
@@ -182,8 +182,8 @@ export function PurchaseOrderForm({
                   <div className="font-medium">{item.name}</div>
                   <div className="text-sm text-muted-foreground">
                     Current Stock:{" "}
-                    {products.find((p) => p.id === item.productId)?.stock || 0}
-                    → New Stock:{" "}
+                    {products.find((p) => p.id === item.productId)?.stock || 0}→
+                    New Stock:{" "}
                     {(products.find((p) => p.id === item.productId)?.stock ||
                       0) + item.quantity}
                   </div>

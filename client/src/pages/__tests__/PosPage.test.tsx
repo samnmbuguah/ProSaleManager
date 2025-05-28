@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "../../test/utils";
 import PosPage from "../PosPage";
-import { useToast } from "@/components/ui/use-toast";
 
 // Mock the toast hook
 vi.mock("@/components/ui/use-toast", () => ({

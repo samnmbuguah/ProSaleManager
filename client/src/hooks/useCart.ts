@@ -20,7 +20,11 @@ export function useCart() {
       if (existing) {
         return prev.map((item) =>
           item.product.id === product.id && item.unit_type === unitType
-            ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.unit_price }
+            ? {
+                ...item,
+                quantity: item.quantity + 1,
+                total: (item.quantity + 1) * item.unit_price,
+              }
             : item,
         );
       }
@@ -50,9 +54,7 @@ export function useCart() {
   const updateUnitType = (productId: number, unitType: string) => {
     setItems((prev) =>
       prev.map((item) =>
-        item.product.id === productId
-          ? { ...item, unit_type: unitType }
-          : item,
+        item.product.id === productId ? { ...item, unit_type: unitType } : item,
       ),
     );
   };
@@ -80,4 +82,4 @@ export function useCart() {
     clearCart,
     total,
   };
-} 
+}

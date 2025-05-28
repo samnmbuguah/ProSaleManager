@@ -17,20 +17,13 @@ const CustomersPage = () => {
   const customersStatus = useSelector(
     (state: RootState) => state.customers.status,
   );
+  const isLoading = customersStatus === "loading";
 
   useEffect(() => {
     if (customersStatus === "idle") {
       dispatch(fetchCustomers());
     }
   }, [dispatch, customersStatus]);
-
-  const { data: customersData = [], isLoading } = useQuery({
-    queryKey: ["customers"],
-    queryFn: async () => {
-      const response = await api.get("/customers");
-      return response.data;
-    },
-  });
 
   const createCustomerMutation = useMutation({
     mutationFn: async (
@@ -142,7 +135,7 @@ const CustomersPage = () => {
   }
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="container mx-auto p-4 mt-16">
       <CustomerList
         customers={customers}
         onAdd={handleAddCustomer}

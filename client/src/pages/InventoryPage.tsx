@@ -15,6 +15,7 @@ import {
   setActiveTab,
   setImagePreview,
   setFormData,
+  searchProducts,
 } from "@/store/productsSlice";
 import ProductList from "@/components/inventory/ProductList";
 import ProductFormDialog from "@/components/inventory/ProductFormDialog";
@@ -173,7 +174,8 @@ const InventoryPage: React.FC = () => {
     } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete product",
+        description:
+          error instanceof Error ? error.message : "Failed to delete product",
         variant: "destructive",
       });
     }
@@ -181,12 +183,7 @@ const InventoryPage: React.FC = () => {
 
   const handleSearch = async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/products/search?query=${searchQuery}`,
-      );
-      if (!response.ok) throw new Error("Failed to search products");
-      const data = await response.json();
-      dispatch(fetchProducts(data));
+      await dispatch(searchProducts(searchQuery));
     } catch (error) {
       console.error("Error:", error);
       toast({

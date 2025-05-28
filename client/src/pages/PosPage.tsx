@@ -249,7 +249,7 @@ const PosPage: React.FC = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] overflow-hidden px-2 mx-auto pt-16">
+    <div className="container mx-auto p-4 mt-16">
       <div className="grid grid-cols-12 h-full">
         {/* Products Section */}
         <div className="col-span-8 h-full p-4 overflow-hidden flex flex-col">
@@ -282,7 +282,8 @@ const PosPage: React.FC = () => {
                   const response = await fetch(
                     `${import.meta.env.VITE_API_URL}/products/search?q=${query}`,
                   );
-                  if (!response.ok) throw new Error("Failed to search products");
+                  if (!response.ok)
+                    throw new Error("Failed to search products");
 
                   const data = await response.json();
                   setProducts(data);

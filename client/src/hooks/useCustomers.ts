@@ -9,12 +9,18 @@ interface Customer {
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1500;
 
-async function fetchWithRetry(url: string, options: RequestInit = {}, retries = MAX_RETRIES): Promise<any> {
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit = {},
+  retries = MAX_RETRIES,
+): Promise<unknown> {
   try {
     const response = await fetch(url, options);
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Server returned ${response.status}: ${errorText || "No error details"}`);
+      throw new Error(
+        `Server returned ${response.status}: ${errorText || "No error details"}`,
+      );
     }
     return await response.json();
   } catch (error) {
@@ -35,8 +41,11 @@ export function useCustomers() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchWithRetry(`${import.meta.env.VITE_API_URL}/customers`, { credentials: "include" });
-      setCustomers(data);
+      const data: unknown = await fetchWithRetry(
+        `${import.meta.env.VITE_API_URL}/customers`,
+        { credentials: "include" },
+      );
+      setCustomers(data as Customer[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -45,4 +54,4 @@ export function useCustomers() {
   }, []);
 
   return { customers, isLoading, error, fetchCustomers, setCustomers };
-} 
+}
