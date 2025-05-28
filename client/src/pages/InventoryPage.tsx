@@ -1,26 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Product, ProductFormData, STOCK_UNITS } from "@/types/product";
-import { PRODUCT_CATEGORIES } from "@/constants/categories";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Product } from "@/types/product";
 import Suppliers from "@/components/inventory/Suppliers";
 import { PurchaseOrders } from "@/components/inventory/PurchaseOrders";
 import { useSelector, useDispatch } from "react-redux";
@@ -67,7 +48,13 @@ const InventoryPage: React.FC = () => {
   const formData = useSelector((state: RootState) => state.products.formData);
   const { toast } = useToast();
 
-  const initialFormData: ProductFormData = {
+  const defaultUnits = [
+    { unit_type: "dozen", buying_price: "", selling_price: "", manual: false },
+    { unit_type: "pack", buying_price: "", selling_price: "", manual: false },
+    { unit_type: "piece", buying_price: "", selling_price: "", manual: false },
+  ];
+
+  const initialFormData = {
     name: "",
     product_code: "",
     category: "",
@@ -76,6 +63,7 @@ const InventoryPage: React.FC = () => {
     min_stock: 0,
     buying_price: "0",
     selling_price: "0",
+    price_units: defaultUnits,
   };
 
   useEffect(() => {
@@ -84,17 +72,18 @@ const InventoryPage: React.FC = () => {
     }
   }, [dispatch, productsStatus]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (_unused: unknown, localImageFile?: File) => {
     try {
       const formDataToSend = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
-        if (key !== "image") {
+        if (key === "price_units") {
+          formDataToSend.append("price_units", JSON.stringify(value));
+        } else {
           formDataToSend.append(key, value.toString());
         }
       });
-      if (formData.image) {
-        formDataToSend.append("image", formData.image);
+      if (localImageFile) {
+        formDataToSend.append("image", localImageFile);
       }
       const url = selectedProduct
         ? `${import.meta.env.VITE_API_URL}/products/${selectedProduct.id}`
@@ -123,7 +112,7 @@ const InventoryPage: React.FC = () => {
       dispatch(setIsAddDialogOpen(false));
       dispatch(setIsEditDialogOpen(false));
       dispatch(fetchProducts());
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error:", error);
       toast({
         title: "Error",
@@ -134,6 +123,12 @@ const InventoryPage: React.FC = () => {
   };
 
   const handleEdit = (product: Product) => {
+    const mergedUnits = defaultUnits.map((def) => {
+      const found = (product.price_units || []).find(
+        (u) => u.unit_type === def.unit_type,
+      );
+      return found ? { ...def, ...found } : def;
+    });
     dispatch(setSelectedProduct(product));
     dispatch(
       setFormData({
@@ -145,6 +140,7 @@ const InventoryPage: React.FC = () => {
         min_stock: product.min_stock,
         buying_price: product.buying_price,
         selling_price: product.selling_price,
+        price_units: mergedUnits,
       }),
     );
     dispatch(setImagePreview(product.image_url));
@@ -166,7 +162,7 @@ const InventoryPage: React.FC = () => {
           if (errorData && errorData.message) {
             errorMsg = errorData.message;
           }
-        } catch (e) {}
+        } catch { }
         throw new Error(errorMsg);
       }
       toast({
@@ -174,10 +170,10 @@ const InventoryPage: React.FC = () => {
         description: "Product deleted successfully",
       });
       dispatch(fetchProducts());
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message || "Failed to delete product",
+        description: error instanceof Error ? error.message : "Failed to delete product",
         variant: "destructive",
       });
     }
@@ -215,7 +211,13 @@ const InventoryPage: React.FC = () => {
               setSearchQuery={(q) => dispatch(setSearchQuery(q))}
               onSearch={handleSearch}
             />
-            <Button onClick={() => dispatch(setIsAddDialogOpen(true))}>
+            <Button
+              onClick={() => {
+                dispatch(setFormData(initialFormData));
+                dispatch(setSelectedProduct(null));
+                dispatch(setIsAddDialogOpen(true));
+              }}
+            >
               Add Product
             </Button>
           </>
@@ -231,6 +233,10 @@ const InventoryPage: React.FC = () => {
       <ProductFormDialog
         open={isAddDialogOpen || isEditDialogOpen}
         onOpenChange={(open) => {
+          if (!open) {
+            dispatch(setFormData(initialFormData));
+            dispatch(setSelectedProduct(null));
+          }
           dispatch(setIsAddDialogOpen(open));
           dispatch(setIsEditDialogOpen(open));
         }}

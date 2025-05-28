@@ -54,9 +54,17 @@ const productsSlice = createSlice({
       state.activeTab = action.payload;
     },
     setImagePreview(state, action) {
+      if (typeof action.payload === 'function') {
+        console.warn('setImagePreview: function passed as payload, ignoring.');
+        return;
+      }
       state.imagePreview = action.payload;
     },
     setFormData(state, action) {
+      if (typeof action.payload === 'function') {
+        console.warn('setFormData: function passed as payload, ignoring.');
+        return;
+      }
       state.formData = action.payload;
     },
   },

@@ -118,13 +118,7 @@ export default function InventoryStatus({
                 </TableCell>
                 <TableCell className="text-right">{product.quantity}</TableCell>
                 <TableCell>
-                  <Badge
-                    variant={
-                      status.variant as VariantProps<
-                        typeof badgeVariants
-                      >["variant"]
-                    }
-                  >
+                  <Badge variant={status.variant as unknown}>
                     {status.label}
                   </Badge>
                 </TableCell>
