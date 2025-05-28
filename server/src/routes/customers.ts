@@ -1,7 +1,7 @@
-import express from 'express';
-import { Op } from 'sequelize';
-import Customer from '../models/Customer.js';
-import { authenticate } from '../middleware/auth.middleware.js';
+import express from "express";
+import { Op } from "sequelize";
+import Customer from "../models/Customer.js";
+import { authenticate } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
@@ -9,27 +9,27 @@ const router = express.Router();
 router.use(authenticate);
 
 // Get all customers
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const customers = await Customer.findAll({
-      order: [['name', 'ASC']]
+      order: [["name", "ASC"]],
     });
     res.json(customers);
   } catch (error) {
-    console.error('Error fetching customers:', error);
-    res.status(500).json({ message: 'Failed to fetch customers' });
+    console.error("Error fetching customers:", error);
+    res.status(500).json({ message: "Failed to fetch customers" });
   }
 });
 
 // Search customers
-router.get('/search', async (req, res) => {
+router.get("/search", async (req, res) => {
   try {
     const { q } = req.query;
-    
+
     if (!q) {
       const customers = await Customer.findAll({
         limit: 10,
-        order: [['name', 'ASC']]
+        order: [["name", "ASC"]],
       });
       return res.json(customers);
     }
@@ -40,90 +40,94 @@ router.get('/search', async (req, res) => {
         [Op.or]: [
           { name: { [Op.iLike]: `%${searchQuery}%` } },
           { email: { [Op.iLike]: `%${searchQuery}%` } },
-          { phone: { [Op.iLike]: `%${searchQuery}%` } }
-        ]
+          { phone: { [Op.iLike]: `%${searchQuery}%` } },
+        ],
       },
       limit: 10,
-      order: [['name', 'ASC']]
+      order: [["name", "ASC"]],
     });
 
     res.json(customers);
   } catch (error) {
-    console.error('Error searching customers:', error);
-    res.status(500).json({ message: 'Failed to search customers' });
+    console.error("Error searching customers:", error);
+    res.status(500).json({ message: "Failed to search customers" });
   }
 });
 
 // Create a new customer
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { name, email, phone, address } = req.body;
 
     if (!name || !phone) {
-      return res.status(400).json({ message: 'Name and phone are required' });
+      return res.status(400).json({ message: "Name and phone are required" });
     }
 
     const customer = await Customer.create({
       name,
       email,
       phone,
-      address
+      address,
     });
 
     res.status(201).json(customer);
   } catch (error: any) {
-    console.error('Error creating customer:', error);
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      return res.status(400).json({ message: 'A customer with this email or phone already exists' });
+    console.error("Error creating customer:", error);
+    if (error.name === "SequelizeUniqueConstraintError") {
+      return res.status(400).json({
+        message: "A customer with this email or phone already exists",
+      });
     }
-    res.status(500).json({ message: 'Failed to create customer' });
+    res.status(500).json({ message: "Failed to create customer" });
   }
 });
 
 // Update a customer
-router.put('/:id', async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, phone, address } = req.body;
 
     const customer = await Customer.findByPk(id);
     if (!customer) {
-      return res.status(404).json({ message: 'Customer not found' });
+      return res.status(404).json({ message: "Customer not found" });
     }
 
     await customer.update({
       name,
       email,
       phone,
-      address
+      address,
     });
 
     res.json(customer);
   } catch (error: any) {
-    console.error('Error updating customer:', error);
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      return res.status(400).json({ message: 'A customer with this email or phone already exists' });
+    console.error("Error updating customer:", error);
+    if (error.name === "SequelizeUniqueConstraintError") {
+      return res.status(400).json({
+        message: "A customer with this email or phone already exists",
+      });
     }
-    res.status(500).json({ message: 'Failed to update customer' });
+    res.status(500).json({ message: "Failed to update customer" });
   }
 });
 
 // Delete a customer
-router.delete('/:id', async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const customer = await Customer.findByPk(id);
-    
+
     if (!customer) {
-      return res.status(404).json({ message: 'Customer not found' });
+      return res.status(404).json({ message: "Customer not found" });
     }
 
     await customer.destroy();
-    res.json({ message: 'Customer deleted successfully' });
+    res.json({ message: "Customer deleted successfully" });
   } catch (error) {
-    console.error('Error deleting customer:', error);
-    res.status(500).json({ message: 'Failed to delete customer' });
+    console.error("Error deleting customer:", error);
+    res.status(500).json({ message: "Failed to delete customer" });
   }
 });
 
-export default router; 
+export default router;

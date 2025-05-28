@@ -1,21 +1,21 @@
-import { Request, Response } from 'express';
-import { UserService } from '../services/user.service.js';
-import jwt from 'jsonwebtoken';
-import env from '../config/env.js';
+import { Request, Response } from "express";
+import { UserService } from "../services/user.service.js";
+import jwt from "jsonwebtoken";
+import env from "../config/env.js";
 
 export class AuthController {
   constructor(private userService: UserService) {}
 
   async register(req: Request, res: Response) {
     try {
-      const { email, password, name, role } = req.body;
+      const { email, password, name } = req.body;
 
       // Check if user already exists
       const existingUser = await this.userService.findByEmail(email);
       if (existingUser.success) {
         return res.status(400).json({
           success: false,
-          message: 'User already exists',
+          message: "User already exists",
         });
       }
 
@@ -24,7 +24,7 @@ export class AuthController {
         email,
         password,
         name,
-        role: 'user',
+        role: "user",
       });
 
       if (!result.success) {
@@ -35,28 +35,28 @@ export class AuthController {
       const token = jwt.sign(
         { userId: result.data!.id, role: result.data!.role },
         env.JWT_SECRET,
-        { expiresIn: '24h' }
+        { expiresIn: "24h" },
       );
 
       // Set cookie
-      res.cookie('token', token, {
+      res.cookie("token", token, {
         httpOnly: true,
-        secure: env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: env.NODE_ENV === "production",
+        sameSite: "lax",
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
       });
 
       // Return success without password
-      const { password: _, ...userWithoutPassword } = result.data!.toJSON();
+      const { password: _password, ...userWithoutPassword } = result.data!.toJSON();
       return res.status(201).json({
         success: true,
         data: userWithoutPassword,
-        message: 'User registered successfully',
+        message: "User registered successfully",
       });
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: 'Registration failed. Please try again.',
+        message: "Registration failed. Please try again.",
       });
     }
   }
@@ -68,16 +68,19 @@ export class AuthController {
       if (!email || !password) {
         return res.status(400).json({
           success: false,
-          message: 'Email and password are required',
+          message: "Email and password are required",
         });
       }
 
-      const result = await this.userService.validateCredentials(email, password);
+      const result = await this.userService.validateCredentials(
+        email,
+        password,
+      );
 
       if (!result.success) {
         return res.status(401).json({
           success: false,
-          message: 'Invalid email or password',
+          message: "Invalid email or password",
         });
       }
 
@@ -85,44 +88,44 @@ export class AuthController {
       const token = jwt.sign(
         { userId: result.data!.id, role: result.data!.role },
         env.JWT_SECRET,
-        { expiresIn: '24h' }
+        { expiresIn: "24h" },
       );
 
       // Set cookie
-      res.cookie('token', token, {
+      res.cookie("token", token, {
         httpOnly: true,
-        secure: env.NODE_ENV === 'production',
-        sameSite: env.NODE_ENV === 'production' ? 'strict' : 'lax',
+        secure: env.NODE_ENV === "production",
+        sameSite: env.NODE_ENV === "production" ? "strict" : "lax",
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        path: '/'
+        path: "/",
       });
 
       // Return success without password
-      const { password: _, ...userWithoutPassword } = result.data!.toJSON();
+      const { password: _password, ...userWithoutPassword } = result.data!.toJSON();
       return res.json({
         success: true,
         data: userWithoutPassword,
-        message: 'Login successful',
+        message: "Login successful",
       });
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: 'Login failed. Please try again.',
+        message: "Login failed. Please try again.",
       });
     }
   }
 
   async logout(_req: Request, res: Response) {
     try {
-      res.clearCookie('token');
+      res.clearCookie("token");
       return res.json({
         success: true,
-        message: 'Logged out successfully',
+        message: "Logged out successfully",
       });
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: 'Logout failed. Please try again.',
+        message: "Logout failed. Please try again.",
       });
     }
   }
@@ -133,7 +136,7 @@ export class AuthController {
       if (!token) {
         return res.status(401).json({
           success: false,
-          message: 'Please log in to continue',
+          message: "Please log in to continue",
         });
       }
 
@@ -143,11 +146,11 @@ export class AuthController {
       if (!result.success) {
         return res.status(401).json({
           success: false,
-          message: 'Session expired. Please log in again.',
+          message: "Session expired. Please log in again.",
         });
       }
 
-      const { password: _, ...userWithoutPassword } = result.data!.toJSON();
+      const { password: _password, ...userWithoutPassword } = result.data!.toJSON();
       return res.json({
         success: true,
         data: userWithoutPassword,
@@ -155,8 +158,8 @@ export class AuthController {
     } catch (error) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid session. Please log in again.',
+        message: "Invalid session. Please log in again.",
       });
     }
   }
-} 
+}

@@ -1,13 +1,13 @@
-import twilio from 'twilio';
-import Sale from '../models/Sale.js';
-import Customer from '../models/Customer.js';
-import Product from '../models/Product.js';
-import SaleItem from '../models/SaleItem.js';
+import twilio from "twilio";
+import Sale from "../models/Sale.js";
+import Customer from "../models/Customer.js";
+import Product from "../models/Product.js";
+import SaleItem from "../models/SaleItem.js";
 
 // Initialize Twilio client
 const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
+  process.env.TWILIO_AUTH_TOKEN,
 );
 
 const WHATSAPP_FROM_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER;
@@ -18,15 +18,15 @@ export class ReceiptService {
     const sale = await Sale.findByPk(saleId, {
       include: [
         { model: Customer },
-        { 
+        {
           model: SaleItem,
-          include: [{ model: Product }]
-        }
-      ]
+          include: [{ model: Product }],
+        },
+      ],
     });
 
     if (!sale) {
-      throw new Error('Sale not found');
+      throw new Error("Sale not found");
     }
 
     // Format receipt text
@@ -48,41 +48,44 @@ export class ReceiptService {
     receiptText += `\n------------------\n`;
     receiptText += `Total: KSh ${sale.total_amount}\n`;
     receiptText += `Payment Method: ${sale.payment_method}\n`;
-    
-    if (sale.payment_method === 'cash' && sale.amount_paid) {
+
+    if (sale.payment_method === "cash" && sale.amount_paid) {
       receiptText += `Amount Paid: KSh ${sale.amount_paid}\n`;
       receiptText += `Change: KSh ${sale.amount_paid - sale.total_amount}\n`;
     }
 
     receiptText += `\nThank you for your business!\n`;
-    
+
     return receiptText;
   }
 
-  static async sendWhatsApp(saleId: number, phoneNumber: string): Promise<boolean> {
+  static async sendWhatsApp(
+    saleId: number,
+    phoneNumber: string,
+  ): Promise<boolean> {
     try {
       const receiptText = await this.formatReceiptText(saleId);
-      
+
       await twilioClient.messages.create({
         body: receiptText,
         from: `whatsapp:${WHATSAPP_FROM_NUMBER}`,
-        to: `whatsapp:${phoneNumber}`
+        to: `whatsapp:${phoneNumber}`,
       });
 
       // Update receipt status
       await Sale.update(
-        { 
+        {
           receipt_status: {
             whatsapp: true,
-            last_sent_at: new Date()
-          }
+            last_sent_at: new Date(),
+          },
         },
-        { where: { id: saleId } }
+        { where: { id: saleId } },
       );
 
       return true;
     } catch (error) {
-      console.error('WhatsApp sending error:', error);
+      console.error("WhatsApp sending error:", error);
       return false;
     }
   }
@@ -90,28 +93,28 @@ export class ReceiptService {
   static async sendSMS(saleId: number, phoneNumber: string): Promise<boolean> {
     try {
       const receiptText = await this.formatReceiptText(saleId);
-      
+
       await twilioClient.messages.create({
         body: receiptText,
         from: SMS_FROM_NUMBER,
-        to: phoneNumber
+        to: phoneNumber,
       });
 
       // Update receipt status
       await Sale.update(
-        { 
+        {
           receipt_status: {
             sms: true,
-            last_sent_at: new Date()
-          }
+            last_sent_at: new Date(),
+          },
         },
-        { where: { id: saleId } }
+        { where: { id: saleId } },
       );
 
       return true;
     } catch (error) {
-      console.error('SMS sending error:', error);
+      console.error("SMS sending error:", error);
       return false;
     }
   }
-} 
+}

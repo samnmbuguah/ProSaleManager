@@ -1,41 +1,42 @@
-import User from '../models/User.js';
-import type { ServiceResponse } from '../types/base';
-import bcrypt from 'bcrypt';
+import User from "../models/User.js";
+import type { ServiceResponse } from "../types/base";
+import bcrypt from "bcrypt";
 
 interface CreateUserDTO {
   email: string;
   password: string;
   name: string;
-  role?: 'admin' | 'user';
+  role?: "admin" | "user";
 }
 
 interface UpdateUserDTO {
   email?: string;
   password?: string;
   name?: string;
-  role?: 'admin' | 'user';
+  role?: "admin" | "user";
 }
 
 export class UserService {
   async create(data: CreateUserDTO): Promise<ServiceResponse<User>> {
     try {
-      console.log('Creating user with data:', { ...data, password: '***' });
+      console.log("Creating user with data:", { ...data, password: "***" });
       const user = await User.create({
         ...data,
-        role: data.role || 'user',
+        role: data.role || "user",
       });
-      console.log('User created with hash:', user.password);
+      console.log("User created with hash:", user.password);
 
       return {
         success: true,
         data: user,
-        message: 'User created successfully',
+        message: "User created successfully",
       };
     } catch (error) {
       return {
         success: false,
         data: null,
-        message: error instanceof Error ? error.message : 'Failed to create user',
+        message:
+          error instanceof Error ? error.message : "Failed to create user",
       };
     }
   }
@@ -47,19 +48,19 @@ export class UserService {
         return {
           success: false,
           data: null,
-          message: 'User not found',
+          message: "User not found",
         };
       }
       return {
         success: true,
         data: user,
-        message: 'User found successfully',
+        message: "User found successfully",
       };
     } catch (error) {
       return {
         success: false,
         data: null,
-        message: error instanceof Error ? error.message : 'Failed to find user',
+        message: error instanceof Error ? error.message : "Failed to find user",
       };
     }
   }
@@ -71,31 +72,34 @@ export class UserService {
         return {
           success: false,
           data: null,
-          message: 'User not found',
+          message: "User not found",
         };
       }
       return {
         success: true,
         data: user,
-        message: 'User found successfully',
+        message: "User found successfully",
       };
     } catch (error) {
       return {
         success: false,
         data: null,
-        message: error instanceof Error ? error.message : 'Failed to find user',
+        message: error instanceof Error ? error.message : "Failed to find user",
       };
     }
   }
 
-  async validateCredentials(email: string, password: string): Promise<ServiceResponse<User>> {
+  async validateCredentials(
+    email: string,
+    password: string,
+  ): Promise<ServiceResponse<User>> {
     try {
       const user = await User.findOne({ where: { email } });
       if (!user) {
         return {
           success: false,
           data: null,
-          message: 'Invalid credentials',
+          message: "Invalid credentials",
         };
       }
 
@@ -104,32 +108,38 @@ export class UserService {
         return {
           success: false,
           data: null,
-          message: 'Invalid credentials',
+          message: "Invalid credentials",
         };
       }
 
       return {
         success: true,
         data: user,
-        message: 'Credentials validated successfully',
+        message: "Credentials validated successfully",
       };
     } catch (error) {
       return {
         success: false,
         data: null,
-        message: error instanceof Error ? error.message : 'Failed to validate credentials',
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to validate credentials",
       };
     }
   }
 
-  async update(id: number, data: UpdateUserDTO): Promise<ServiceResponse<User>> {
+  async update(
+    id: number,
+    data: UpdateUserDTO,
+  ): Promise<ServiceResponse<User>> {
     try {
       const user = await User.findByPk(id);
       if (!user) {
         return {
           success: false,
           data: null,
-          message: 'User not found',
+          message: "User not found",
         };
       }
 
@@ -138,14 +148,15 @@ export class UserService {
       return {
         success: true,
         data: user,
-        message: 'User updated successfully',
+        message: "User updated successfully",
       };
     } catch (error) {
       return {
         success: false,
         data: null,
-        message: error instanceof Error ? error.message : 'Failed to update user',
+        message:
+          error instanceof Error ? error.message : "Failed to update user",
       };
     }
   }
-} 
+}

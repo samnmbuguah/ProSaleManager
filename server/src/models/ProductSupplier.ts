@@ -1,5 +1,5 @@
-import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database';
+import { Model, DataTypes } from "sequelize";
+import sequelize from "../config/database";
 
 class ProductSupplier extends Model {
   declare id: number;
@@ -23,16 +23,16 @@ ProductSupplier.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'products',
-        key: 'id',
+        model: "products",
+        key: "id",
       },
     },
     supplier_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'suppliers',
-        key: 'id',
+        model: "suppliers",
+        key: "id",
       },
     },
     cost_price: {
@@ -51,15 +51,15 @@ ProductSupplier.init(
   },
   {
     sequelize,
-    modelName: 'ProductSupplier',
-    tableName: 'product_suppliers',
+    modelName: "ProductSupplier",
+    tableName: "product_suppliers",
     indexes: [
       {
         unique: true,
-        fields: ['product_id', 'supplier_id'],
+        fields: ["product_id", "supplier_id"],
       },
     ],
-  }
+  },
 );
 
-export default ProductSupplier; 
+export default ProductSupplier;

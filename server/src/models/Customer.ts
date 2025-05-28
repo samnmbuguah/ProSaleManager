@@ -1,5 +1,5 @@
-import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database';
+import { Model, DataTypes } from "sequelize";
+import sequelize from "../config/database";
 
 class Customer extends Model {
   declare id: number;
@@ -39,9 +39,9 @@ Customer.init(
   },
   {
     sequelize,
-    modelName: 'Customer',
-    tableName: 'customers',
-  }
+    modelName: "Customer",
+    tableName: "customers",
+  },
 );
 
-export default Customer; 
+export default Customer;

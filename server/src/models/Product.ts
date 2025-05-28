@@ -1,12 +1,12 @@
-import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
+import { Model, DataTypes } from "sequelize";
+import sequelize from "../config/database.js";
 
 class Product extends Model {
   declare id: number;
   declare name: string;
   declare product_code: string | null;
   declare category: string;
-  declare stock_unit: 'piece' | 'pack' | 'dozen';
+  declare stock_unit: "piece" | "pack" | "dozen";
   declare quantity: number;
   declare available_units: number;
   declare min_stock: number;
@@ -38,7 +38,7 @@ Product.init(
       allowNull: false,
     },
     stock_unit: {
-      type: DataTypes.ENUM('piece', 'pack', 'dozen'),
+      type: DataTypes.ENUM("piece", "pack", "dozen"),
       allowNull: false,
     },
     quantity: {
@@ -73,16 +73,16 @@ Product.init(
   },
   {
     sequelize,
-    modelName: 'Product',
-    tableName: 'products',
+    modelName: "Product",
+    tableName: "products",
     hooks: {
       beforeSave: (product: Product) => {
         // Calculate available units based on stock unit and quantity
         switch (product.stock_unit) {
-          case 'dozen':
+          case "dozen":
             product.available_units = product.quantity * 12;
             break;
-          case 'pack':
+          case "pack":
             // Assuming a pack is 6 pieces
             product.available_units = product.quantity * 6;
             break;
@@ -91,7 +91,7 @@ Product.init(
         }
       },
     },
-  }
+  },
 );
 
-export default Product; 
+export default Product;
