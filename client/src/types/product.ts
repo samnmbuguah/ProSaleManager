@@ -6,7 +6,7 @@ export const STOCK_UNITS = ["piece", "pack", "dozen"] as const;
 export const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
   product_code: z.string().optional(),
-  category: z.enum(PRODUCT_CATEGORIES as [string, ...string[]]),
+  category: z.enum(PRODUCT_CATEGORIES as unknown as [string, ...string[]]),
   stock_unit: z.enum(STOCK_UNITS),
   quantity: z.number().min(0, "Quantity cannot be negative"),
   min_stock: z.number().min(0, "Minimum stock cannot be negative"),
@@ -18,6 +18,13 @@ export const productSchema = z.object({
 export type ProductFormData = z.infer<typeof productSchema> & {
   image?: File;
 };
+
+export interface PriceUnit {
+  unit_type: string;
+  buying_price: string;
+  selling_price: string;
+  manual?: boolean;
+}
 
 export interface Product {
   id: number;
@@ -33,4 +40,5 @@ export interface Product {
   image_url: string | null;
   createdAt: string;
   updatedAt: string;
+  price_units?: PriceUnit[];
 }

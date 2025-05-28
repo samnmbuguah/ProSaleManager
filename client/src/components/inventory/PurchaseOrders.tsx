@@ -77,10 +77,13 @@ export function PurchaseOrders() {
   const purchaseOrdersStatus = useSelector(
     (state: RootState) => state.purchaseOrders.status,
   );
-  const [suppliers] = useState<Supplier[]>([]);
-  const [products] = useState<Product[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(
+    null,
+  );
   const [formData, setFormData] = useState<PurchaseOrderFormData>({
     supplier_id: 0,
     expected_delivery_date: "",

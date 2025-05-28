@@ -43,32 +43,31 @@ export function PurchaseOrderForm({
   const form = useForm<PurchaseOrderFormData>({
     resolver: zodResolver(purchaseOrderSchema),
     defaultValues: {
-      supplier_id: "",
+      supplierId: "",
     },
   });
 
-  // eslint-disable-next-line camelcase
-  const addItem = (product_id: string) => {
-    const product = products.find((p) => p.id === parseInt(product_id));
+  const addItem = (productId: string) => {
+    const product = products.find((p) => p.id === parseInt(productId));
     if (!product) return;
 
     // Find preferred supplier price if available
     const supplierPricing = productSuppliers.find(
       (ps) =>
-        Number(ps.product_id) === Number(product_id) &&
-        Number(ps.supplier_id) === Number(form.getValues("supplier_id")),
+        Number(ps.product_id) === Number(productId) &&
+        Number(ps.supplier_id) === Number(form.getValues("supplierId")),
     );
 
     setItems([
       ...items,
       {
-        product_id: parseInt(product_id),
+        productId: parseInt(productId),
         quantity: 1,
         buying_price: Number(
           supplierPricing
             ? supplierPricing.cost_price
             : product.price_units?.find((p) => p.is_default)?.buying_price ||
-                "0",
+            "0",
         ),
         selling_price: Number(
           product.price_units?.find((p) => p.is_default)?.selling_price || "0",
@@ -100,16 +99,15 @@ export function PurchaseOrderForm({
       .toFixed(2);
   };
 
-  // eslint-disable-next-line camelcase
-  const handleSupplierChange = (supplier_id: string) => {
-    form.setValue("supplier_id", supplier_id);
+  const handleSupplierChange = (supplierId: string) => {
+    form.setValue("supplierId", supplierId);
     // Update prices based on selected supplier
     setItems(
       items.map((item) => {
         const supplierPricing = productSuppliers.find(
           (ps) =>
-            Number(ps.product_id) === Number(item.product_id) &&
-            Number(ps.supplier_id) === Number(supplier_id),
+            Number(ps.product_id) === Number(item.productId) &&
+            Number(ps.supplier_id) === Number(supplierId),
         );
         return {
           ...item,
@@ -126,7 +124,7 @@ export function PurchaseOrderForm({
       <form
         onSubmit={form.handleSubmit((data) =>
           onSubmit({
-            supplier_id: parseInt(data.supplier_id),
+            supplierId: parseInt(data.supplierId),
             items,
             total: calculateTotal(),
           }),
@@ -135,7 +133,7 @@ export function PurchaseOrderForm({
       >
         <FormField
           control={form.control}
-          name="supplier_id"
+          name="supplierId"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Supplier</FormLabel>
@@ -184,9 +182,9 @@ export function PurchaseOrderForm({
                   <div className="font-medium">{item.name}</div>
                   <div className="text-sm text-muted-foreground">
                     Current Stock:{" "}
-                    {products.find((p) => p.id === item.product_id)?.stock || 0}
+                    {products.find((p) => p.id === item.productId)?.stock || 0}
                     → New Stock:{" "}
-                    {(products.find((p) => p.id === item.product_id)?.stock ||
+                    {(products.find((p) => p.id === item.productId)?.stock ||
                       0) + item.quantity}
                   </div>
                 </div>

@@ -177,8 +177,7 @@ export function ProductTable({
                 min_stock: editingProduct.min_stock || 0,
                 max_stock: editingProduct.max_stock || 0,
                 reorder_point: editingProduct.reorder_point || 0,
-                stock_unit:
-                  editingProduct.stock_unit as (typeof import("@/types/product").STOCK_UNITS)[number],
+                stock_unit: editingProduct.stock_unit as unknown,
                 price_units: (editingProduct.price_units || []).map((unit) => ({
                   unit_type: unit.unit_type as UnitTypeValues,
                   quantity: Number(unit.quantity),

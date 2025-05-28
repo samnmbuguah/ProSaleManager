@@ -6,7 +6,7 @@ import type { CartItem, Cart } from "@/types/pos";
 // Define the shape of our context state
 interface CartContextType {
   cart: Cart;
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product, unit_type: string, price: number) => void;
   removeFromCart: (itemId: number) => void;
   updateQuantity: (itemId: number, quantity: number) => void;
   updateUnitPrice: (itemId: number, price: number) => void;
@@ -17,7 +17,7 @@ interface CartContextType {
 
 // Define action types
 type CartAction =
-  | { type: "ADD_ITEM"; payload: { product: Product; unitPrice: number } }
+  | { type: "ADD_ITEM"; payload: { product: Product; unitType: string; unitPrice: number } }
   | { type: "REMOVE_ITEM"; payload: { itemId: number } }
   | { type: "UPDATE_QUANTITY"; payload: { itemId: number; quantity: number } }
   | { type: "UPDATE_UNIT_PRICE"; payload: { itemId: number; price: number } }
@@ -36,9 +36,9 @@ const STORAGE_KEY = "pos_cart_v2";
 function cartReducer(state: Cart, action: CartAction): Cart {
   switch (action.type) {
     case "ADD_ITEM": {
-      const { product, unitPrice } = action.payload;
+      const { product, unitType, unitPrice } = action.payload;
       const existingItem = state.items.find(
-        (item) => item.product.id === product.id,
+        (item) => item.product.id === product.id && item.unit_type === unitType,
       );
 
       if (existingItem) {
@@ -49,7 +49,7 @@ function cartReducer(state: Cart, action: CartAction): Cart {
 
         // Update existing item
         const updatedItems = state.items.map((item) => {
-          if (item.product.id === product.id) {
+          if (item.product.id === product.id && item.unit_type === unitType) {
             const newQuantity = item.quantity + 1;
             return {
               ...item,
@@ -74,7 +74,7 @@ function cartReducer(state: Cart, action: CartAction): Cart {
         quantity: 1,
         unit_price: unitPrice,
         total: unitPrice,
-        unit_type: product.stock_unit,
+        unit_type: unitType,
       };
 
       const updatedItems = [...state.items, newItem];
@@ -313,9 +313,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   // Action creators
-  const addToCart = (product: Product) => {
-    const unitPrice = calculateUnitPrice(product);
-    dispatch({ type: "ADD_ITEM", payload: { product, unitPrice } });
+  const addToCart = (product: Product, unitType: string, unitPrice: number) => {
+    dispatch({ type: "ADD_ITEM", payload: { product, unitType, unitPrice } });
   };
 
   const removeFromCart = (itemId: number) => {
