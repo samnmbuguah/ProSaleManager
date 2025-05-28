@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
 
 interface Transaction {
   id: number;

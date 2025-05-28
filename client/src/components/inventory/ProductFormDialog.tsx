@@ -112,7 +112,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   // Handler to allow manual override
   const handleManualOverride = (unit, field) => {
     const updatedUnits = priceUnits.map((u) =>
-      u.unit_type === unit ? { ...u, manual: true } : u
+      u.unit_type === unit ? { ...u, manual: true } : u,
     );
     setFormData({ ...formData, price_units: updatedUnits });
   };
@@ -128,12 +128,15 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
             Fill in the product details below.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={e => {
-          e.preventDefault();
-          if (typeof onSubmit === 'function') {
-            onSubmit(e, localImageFile);
-          }
-        }} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (typeof onSubmit === "function") {
+              onSubmit(e, localImageFile);
+            }
+          }}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <Label htmlFor="image">Product Image (Optional)</Label>
             <Input
@@ -243,14 +246,24 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
             <div className="grid grid-cols-3 gap-4">
               {priceUnits.map((unit) => (
                 <div key={unit.unit_type} className="border rounded p-2">
-                  <div className="font-semibold capitalize mb-1">{unit.unit_type}</div>
+                  <div className="font-semibold capitalize mb-1">
+                    {unit.unit_type}
+                  </div>
                   <div>
                     <Label>Buying Price</Label>
                     <Input
                       type="number"
                       value={unit.buying_price}
-                      onChange={e => handlePriceChange(unit.unit_type, "buying_price", e.target.value)}
-                      onFocus={() => handleManualOverride(unit.unit_type, "buying_price")}
+                      onChange={(e) =>
+                        handlePriceChange(
+                          unit.unit_type,
+                          "buying_price",
+                          e.target.value,
+                        )
+                      }
+                      onFocus={() =>
+                        handleManualOverride(unit.unit_type, "buying_price")
+                      }
                     />
                   </div>
                   <div>
@@ -258,11 +271,23 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                     <Input
                       type="number"
                       value={unit.selling_price}
-                      onChange={e => handlePriceChange(unit.unit_type, "selling_price", e.target.value)}
-                      onFocus={() => handleManualOverride(unit.unit_type, "selling_price")}
+                      onChange={(e) =>
+                        handlePriceChange(
+                          unit.unit_type,
+                          "selling_price",
+                          e.target.value,
+                        )
+                      }
+                      onFocus={() =>
+                        handleManualOverride(unit.unit_type, "selling_price")
+                      }
                     />
                   </div>
-                  {unit.manual && <div className="text-xs text-green-600 mt-1">Manual override</div>}
+                  {unit.manual && (
+                    <div className="text-xs text-green-600 mt-1">
+                      Manual override
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

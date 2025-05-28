@@ -1,17 +1,14 @@
 import React from "react";
-import type { Product } from "@/types/product";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Minus, Plus, ShoppingCart } from "lucide-react";
 import { CartItem } from "../../types/pos";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { PriceUnit } from "@/types/product";
 
 interface CartProps {
   items: CartItem[];
-  onUpdateQuantity: (productId: number, unitType: string, quantity: number) => void;
-  onUpdateUnitType: (productId: number, unitType: string) => void;
-  onUpdateUnitPrice: (productId: number, price: number) => void;
+  onUpdateQuantity: (
+    productId: number,
+    unitType: string,
+    quantity: number,
+  ) => void;
   onCheckout: () => void;
   total: number;
 }
@@ -19,8 +16,6 @@ interface CartProps {
 export const Cart: React.FC<CartProps> = ({
   items,
   onUpdateQuantity,
-  onUpdateUnitType,
-  onUpdateUnitPrice,
   onCheckout,
   total,
 }) => {
@@ -34,7 +29,6 @@ export const Cart: React.FC<CartProps> = ({
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center gap-2 mb-4">
-        <ShoppingCart className="h-5 w-5" />
         <h2 className="text-lg font-semibold">Current Sale</h2>
       </div>
 
@@ -44,7 +38,10 @@ export const Cart: React.FC<CartProps> = ({
         ) : (
           <div className="space-y-2">
             {items.map((item) => (
-              <div key={item.product.id} className="flex items-center gap-2 border-b pb-2">
+              <div
+                key={item.product.id}
+                className="flex items-center gap-2 border-b pb-2"
+              >
                 <div className="flex-1">
                   <div className="font-bold">{item.product.name}</div>
                   <div className="text-xs text-gray-500">{item.unit_type}</div>
@@ -53,17 +50,18 @@ export const Cart: React.FC<CartProps> = ({
                   type="number"
                   min={1}
                   value={item.quantity}
-                  onChange={(e) => onUpdateQuantity(item.product.id, item.unit_type, Number(e.target.value))}
+                  onChange={(e) =>
+                    onUpdateQuantity(
+                      item.product.id,
+                      item.unit_type,
+                      Number(e.target.value),
+                    )
+                  }
                   className="w-16 border rounded px-1"
                 />
-                <input
-                  type="number"
-                  min={0}
-                  value={item.unit_price}
-                  onChange={(e) => onUpdateUnitPrice(item.product.id, Number(e.target.value))}
-                  className="w-20 border rounded px-1"
-                />
-                <div className="w-20 text-right">KSh {item.total.toFixed(2)}</div>
+                <div className="w-20 text-right">
+                  KSh {item.total.toFixed(2)}
+                </div>
               </div>
             ))}
           </div>

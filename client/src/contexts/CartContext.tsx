@@ -17,7 +17,10 @@ interface CartContextType {
 
 // Define action types
 type CartAction =
-  | { type: "ADD_ITEM"; payload: { product: Product; unitType: string; unitPrice: number } }
+  | {
+      type: "ADD_ITEM";
+      payload: { product: Product; unitType: string; unitPrice: number };
+    }
   | { type: "REMOVE_ITEM"; payload: { itemId: number } }
   | { type: "UPDATE_QUANTITY"; payload: { itemId: number; quantity: number } }
   | { type: "UPDATE_UNIT_PRICE"; payload: { itemId: number; price: number } }
@@ -298,19 +301,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
       console.error("Error saving cart to localStorage:", error);
     }
   }, [cart]);
-
-  // Helper function to calculate unit price
-  const calculateUnitPrice = (product: Product): number => {
-    const numericPrice = parseFloat(product.selling_price);
-    switch (product.stock_unit) {
-      case "dozen":
-        return numericPrice / 12;
-      case "pack":
-        return numericPrice / 6;
-      default:
-        return numericPrice;
-    }
-  };
 
   // Action creators
   const addToCart = (product: Product, unitType: string, unitPrice: number) => {

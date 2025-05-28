@@ -73,6 +73,7 @@ import suppliersRoutes from "./routes/suppliers.js";
 import expensesRoutes from "./routes/expenses.js";
 import purchaseOrdersRouter from "./routes/purchase-orders.js";
 import seedRoutes from "./routes/seed.js";
+import productSuppliersRoutes from "./routes/product-suppliers.js";
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productsRoutes);
@@ -82,6 +83,7 @@ app.use("/api/suppliers", suppliersRoutes);
 app.use("/api/expenses", expensesRoutes);
 app.use("/api/purchase-orders", purchaseOrdersRouter);
 app.use("/api/seed", seedRoutes);
+app.use("/api/product-suppliers", productSuppliersRoutes);
 
 // Health check endpoint
 app.get("/api/health", (_, res) => {

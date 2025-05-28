@@ -23,8 +23,6 @@ import {
   PaginationContent,
   PaginationItem,
   PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -80,7 +78,7 @@ export function SalesPage() {
     },
   });
 
-  const { data: saleItems, isLoading: isLoadingSaleItems } = useQuery<
+  const { isLoading: isLoadingSaleItems } = useQuery<
     SaleItem[]
   >({
     queryKey: ["sale-items", selectedSale?.id],
@@ -123,7 +121,7 @@ export function SalesPage() {
   };
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="container mx-auto p-4 mt-16">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Sales History</h1>
         <Dialog>
@@ -278,8 +276,9 @@ export function SalesPage() {
           </DialogHeader>
 
           {selectedSale && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-8">
+              {/* Summary Section */}
+              <div className="flex flex-col md:grid md:grid-cols-3 gap-6 md:gap-4 border-b pb-6">
                 <div>
                   <h3 className="font-semibold mb-2">Customer Information</h3>
                   <p>{selectedSale.customer?.name || "Walk-in Customer"}</p>
@@ -308,6 +307,31 @@ export function SalesPage() {
                     </Badge>
                   </p>
                   <p>Total: {formatCurrency(selectedSale.total_amount)}</p>
+                  {selectedSale.change_amount && (
+                    <p>
+                      Change Given: {formatCurrency(selectedSale.change_amount)}
+                    </p>
+                  )}
+                  {selectedSale.receiptStatus && (
+                    <div className="mt-2 flex gap-2">
+                      <Badge
+                        variant={
+                          selectedSale.receiptStatus.sms ? "default" : "outline"
+                        }
+                      >
+                        SMS
+                      </Badge>
+                      <Badge
+                        variant={
+                          selectedSale.receiptStatus.whatsapp
+                            ? "default"
+                            : "outline"
+                        }
+                      >
+                        WhatsApp
+                      </Badge>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">Sale Information</h3>
@@ -318,9 +342,12 @@ export function SalesPage() {
                       selectedSale.user?.email ||
                       "Unknown User"}
                   </p>
+                  {selectedSale.status && <p>Status: {selectedSale.status}</p>}
+                  {selectedSale.id && <p>Sale ID: {selectedSale.id}</p>}
                 </div>
               </div>
 
+              {/* Items Section */}
               <div>
                 <h3 className="font-semibold mb-2">Items</h3>
                 {isLoadingSaleItems ? (
@@ -328,7 +355,7 @@ export function SalesPage() {
                     <Loader2 className="h-4 w-4 animate-spin" />
                   </div>
                 ) : (
-                  <div className="rounded-md border">
+                  <div className="rounded-md border overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>

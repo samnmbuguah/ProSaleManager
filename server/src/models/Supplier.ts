@@ -7,6 +7,7 @@ class Supplier extends Model {
   declare email: string;
   declare phone: string | null;
   declare address: string | null;
+  declare contact_person: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -35,6 +36,10 @@ Supplier.init(
       allowNull: true,
     },
     address: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    contact_person: {
       type: DataTypes.STRING,
       allowNull: true,
     },

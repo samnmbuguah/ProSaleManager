@@ -125,7 +125,12 @@ export default function MainNav() {
                 </Button>
               </Link>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleLogout} className="hover:bg-accent">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              className="hover:bg-accent"
+            >
               <LogOut className="h-4 w-4" />
             </Button>
           </div>

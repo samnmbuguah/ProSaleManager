@@ -127,7 +127,7 @@ export default function ExpensesPage() {
   }
 
   return (
-    <div className="space-y-6 px-4 sm:px-6 md:px-8 max-w-6xl mx-auto">
+    <div className="container mx-auto p-4 mt-16 space-y-6">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Expense Tracker</h2>
         <p className="text-muted-foreground">

@@ -4,12 +4,18 @@ import type { Product } from "@/types/product";
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1500;
 
-async function fetchWithRetry(url: string, options: RequestInit = {}, retries = MAX_RETRIES): Promise<any> {
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit = {},
+  retries = MAX_RETRIES,
+): Promise<unknown> {
   try {
     const response = await fetch(url, options);
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Server returned ${response.status}: ${errorText || "No error details"}`);
+      throw new Error(
+        `Server returned ${response.status}: ${errorText || "No error details"}`,
+      );
     }
     return await response.json();
   } catch (error) {
@@ -30,8 +36,11 @@ export function useProducts() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchWithRetry(`${import.meta.env.VITE_API_URL}/products`, { credentials: "include" });
-      setProducts(data);
+      const data: unknown = await fetchWithRetry(
+        `${import.meta.env.VITE_API_URL}/products`,
+        { credentials: "include" },
+      );
+      setProducts(data as Product[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -40,4 +49,4 @@ export function useProducts() {
   }, []);
 
   return { products, isLoading, error, fetchProducts, setProducts };
-} 
+}

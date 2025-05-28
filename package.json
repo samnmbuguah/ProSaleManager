@@ -15,7 +15,8 @@
     "db:seed:undo:all": "cd server && npx sequelize-cli db:seed:undo:all",
     "db:migrate:status": "cd server && npx sequelize-cli db:migrate:status",
     "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest tests/e2e",
-    "test:e2e:watch": "NODE_OPTIONS=--experimental-vm-modules jest tests/e2e --watch"
+    "test:e2e:watch": "NODE_OPTIONS=--experimental-vm-modules jest tests/e2e --watch",
+    "seed": "cd server && npm run seed"
   },
   "keywords": [],
   "author": "",

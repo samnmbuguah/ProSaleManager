@@ -12,6 +12,41 @@ export const fetchProducts = createAsyncThunk(
   },
 );
 
+export const searchProducts = createAsyncThunk(
+  "products/searchProducts",
+  async (query: string) => {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/products/search?query=${encodeURIComponent(query)}`,
+      {
+        credentials: "include",
+      },
+    );
+    if (!response.ok) throw new Error("Failed to search products");
+    return await response.json();
+  },
+);
+
+export const updateProduct = createAsyncThunk(
+  "products/updateProduct",
+  async (
+    { id, data }: { id: number; data: Partial<ProductFormData> },
+    { dispatch },
+  ) => {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/products/${id}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      },
+    );
+    if (!response.ok) throw new Error("Failed to update product");
+    await dispatch(fetchProducts());
+    return await response.json();
+  },
+);
+
 const initialFormData: ProductFormData = {
   name: "",
   product_code: "",
@@ -54,15 +89,15 @@ const productsSlice = createSlice({
       state.activeTab = action.payload;
     },
     setImagePreview(state, action) {
-      if (typeof action.payload === 'function') {
-        console.warn('setImagePreview: function passed as payload, ignoring.');
+      if (typeof action.payload === "function") {
+        console.warn("setImagePreview: function passed as payload, ignoring.");
         return;
       }
       state.imagePreview = action.payload;
     },
     setFormData(state, action) {
-      if (typeof action.payload === 'function') {
-        console.warn('setFormData: function passed as payload, ignoring.');
+      if (typeof action.payload === "function") {
+        console.warn("setFormData: function passed as payload, ignoring.");
         return;
       }
       state.formData = action.payload;
@@ -78,6 +113,27 @@ const productsSlice = createSlice({
         state.items = action.payload;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.error.message || null;
+      })
+      .addCase(searchProducts.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(searchProducts.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.items = action.payload;
+      })
+      .addCase(searchProducts.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.error.message || null;
+      })
+      .addCase(updateProduct.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(updateProduct.fulfilled, (state) => {
+        state.status = "succeeded";
+      })
+      .addCase(updateProduct.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.error.message || null;
       });

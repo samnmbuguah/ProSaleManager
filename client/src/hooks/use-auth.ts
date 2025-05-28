@@ -61,10 +61,12 @@ export const useAuth = () => {
       toast({
         variant: "destructive",
         title: "Authentication Error",
-        description:
-          axios.isAxiosError(error)
-            ? error.response?.data?.message || "Session expired. Please log in again."
-            : (error instanceof Error ? error.message : "Session expired. Please log in again."),
+        description: axios.isAxiosError(error)
+          ? error.response?.data?.message ||
+            "Session expired. Please log in again."
+          : error instanceof Error
+            ? error.message
+            : "Session expired. Please log in again.",
       });
     }
 
@@ -134,12 +136,13 @@ export const useAuth = () => {
         toast({
           variant: "destructive",
           title: "Login Failed",
-          description:
-            axios.isAxiosError(error)
-              ? error.response?.data?.message || error.message || "Failed to log in"
-              : error instanceof Error
-                ? error.message
-                : "Failed to log in",
+          description: axios.isAxiosError(error)
+            ? error.response?.data?.message ||
+              error.message ||
+              "Failed to log in"
+            : error instanceof Error
+              ? error.message
+              : "Failed to log in",
         });
       }
       throw error;
