@@ -31,6 +31,9 @@ import { format } from "date-fns";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "@/store";
 import { fetchPurchaseOrders } from "@/store/purchaseOrdersSlice";
+import { useSuppliers } from "@/hooks/use-suppliers";
+import { useInventory } from "@/hooks/use-inventory";
+import { ProductSearch } from "@/components/pos/ProductSearch";
 
 interface PurchaseOrder {
   id: number;
@@ -77,13 +80,10 @@ export function PurchaseOrders() {
   const purchaseOrdersStatus = useSelector(
     (state: RootState) => state.purchaseOrders.status,
   );
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const { suppliers = [], productSuppliers = [] } = useSuppliers();
+  const { products = [] } = useInventory();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(
-    null,
-  );
   const [formData, setFormData] = useState<PurchaseOrderFormData>({
     supplier_id: 0,
     expected_delivery_date: "",
@@ -138,6 +138,18 @@ export function PurchaseOrders() {
       ...prev,
       items: prev.items.filter((_, i) => i !== index),
     }));
+  };
+
+  const handleProductSelect = (index: number, product: Product) => {
+    setFormData((prev) => {
+      const newItems = [...prev.items];
+      newItems[index] = {
+        ...newItems[index],
+        product_id: product.id,
+        unit_price: Number(product.buying_price),
+      };
+      return { ...prev, items: newItems };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -271,23 +283,11 @@ export function PurchaseOrders() {
         <Label>Items</Label>
         {formData.items.map((item, index) => (
           <div key={index} className="grid grid-cols-3 gap-2 mt-2">
-            <Select
-              value={item.product_id.toString()}
-              onValueChange={(value) =>
-                handleItemChange(index, "product_id", parseInt(value))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a product" />
-              </SelectTrigger>
-              <SelectContent>
-                {products.map((product) => (
-                  <SelectItem key={product.id} value={product.id.toString()}>
-                    {product.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ProductSearch
+              products={products}
+              onSelect={(product) => handleProductSelect(index, product)}
+              searchProducts={async () => { }}
+            />
             <Input
               type="number"
               min="1"
