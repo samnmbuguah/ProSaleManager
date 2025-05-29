@@ -1,11 +1,13 @@
-import request from "supertest";
+const request = require('supertest');
+const app = require('../../app'); // Adjust path as needed
+import { jest, describe, it, expect } from '@jest/globals';
 import express from "express";
-import { ReceiptService } from "../../services/receipt.service.js";
-import salesRoutes from "../../routes/sales.js";
+import { ReceiptService } from "../../services/receipt.service";
+import salesRoutes from "../../routes/sales";
 import type { Request, Response, NextFunction } from "express";
 
 // Mock the receipt service
-jest.mock("../../services/receipt.service.js", () => ({
+jest.mock("../../services/receipt.service", () => ({
   ReceiptService: {
     sendWhatsApp: jest.fn(),
     sendSMS: jest.fn(),

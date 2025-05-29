@@ -1,15 +1,14 @@
-import { ReceiptService } from "../../services/receipt.service.js";
+import { ReceiptService } from "../../services/receipt.service";
+import { jest, describe, it, expect } from '@jest/globals';
 
 // Mock the twilio and Sale model
-jest.mock("twilio", () => {
-  return jest.fn().mockImplementation(() => ({
-    messages: {
-      create: jest.fn().mockResolvedValue({ sid: "test-sid" }),
-    },
-  }));
-});
+jest.mock("twilio", () => ({
+  messages: {
+    create: jest.fn().mockResolvedValue({ sid: "test-sid" }),
+  },
+}));
 
-jest.mock("../../models/Sale.js", () => ({
+jest.mock("../../models/Sale", () => ({
   default: {
     findByPk: jest.fn().mockResolvedValue({
       id: 1,
@@ -31,15 +30,15 @@ jest.mock("../../models/Sale.js", () => ({
 }));
 
 // Mock additional dependencies
-jest.mock("../../models/Customer.js", () => ({
+jest.mock("../../models/Customer", () => ({
   default: {},
 }));
 
-jest.mock("../../models/Product.js", () => ({
+jest.mock("../../models/Product", () => ({
   default: {},
 }));
 
-jest.mock("../../models/SaleItem.js", () => ({
+jest.mock("../../models/SaleItem", () => ({
   default: {},
 }));
 

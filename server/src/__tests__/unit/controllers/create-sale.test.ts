@@ -7,18 +7,18 @@ import {
   beforeEach,
   afterEach,
 } from "@jest/globals";
-import { createSale } from "../../../controllers/sales.controller.js";
+import { createSale } from "../../../src/controllers/sales.controller";
 import Sale from "../../../models/Sale.js";
 import SaleItem from "../../../models/SaleItem.js";
 import sequelize from "../../../config/database.js";
 
 // Manually mock the models and database
-jest.mock("../../../models/Sale.js", () => ({
+jest.mock("../../../models/Sale", () => ({
   create: jest.fn(),
   findByPk: jest.fn(),
 }));
 
-jest.mock("../../../models/SaleItem.js", () => ({
+jest.mock("../../../models/SaleItem", () => ({
   create: jest.fn(),
 }));
 

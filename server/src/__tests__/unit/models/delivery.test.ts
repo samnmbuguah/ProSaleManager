@@ -1,7 +1,9 @@
-import Product from "../../../models/Product.js";
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+import Product from "../../../models/Product";
+import { createDelivery } from "../../../services/delivery.service"; // Adjust path if necessary
 
 // Mock the Product model and database
-jest.mock("../../../models/Product.js", () => ({
+jest.mock("../../../models/Product", () => ({
   default: {
     findOne: jest.fn(),
     create: jest.fn(),

@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { jest, describe, it, expect, beforeEach } from "@jest/globals";
-import { getSaleById } from "../../../controllers/sales.controller.js";
-import Sale from "../../../models/Sale.js";
+import { getSaleById } from "../../../controllers/sales.controller";
+import Sale from "../../../models/Sale";
 
 // Manually mock the Sale model methods
-jest.mock("../../../models/Sale.js", () => ({
+jest.mock("../../../models/Sale", () => ({
   findByPk: jest.fn(),
 }));
 
