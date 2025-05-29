@@ -80,7 +80,7 @@ export function PurchaseOrders() {
   const purchaseOrdersStatus = useSelector(
     (state: RootState) => state.purchaseOrders.status,
   );
-  const { suppliers = [], productSuppliers = [] } = useSuppliers();
+  const { suppliers = [] } = useSuppliers();
   const { products = [] } = useInventory();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -286,7 +286,7 @@ export function PurchaseOrders() {
             <ProductSearch
               products={products}
               onSelect={(product) => handleProductSelect(index, product)}
-              searchProducts={async () => { }}
+              searchProducts={async () => {}}
             />
             <Input
               type="number"
