@@ -17,7 +17,7 @@ describe("PosPage", () => {
     vi.clearAllMocks();
 
     // Mock successful products response
-    (global.fetch as any).mockResolvedValueOnce({
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => [
         {
@@ -32,7 +32,7 @@ describe("PosPage", () => {
     });
 
     // Mock successful customers response
-    (global.fetch as any).mockResolvedValueOnce({
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: async () => [{ id: 1, name: "Test Customer" }],
     });
