@@ -33,9 +33,9 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
       </div>
       <div className="grid grid-cols-2 gap-2">
         {products.map((product) => (
-          <div
+          <button
             key={product.id}
-            className="border rounded p-2 cursor-pointer hover:bg-gray-100"
+            className="border rounded p-2 cursor-pointer hover:bg-gray-100 text-left w-full"
             onClick={() =>
               onSelect(
                 product,
@@ -47,7 +47,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
             <div className="font-bold">{product.name}</div>
             <div className="text-sm text-gray-500">{product.category}</div>
             <div className="text-sm">KSh {product.selling_price}</div>
-          </div>
+          </button>
         ))}
       </div>
     </div>
