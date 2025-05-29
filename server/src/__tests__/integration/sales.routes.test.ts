@@ -1,11 +1,11 @@
-import request from "supertest";
-import express from "express";
+const request = require('supertest');
+const app = require('../../app'); // Adjust path as needed
+import { jest, describe, it, expect } from '@jest/globals';
 import router from "../../routes/sales.js";
 import { ReceiptService } from "../../services/receipt.service.js";
-import { jest } from "@jest/globals";
 
 // Mock dependencies
-jest.mock("../../services/receipt.service.js", () => ({
+jest.mock("../../services/receipt.service", () => ({
   ReceiptService: {
     sendWhatsApp: jest.fn(),
     sendSMS: jest.fn(),
@@ -13,7 +13,7 @@ jest.mock("../../services/receipt.service.js", () => ({
 }));
 
 // Mock authentication middleware
-jest.mock("../../middleware/auth.middleware.js", () => ({
+jest.mock("../../middleware/auth.middleware", () => ({
   authenticate: (req, res, next) => next(),
 }));
 
@@ -25,9 +25,9 @@ jest.mock("../../controllers/sales.controller.js", () => ({
 }));
 
 // Create test Express app
-const app = express();
-app.use(express.json());
-app.use("/sales", router);
+const testApp = express();
+testApp.use(express.json());
+testApp.use("/sales", router);
 
 describe("Sales Routes", () => {
   beforeEach(() => {
@@ -39,7 +39,7 @@ describe("Sales Routes", () => {
       // Mock successful WhatsApp sending
       (ReceiptService.sendWhatsApp as jest.Mock).mockResolvedValue(true);
 
-      const response = await request(app).post("/sales/1/send-receipt").send({
+      const response = await request(testApp).post("/sales/1/send-receipt").send({
         method: "whatsapp",
         phoneNumber: "+254712345678",
       });
@@ -58,7 +58,7 @@ describe("Sales Routes", () => {
       // Mock successful SMS sending
       (ReceiptService.sendSMS as jest.Mock).mockResolvedValue(true);
 
-      const response = await request(app).post("/sales/1/send-receipt").send({
+      const response = await request(testApp).post("/sales/1/send-receipt").send({
         method: "sms",
         phoneNumber: "+254712345678",
       });
@@ -71,7 +71,7 @@ describe("Sales Routes", () => {
     });
 
     it("should return 400 when phone number is missing", async () => {
-      const response = await request(app).post("/sales/1/send-receipt").send({
+      const response = await request(testApp).post("/sales/1/send-receipt").send({
         method: "whatsapp",
       });
 
@@ -81,7 +81,7 @@ describe("Sales Routes", () => {
     });
 
     it("should return 400 for invalid method", async () => {
-      const response = await request(app).post("/sales/1/send-receipt").send({
+      const response = await request(testApp).post("/sales/1/send-receipt").send({
         method: "invalid",
         phoneNumber: "+254712345678",
       });
@@ -98,7 +98,7 @@ describe("Sales Routes", () => {
       // Mock failed WhatsApp sending
       (ReceiptService.sendWhatsApp as jest.Mock).mockResolvedValue(false);
 
-      const response = await request(app).post("/sales/1/send-receipt").send({
+      const response = await request(testApp).post("/sales/1/send-receipt").send({
         method: "whatsapp",
         phoneNumber: "+254712345678",
       });

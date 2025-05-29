@@ -1,5 +1,6 @@
-import { ReceiptService } from "../../../services/receipt.service.js";
+import { ReceiptService } from "../../../services/receipt.service";
 import twilio from "twilio";
+import { jest, describe, beforeEach, it, expect } from '@jest/globals';
 
 // Mock dependencies
 jest.mock("twilio", () => {
@@ -11,19 +12,19 @@ jest.mock("twilio", () => {
 });
 
 // Mock all models at once
-jest.mock("../../../models/Sale.js", () => ({
+jest.mock("../../../models/Sale", () => ({
   default: {
     findByPk: jest.fn(),
     update: jest.fn().mockResolvedValue([1]),
   },
 }));
 
-jest.mock("../../../models/SaleItem.js", () => ({ default: {} }));
-jest.mock("../../../models/Customer.js", () => ({ default: {} }));
-jest.mock("../../../models/Product.js", () => ({ default: {} }));
+jest.mock("../../../models/SaleItem", () => ({ default: {} }));
+jest.mock("../../../models/Customer", () => ({ default: {} }));
+jest.mock("../../../models/Product", () => ({ default: {} }));
 
 // Import the mocked Sale to use in tests
-import Sale from "../../../models/Sale.js";
+import Sale from "../../../models/Sale";
 
 describe("ReceiptService", () => {
   beforeEach(() => {
