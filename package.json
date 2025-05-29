@@ -7,16 +7,18 @@
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:client": "cd client && npm run dev",
     "dev:server": "cd server && npm run dev",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
     "install:all": "npm install && cd client && npm install && cd ../server && npm install",
+    "db:generate": "cd server && npx sequelize-cli migration:generate --name",
     "db:migrate": "cd server && npx sequelize-cli db:migrate",
     "db:migrate:undo": "cd server && npx sequelize-cli db:migrate:undo",
     "db:migrate:undo:all": "cd server && npx sequelize-cli db:migrate:undo:all",
     "db:seed:all": "cd server && npx sequelize-cli db:seed:all",
     "db:seed:undo:all": "cd server && npx sequelize-cli db:seed:undo:all",
-    "db:migrate:status": "cd server && npx sequelize-cli db:migrate:status",
     "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest tests/e2e",
-    "test:e2e:watch": "NODE_OPTIONS=--experimental-vm-modules jest tests/e2e --watch",
-    "seed": "cd server && npm run seed"
+    "test:e2e:watch": "NODE_OPTIONS=--experimental-vm-modules jest tests/e2e --watch"
   },
   "keywords": [],
   "author": "",
@@ -31,7 +33,5 @@
     "tailwindcss": "^3.4.3",
     "ts-jest": "^29.3.4"
   },
-  "dependencies": {
-    "@radix-ui/react-separator": "^1.1.7"
-  }
+  "dependencies": {}
 }
