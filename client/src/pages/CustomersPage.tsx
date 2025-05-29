@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import CustomerList from "../components/customers/CustomerList";
-import type { Customer } from "@/types/schema";
 import { useToast } from "@/components/ui/use-toast";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "@/store";
@@ -41,7 +40,8 @@ const CustomersPage = () => {
     },
     onError: (error: unknown) => {
       const message =
-        (error as any)?.response?.data?.message ||
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message ||
         (error as Error).message ||
         "Failed to add customer";
       toast({
@@ -72,7 +72,8 @@ const CustomersPage = () => {
     },
     onError: (error: unknown) => {
       const message =
-        (error as any)?.response?.data?.message ||
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message ||
         (error as Error).message ||
         "Failed to update customer";
       toast({
@@ -96,7 +97,8 @@ const CustomersPage = () => {
     },
     onError: (error: unknown) => {
       const message =
-        (error as any)?.response?.data?.message ||
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message ||
         (error as Error).message ||
         "Failed to delete customer";
       toast({
