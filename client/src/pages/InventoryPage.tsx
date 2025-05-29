@@ -163,7 +163,7 @@ const InventoryPage: React.FC = () => {
           if (errorData && errorData.message) {
             errorMsg = errorData.message;
           }
-        } catch { }
+        } catch {}
         throw new Error(errorMsg);
       }
       toast({
