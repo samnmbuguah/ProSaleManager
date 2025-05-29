@@ -78,9 +78,7 @@ export function SalesPage() {
     },
   });
 
-  const { isLoading: isLoadingSaleItems } = useQuery<
-    SaleItem[]
-  >({
+  const { isLoading: isLoadingSaleItems } = useQuery<SaleItem[]>({
     queryKey: ["sale-items", selectedSale?.id],
     queryFn: async () => {
       if (!selectedSale) return [];
