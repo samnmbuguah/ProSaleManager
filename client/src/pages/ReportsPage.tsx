@@ -1,18 +1,16 @@
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProductPerformance from "../components/reports/ProductPerformance";
-import CustomerHistory from "../components/reports/CustomerHistory";
 import InventoryStatus from "../components/reports/InventoryStatus";
 import { useInventory } from "@/hooks/use-inventory";
 
 export default function ReportsPage() {
   const { products, isLoading } = useInventory();
 
-  const handleDateRangeChange = (start: Date, end: Date) => {
+  const handleDateRangeChange = () => {
     // Implementation of handleDateRangeChange
   };
 
-  const handleSortChange = (value: string) => {
+  const handleSortChange = () => {
     // Implementation of handleSortChange
   };
 
@@ -22,8 +20,6 @@ export default function ReportsPage() {
         `/api/products/search?q=${encodeURIComponent(query)}`,
       );
       if (!response.ok) throw new Error("Failed to search products");
-      const data = await response.json();
-      // Implementation of handleSearch
     } catch (error) {
       console.error("Error searching products:", error);
     }
@@ -36,8 +32,6 @@ export default function ReportsPage() {
         : "/api/products";
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to filter products");
-      const data = await response.json();
-      // Implementation of handleFilter
     } catch (error) {
       console.error("Error filtering products:", error);
     }
@@ -57,7 +51,6 @@ export default function ReportsPage() {
         <TabsList>
           <TabsTrigger value="inventory">Inventory Status</TabsTrigger>
           <TabsTrigger value="performance">Product Performance</TabsTrigger>
-          <TabsTrigger value="customers">Customer History</TabsTrigger>
         </TabsList>
 
         <TabsContent value="inventory">
@@ -75,12 +68,6 @@ export default function ReportsPage() {
             onDateRangeChange={handleDateRangeChange}
             onSortChange={handleSortChange}
           />
-        </TabsContent>
-
-        <TabsContent value="customers">
-          {/* Implementation of selectedCustomer */}
-          {/* Implementation of transactions */}
-          {/* Implementation of onDateRangeChange */}
         </TabsContent>
       </Tabs>
     </div>
