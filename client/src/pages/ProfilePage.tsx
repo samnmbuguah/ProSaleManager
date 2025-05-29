@@ -75,7 +75,7 @@ export default function ProfilePage() {
     if (!isAuthenticated && !authLoading) {
       checkSession();
     }
-  }, [isAuthenticated, authLoading]);
+  }, [isAuthenticated, authLoading, checkSession]);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
