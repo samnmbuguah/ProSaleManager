@@ -70,7 +70,7 @@ function App() {
 
   useEffect(() => {
     checkSession();
-  }, []);
+  }, [checkSession]);
 
   if (isLoading && location !== "/auth") {
     return (
