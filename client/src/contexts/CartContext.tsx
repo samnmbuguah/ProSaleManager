@@ -35,6 +35,24 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 // Storage key
 const STORAGE_KEY = "pos_cart_v2";
 
+// Define a type for potentially invalid data read from localStorage
+interface PotentialCartItemData {
+  product?: {
+    id?: unknown;
+    name?: unknown;
+    selling_price?: unknown;
+    stock_unit?: unknown;
+    product_code?: unknown; // Added based on ADD_DELIVERY case check
+    [key: string]: unknown;
+  };
+  quantity?: unknown;
+  unit_price?: unknown;
+  total?: unknown;
+  unit_type?: unknown;
+  id?: unknown;
+  [key: string]: unknown;
+}
+
 // Reducer function to handle cart state updates
 function cartReducer(state: Cart, action: CartAction): Cart {
   switch (action.type) {
@@ -66,7 +84,10 @@ function cartReducer(state: Cart, action: CartAction): Cart {
         return {
           ...state,
           items: updatedItems,
-          total: updatedItems.reduce((sum, item) => sum + item.total, 0),
+          total: updatedItems.reduce(
+            (sum: number, item: CartItem) => sum + item.total,
+            0,
+          ),
         };
       }
 
@@ -84,7 +105,10 @@ function cartReducer(state: Cart, action: CartAction): Cart {
       return {
         ...state,
         items: updatedItems,
-        total: updatedItems.reduce((sum, item) => sum + item.total, 0),
+        total: updatedItems.reduce(
+          (sum: number, item: CartItem) => sum + item.total,
+          0,
+        ),
       };
     }
 
@@ -95,7 +119,10 @@ function cartReducer(state: Cart, action: CartAction): Cart {
       return {
         ...state,
         items: updatedItems,
-        total: updatedItems.reduce((sum, item) => sum + item.total, 0),
+        total: updatedItems.reduce(
+          (sum: number, item: CartItem) => sum + item.total,
+          0,
+        ),
       };
     }
 
@@ -117,7 +144,10 @@ function cartReducer(state: Cart, action: CartAction): Cart {
       return {
         ...state,
         items: updatedItems,
-        total: updatedItems.reduce((sum, item) => sum + item.total, 0),
+        total: updatedItems.reduce(
+          (sum: number, item: CartItem) => sum + item.total,
+          0,
+        ),
       };
     }
 
@@ -137,7 +167,10 @@ function cartReducer(state: Cart, action: CartAction): Cart {
       return {
         ...state,
         items: updatedItems,
-        total: updatedItems.reduce((sum, item) => sum + item.total, 0),
+        total: updatedItems.reduce(
+          (sum: number, item: CartItem) => sum + item.total,
+          0,
+        ),
       };
     }
 
@@ -156,7 +189,10 @@ function cartReducer(state: Cart, action: CartAction): Cart {
       return {
         ...state,
         items: updatedItems,
-        total: updatedItems.reduce((sum, item) => sum + item.total, 0),
+        total: updatedItems.reduce(
+          (sum: number, item: CartItem) => sum + item.total,
+          0,
+        ),
       };
     }
 
@@ -192,7 +228,10 @@ function cartReducer(state: Cart, action: CartAction): Cart {
       return {
         ...state,
         items: updatedItems,
-        total: updatedItems.reduce((sum, item) => sum + item.total, 0),
+        total: updatedItems.reduce(
+          (sum: number, item: CartItem) => sum + item.total,
+          0,
+        ),
       };
     }
 
@@ -227,15 +266,30 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
         const parsedCart = JSON.parse(savedCart);
 
         if (parsedCart && parsedCart.items && Array.isArray(parsedCart.items)) {
-          // Validate all cart items have the necessary properties
-          const validItems = parsedCart.items.filter(
-            (item) =>
-              item &&
-              item.product &&
-              typeof item.product === "object" &&
-              "id" in item.product &&
-              "name" in item.product,
-          );
+          // Validate all cart items have the necessary properties and correct types
+          const validItems = parsedCart.items
+            .filter(
+              (item: PotentialCartItemData) =>
+                item &&
+                item.product &&
+                typeof item.product === "object" &&
+                "id" in item.product &&
+                "name" in item.product &&
+                "selling_price" in item.product &&
+                "stock_unit" in item.product &&
+                "quantity" in item && // Check for quantity on the cart item
+                "unit_price" in item && // Check for unit_price on the cart item
+                "total" in item && // Check for total on the cart item
+                "unit_type" in item, // Check for unit_type on the cart item
+            )
+            .map((item: PotentialCartItemData) => ({
+              id: item.id,
+              product: item.product, // Product type is handled by the filter
+              quantity: Number(item.quantity), // Ensure quantity is a number
+              unit_price: Number(item.unit_price), // Ensure unit_price is a number
+              total: Number(item.total), // Ensure total is a number
+              unit_type: item.unit_type, // Ensure unit_type is a string
+            }));
 
           // Only load if we have valid items
           if (validItems.length > 0) {
@@ -243,64 +297,32 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
             const validCart = {
               items: validItems,
               total: validItems.reduce(
-                (sum, item) => sum + (item.total || 0),
+                (sum: number, item: CartItem) => sum + item.total,
                 0,
               ),
             };
 
-            console.log("Loading validated cart:", validCart);
             dispatch({ type: "LOAD_CART", payload: { cart: validCart } });
           }
         }
-      } else if (savedCart) {
-        console.log("Found stale cart data, not loading");
-        // Clear stale data
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(`${STORAGE_KEY}_timestamp`);
       }
     } catch (error) {
-      console.error("Error loading cart from localStorage:", error);
-      // Clean up potentially corrupted data
+      console.error("Failed to load cart from localStorage:", error);
+      // Clear potentially corrupted cart data from localStorage
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(`${STORAGE_KEY}_timestamp`);
     }
-  }, []);
+  }, [dispatch]); // Depend on dispatch
 
-  // Save cart to localStorage on change
+  // Save cart to localStorage whenever it changes
   useEffect(() => {
     try {
-      // Create a simplified version for storage to avoid circular references
-      const storageCart = {
-        items: cart.items.map((item) => ({
-          id: item.id,
-          product: {
-            id: item.product.id,
-            name: item.product.name,
-            product_code: item.product.product_code,
-            selling_price: item.product.selling_price,
-            buying_price: item.product.buying_price || "0",
-            quantity: item.product.quantity || 0,
-            available_units: item.product.available_units || 0,
-            stock_unit: item.product.stock_unit || "piece",
-            category_id: item.product.category_id || null,
-          },
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          total: item.total,
-          unit_type: item.unit_type,
-        })),
-        total: cart.total,
-      };
-
-      console.log("Saving cart to localStorage:", storageCart);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(storageCart));
-
-      // Also save a timestamp to verify freshness
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
       localStorage.setItem(`${STORAGE_KEY}_timestamp`, Date.now().toString());
     } catch (error) {
-      console.error("Error saving cart to localStorage:", error);
+      console.error("Failed to save cart to localStorage:", error);
     }
-  }, [cart]);
+  }, [cart]); // Depend on cart
 
   // Action creators
   const addToCart = (product: Product, unitType: string, unitPrice: number) => {
