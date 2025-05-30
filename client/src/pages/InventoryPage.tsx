@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/types/product";
@@ -21,6 +21,7 @@ import ProductList from "@/components/inventory/ProductList";
 import ProductFormDialog from "@/components/inventory/ProductFormDialog";
 import ProductSearchBar from "@/components/inventory/ProductSearchBar";
 import TabsNav from "@/components/inventory/TabsNav";
+import { UnitType } from "@/types/product";
 
 const InventoryPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -49,7 +50,7 @@ const InventoryPage: React.FC = () => {
   const formData = useSelector((state: RootState) => state.products.formData);
   const { toast } = useToast();
 
-  const defaultUnits = [
+  const defaultUnitTypes: UnitType[] = [
     { unit_type: "dozen", buying_price: "", selling_price: "", manual: false },
     { unit_type: "pack", buying_price: "", selling_price: "", manual: false },
     { unit_type: "piece", buying_price: "", selling_price: "", manual: false },
@@ -64,7 +65,7 @@ const InventoryPage: React.FC = () => {
     min_stock: 0,
     buying_price: "0",
     selling_price: "0",
-    price_units: defaultUnits,
+    price_units: defaultUnitTypes,
   };
 
   useEffect(() => {
@@ -124,7 +125,7 @@ const InventoryPage: React.FC = () => {
   };
 
   const handleEdit = (product: Product) => {
-    const mergedUnits = defaultUnits.map((def) => {
+    const mergedUnits = defaultUnitTypes.map((def) => {
       const found = (product.price_units || []).find(
         (u) => u.unit_type === def.unit_type,
       );

@@ -26,52 +26,7 @@ import {
 } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-interface Sale {
-  id: number;
-  customer_id: number | null;
-  total_amount: string;
-  payment_method: string;
-  status: string;
-  createdAt: string;
-  customer?: {
-    name: string;
-    email: string | null;
-    phone: string | null;
-  };
-  user: {
-    name: string;
-    email: string;
-  };
-  items: {
-    id: number;
-    product_id: number;
-    quantity: number;
-    unit_price: string;
-    total: string;
-    product: {
-      name: string;
-      product_number: string;
-    };
-  }[];
-  receiptStatus?: {
-    sms?: boolean;
-    whatsapp?: boolean;
-  };
-  change_amount?: string | number;
-}
-
-interface SaleItem {
-  id: number;
-  product_id: number;
-  quantity: number;
-  unit_price: string;
-  total: string;
-  product: {
-    name: string;
-    product_number: string;
-  };
-}
+import { Sale, SaleItem } from "@/types/sale";
 
 export function SalesPage() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -113,7 +68,7 @@ export function SalesPage() {
 
   const totalPages = salesData ? Math.ceil(salesData.total / pageSize) : 1;
 
-  const formatCurrency = (amount: string) => {
+  const formatCurrency = (amount: string | number) => {
     return `KSh ${Number(amount).toLocaleString("en-KE", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -285,7 +240,7 @@ export function SalesPage() {
         open={!!selectedSale}
         onOpenChange={(open) => !open && setSelectedSale(null)}
       >
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>Sale Details</DialogTitle>
           </DialogHeader>
