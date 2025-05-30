@@ -130,6 +130,34 @@ type Toast = Omit<ToasterToast, "id">;
 function toast({ ...props }: Toast) {
   const id = genId();
 
+  // Basic validation for toast content
+  if (
+    props.title !== undefined &&
+    typeof props.title !== "string" &&
+    !React.isValidElement(props.title)
+  ) {
+    console.warn("Invalid toast title:", props.title);
+    // Optionally, return or use a default title
+    // return { id, dismiss: () => {}, update: () => {} };
+  }
+
+  if (
+    props.description !== undefined &&
+    typeof props.description !== "string" &&
+    !React.isValidElement(props.description)
+  ) {
+    console.warn("Invalid toast description:", props.description);
+    // Optionally, return or use a default description
+    // return { id, dismiss: () => {}, update: () => {} };
+  }
+
+  // React.isValidElement checks for valid React elements, which should cover ToastActionElement
+  if (props.action !== undefined && !React.isValidElement(props.action)) {
+    console.warn("Invalid toast action:", props.action);
+    // Optionally, return or remove the action
+    // delete props.action;
+  }
+
   const update = (props: ToasterToast) =>
     dispatch({
       type: "UPDATE_TOAST",
@@ -158,8 +186,10 @@ function toast({ ...props }: Toast) {
 
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState);
+  const isMounted = React.useRef(false);
 
   React.useEffect(() => {
+    isMounted.current = true;
     listeners.push(setState);
     return () => {
       const index = listeners.indexOf(setState);
@@ -171,7 +201,13 @@ function useToast() {
 
   return {
     ...state,
-    toast,
+    toast: (...args: Parameters<typeof toast>) => {
+      if (!isMounted.current) {
+        console.warn("Toast called before hook is mounted");
+        return { id: genId(), dismiss: () => {}, update: () => {} }; // Return a dummy object
+      }
+      return toast(...args);
+    },
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
   };
 }
