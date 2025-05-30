@@ -86,3 +86,10 @@ export interface Product {
 export type ProductInsert = Omit<Product, "id">;
 
 export type ProductUpdate = Partial<ProductInsert>;
+
+export interface UnitType {
+  unit_type: "dozen" | "pack" | "piece";
+  buying_price: string;
+  selling_price: string;
+  manual: boolean;
+}
