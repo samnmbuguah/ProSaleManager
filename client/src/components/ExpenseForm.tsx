@@ -40,6 +40,8 @@ const expenseCategories = [
   "Other",
 ] as const;
 
+const paymentMethods = ["Cash", "Card", "Mobile Money", "Other"] as const;
+
 const formSchema = z.object({
   description: z.string().min(1, "Description is required"),
   amount: z.coerce
@@ -51,6 +53,9 @@ const formSchema = z.object({
   }),
   date: z.date({
     required_error: "Date is required",
+  }),
+  payment_method: z.enum(paymentMethods, {
+    required_error: "Please select a payment method",
   }),
 });
 
@@ -70,6 +75,7 @@ export default function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
       amount: 0,
       category: "Other",
       date: new Date(),
+      payment_method: "Cash",
     },
   });
 
@@ -83,6 +89,7 @@ export default function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
       amount: 0,
       category: "Other",
       date: new Date(),
+      payment_method: "Cash",
     });
   };
 
@@ -190,6 +197,31 @@ export default function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
                     />
                   </PopoverContent>
                 </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="payment_method"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Payment Method</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select payment method" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {paymentMethods.map((method) => (
+                      <SelectItem key={method} value={method}>
+                        {method}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

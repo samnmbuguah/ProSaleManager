@@ -1,9 +1,8 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "../../../test/utils";
+import { render, screen } from "@testing-library/react";
 import { Button } from "../button";
 
 describe("Button", () => {
-  it("renders with the correct text", () => {
+  it("renders correctly", () => {
     render(<Button>Click me</Button>);
     expect(
       screen.getByRole("button", { name: /click me/i }),

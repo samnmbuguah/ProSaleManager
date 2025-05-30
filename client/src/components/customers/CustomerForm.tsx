@@ -11,7 +11,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import type { CustomerInsert } from "@/types/schema";
+import { customerSchema, type CustomerInsert } from "@/types/customer";
 
 const customerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),

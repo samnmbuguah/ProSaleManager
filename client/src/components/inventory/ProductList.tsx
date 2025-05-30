@@ -28,7 +28,7 @@ const ProductList: React.FC<ProductListProps> = ({
           <p className="text-sm text-gray-600">
             Price: {product.selling_price}
           </p>
-          <p className="text-sm text-gray-600">Stock: {product.quantity}</p>
+          <p className="text-sm text-gray-600">Stock: {product.stock}</p>
           <div className="flex justify-end space-x-2 mt-4">
             <button
               className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
