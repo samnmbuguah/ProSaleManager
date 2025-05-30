@@ -34,43 +34,11 @@ import { fetchPurchaseOrders } from "@/store/purchaseOrdersSlice";
 import { useSuppliers } from "@/hooks/use-suppliers";
 import { useInventory } from "@/hooks/use-inventory";
 import { ProductSearch } from "@/components/pos/ProductSearch";
-
-interface PurchaseOrder {
-  id: number;
-  order_number: string;
-  supplier_id: number;
-  order_date: string;
-  expected_delivery_date: string | null;
-  status: "pending" | "approved" | "ordered" | "received" | "cancelled";
-  total_amount: number;
-  notes: string | null;
-  supplier: {
-    name: string;
-  };
-}
-
-interface PurchaseOrderFormData {
-  supplier_id: number;
-  expected_delivery_date: string;
-  notes: string;
-  items: {
-    product_id: number;
-    quantity: number;
-    unit_price: number;
-  }[];
-}
-
-interface Supplier {
-  id: number;
-  name: string;
-}
-
-interface Product {
-  id: number;
-  name: string;
-  product_number: string;
-  buying_price: number;
-}
+import type {
+  PurchaseOrder,
+  PurchaseOrderFormData,
+  PurchaseOrderItem,
+} from "@/types/purchase-order"; // Import PurchaseOrderItem
 
 export function PurchaseOrders() {
   const dispatch = useDispatch<AppDispatch>();
@@ -85,10 +53,10 @@ export function PurchaseOrders() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [formData, setFormData] = useState<PurchaseOrderFormData>({
-    supplier_id: 0,
+    supplier_id: "",
     expected_delivery_date: "",
     notes: "",
-    items: [{ product_id: 0, quantity: 1, unit_price: 0 }],
+    items: [],
   });
   const { toast } = useToast();
 
@@ -110,11 +78,11 @@ export function PurchaseOrders() {
 
   const handleItemChange = (
     index: number,
-    field: string,
+    field: keyof PurchaseOrderItem, // Use keyof PurchaseOrderItem
     value: string | number,
   ) => {
     setFormData((prev) => {
-      const newItems = [...prev.items];
+      const newItems: PurchaseOrderItem[] = [...prev.items]; // Explicitly type newItems
       newItems[index] = {
         ...newItems[index],
         [field]: value,
@@ -129,24 +97,37 @@ export function PurchaseOrders() {
   const addItem = () => {
     setFormData((prev) => ({
       ...prev,
-      items: [...prev.items, { product_id: 0, quantity: 1, unit_price: 0 }],
+      items: [
+        ...prev.items,
+        {
+          product_id: 0,
+          quantity: 1,
+          buying_price: 0,
+          selling_price: 0,
+          name: "",
+        } as PurchaseOrderItem,
+      ], // Added buying_price and selling_price
     }));
   };
 
   const removeItem = (index: number) => {
     setFormData((prev) => ({
       ...prev,
-      items: prev.items.filter((_, i) => i !== index),
+      items: prev.items.filter(
+        (_item: PurchaseOrderItem, i: number) => i !== index,
+      ), // Explicitly type filter parameters
     }));
   };
 
   const handleProductSelect = (index: number, product: Product) => {
     setFormData((prev) => {
-      const newItems = [...prev.items];
+      const newItems: PurchaseOrderItem[] = [...prev.items];
       newItems[index] = {
         ...newItems[index],
         product_id: product.id,
-        unit_price: Number(product.buying_price),
+        buying_price: Number(product.buying_price), // Set buying_price
+        selling_price: Number(product.selling_price), // Set selling_price
+        // unit_price is not in PurchaseOrderItem
       };
       return { ...prev, items: newItems };
     });
@@ -175,10 +156,10 @@ export function PurchaseOrders() {
       });
 
       setFormData({
-        supplier_id: 0,
+        supplier_id: "",
         expected_delivery_date: "",
         notes: "",
-        items: [{ product_id: 0, quantity: 1, unit_price: 0 }],
+        items: [],
       });
       setIsAddDialogOpen(false);
       dispatch(fetchPurchaseOrders());
@@ -233,12 +214,10 @@ export function PurchaseOrders() {
         return "secondary";
       case "approved":
         return "default";
-      case "ordered":
-        return "default";
-      case "received":
-        return "default";
-      case "cancelled":
+      case "rejected":
         return "destructive";
+      case "completed":
+        return "default"; // Assuming completed is also a 'default' visual style
       default:
         return "default";
     }
@@ -249,9 +228,9 @@ export function PurchaseOrders() {
       <div>
         <Label htmlFor="supplier_id">Supplier</Label>
         <Select
-          value={formData.supplier_id.toString()}
+          value={formData.supplier_id}
           onValueChange={(value) =>
-            setFormData((prev) => ({ ...prev, supplier_id: parseInt(value) }))
+            setFormData((prev) => ({ ...prev, supplier_id: value }))
           }
         >
           <SelectTrigger>
@@ -281,48 +260,69 @@ export function PurchaseOrders() {
 
       <div>
         <Label>Items</Label>
-        {formData.items.map((item, index) => (
-          <div key={index} className="grid grid-cols-3 gap-2 mt-2">
-            <ProductSearch
-              products={products}
-              onSelect={(product) => handleProductSelect(index, product)}
-              searchProducts={async () => {}}
-            />
-            <Input
-              type="number"
-              min="1"
-              value={item.quantity}
-              onChange={(e) =>
-                handleItemChange(index, "quantity", parseInt(e.target.value))
-              }
-              placeholder="Quantity"
-            />
-            <div className="flex gap-2">
+        {formData.items.map(
+          (
+            item: PurchaseOrderItem,
+            index: number, // Explicitly type map parameters
+          ) => (
+            <div key={index} className="grid grid-cols-3 gap-2 mt-2">
+              <ProductSearch
+                products={products}
+                onSelect={(product) => handleProductSelect(index, product)}
+                searchProducts={async () => {
+                  /* Implement search logic */
+                }}
+              />
               <Input
                 type="number"
-                min="0"
-                step="0.01"
-                value={item.unit_price}
+                min="1"
+                value={item.quantity}
                 onChange={(e) =>
-                  handleItemChange(
-                    index,
-                    "unit_price",
-                    parseFloat(e.target.value),
-                  )
+                  handleItemChange(index, "quantity", parseInt(e.target.value))
                 }
-                placeholder="Unit Price"
+                placeholder="Quantity"
               />
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={() => removeItem(index)}
-              >
-                Remove
-              </Button>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={item.buying_price}
+                  onChange={(e) =>
+                    handleItemChange(
+                      index,
+                      "buying_price",
+                      parseFloat(e.target.value),
+                    )
+                  }
+                  placeholder="Buying Price"
+                />
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={item.selling_price}
+                  onChange={(e) =>
+                    handleItemChange(
+                      index,
+                      "selling_price",
+                      parseFloat(e.target.value),
+                    )
+                  }
+                  placeholder="Selling Price"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => removeItem(index)}
+                >
+                  Remove
+                </Button>
+              </div>
             </div>
-          </div>
-        ))}
+          ),
+        )}
         <Button
           type="button"
           variant="outline"
@@ -374,51 +374,60 @@ export function PurchaseOrders() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {purchaseOrders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell>{order.order_number}</TableCell>
-                <TableCell>
-                  {order.supplier?.name || "Unknown Supplier"}
-                </TableCell>
-                <TableCell>
-                  {format(new Date(order.order_date), "PPP")}
-                </TableCell>
-                <TableCell>
-                  {order.expected_delivery_date
-                    ? format(new Date(order.expected_delivery_date), "PPP")
-                    : "Not set"}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={getStatusBadgeVariant(order.status)}>
-                    {order.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>KSh {order.total_amount.toLocaleString()}</TableCell>
-                <TableCell>{order.notes || "No notes"}</TableCell>
-                <TableCell>
-                  <Select
-                    value={order.status}
-                    onValueChange={(value) =>
-                      handleStatusChange(
-                        order.id,
-                        value as PurchaseOrder["status"],
-                      )
-                    }
-                  >
-                    <SelectTrigger className="w-[130px]">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
-                      <SelectItem value="ordered">Ordered</SelectItem>
-                      <SelectItem value="received">Received</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-              </TableRow>
-            ))}
+            {purchaseOrders.map(
+              (
+                order: PurchaseOrder & { supplier?: { name: string } }, // Explicitly type order and include optional supplier with name
+              ) => (
+                <TableRow key={order.id}>
+                  <TableCell>{order.id}</TableCell>{" "}
+                  {/* Assuming id is used for order number */}
+                  <TableCell>
+                    {order.supplier?.name || "Unknown Supplier"}
+                  </TableCell>
+                  <TableCell>
+                    {order.created_at
+                      ? format(new Date(order.created_at), "PPP")
+                      : "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    {order.expected_delivery_date
+                      ? format(new Date(order.expected_delivery_date), "PPP")
+                      : "Not set"}{" "}
+                    {/* Check for null before formatting */}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusBadgeVariant(order.status)}>
+                      {order.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    KSh {order.total_amount.toLocaleString()}
+                  </TableCell>
+                  <TableCell>{order.notes || "No notes"}</TableCell>
+                  <TableCell>
+                    <Select
+                      value={order.status}
+                      onValueChange={(value) =>
+                        handleStatusChange(
+                          order.id,
+                          value as PurchaseOrder["status"],
+                        )
+                      }
+                    >
+                      <SelectTrigger className="w-[130px]">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                </TableRow>
+              ),
+            )}
           </TableBody>
         </Table>
       </div>

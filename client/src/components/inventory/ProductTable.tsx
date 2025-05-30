@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type {
   Product,
-  UnitTypeValues,
+  StockUnitType,
   PriceUnit,
   ProductFormData,
 } from "@/types/product";
@@ -75,12 +75,7 @@ export function ProductTable({
 
   const getDefaultPricing = (product: Product) => {
     const defaultUnit = product.price_units?.find(
-      (unit: {
-        unit_type: string;
-        buying_price: string;
-        selling_price: string;
-        is_default: boolean;
-      }) => unit.is_default,
+      (unit: PriceUnit) => unit.is_default,
     );
     return (
       defaultUnit || {
@@ -177,9 +172,9 @@ export function ProductTable({
                 min_stock: editingProduct.min_stock || 0,
                 max_stock: editingProduct.max_stock || 0,
                 reorder_point: editingProduct.reorder_point || 0,
-                stock_unit: editingProduct.stock_unit as unknown,
+                stock_unit: editingProduct.stock_unit,
                 price_units: (editingProduct.price_units || []).map((unit) => ({
-                  unit_type: unit.unit_type as UnitTypeValues,
+                  unit_type: unit.unit_type as StockUnitType,
                   quantity: Number(unit.quantity),
                   buying_price: String(unit.buying_price),
                   selling_price: String(unit.selling_price),
@@ -222,32 +217,26 @@ export function ProductTable({
                 </div>
                 <div>
                   <h3 className="font-medium">Pricing Information</h3>
-                  {selectedProduct.price_units?.map(
-                    (unit: {
-                      unit_type: string;
-                      buying_price: string;
-                      selling_price: string;
-                    }) => (
-                      <div key={unit.unit_type} className="mb-2">
-                        <p className="capitalize">
-                          {unit.unit_type.replace("_", " ")}:
-                        </p>
-                        <p className="ml-4">
-                          Buy: KSh {Number(unit.buying_price).toFixed(2)}
-                        </p>
-                        <p className="ml-4">
-                          Sell: KSh {Number(unit.selling_price).toFixed(2)}
-                        </p>
-                        <p className="ml-4">
-                          Margin:{" "}
-                          {calculateProfitMargin(
-                            unit.buying_price,
-                            unit.selling_price,
-                          )}
-                        </p>
-                      </div>
-                    ),
-                  )}
+                  {selectedProduct.price_units?.map((unit: PriceUnit) => (
+                    <div key={unit.unit_type} className="mb-2">
+                      <p className="capitalize">
+                        {unit.unit_type.replace("_", " ")}:
+                      </p>
+                      <p className="ml-4">
+                        Buy: KSh {Number(unit.buying_price).toFixed(2)}
+                      </p>
+                      <p className="ml-4">
+                        Sell: KSh {Number(unit.selling_price).toFixed(2)}
+                      </p>
+                      <p className="ml-4">
+                        Margin:{" "}
+                        {calculateProfitMargin(
+                          unit.buying_price,
+                          unit.selling_price,
+                        )}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

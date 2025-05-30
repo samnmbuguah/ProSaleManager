@@ -54,6 +54,23 @@ interface Sale {
       product_number: string;
     };
   }[];
+  receiptStatus?: {
+    sms?: boolean;
+    whatsapp?: boolean;
+  };
+  change_amount?: string | number;
+}
+
+interface SaleItem {
+  id: number;
+  product_id: number;
+  quantity: number;
+  unit_price: string;
+  total: string;
+  product: {
+    name: string;
+    product_number: string;
+  };
 }
 
 export function SalesPage() {

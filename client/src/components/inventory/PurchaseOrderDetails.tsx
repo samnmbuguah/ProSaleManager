@@ -14,16 +14,13 @@ import {
 } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import type { Supplier } from "@/types/supplier";
 
 interface PurchaseOrderDetailsProps {
   orderId: number | null;
   isOpen: boolean;
   onClose: () => void;
-  supplier?: {
-    name: string;
-    email: string | null;
-    phone: string | null;
-  } | null;
+  supplier?: Supplier | null;
 }
 
 interface OrderItem {

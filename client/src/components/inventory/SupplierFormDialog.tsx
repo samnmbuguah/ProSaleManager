@@ -8,24 +8,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-
-interface Supplier {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  contact_person?: string;
-  status: "active" | "inactive";
-}
-
-interface SupplierFormData {
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  contact_person?: string;
-}
+import type { Supplier, SupplierFormData } from "@/types/supplier";
 
 interface SupplierFormDialogProps {
   open: boolean;

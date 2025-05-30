@@ -1,12 +1,5 @@
 import React from "react";
-
-export type Customer = {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-};
+import type { Customer } from "@/types/customer";
 
 interface CustomerCardProps {
   customer: Customer;

@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { UNIT_CONVERSIONS, UnitConversions } from "@/constants/priceUnits";
 
 interface ProductFormDialogProps {
   open: boolean;
@@ -60,22 +61,37 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
     }
   };
 
-  // Updated conversion factors: 1 pack = 3 pieces, 1 dozen = 4 packs = 12 pieces
-  const UNIT_CONVERSIONS = {
-    dozen: { pack: 4, piece: 12 }, // 1 dozen = 4 packs, 12 pieces
-    pack: { dozen: 1 / 4, piece: 3 }, // 1 pack = 3 pieces, 1 dozen = 4 packs
-    piece: { dozen: 1 / 12, pack: 1 / 3 }, // 1 piece = 1/12 dozen, 1/3 pack
-  };
-
   // Initialize price_units if not present
   const priceUnits = formData.price_units || [
-    { unit_type: "dozen", buying_price: "", selling_price: "", manual: false },
-    { unit_type: "pack", buying_price: "", selling_price: "", manual: false },
-    { unit_type: "piece", buying_price: "", selling_price: "", manual: false },
+    {
+      unit_type: "dozen",
+      quantity: 12,
+      buying_price: "",
+      selling_price: "",
+      manual: false,
+    },
+    {
+      unit_type: "pack",
+      quantity: 3,
+      buying_price: "",
+      selling_price: "",
+      manual: false,
+    },
+    {
+      unit_type: "piece",
+      quantity: 1,
+      buying_price: "",
+      selling_price: "",
+      manual: false,
+    },
   ];
 
   // Handler for price change with correct auto-calc logic
-  const handlePriceChange = (unit, field, value) => {
+  const handlePriceChange = (
+    unit: string,
+    field: "buying_price" | "selling_price",
+    value: string,
+  ) => {
     const updatedUnits = priceUnits.map((u) => {
       if (u.unit_type === unit) {
         return { ...u, [field]: value, manual: true };
@@ -85,32 +101,35 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
     // Auto-calc logic
     const changed = updatedUnits.find((u) => u.unit_type === unit);
     if (changed && !isNaN(Number(value)) && value !== "") {
-      Object.keys(UNIT_CONVERSIONS[unit]).forEach((otherUnit) => {
-        const conv = UNIT_CONVERSIONS[unit][otherUnit];
-        const other = updatedUnits.find((u) => u.unit_type === otherUnit);
-        if (other && !other.manual) {
-          updatedUnits.forEach((u, idx) => {
-            if (u.unit_type === otherUnit) {
-              let newValue;
-              if (conv > 1) {
-                newValue = (Number(value) / conv).toString();
-              } else {
-                newValue = (Number(value) * (1 / conv)).toString();
+      Object.keys(UNIT_CONVERSIONS[unit as keyof UnitConversions]).forEach(
+        (otherUnit) => {
+          const conv =
+            UNIT_CONVERSIONS[unit as keyof UnitConversions][otherUnit];
+          const other = updatedUnits.find((u) => u.unit_type === otherUnit);
+          if (other && !other.manual) {
+            updatedUnits.forEach((u, idx) => {
+              if (u.unit_type === otherUnit) {
+                let newValue;
+                if (conv > 1) {
+                  newValue = (Number(value) / conv).toString();
+                } else {
+                  newValue = (Number(value) * (1 / conv)).toString();
+                }
+                updatedUnits[idx] = {
+                  ...u,
+                  [field]: newValue,
+                };
               }
-              updatedUnits[idx] = {
-                ...u,
-                [field]: newValue,
-              };
-            }
-          });
-        }
-      });
+            });
+          }
+        },
+      );
     }
     setFormData({ ...formData, price_units: updatedUnits });
   };
 
   // Handler to allow manual override
-  const handleManualOverride = (unit, field) => {
+  const handleManualOverride = (unit: string) => {
     const updatedUnits = priceUnits.map((u) =>
       u.unit_type === unit ? { ...u, manual: true } : u,
     );
@@ -132,7 +151,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
           onSubmit={(e) => {
             e.preventDefault();
             if (typeof onSubmit === "function") {
-              onSubmit(e, localImageFile);
+              onSubmit(e, localImageFile || undefined);
             }
           }}
           className="space-y-4"
@@ -199,8 +218,8 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
           <div>
             <Label htmlFor="stock_unit">Stock Unit *</Label>
             <Select
-              value={formData.stock_unit}
-              onValueChange={(value) =>
+              value={formData.stock_unit || ""}
+              onValueChange={(value: typeof formData.stock_unit) =>
                 setFormData({ ...formData, stock_unit: value })
               }
             >
@@ -223,7 +242,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                 id="quantity"
                 name="quantity"
                 type="number"
-                value={formData.quantity}
+                value={formData.stock}
                 onChange={handleInputChange}
                 required
               />
@@ -261,9 +280,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                           e.target.value,
                         )
                       }
-                      onFocus={() =>
-                        handleManualOverride(unit.unit_type, "buying_price")
-                      }
+                      onFocus={() => handleManualOverride(unit.unit_type)}
                     />
                   </div>
                   <div>
@@ -278,9 +295,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                           e.target.value,
                         )
                       }
-                      onFocus={() =>
-                        handleManualOverride(unit.unit_type, "selling_price")
-                      }
+                      onFocus={() => handleManualOverride(unit.unit_type)}
                     />
                   </div>
                   {unit.manual && (

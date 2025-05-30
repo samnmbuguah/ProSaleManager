@@ -21,24 +21,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "@/store";
 import { fetchSuppliers } from "@/store/suppliersSlice";
-
-interface Supplier {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  contact_person?: string;
-  status: "active" | "inactive";
-}
-
-interface SupplierFormData {
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  contact_person?: string;
-}
+import type { Supplier, SupplierFormData } from "@/types/supplier";
 
 const Suppliers = () => {
   const dispatch = useDispatch<AppDispatch>();

@@ -38,13 +38,12 @@ export function ProductForm({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: initialData?.name ?? "",
-      sku: initialData?.sku ?? "",
       stock: initialData?.stock ?? 0,
       category: initialData?.category ?? "",
       min_stock: initialData?.min_stock ?? 0,
       max_stock: initialData?.max_stock ?? 0,
       reorder_point: initialData?.reorder_point ?? 0,
-      stock_unit: initialData?.stock_unit ?? "per_piece",
+      stock_unit: initialData?.stock_unit ?? "piece",
       price_units:
         initialData?.price_units ??
         PRICE_UNITS.map((unit) => ({
@@ -52,7 +51,7 @@ export function ProductForm({
           quantity: unit.quantity,
           buying_price: "0",
           selling_price: "0",
-          is_default: unit.value === "per_piece",
+          is_default: unit.value === "piece",
         })),
     },
   });
@@ -109,7 +108,11 @@ export function ProductForm({
               <FormItem>
                 <FormLabel>Product Name</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input
+                    {...field}
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -118,12 +121,16 @@ export function ProductForm({
 
           <FormField
             control={form.control}
-            name="product_number"
+            name="product_code"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Product Number</FormLabel>
+                <FormLabel>Product Code</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input
+                    {...field}
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -165,12 +172,8 @@ export function ProductForm({
                   <Input
                     type="number"
                     {...field}
-                    value={field.value || "0"}
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value ? Number(e.target.value) : 0,
-                      )
-                    }
+                    value={field.value || 0}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
                   />
                 </FormControl>
                 <FormMessage />
@@ -255,9 +258,9 @@ export function ProductForm({
                       <FormControl>
                         <Input
                           type="number"
-                          step="0.01"
                           {...field}
-                          value={field.value || "0"}
+                          value={field.value || ""}
+                          onChange={field.onChange}
                         />
                       </FormControl>
                       <FormMessage />
@@ -274,9 +277,30 @@ export function ProductForm({
                       <FormControl>
                         <Input
                           type="number"
-                          step="0.01"
                           {...field}
-                          value={field.value || "0"}
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name={`price_units.${index}.quantity`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quantity</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value || 0}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -288,11 +312,6 @@ export function ProductForm({
                   type="hidden"
                   {...form.register(`price_units.${index}.unit_type`)}
                   value={unit.value}
-                />
-                <input
-                  type="hidden"
-                  {...form.register(`price_units.${index}.quantity`)}
-                  value={unit.quantity}
                 />
               </div>
             ))}
@@ -308,12 +327,8 @@ export function ProductForm({
                   <Input
                     type="number"
                     {...field}
-                    value={field.value || "0"}
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value ? Number(e.target.value) : 0,
-                      )
-                    }
+                    value={field.value || 0}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
                   />
                 </FormControl>
                 <FormMessage />
@@ -331,12 +346,8 @@ export function ProductForm({
                   <Input
                     type="number"
                     {...field}
-                    value={field.value || "0"}
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value ? Number(e.target.value) : 0,
-                      )
-                    }
+                    value={field.value || 0}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
                   />
                 </FormControl>
                 <FormMessage />
@@ -354,12 +365,8 @@ export function ProductForm({
                   <Input
                     type="number"
                     {...field}
-                    value={field.value || "0"}
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value ? Number(e.target.value) : 0,
-                      )
-                    }
+                    value={field.value || 0}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
                   />
                 </FormControl>
                 <FormMessage />
@@ -368,7 +375,7 @@ export function ProductForm({
           />
         </div>
 
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting} className="w-full">
           {isSubmitting ? "Saving..." : "Save Product"}
         </Button>
       </form>

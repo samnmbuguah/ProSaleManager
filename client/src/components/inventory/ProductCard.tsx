@@ -29,8 +29,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
     )}
     <p className="text-sm text-gray-600">Category: {product.category}</p>
     <p className="text-sm text-gray-600">
-      Quantity: {product.quantity} {product.stock_unit}
-      {product.available_units !== product.quantity && (
+      Stock: {product.stock} {product.stock_unit}
+      {product.available_units !== product.stock && (
         <span className="ml-2">({product.available_units} pieces)</span>
       )}
     </p>

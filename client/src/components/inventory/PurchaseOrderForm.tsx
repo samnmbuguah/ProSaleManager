@@ -43,7 +43,7 @@ export function PurchaseOrderForm({
   const form = useForm<PurchaseOrderFormData>({
     resolver: zodResolver(purchaseOrderSchema),
     defaultValues: {
-      supplierId: "",
+      supplier_id: "",
     },
   });
 
@@ -55,13 +55,13 @@ export function PurchaseOrderForm({
     const supplierPricing = productSuppliers.find(
       (ps) =>
         Number(ps.product_id) === Number(productId) &&
-        Number(ps.supplier_id) === Number(form.getValues("supplierId")),
+        Number(ps.supplier_id) === Number(form.getValues("supplier_id")),
     );
 
     setItems([
       ...items,
       {
-        productId: parseInt(productId),
+        product_id: parseInt(productId),
         quantity: 1,
         buying_price: Number(
           supplierPricing
@@ -100,13 +100,13 @@ export function PurchaseOrderForm({
   };
 
   const handleSupplierChange = (supplierId: string) => {
-    form.setValue("supplierId", supplierId);
+    form.setValue("supplier_id", supplierId);
     // Update prices based on selected supplier
     setItems(
       items.map((item) => {
         const supplierPricing = productSuppliers.find(
           (ps) =>
-            Number(ps.product_id) === Number(item.productId) &&
+            Number(ps.product_id) === Number(item.product_id) &&
             Number(ps.supplier_id) === Number(supplierId),
         );
         return {
@@ -124,7 +124,7 @@ export function PurchaseOrderForm({
       <form
         onSubmit={form.handleSubmit((data) =>
           onSubmit({
-            supplierId: parseInt(data.supplierId),
+            supplier_id: parseInt(data.supplier_id),
             items,
             total: calculateTotal(),
           }),
@@ -133,7 +133,7 @@ export function PurchaseOrderForm({
       >
         <FormField
           control={form.control}
-          name="supplierId"
+          name="supplier_id"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Supplier</FormLabel>
@@ -182,9 +182,9 @@ export function PurchaseOrderForm({
                   <div className="font-medium">{item.name}</div>
                   <div className="text-sm text-muted-foreground">
                     Current Stock:{" "}
-                    {products.find((p) => p.id === item.productId)?.stock || 0}→
-                    New Stock:{" "}
-                    {(products.find((p) => p.id === item.productId)?.stock ||
+                    {products.find((p) => p.id === item.product_id)?.stock || 0}
+                    → New Stock:{" "}
+                    {(products.find((p) => p.id === item.product_id)?.stock ||
                       0) + item.quantity}
                   </div>
                 </div>
