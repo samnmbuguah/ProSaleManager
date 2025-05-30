@@ -13,4 +13,6 @@ export interface Supplier extends SupplierFormData {
   id: number;
   created_at: Date | null;
   updated_at: Date | null;
+  contact_person?: string | null;
+  status: "active" | "inactive";
 }

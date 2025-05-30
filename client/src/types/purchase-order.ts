@@ -9,10 +9,28 @@ export interface PurchaseOrderItem {
   name?: string;
 }
 
-export const purchaseOrderSchema = z.object({
-  supplier_id: z.string().min(1, "Please select a supplier"),
+// Define schema for PurchaseOrderItem used within the form
+const purchaseOrderItemSchema = z.object({
+  product_id: z.number().int().positive(),
+  quantity: z.number().int().positive("Quantity must be at least 1"),
+  buying_price: z.number().nonnegative("Buying price cannot be negative"),
+  selling_price: z.number().nonnegative("Selling price cannot be negative"),
+  name: z.string().optional(),
 });
 
+// Define the schema for the entire purchase order form data
+export const purchaseOrderSchema = z.object({
+  supplier_id: z.string().min(1, "Please select a supplier"),
+  expected_delivery_date: z
+    .string()
+    .min(1, "Expected delivery date is required"),
+  notes: z.string().optional(),
+  items: z
+    .array(purchaseOrderItemSchema)
+    .min(1, "At least one item is required"),
+});
+
+// Redefine PurchaseOrderFormData to match the schema for clarity
 export type PurchaseOrderFormData = z.infer<typeof purchaseOrderSchema>;
 
 export interface PurchaseOrderSubmitData {
