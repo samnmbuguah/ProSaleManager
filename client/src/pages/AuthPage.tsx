@@ -122,8 +122,6 @@ export default function AuthPage() {
     registerForm.reset();
   };
 
-  const form = isLogin ? loginForm : registerForm;
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
@@ -136,7 +134,12 @@ export default function AuthPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={(isLogin ? loginForm : registerForm).handleSubmit(
+              onSubmit,
+            )}
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
                 Email
@@ -146,11 +149,17 @@ export default function AuthPage() {
                 type="email"
                 autoComplete="email"
                 disabled={isLoading}
-                {...form.register("email")}
+                {...(isLogin
+                  ? loginForm.register("email")
+                  : registerForm.register("email"))}
               />
-              {form.formState.errors.email && (
+              {(isLogin
+                ? loginForm.formState.errors.email
+                : registerForm.formState.errors.email) && (
                 <p className="text-sm font-medium text-destructive">
-                  {form.formState.errors.email.message}
+                  {isLogin
+                    ? loginForm.formState.errors.email?.message
+                    : registerForm.formState.errors.email?.message}
                 </p>
               )}
             </div>
@@ -164,11 +173,11 @@ export default function AuthPage() {
                   id="name"
                   autoComplete="name"
                   disabled={isLoading}
-                  {...form.register("name")}
+                  {...registerForm.register("name")}
                 />
-                {form.formState.errors.name && (
+                {registerForm.formState.errors.name && (
                   <p className="text-sm font-medium text-destructive">
-                    {form.formState.errors.name.message}
+                    {registerForm.formState.errors.name.message}
                   </p>
                 )}
               </div>
@@ -184,7 +193,9 @@ export default function AuthPage() {
                   type={showPassword ? "text" : "password"}
                   autoComplete={isLogin ? "current-password" : "new-password"}
                   disabled={isLoading}
-                  {...form.register("password")}
+                  {...(isLogin
+                    ? loginForm.register("password")
+                    : registerForm.register("password"))}
                 />
                 <Button
                   type="button"
@@ -200,43 +211,41 @@ export default function AuthPage() {
                   )}
                 </Button>
               </div>
-              {form.formState.errors.password && (
+              {(isLogin
+                ? loginForm.formState.errors.password
+                : registerForm.formState.errors.password) && (
                 <p className="text-sm font-medium text-destructive">
-                  {form.formState.errors.password.message}
+                  {isLogin
+                    ? loginForm.formState.errors.password?.message
+                    : registerForm.formState.errors.password?.message}
                 </p>
               )}
             </div>
 
-            {form.formState.errors.root && (
+            {(isLogin
+              ? loginForm.formState.errors.root
+              : registerForm.formState.errors.root) && (
               <p className="text-sm font-medium text-destructive">
-                {form.formState.errors.root.message}
+                {isLogin
+                  ? loginForm.formState.errors.root?.message
+                  : registerForm.formState.errors.root?.message}
               </p>
             )}
 
-            <div className="space-y-2">
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isLogin ? "Logging in..." : "Creating account..."}
-                  </>
-                ) : isLogin ? (
-                  "Login"
-                ) : (
-                  "Register"
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                disabled={isLoading}
-                onClick={toggleMode}
-              >
-                {isLogin ? "Need an account?" : "Already have an account?"}
-              </Button>
-            </div>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              {isLogin ? "Login" : "Register"}
+            </Button>
           </form>
+
+          <div className="mt-4 text-center text-sm">
+            {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
+            <Button variant="link" onClick={toggleMode} disabled={isLoading}>
+              {isLogin ? "Sign up" : "Login"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

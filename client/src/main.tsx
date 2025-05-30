@@ -4,7 +4,6 @@ import { Switch, Route, useLocation } from "wouter";
 import "./index.css";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
-import { Toaster } from "@/components/ui/toaster";
 import PosPage from "./pages/PosPage";
 import InventoryPage from "./pages/InventoryPage";
 import CustomersPage from "./pages/CustomersPage";
@@ -27,52 +26,19 @@ if (typeof document !== "undefined") {
   document.body.classList.remove("dark");
 }
 
-// Custom error boundary for CartProvider
-type CartErrorBoundaryProps = {
-  fallback?: React.ReactNode;
-  children: React.ReactNode;
-};
-type CartErrorBoundaryState = {
-  hasError: boolean;
-};
-class CartErrorBoundary extends React.Component<
-  CartErrorBoundaryProps,
-  CartErrorBoundaryState
-> {
-  constructor(props: CartErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(): CartErrorBoundaryState {
-    return { hasError: true };
-  }
-
-  componentDidCatch(): void {
-    // Clean up potentially corrupted cart data
-    localStorage.removeItem("pos_cart_v2");
-    localStorage.removeItem("pos_cart_v2_timestamp");
-  }
-
-  render() {
-    if (this.state.hasError) {
-      // Reset state and render app without the error
-      setTimeout(() => this.setState({ hasError: false }), 100);
-      return this.props.fallback || this.props.children;
-    }
-    return this.props.children;
-  }
-}
-
 function App() {
   const { checkSession, isLoading } = useAuth();
   const [location] = useLocation();
 
   useEffect(() => {
+    console.log('App mounted, checking session...');
     checkSession();
-  }, [checkSession]);
+  }, [location]);
+
+  console.log('App render:', { isLoading, location });
 
   if (isLoading && location !== "/auth") {
+    console.log('Showing loading state');
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -82,12 +48,9 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <CartErrorBoundary>
-        <CartProvider>
-          <Router />
-          <Toaster />
-        </CartProvider>
-      </CartErrorBoundary>
+      <CartProvider>
+        <Router />
+      </CartProvider>
     </QueryClientProvider>
   );
 }
@@ -103,7 +66,7 @@ function ProtectedRoute({
     <RoleBasedRoute allowedRoles={roles || ["admin", "user"]}>
       <div className="min-h-screen bg-background flex flex-col">
         <MainNav />
-        <main className="flex-1 overflow-hidden">
+        <main className="flex-1 ">
           <Component />
         </main>
       </div>

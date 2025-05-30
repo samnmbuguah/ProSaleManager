@@ -61,12 +61,14 @@ export const useAuth = () => {
       toast({
         variant: "destructive",
         title: "Authentication Error",
-        description: axios.isAxiosError(error)
-          ? error.response?.data?.message ||
-            "Session expired. Please log in again."
-          : error instanceof Error
-            ? error.message
-            : "Session expired. Please log in again.",
+        description: String(
+          axios.isAxiosError(error)
+            ? error.response?.data?.message ||
+                "Session expired. Please log in again."
+            : error instanceof Error
+              ? error.message
+              : "Session expired. Please log in again.",
+        ),
       });
     }
 
@@ -78,8 +80,11 @@ export const useAuth = () => {
 
   const checkSession = async () => {
     try {
+      console.log('Checking session...', { location, lastCheck, user });
+      
       // Skip check if we're on the auth page
       if (location === "/auth") {
+        console.log('On auth page, skipping session check');
         setIsLoading(false);
         return;
       }
@@ -87,21 +92,32 @@ export const useAuth = () => {
       // Skip check if we've checked recently (within 5 minutes) and have a user
       const now = Date.now();
       if (now - lastCheck < 5 * 60 * 1000 && user) {
+        console.log('Recent check exists, skipping session check');
         setIsLoading(false);
         return;
       }
 
+      // Skip if we're already loading
+      if (isLoading) {
+        console.log('Already loading, skipping session check');
+        return;
+      }
+
+      console.log('Making API call to check session');
       setIsLoading(true);
       const response = await api.get("/auth/me");
+      console.log('Session check response:', response.data);
 
       if (response.data.success && response.data.data) {
         setUser(response.data.data);
         setIsAuthenticated(true);
         setLastCheck(now);
       } else {
+        console.log('Session invalid, no user data received');
         handleAuthError(new Error("Session invalid"), true);
       }
     } catch (error: unknown) {
+      console.error('Session check error:', error);
       handleAuthError(error, true);
     } finally {
       setIsLoading(false);
@@ -136,13 +152,15 @@ export const useAuth = () => {
         toast({
           variant: "destructive",
           title: "Login Failed",
-          description: axios.isAxiosError(error)
-            ? error.response?.data?.message ||
-              error.message ||
-              "Failed to log in"
-            : error instanceof Error
-              ? error.message
-              : "Failed to log in",
+          description: String(
+            axios.isAxiosError(error)
+              ? error.response?.data?.message ||
+                  error.message ||
+                  "Failed to log in"
+              : error instanceof Error
+                ? error.message
+                : "Failed to log in",
+          ),
         });
       }
       throw error;
