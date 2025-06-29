@@ -1,35 +1,65 @@
 export interface Sale {
   id: number;
   customer_id: number | null;
-  total_amount: string;
+  user_id: number;
+  total_amount: number;
   payment_method: string;
+  amount_paid: number;
   status: string;
+  payment_status: string;
+  delivery_fee: number;
+  receipt_status?: {
+    whatsapp?: boolean;
+    sms?: boolean;
+    last_sent_at?: Date;
+  };
   createdAt: string;
+  updatedAt: string;
   customer?: {
+    id: number;
     name: string;
     email: string | null;
     phone: string | null;
   };
   user: {
+    id: number;
     name: string;
     email: string;
   };
   items: SaleItem[];
-  receiptStatus?: {
-    sms?: boolean;
-    whatsapp?: boolean;
-  };
-  change_amount?: string | number;
 }
 
 export interface SaleItem {
   id: number;
+  sale_id: number;
   product_id: number;
   quantity: number;
-  unit_price: string;
-  total: string;
+  unit_price: number;
+  total: number;
+  unit_type: string;
+  createdAt: string;
+  updatedAt: string;
   product: {
+    id: number;
     name: string;
-    product_number: string;
+    sku?: string;
   };
-} 
+}
+
+export interface CreateSaleRequest {
+  items: {
+    product_id: number;
+    quantity: number;
+    unit_price: number;
+    total: number;
+    unit_type: string;
+  }[];
+  total: number;
+  delivery_fee: number;
+  customer_id: number | null;
+  payment_method: string;
+  status: string;
+  payment_status: string;
+  amount_paid: number;
+  change_amount: number;
+}

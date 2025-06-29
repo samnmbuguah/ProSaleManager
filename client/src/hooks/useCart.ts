@@ -69,6 +69,10 @@ export function useCart() {
     );
   };
 
+  const removeItem = (productId: number) => {
+    setItems((prev) => prev.filter((item) => item.product.id !== productId));
+  };
+
   const clearCart = () => setItems([]);
 
   const total = items.reduce((sum, item) => sum + item.total, 0);
@@ -79,6 +83,7 @@ export function useCart() {
     updateQuantity,
     updateUnitType,
     updateUnitPrice,
+    removeItem,
     clearCart,
     total,
   };

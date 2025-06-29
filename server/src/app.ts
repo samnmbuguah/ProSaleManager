@@ -5,6 +5,11 @@ import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import sequelize from "./config/database.js";
+import helmet from 'helmet';
+import { errorHandler } from './middleware/error.middleware';
+import { authLimiter, apiLimiter } from './middleware/auth.middleware';
+import { validateCsrfToken } from './utils/csrf';
+import routes from './routes';
 
 // Load environment variables
 dotenv.config();
@@ -24,31 +29,35 @@ const developmentOrigins = [
 ];
 
 // Middleware
+app.use(helmet());
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-
-      if (process.env.NODE_ENV === "production") {
-        const allowedOrigin = process.env.CLIENT_URL;
-        return callback(null, allowedOrigin);
-      } else {
-        if (developmentOrigins.indexOf(origin) !== -1) {
-          return callback(null, true);
-        }
-        return callback(null, origin);
-      }
-    },
+    origin: process.env.NODE_ENV === 'production' 
+      ? process.env.FRONTEND_URL 
+      : ['http://localhost:5173', 'http://localhost:3000'],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
   }),
 );
 
 // Parse JSON bodies and cookies before any routes
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Rate limiting
+app.use('/auth', authLimiter);
+app.use('/api', apiLimiter);
+
+// CSRF protection for non-GET requests, excluding auth routes
+app.use('/api', (req, res, next) => {
+  // Skip CSRF check for auth routes
+  if (req.path.startsWith('/auth')) {
+    return next();
+  }
+  validateCsrfToken(req, res, next);
+});
 
 // Initialize database
 try {
@@ -65,29 +74,14 @@ try {
 }
 
 // Routes
-import authRoutes from "./routes/auth/index.js";
-import productsRoutes from "./routes/products.js";
-import salesRoutes from "./routes/sales.js";
-import customersRoutes from "./routes/customers.js";
-import suppliersRoutes from "./routes/suppliers.js";
-import expensesRoutes from "./routes/expenses.js";
-import purchaseOrdersRouter from "./routes/purchase-orders.js";
-import seedRoutes from "./routes/seed.js";
-import productSuppliersRoutes from "./routes/product-suppliers.js";
-
-app.use("/api/auth", authRoutes);
-app.use("/api/products", productsRoutes);
-app.use("/api/sales", salesRoutes);
-app.use("/api/customers", customersRoutes);
-app.use("/api/suppliers", suppliersRoutes);
-app.use("/api/expenses", expensesRoutes);
-app.use("/api/purchase-orders", purchaseOrdersRouter);
-app.use("/api/seed", seedRoutes);
-app.use("/api/product-suppliers", productSuppliersRoutes);
+app.use('/api', routes);
 
 // Health check endpoint
 app.get("/api/health", (_, res) => {
   res.json({ status: "healthy" });
 });
+
+// Error handling
+app.use(errorHandler);
 
 export default app;

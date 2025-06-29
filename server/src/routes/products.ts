@@ -6,7 +6,6 @@ import { Op } from "sequelize";
 import upload from "../middleware/upload.js";
 import cloudinary from "../config/cloudinary.js";
 import PurchaseOrderItem from "../models/PurchaseOrderItem.js";
-import PriceUnit from "../models/PriceUnit.js";
 
 const router = Router();
 
@@ -32,7 +31,6 @@ router.get("/", async (req, res) => {
   try {
     const products = await Product.findAll({
       order: [["name", "ASC"]],
-      include: [{ model: PriceUnit, as: "price_units" }],
     });
     res.json(products);
   } catch (error) {
@@ -61,7 +59,6 @@ router.get("/search", async (req, res) => {
         ],
       },
       order: [["name", "ASC"]],
-      include: [{ model: PriceUnit, as: "price_units" }],
     });
 
     return res.json(products);
@@ -79,7 +76,6 @@ router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findByPk(req.params.id, {
       include: [
-        { model: PriceUnit, as: "price_units" },
         {
           model: Supplier,
           through: ProductSupplier,
@@ -107,37 +103,13 @@ router.post("/", upload.single("image"), async (req, res) => {
       image_url = await uploadToCloudinary(req.file);
     }
 
-    // Extract price_units from productData (as JSON string if sent via multipart/form-data)
-    let priceUnits = [];
-    if (productData.price_units) {
-      if (typeof productData.price_units === "string") {
-        priceUnits = JSON.parse(productData.price_units);
-      } else {
-        priceUnits = productData.price_units;
-      }
-    }
-
     const product = await Product.create({
       ...productData,
       image_url,
     });
 
-    // Save price units
-    if (priceUnits.length > 0) {
-      await Promise.all(
-        priceUnits.map((unit) =>
-          PriceUnit.create({
-            ...unit,
-            product_id: product.id,
-          })
-        )
-      );
-    }
-
     // Return product with price_units
-    const productWithUnits = await Product.findByPk(product.id, {
-      include: [{ model: PriceUnit, as: "price_units" }],
-    });
+    const productWithUnits = await Product.findByPk(product.id);
     res.status(201).json(productWithUnits);
   } catch (error) {
     console.error("Error creating product:", error);
@@ -164,45 +136,26 @@ router.put("/:id", upload.single("image"), async (req, res) => {
       productData.image_url = image_url;
     }
 
-    // Extract price_units from productData (as JSON string if sent via multipart/form-data)
-    let priceUnits = [];
-    if (productData.price_units) {
-      if (typeof productData.price_units === "string") {
-        priceUnits = JSON.parse(productData.price_units);
-      } else {
-        priceUnits = productData.price_units;
-      }
+    // Ensure quantity is a number
+    if (productData.quantity !== undefined) {
+      productData.quantity = Number(productData.quantity);
     }
+
+    // Log the data being sent to update
+    console.log("Updating product with data:", productData);
 
     await product.update(productData);
 
-    // Delete old price units and add new ones
-    await PriceUnit.destroy({ where: { product_id: product.id } });
-    if (priceUnits.length > 0) {
-      await Promise.all(
-        priceUnits.map((unit) =>
-          PriceUnit.create({
-            ...unit,
-            product_id: product.id,
-          })
-        )
-      );
-    }
-
-    // Return updated product with price_units
-    const updatedProduct = await Product.findByPk(product.id, {
-      include: [
-        { model: PriceUnit, as: "price_units" },
-        {
-          model: Supplier,
-          through: ProductSupplier,
-        },
-      ],
-    });
+    // Return updated product
+    const updatedProduct = await Product.findByPk(product.id);
 
     res.json(updatedProduct);
   } catch (error) {
-    res.status(500).json({ message: "Error updating product", error });
+    console.error("Error updating product:", error);
+    res.status(500).json({
+      message: "Error updating product",
+      error: error instanceof Error ? error.message : error,
+    });
   }
 });
 

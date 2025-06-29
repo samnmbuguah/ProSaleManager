@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Customer, CustomerInsert } from "@/types/customer";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
+import { api } from "@/lib/api";
 
 interface APIError {
   error: string;
@@ -70,19 +71,12 @@ export function useCustomers() {
     queryFn: async () => {
       try {
         console.log("[Customers] Fetching customers data");
-        const res = await fetchWithRetry("/api/customers");
-
-        if (!res.ok) {
-          if (res.status === 401) {
-            throw new Error("Please login to view customers");
-          }
-          const errorData: APIError = await res.json();
-          throw new Error(errorData.error || "Failed to fetch customers");
-        }
-
-        const data = await res.json();
-        console.log("[Customers] Successfully fetched customers:", data.length);
-        return data;
+        const response = await api.get("/api/customers");
+        console.log(
+          "[Customers] Successfully fetched customers:",
+          response.data.data.length,
+        );
+        return response.data.data;
       } catch (error) {
         console.error("[Customers] Error fetching customers:", error);
         throw error;
@@ -95,19 +89,8 @@ export function useCustomers() {
 
   const createCustomerMutation = useMutation<Customer, Error, CustomerInsert>({
     mutationFn: async (customer) => {
-      const res = await fetch("/api/customers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(customer),
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to create customer");
-      }
-
-      return res.json();
+      const response = await api.post("/api/customers", customer);
+      return response.data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });
@@ -139,7 +122,7 @@ export function useCustomers() {
     customers,
     isLoading,
     error,
-    createCustomer: createCustomerMutation.mutateAsync,
+    createCustomer: createCustomerMutation.mutate,
     isCreating: createCustomerMutation.isPending,
     searchCustomers,
   };

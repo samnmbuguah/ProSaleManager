@@ -1,5 +1,5 @@
 import { Model, DataTypes } from "sequelize";
-import sequelize from "../config/database.js";
+import { sequelize } from "../config/database.js";
 
 class PurchaseOrderItem extends Model {
   declare id: number;

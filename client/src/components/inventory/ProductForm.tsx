@@ -1,15 +1,10 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ProductFormData, productSchema } from "@/types/product";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -17,368 +12,173 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { PRICE_UNITS } from "@/constants/priceUnits";
-import { PRODUCT_CATEGORIES } from "@/constants/categories";
-import { type ProductFormData, productSchema } from "@/types/product";
 
 interface ProductFormProps {
+  initialData?: Partial<ProductFormData>;
   onSubmit: (data: ProductFormData) => Promise<void>;
   isSubmitting?: boolean;
-  initialData?: Partial<ProductFormData>;
 }
 
 export function ProductForm({
-  onSubmit,
-  isSubmitting = false,
   initialData,
+  onSubmit,
+  isSubmitting,
 }: ProductFormProps) {
-  // Initialize form with proper default values
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      name: initialData?.name ?? "",
-      stock: initialData?.stock ?? 0,
-      category: initialData?.category ?? "",
-      min_stock: initialData?.min_stock ?? 0,
-      max_stock: initialData?.max_stock ?? 0,
-      reorder_point: initialData?.reorder_point ?? 0,
-      stock_unit: initialData?.stock_unit ?? "piece",
-      price_units:
-        initialData?.price_units ??
-        PRICE_UNITS.map((unit) => ({
-          unit_type: unit.value,
-          quantity: unit.quantity,
-          buying_price: "0",
-          selling_price: "0",
-          is_default: unit.value === "piece",
-        })),
+      name: "",
+      description: "",
+      sku: "",
+      barcode: "",
+      category_id: 1,
+      price: 0,
+      cost_price: 0,
+      quantity: 0,
+      min_quantity: 0,
+      is_active: true,
+      ...initialData,
     },
   });
 
   const handleSubmit = async (data: ProductFormData) => {
-    try {
-      // Ensure numeric values are properly converted
-      const formattedData = {
-        ...data,
-        stock: Number(data.stock),
-        min_stock: Number(data.min_stock),
-        max_stock: Number(data.max_stock),
-        reorder_point: Number(data.reorder_point),
-        price_units: data.price_units.map((unit) => ({
-          ...unit,
-          quantity: Number(unit.quantity),
-          buying_price: unit.buying_price.toString(),
-          selling_price: unit.selling_price.toString(),
-          is_default: Boolean(unit.is_default),
-        })),
-      };
-
-      // Validate that at least one price unit is marked as default
-      const hasDefaultUnit = formattedData.price_units.some(
-        (unit) => unit.is_default,
-      );
-      if (!hasDefaultUnit) {
-        formattedData.price_units[0].is_default = true;
-      }
-
-      // Adjust stock based on selected unit
-      const selectedUnit = formattedData.price_units.find(
-        (unit) => unit.unit_type === formattedData.stock_unit,
-      );
-      if (selectedUnit) {
-        formattedData.stock = formattedData.stock * selectedUnit.quantity;
-      }
-
-      console.log("Submitting form data:", formattedData);
-      await onSubmit(formattedData);
-    } catch (error) {
-      console.error("Form submission error:", error);
-    }
+    await onSubmit(data);
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Product Name</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+      <div className="space-y-4">
+        <div>
+          <Label htmlFor="name">Name</Label>
+          <Input
+            id="name"
+            {...form.register("name")}
+            placeholder="Enter product name"
           />
+          {form.formState.errors.name && (
+            <p className="text-sm text-red-500">
+              {form.formState.errors.name.message}
+            </p>
+          )}
+        </div>
 
-          <FormField
-            control={form.control}
-            name="product_code"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Product Code</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="category"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {PRODUCT_CATEGORIES.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="stock"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Current Stock</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    {...field}
-                    value={field.value || 0}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="stock_unit"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Stock Unit</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select stock unit" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {PRICE_UNITS.map((unit) => (
-                      <SelectItem key={unit.value} value={unit.value}>
-                        {unit.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="col-span-2">
-            <h3 className="text-lg font-semibold mb-4">Price Units</h3>
-            {PRICE_UNITS.map((unit, index) => (
-              <div
-                key={unit.value}
-                className="grid grid-cols-2 gap-4 mb-6 p-4 border rounded-lg"
-              >
-                <div className="col-span-2 flex justify-between items-center">
-                  <h4 className="font-medium mb-2">
-                    {unit.label} ({unit.quantity}{" "}
-                    {unit.quantity === 1 ? "piece" : "pieces"})
-                  </h4>
-                  <FormField
-                    control={form.control}
-                    name={`price_units.${index}.is_default`}
-                    render={({ field }) => (
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={(checked) => {
-                              // Uncheck other units when this one is checked
-                              if (checked) {
-                                form.setValue(
-                                  "price_units",
-                                  form
-                                    .getValues("price_units")
-                                    .map((pu, i) => ({
-                                      ...pu,
-                                      is_default: i === index,
-                                    })),
-                                );
-                              }
-                              field.onChange(checked);
-                            }}
-                          />
-                        </FormControl>
-                        <FormLabel className="text-sm">Default Unit</FormLabel>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name={`price_units.${index}.buying_price`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Buying Price</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          value={field.value || ""}
-                          onChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name={`price_units.${index}.selling_price`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Selling Price</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          value={field.value || ""}
-                          onChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name={`price_units.${index}.quantity`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Quantity</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          {...field}
-                          value={field.value || 0}
-                          onChange={(e) =>
-                            field.onChange(Number(e.target.value))
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <input
-                  type="hidden"
-                  {...form.register(`price_units.${index}.unit_type`)}
-                  value={unit.value}
-                />
-              </div>
-            ))}
-          </div>
-
-          <FormField
-            control={form.control}
-            name="min_stock"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Minimum Stock</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    {...field}
-                    value={field.value || 0}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="max_stock"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Maximum Stock</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    {...field}
-                    value={field.value || 0}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="reorder_point"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Reorder Point</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    {...field}
-                    value={field.value || 0}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+        <div>
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            {...form.register("description")}
+            placeholder="Enter product description"
           />
         </div>
 
-        <Button type="submit" disabled={isSubmitting} className="w-full">
-          {isSubmitting ? "Saving..." : "Save Product"}
-        </Button>
-      </form>
-    </Form>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="sku">SKU</Label>
+            <Input id="sku" {...form.register("sku")} placeholder="Enter SKU" />
+          </div>
+
+          <div>
+            <Label htmlFor="barcode">Barcode</Label>
+            <Input
+              id="barcode"
+              {...form.register("barcode")}
+              placeholder="Enter barcode"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="price">Price</Label>
+            <Input
+              id="price"
+              type="number"
+              {...form.register("price", { valueAsNumber: true })}
+              placeholder="Enter price"
+            />
+            {form.formState.errors.price && (
+              <p className="text-sm text-red-500">
+                {form.formState.errors.price.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="cost_price">Cost Price</Label>
+            <Input
+              id="cost_price"
+              type="number"
+              {...form.register("cost_price", { valueAsNumber: true })}
+              placeholder="Enter cost price"
+            />
+            {form.formState.errors.cost_price && (
+              <p className="text-sm text-red-500">
+                {form.formState.errors.cost_price.message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="quantity">Quantity</Label>
+            <Input
+              id="quantity"
+              type="number"
+              {...form.register("quantity", { valueAsNumber: true })}
+              placeholder="Enter quantity"
+            />
+            {form.formState.errors.quantity && (
+              <p className="text-sm text-red-500">
+                {form.formState.errors.quantity.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="min_quantity">Minimum Quantity</Label>
+            <Input
+              id="min_quantity"
+              type="number"
+              {...form.register("min_quantity", { valueAsNumber: true })}
+              placeholder="Enter minimum quantity"
+            />
+            {form.formState.errors.min_quantity && (
+              <p className="text-sm text-red-500">
+                {form.formState.errors.min_quantity.message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="category_id">Category</Label>
+          <Select
+            value={form.watch("category_id").toString()}
+            onValueChange={(value) =>
+              form.setValue("category_id", parseInt(value))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Category 1</SelectItem>
+              <SelectItem value="2">Category 2</SelectItem>
+              <SelectItem value="3">Category 3</SelectItem>
+            </SelectContent>
+          </Select>
+          {form.formState.errors.category_id && (
+            <p className="text-sm text-red-500">
+              {form.formState.errors.category_id.message}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Saving..." : "Save Product"}
+      </Button>
+    </form>
   );
 }

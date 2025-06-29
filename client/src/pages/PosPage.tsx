@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, RefreshCcw } from "lucide-react";
+import { AlertCircle, RefreshCcw, User, ShoppingCart } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { ProductSearch } from "@/components/pos/ProductSearch";
 import { Cart } from "@/components/pos/Cart";
@@ -11,9 +11,10 @@ import type { CartItem } from "@/types/pos";
 import { ReceiptDialog } from "@/components/pos/ReceiptDialog";
 import { useProducts } from "@/hooks/useProducts";
 import { useCustomers } from "@/hooks/useCustomers";
-
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1500;
+import { api } from "@/lib/api";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const PosPage: React.FC = () => {
   const {
@@ -28,6 +29,7 @@ const PosPage: React.FC = () => {
     updateQuantity,
     updateUnitType,
     updateUnitPrice,
+    removeItem,
     clearCart,
     total: cartTotal,
   } = useCart();
@@ -38,61 +40,42 @@ const PosPage: React.FC = () => {
   const { customers, fetchCustomers } = useCustomers();
   const [isReceiptDialogOpen, setIsReceiptDialogOpen] = useState(false);
   const [currentSaleId, setCurrentSaleId] = useState<number | null>(null);
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [isSendingReceipt, setIsSendingReceipt] = useState(false);
   const [isLoading, setIsLoading] = useState({
     checkout: false,
   });
-  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [deliveryFee, setDeliveryFee] = useState(200);
 
+  // Load products and customers on component mount
+  // Note: In development mode with React.StrictMode, this may run twice
+  // which is expected behavior and helps catch certain types of bugs
   useEffect(() => {
     fetchProducts();
     fetchCustomers();
-  }, [fetchProducts, fetchCustomers]);
+  }, []); // Empty dependency array to run only once on mount
 
-  const fetchWithRetry = async (
-    url: string,
-    options: RequestInit = {},
-    retries = MAX_RETRIES,
-  ) => {
-    try {
-      console.log(`Fetching ${url} with options:`, options);
-      const response = await fetch(url, options);
-
-      // Log the response status to help with debugging
-      console.log(`Response status: ${response.status} for ${url}`);
-
-      // First check if the response is ok (status in the range 200-299)
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Server error: ${response.status}`, errorText);
-        throw new Error(
-          `Server returned ${response.status}: ${errorText || "No error details"}`,
-        );
+  // Set Walk-in Customer as default when customers are loaded
+  useEffect(() => {
+    if (customers.length > 0 && !selectedCustomer) {
+      // Find the Walk-in Customer (should be the first customer with ID 1)
+      const walkInCustomer = customers.find(c => c.name === "Walk-in Customer");
+      if (walkInCustomer) {
+        setSelectedCustomer(walkInCustomer.id);
       }
-
-      // Then try to parse the JSON
-      try {
-        const data = await response.json();
-        console.log(`Response data for ${url}:`, data);
-        return data;
-      } catch (parseError) {
-        console.error("JSON parse error:", parseError);
-        throw new Error("Invalid JSON response from server");
-      }
-    } catch (error) {
-      console.error(`Fetch error for ${url}:`, error);
-
-      // If we have retries left, wait and try again
-      if (retries > 0) {
-        console.log(`Retrying ${url}, ${retries} attempts left`);
-        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
-        return fetchWithRetry(url, options, retries - 1);
-      }
-
-      // No more retries, rethrow the error
-      throw error;
     }
+  }, [customers, selectedCustomer]);
+
+  // Enhanced add to cart function that defaults to piece pricing
+  const handleAddToCart = (product: any) => {
+    // Default to piece pricing
+    const unitType = "piece";
+    const unitPrice = product.piece_selling_price || 0;
+
+    addToCart(product, unitType, unitPrice);
+
+    toast({
+      title: "Added to Cart",
+      description: `${product.name} added to cart (${unitType})`,
+    });
   };
 
   const handleCheckout = async () => {
@@ -108,16 +91,25 @@ const PosPage: React.FC = () => {
         return;
       }
 
+      if (!selectedCustomer) {
+        toast({
+          title: "Error",
+          description: "Please select a customer",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Format sale data for API
       const saleData = {
-        items: cartItems
-          .filter((item) => item.product && item.product.id > 0)
+        items: (cartItems || [])
+          .filter((item) => item?.product && item.product.id > 0)
           .map((item) => ({
             product_id: item.product.id,
             quantity: item.quantity,
             unit_price: item.unit_price,
             total: item.total,
-            unit_type: item.unit_type || item.product.stock_unit,
+            unit_type: item.unit_type || "piece",
           })),
         total: cartTotal + deliveryFee,
         delivery_fee: deliveryFee,
@@ -131,27 +123,20 @@ const PosPage: React.FC = () => {
 
       console.log("CHECKOUT - Sending sale data:", JSON.stringify(saleData));
 
-      // Attempt to create the sale
-      const response = await fetchWithRetry(
-        `${import.meta.env.VITE_API_URL}/sales`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(saleData),
-          credentials: "include",
-        },
-      );
+      // Use the configured API instance
+      const response = await api.post("/sales", saleData);
 
-      console.log("CHECKOUT - Sale created successfully, response:", response);
+      console.log(
+        "CHECKOUT - Sale created successfully, response:",
+        response.data,
+      );
 
       // Verify response format and extract sale ID
       let saleId;
-      if (response && response.data && response.data.id) {
+      if (response.data && response.data.data && response.data.data.id) {
+        saleId = response.data.data.id;
+      } else if (response.data && response.data.id) {
         saleId = response.data.id;
-      } else if (response && response.id) {
-        saleId = response.id;
       } else {
         throw new Error("Invalid server response format");
       }
@@ -171,24 +156,19 @@ const PosPage: React.FC = () => {
       // Set the sale ID for the receipt dialog
       setCurrentSaleId(saleId);
 
-      // Pre-fill the phone number if available
-      const customer = customers.find((c) => c.id === selectedCustomer);
-      if (customer?.phone) {
-        setPhoneNumber(customer.phone);
-      }
-
       // Open the receipt dialog immediately
       setIsReceiptDialogOpen(true);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("CHECKOUT - Error:", error);
 
       // Show detailed error message
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to complete checkout. Please try again.";
       toast({
         title: "Server Error",
-        description:
-          error instanceof Error
-            ? `Failed to complete checkout: ${error.message}`
-            : "Failed to complete checkout. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -196,112 +176,131 @@ const PosPage: React.FC = () => {
     }
   };
 
-  const handleSendReceipt = async (method: "whatsapp" | "sms") => {
-    try {
-      if (!currentSaleId || !phoneNumber) {
-        toast({
-          title: "Error",
-          description: "Missing sale ID or phone number",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setIsSendingReceipt(true);
-
-      const response = await fetchWithRetry(
-        `${import.meta.env.VITE_API_URL}/sales/${currentSaleId}/receipt/${method}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ phoneNumber }),
-          credentials: "include",
-        },
-      );
-
-      if (!response) {
-        throw new Error(`Failed to send ${method} receipt`);
-      }
-
-      toast({
-        title: "Success",
-        description: `Receipt sent via ${method === "whatsapp" ? "WhatsApp" : "SMS"}!`,
-      });
-
-      // Close the dialog after sending
-      setTimeout(() => {
-        setIsReceiptDialogOpen(false);
-        setPhoneNumber("");
-        setCurrentSaleId(null);
-      }, 2000);
-    } catch (error) {
-      console.error(`Error sending ${method} receipt:`, error);
-      toast({
-        title: "Error",
-        description: `Failed to send receipt via ${method === "whatsapp" ? "WhatsApp" : "SMS"}`,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSendingReceipt(false);
-    }
-  };
+  const selectedCustomerData = customers.find(c => c.id === selectedCustomer);
 
   return (
     <div className="container mx-auto p-4 mt-16">
-      <div className="grid grid-cols-12 h-full">
-        {/* Products Section */}
-        <div className="col-span-8 h-full p-4 overflow-hidden flex flex-col">
-          {productsError && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Connection Error</AlertTitle>
-              <AlertDescription>
-                {productsError}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={fetchProducts}
-                  className="ml-2"
-                >
-                  <RefreshCcw className="h-4 w-4 mr-1" /> Retry
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <div className="flex-1 overflow-y-auto">
-            <ProductSearch
-              products={products.filter(
-                (product) => product.product_code !== "SRV001",
-              )}
-              onSelect={addToCart}
-              searchProducts={async (query: string) => {
-                try {
-                  const response = await fetch(
-                    `${import.meta.env.VITE_API_URL}/products/search?q=${query}`,
-                  );
-                  if (!response.ok)
-                    throw new Error("Failed to search products");
-
-                  const data = await response.json();
-                  setProducts(data);
-                } catch (error) {
-                  console.error("Error:", error);
-                  toast({
-                    title: "Error",
-                    description: "Failed to search products",
-                    variant: "destructive",
-                  });
-                }
-              }}
-            />
+      {/* Header with Customer Selection */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold">Point of Sale</h1>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <User className="h-5 w-5 text-gray-500" />
+              <span className="text-sm text-gray-600">Customer:</span>
+            </div>
+            <Select value={selectedCustomer?.toString() || ""} onValueChange={(value) => setSelectedCustomer(value ? parseInt(value) : null)}>
+              <SelectTrigger className="w-64">
+                <SelectValue placeholder="Select a customer" />
+              </SelectTrigger>
+              <SelectContent>
+                {customers.map((customer) => (
+                  <SelectItem key={customer.id} value={customer.id.toString()}>
+                    {customer.name} - {customer.phone}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
+        {selectedCustomerData && (
+          <Card className="mb-4">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Selected Customer
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold">{selectedCustomerData.name}</p>
+                  <p className="text-sm text-gray-600">{selectedCustomerData.phone}</p>
+                  {selectedCustomerData.email && (
+                    <p className="text-sm text-gray-600">{selectedCustomerData.email}</p>
+                  )}
+                </div>
+                <Badge variant="secondary">Customer ID: {selectedCustomerData.id}</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      <div className="grid grid-cols-12 gap-6 h-[calc(100vh-280px)]">
+        {/* Products Section */}
+        <div className="col-span-8 h-full overflow-hidden flex flex-col">
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5" />
+                Products
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-hidden">
+              {productsError && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Connection Error</AlertTitle>
+                  <AlertDescription>
+                    {productsError}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={fetchProducts}
+                      className="ml-2"
+                    >
+                      <RefreshCcw className="h-4 w-4 mr-1" /> Retry
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="h-full overflow-y-auto">
+                <ProductSearch
+                  products={(products || []).filter(
+                    (product) => product?.sku !== "SRV001",
+                  )}
+                  onSelect={handleAddToCart}
+                  searchProducts={async (query: string) => {
+                    try {
+                      const response = await fetch(
+                        `${import.meta.env.VITE_API_URL}/pos/products/search?q=${query}`,
+                        {
+                          credentials: "include",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                        },
+                      );
+                      if (!response.ok)
+                        throw new Error("Failed to search products");
+
+                      const data = await response.json();
+                      if (data.message === "getProducts stub") {
+                        throw new Error(
+                          "Stub response received - API not properly configured",
+                        );
+                      }
+                      setProducts(data);
+                    } catch (error) {
+                      console.error("Error:", error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to search products",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Cart Section */}
-        <div className="col-span-4 h-full p-4 overflow-hidden">
+        <div className="col-span-4 h-full overflow-hidden">
           <Cart
             items={cartItems as unknown as CartItem[]}
             onUpdateQuantity={(
@@ -311,8 +310,10 @@ const PosPage: React.FC = () => {
             ) => updateQuantity(productId, quantity)}
             onUpdateUnitType={updateUnitType}
             onUpdateUnitPrice={updateUnitPrice}
+            onRemoveItem={removeItem}
             onCheckout={() => setIsCheckoutDialogOpen(true)}
             total={cartTotal}
+            selectedCustomer={selectedCustomerData}
           />
         </div>
       </div>
@@ -336,14 +337,8 @@ const PosPage: React.FC = () => {
       {/* Receipt Dialog */}
       <ReceiptDialog
         open={isReceiptDialogOpen}
-        onOpenChange={(open) => {
-          if (!open && !isSendingReceipt) setIsReceiptDialogOpen(false);
-        }}
+        onOpenChange={setIsReceiptDialogOpen}
         currentSaleId={currentSaleId}
-        phoneNumber={phoneNumber}
-        setPhoneNumber={setPhoneNumber}
-        isSendingReceipt={isSendingReceipt}
-        handleSendReceipt={handleSendReceipt}
       />
     </div>
   );

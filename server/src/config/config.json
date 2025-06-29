@@ -1,0 +1,32 @@
+{
+  "development": {
+    "username": "prosalemanager",
+    "password": "prosalepassword",
+    "database": "prosaledatabase",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "prosalemanager",
+    "password": "prosalepassword",
+    "database": "prosaledatabase",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "prosalemanager",
+    "password": "prosalepassword",
+    "database": "prosaledatabase",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
+  }
+} 
