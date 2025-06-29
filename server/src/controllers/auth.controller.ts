@@ -1,165 +1,135 @@
-import { Request, Response } from "express";
-import { UserService } from "../services/user.service.js";
-import jwt from "jsonwebtoken";
-import env from "../config/env.js";
+import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
+import { ApiError } from '../utils/api-error.js';
+import { catchAsync } from '../utils/catch-async.js';
 
-export class AuthController {
-  constructor(private userService: UserService) {}
+export const register = catchAsync(async (req: Request, res: Response) => {
+  const { name, email, password, role } = req.body;
 
-  async register(req: Request, res: Response) {
-    try {
-      const { email, password, name } = req.body;
-
-      // Check if user already exists
-      const existingUser = await this.userService.findByEmail(email);
-      if (existingUser.success) {
-        return res.status(400).json({
-          success: false,
-          message: "User already exists",
-        });
-      }
-
-      // Create new user
-      const result = await this.userService.create({
-        email,
-        password,
-        name,
-        role: "user",
-      });
-
-      if (!result.success) {
-        return res.status(400).json(result);
-      }
-
-      // Generate JWT token
-      const token = jwt.sign(
-        { userId: result.data!.id, role: result.data!.role },
-        env.JWT_SECRET,
-        { expiresIn: "24h" },
-      );
-
-      // Set cookie
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      });
-
-      // Return success without password
-      const { password: _password, ...userWithoutPassword } = result.data!.toJSON();
-      return res.status(201).json({
-        success: true,
-        data: userWithoutPassword,
-        message: "User registered successfully",
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: "Registration failed. Please try again.",
-      });
-    }
+  // Check if user already exists
+  const existingUser = await User.findOne({ where: { email } });
+  if (existingUser) {
+    throw new ApiError(400, 'User already exists');
   }
 
-  async login(req: Request, res: Response) {
-    try {
-      const { email, password } = req.body;
+  // Hash password
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
 
-      if (!email || !password) {
-        return res.status(400).json({
-          success: false,
-          message: "Email and password are required",
-        });
-      }
+  // Create user
+  const user = await User.create({
+    name,
+    email,
+    password: hashedPassword,
+    role: role || 'sales',
+    is_active: true
+  });
 
-      const result = await this.userService.validateCredentials(
-        email,
-        password,
-      );
+  // Generate token
+  const token = jwt.sign(
+    { id: user.id, email: user.email, role: user.role },
+    process.env.JWT_SECRET || 'your-secret-key',
+    { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+  );
 
-      if (!result.success) {
-        return res.status(401).json({
-          success: false,
-          message: "Invalid email or password",
-        });
-      }
+  // Set cookie
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
+  });
 
-      // Generate JWT token
-      const token = jwt.sign(
-        { userId: result.data!.id, role: result.data!.role },
-        env.JWT_SECRET,
-        { expiresIn: "24h" },
-      );
+  // Return user data (excluding password)
+  const userData = user.toJSON();
+  delete userData.password;
 
-      // Set cookie
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: env.NODE_ENV === "production",
-        sameSite: env.NODE_ENV === "production" ? "strict" : "lax",
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        path: "/",
-      });
+  res.status(201).json({
+    success: true,
+    data: userData
+  });
+});
 
-      // Return success without password
-      const { password: _password, ...userWithoutPassword } = result.data!.toJSON();
-      return res.json({
-        success: true,
-        data: userWithoutPassword,
-        message: "Login successful",
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: "Login failed. Please try again.",
-      });
-    }
+export const login = catchAsync(async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  // Validate required fields
+  if (!email || !password) {
+    throw new ApiError(400, 'Email and password are required');
   }
 
-  async logout(_req: Request, res: Response) {
-    try {
-      res.clearCookie("token");
-      return res.json({
-        success: true,
-        message: "Logged out successfully",
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: "Logout failed. Please try again.",
-      });
-    }
+  // Find user
+  const user = await User.findOne({ where: { email: email.trim() } });
+  
+  if (!user) {
+    throw new ApiError(401, 'Invalid credentials');
   }
 
-  async checkSession(req: Request, res: Response) {
-    try {
-      const token = req.cookies.token;
-      if (!token) {
-        return res.status(401).json({
-          success: false,
-          message: "Please log in to continue",
-        });
-      }
-
-      const decoded = jwt.verify(token, env.JWT_SECRET) as { userId: number };
-      const result = await this.userService.findById(decoded.userId);
-
-      if (!result.success) {
-        return res.status(401).json({
-          success: false,
-          message: "Session expired. Please log in again.",
-        });
-      }
-
-      const { password: _password, ...userWithoutPassword } = result.data!.toJSON();
-      return res.json({
-        success: true,
-        data: userWithoutPassword,
-      });
-    } catch (error) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid session. Please log in again.",
-      });
-    }
+  // Check if user is active
+  if (!user.is_active) {
+    throw new ApiError(401, 'Account is inactive');
   }
-}
+
+  // Check password
+  const isMatch = await bcrypt.compare(password, user.password);
+  
+  if (!isMatch) {
+    throw new ApiError(401, 'Invalid credentials');
+  }
+
+  // Update last login
+  await user.update({ last_login: new Date() });
+
+  // Generate token
+  const token = jwt.sign(
+    { id: user.id, email: user.email, role: user.role },
+    process.env.JWT_SECRET || 'your-secret-key',
+    { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+  );
+
+  // Set cookie
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
+  });
+
+  // Return user data (excluding password)
+  const userData = user.toJSON();
+  delete userData.password;
+
+  console.log('Login successful for:', email);
+  res.json({
+    success: true,
+    data: userData
+  });
+});
+
+export const logout = catchAsync(async (req: Request, res: Response) => {
+  res.clearCookie('token');
+  res.json({ success: true });
+});
+
+export const getMe = catchAsync(async (req: Request, res: Response) => {
+  // If no user is attached to the request, return unauthenticated
+  if (!req.user) {
+    return res.json({
+      success: true,
+      data: null,
+      authenticated: false
+    });
+  }
+  
+  // Return user data (excluding password)
+  const userData = req.user.toJSON();
+  delete userData.password;
+
+  res.json({
+    success: true,
+    data: userData,
+    authenticated: true
+  });
+});

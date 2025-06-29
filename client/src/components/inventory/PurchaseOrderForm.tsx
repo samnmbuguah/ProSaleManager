@@ -182,10 +182,11 @@ export function PurchaseOrderForm({
                   <div className="font-medium">{item.name}</div>
                   <div className="text-sm text-muted-foreground">
                     Current Stock:{" "}
-                    {products.find((p) => p.id === item.product_id)?.stock || 0}
+                    {products.find((p) => p.id === item.product_id)?.quantity ||
+                      0}
                     → New Stock:{" "}
-                    {(products.find((p) => p.id === item.product_id)?.stock ||
-                      0) + item.quantity}
+                    {(products.find((p) => p.id === item.product_id)
+                      ?.quantity || 0) + item.quantity}
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 w-full md:w-auto">

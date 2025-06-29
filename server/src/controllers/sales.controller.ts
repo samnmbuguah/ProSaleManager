@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import Sale from "../models/Sale.js";
 import SaleItem from "../models/SaleItem.js";
-import sequelize from "../config/database.js";
+import { sequelize } from "../config/database.js";
 import User from "../models/User.js";
 import Customer from "../models/Customer.js";
 import Product from "../models/Product.js";
@@ -9,6 +9,10 @@ import Product from "../models/Product.js";
 export const createSale = async (req: Request, res: Response) => {
   let t;
   try {
+    console.log("=== CREATE SALE START ===");
+    console.log("Request body:", JSON.stringify(req.body, null, 2));
+    console.log("User:", req.user);
+    
     t = await sequelize.transaction();
 
     const {
@@ -25,16 +29,22 @@ export const createSale = async (req: Request, res: Response) => {
     // Get the user_id from the authenticated session
     const user_id = req.user?.id;
     if (!user_id) {
+      console.log("ERROR: No user_id found in request");
       await t.rollback();
       return res.status(401).json({ message: "User not authenticated" });
     }
 
+    console.log("User ID:", user_id);
+    console.log("Customer ID:", customer_id);
+
     // Validate items
     if (!items || !Array.isArray(items) || items.length === 0) {
+      console.log("ERROR: No items provided");
       await t.rollback();
       return res.status(400).json({ message: "No items provided for sale" });
     }
 
+    console.log("Creating sale record...");
     // Create the sale with customer_id (null for walk-in customers)
     // Ensure we use the client's status value or default to 'completed' for paid sales
     const sale = await Sale.create(
@@ -51,6 +61,8 @@ export const createSale = async (req: Request, res: Response) => {
       { transaction: t },
     );
 
+    console.log("Sale created with ID:", sale.id);
+
     // Define a type for sale item
     interface SaleItemInput {
       product_id: number;
@@ -60,6 +72,7 @@ export const createSale = async (req: Request, res: Response) => {
       unit_type: string;
     }
 
+    console.log("Creating sale items...");
     // Create sale items
     await Promise.all(
       (items as SaleItemInput[]).map((item) =>
@@ -77,9 +90,13 @@ export const createSale = async (req: Request, res: Response) => {
       ),
     );
 
+    console.log("Sale items created successfully");
+
     // Commit transaction
     await t.commit();
     t = null;
+
+    console.log("Transaction committed successfully");
 
     // Return the created sale with items
     const createdSale = await Sale.findByPk(sale.id, {
@@ -94,32 +111,69 @@ export const createSale = async (req: Request, res: Response) => {
         },
         {
           model: SaleItem,
+          as: "items",
           include: [
             {
               model: Product,
-              attributes: ["id", "name", "product_code"],
+              attributes: ["id", "name", "sku"],
             },
           ],
         },
       ],
     });
 
+    console.log("=== CREATE SALE SUCCESS ===");
     res.status(201).json({
       message: "Sale created successfully",
       data: createdSale,
     });
   } catch (error) {
+    console.error("=== CREATE SALE ERROR ===");
+    console.error("Error type:", error.constructor.name);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
+    
+    if (error.name) {
+      console.error("Error name:", error.name);
+    }
+    
+    if (error.parent) {
+      console.error("Parent error:", error.parent.message);
+      console.error("Parent code:", error.parent.code);
+    }
+    
     // Only rollback if transaction exists and is not already committed/rolled back
     if (t && !t.finished) {
       try {
         await t.rollback();
+        console.log("Transaction rolled back");
       } catch (rollbackError) {
         console.error("Error rolling back transaction:", rollbackError);
       }
     }
 
-    console.error("Error creating sale:", error);
-    res.status(500).json({ message: "Failed to create sale" });
+    // Return more specific error messages based on error type
+    let errorMessage = "Failed to create sale";
+    let statusCode = 500;
+
+    if (error.name === "SequelizeValidationError") {
+      errorMessage = `Validation error: ${error.message}`;
+      statusCode = 400;
+    } else if (error.name === "SequelizeForeignKeyConstraintError") {
+      errorMessage = `Foreign key constraint error: ${error.message}`;
+      statusCode = 400;
+    } else if (error.name === "SequelizeUniqueConstraintError") {
+      errorMessage = `Duplicate entry error: ${error.message}`;
+      statusCode = 400;
+    } else if (error.name === "SequelizeDatabaseError") {
+      errorMessage = `Database error: ${error.message}`;
+      statusCode = 500;
+    }
+
+    res.status(statusCode).json({ 
+      message: errorMessage,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
@@ -142,10 +196,11 @@ export const getSales = async (req: Request, res: Response) => {
         },
         {
           model: SaleItem,
+          as: "items",
           include: [
             {
               model: Product,
-              attributes: ["id", "name", "product_code"],
+              attributes: ["id", "name", "sku"],
             },
           ],
         },
@@ -180,7 +235,7 @@ export const getSaleItems = async (req: Request, res: Response) => {
       include: [
         {
           model: Product,
-          attributes: ["id", "name", "product_number"],
+          attributes: ["id", "name", "sku"],
         },
       ],
       order: [["id", "ASC"]],
@@ -255,10 +310,11 @@ export const getSaleById = async (req: Request, res: Response) => {
         },
         {
           model: SaleItem,
+          as: "items",
           include: [
             {
               model: Product,
-              attributes: ["id", "name", "product_code", "selling_price"],
+              attributes: ["id", "name", "sku"],
             },
           ],
         },

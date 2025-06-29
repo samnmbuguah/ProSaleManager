@@ -116,7 +116,7 @@ router.put("/:id/status", async (req, res) => {
 
     await order.update({ status });
 
-    // If status is 'received', update product stock
+    // If status is 'received', update product quantity
     if (status === "received") {
       const items = await PurchaseOrderItem.findAll({
         where: { purchase_order_id: order.id },
@@ -126,7 +126,7 @@ router.put("/:id/status", async (req, res) => {
       await Promise.all(
         items.map(async (item) => {
           const product = item.product;
-          await product.increment("stock", { by: item.quantity });
+          await product.increment("quantity", { by: item.quantity });
         }),
       );
     }

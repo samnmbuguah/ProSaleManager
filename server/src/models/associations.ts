@@ -7,7 +7,7 @@ import Expense from "./Expense.js";
 import Supplier from "./Supplier.js";
 import PurchaseOrder from "./PurchaseOrder.js";
 import PurchaseOrderItem from "./PurchaseOrderItem.js";
-import PriceUnit from "./PriceUnit.js";
+import Category from './Category.js';
 
 export function setupAssociations() {
   // User - Sale association
@@ -19,7 +19,7 @@ export function setupAssociations() {
   Sale.belongsTo(Customer, { foreignKey: "customer_id", constraints: false });
 
   // Sale - SaleItem association
-  Sale.hasMany(SaleItem, { foreignKey: "sale_id" });
+  Sale.hasMany(SaleItem, { foreignKey: "sale_id", as: "items" });
   SaleItem.belongsTo(Sale, { foreignKey: "sale_id" });
 
   // Product - SaleItem association
@@ -65,9 +65,9 @@ export function setupAssociations() {
     foreignKey: "product_id",
   });
 
-  // Product - PriceUnit association
-  Product.hasMany(PriceUnit, { foreignKey: "product_id", as: "price_units" });
-  PriceUnit.belongsTo(Product, { foreignKey: "product_id" });
+  // Category - Product association
+  Category.hasMany(Product, { foreignKey: 'category_id' });
+  Product.belongsTo(Category, { foreignKey: 'category_id' });
 
   console.log("Model associations have been set up");
 }

@@ -68,7 +68,7 @@ export function usePos() {
 
   const fetchAllProducts = async () => {
     try {
-      const response = await fetch("/api/products", {
+      const response = await fetch("/api/pos/products", {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
@@ -78,6 +78,9 @@ export function usePos() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
+      if (data.message === "getProducts stub") {
+        throw new Error("Stub response received - API not properly configured");
+      }
       setProducts(data);
       setError(null);
     } catch (error) {

@@ -28,7 +28,7 @@ const CustomersPage = () => {
     mutationFn: async (
       customer: Omit<CustomerType, "id" | "createdAt" | "updatedAt">,
     ) => {
-      const response = await api.post("/customers", customer);
+      const response = await api.post("/api/customers", customer);
       return response.data;
     },
     onSuccess: () => {
@@ -60,7 +60,7 @@ const CustomersPage = () => {
       id: number;
       data: Partial<CustomerType>;
     }) => {
-      const response = await api.put(`/customers/${id}`, data);
+      const response = await api.put(`/api/customers/${id}`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -86,7 +86,7 @@ const CustomersPage = () => {
 
   const deleteCustomerMutation = useMutation({
     mutationFn: async (id: number) => {
-      await api.delete(`/customers/${id}`);
+      await api.delete(`/api/customers/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers"] });

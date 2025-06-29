@@ -1,12 +1,12 @@
 import express from "express";
 import { Op } from "sequelize";
 import Customer from "../models/Customer.js";
-import { authenticate } from "../middleware/auth.middleware.js";
+import { protect } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
 // Apply authentication middleware to all customer routes
-router.use(authenticate);
+router.use(protect);
 
 // Get all customers
 router.get("/", async (req, res) => {
@@ -14,7 +14,7 @@ router.get("/", async (req, res) => {
     const customers = await Customer.findAll({
       order: [["name", "ASC"]],
     });
-    res.json(customers);
+    res.json({ data: customers });
   } catch (error) {
     console.error("Error fetching customers:", error);
     res.status(500).json({ message: "Failed to fetch customers" });

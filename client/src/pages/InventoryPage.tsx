@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Product } from "@/types/product";
+import { Product, UnitType } from "@/types/product";
 import Suppliers from "@/components/inventory/Suppliers";
 import { PurchaseOrders } from "@/components/inventory/PurchaseOrders";
 import { useSelector, useDispatch } from "react-redux";
@@ -21,7 +21,6 @@ import ProductList from "@/components/inventory/ProductList";
 import ProductFormDialog from "@/components/inventory/ProductFormDialog";
 import ProductSearchBar from "@/components/inventory/ProductSearchBar";
 import TabsNav from "@/components/inventory/TabsNav";
-import { UnitType } from "@/types/product";
 
 const InventoryPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -58,14 +57,15 @@ const InventoryPage: React.FC = () => {
 
   const initialFormData = {
     name: "",
-    product_code: "",
-    category: "",
-    stock_unit: "piece",
+    description: "",
+    sku: "",
+    barcode: "",
+    category_id: 1, // Default category ID
+    price: "0",
+    cost_price: "0",
     quantity: 0,
-    min_stock: 0,
-    buying_price: "0",
-    selling_price: "0",
-    price_units: defaultUnitTypes,
+    min_quantity: 0,
+    is_active: true,
   };
 
   useEffect(() => {
@@ -78,11 +78,7 @@ const InventoryPage: React.FC = () => {
     try {
       const formDataToSend = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
-        if (key === "price_units") {
-          formDataToSend.append("price_units", JSON.stringify(value));
-        } else {
-          formDataToSend.append(key, value.toString());
-        }
+        formDataToSend.append(key, value.toString());
       });
       if (localImageFile) {
         formDataToSend.append("image", localImageFile);
@@ -99,18 +95,7 @@ const InventoryPage: React.FC = () => {
         title: "Success",
         description: `Product ${selectedProduct ? "updated" : "created"} successfully`,
       });
-      dispatch(
-        setFormData({
-          name: "",
-          product_code: "",
-          category: "",
-          stock_unit: "piece",
-          quantity: 0,
-          min_stock: 0,
-          buying_price: "0",
-          selling_price: "0",
-        }),
-      );
+      dispatch(setFormData(initialFormData));
       dispatch(setIsAddDialogOpen(false));
       dispatch(setIsEditDialogOpen(false));
       dispatch(fetchProducts());
@@ -125,27 +110,26 @@ const InventoryPage: React.FC = () => {
   };
 
   const handleEdit = (product: Product) => {
-    const mergedUnits = defaultUnitTypes.map((def) => {
-      const found = (product.price_units || []).find(
-        (u) => u.unit_type === def.unit_type,
-      );
-      return found ? { ...def, ...found } : def;
-    });
     dispatch(setSelectedProduct(product));
     dispatch(
       setFormData({
         name: product.name,
-        product_code: product.product_code || "",
-        category: product.category,
-        stock_unit: product.stock_unit,
+        description: product.description || "",
+        sku: product.sku || "",
+        barcode: product.barcode || "",
+        category_id: product.category_id,
+        piece_buying_price: product.piece_buying_price || 0,
+        piece_selling_price: product.piece_selling_price || 0,
+        pack_buying_price: product.pack_buying_price || 0,
+        pack_selling_price: product.pack_selling_price || 0,
+        dozen_buying_price: product.dozen_buying_price || 0,
+        dozen_selling_price: product.dozen_selling_price || 0,
         quantity: product.quantity,
-        min_stock: product.min_stock,
-        buying_price: product.buying_price,
-        selling_price: product.selling_price,
-        price_units: mergedUnits,
+        min_quantity: product.min_quantity,
+        image_url: product.image_url || "",
+        is_active: product.is_active,
       }),
     );
-    dispatch(setImagePreview(product.image_url));
     dispatch(setIsEditDialogOpen(true));
   };
 

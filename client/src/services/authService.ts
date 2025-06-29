@@ -1,50 +1,53 @@
-import { api } from "@/lib/api";
-import { useAuth } from "@/hooks/use-auth";
+import { api, API_ENDPOINTS } from "../lib/api";
+import { User } from "../types/user";
 
-interface LoginData {
+interface LoginCredentials {
   email: string;
   password: string;
 }
 
-interface RegisterData extends LoginData {
+interface RegisterData extends LoginCredentials {
   name: string;
 }
 
 interface AuthResponse {
-  user: {
-    id: number;
-    email: string;
-    name: string;
-    role: "admin" | "user";
-  };
+  success: boolean;
+  data: User | null;
+  authenticated: boolean;
 }
 
 export const authService = {
-  login: async (data: LoginData) => {
-    const response = await api.post<AuthResponse>("/auth/login", data);
-    useAuth.getState().setUser(response.data.user);
+  login: async (credentials: LoginCredentials) => {
+    const data = {
+      email: credentials.email.trim(),
+      password: credentials.password,
+    };
+    const response = await api.post<{ data: User }>(
+      API_ENDPOINTS.auth.login,
+      data,
+    );
     return response.data;
   },
 
   register: async (data: RegisterData) => {
-    const response = await api.post<AuthResponse>("/auth/register", data);
-    useAuth.getState().setUser(response.data.user);
+    const formattedData = {
+      email: data.email.trim(),
+      password: data.password,
+      name: data.name.trim(),
+    };
+    const response = await api.post<{ data: User }>(
+      API_ENDPOINTS.auth.register,
+      formattedData,
+    );
     return response.data;
   },
 
   logout: async () => {
-    await api.post("/auth/logout");
-    useAuth.getState().logout();
+    await api.post(API_ENDPOINTS.auth.logout);
   },
 
-  checkSession: async () => {
-    try {
-      const response = await api.get<AuthResponse>("/auth/me");
-      useAuth.getState().setUser(response.data.user);
-      return response.data;
-    } catch (error) {
-      useAuth.getState().logout();
-      throw error;
-    }
+  getCurrentUser: async () => {
+    const response = await api.get<AuthResponse>(API_ENDPOINTS.auth.me);
+    return response.data.authenticated ? response.data.data : null;
   },
 };

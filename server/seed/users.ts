@@ -10,13 +10,23 @@ export async function seedUsers() {
       email: "admin@prosale.com",
       password: "prosale123",
       role: "admin",
+      is_active: true
     });
 
     await User.create({
       name: "Sales Person",
       email: "sales@prosale.com",
       password: "sales123",
-      role: "user",
+      role: "sales",
+      is_active: true
+    });
+
+    await User.create({
+      name: "Test User",
+      email: "test@prosale.com",
+      password: "test123",
+      role: "admin",
+      is_active: true
     });
 
     console.log("Users seeded successfully");
@@ -24,4 +34,4 @@ export async function seedUsers() {
     console.error("Error seeding users:", error);
     throw error;
   }
-}
+} 

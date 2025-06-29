@@ -1,5 +1,5 @@
 import { Router } from "express";
-import Supplier from "../models/Supplier";
+import Supplier from "../models/Supplier.js";
 import { Op } from "sequelize";
 
 const router = Router();

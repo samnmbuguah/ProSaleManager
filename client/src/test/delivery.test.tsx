@@ -7,10 +7,10 @@ const DeliveryTestComponent = () => {
   const { cart, addDeliveryService } = useCart();
 
   // Create a delivery service product
-  const deliveryService = {
-    id: -1,
+  const deliveryProduct = {
+    id: 2,
     name: "Delivery Service",
-    product_code: "SRV001",
+    sku: "SRV001",
     description: "Delivery service fee",
     category_id: null,
     selling_price: "200",
@@ -31,14 +31,14 @@ const DeliveryTestComponent = () => {
 
       <div data-testid="delivery-count">
         {
-          cart.items.filter((item) => item.product.product_code === "SRV001")
+          cart.items.filter((item) => item.product.sku === "SRV001")
             .length
         }
       </div>
 
       <button
         data-testid="add-delivery"
-        onClick={() => addDeliveryService(deliveryService)}
+        onClick={() => addDeliveryService(deliveryProduct)}
       >
         Add Delivery
       </button>

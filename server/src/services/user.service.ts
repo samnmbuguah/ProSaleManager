@@ -1,19 +1,19 @@
 import User from "../models/User.js";
-import type { ServiceResponse } from "../types/base";
-import bcrypt from "bcrypt";
+import type { ServiceResponse } from "../types/base.js";
+import bcrypt from "bcryptjs";
 
 interface CreateUserDTO {
   email: string;
   password: string;
   name: string;
-  role?: "admin" | "user";
+  role?: "admin" | "sales" | "manager";
 }
 
 interface UpdateUserDTO {
   email?: string;
   password?: string;
   name?: string;
-  role?: "admin" | "user";
+  role?: "admin" | "sales" | "manager";
 }
 
 export class UserService {

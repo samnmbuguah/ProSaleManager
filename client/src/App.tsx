@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Route, Switch } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { useAuth } from "@/hooks/use-auth";
-import RoleBasedRoute from "@/components/auth/RoleBasedRoute";
+import { RoleBasedRoute } from "@/components/auth/RoleBasedRoute";
 
 // Import your pages
 import AuthPage from "@/pages/AuthPage";

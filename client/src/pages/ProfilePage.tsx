@@ -115,7 +115,7 @@ export default function ProfilePage() {
       }
 
       // In a real app, this would be an API call to update the user profile
-      // await api.put('/users/profile', profileData);
+      await api.put("/api/users/profile", profileData);
 
       // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -166,7 +166,7 @@ export default function ProfilePage() {
       }
 
       // In a real app, this would be an API call to change the password
-      // await api.post('/users/change-password', passwordData);
+      await api.post("/api/users/change-password", passwordData);
 
       // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 1000));

@@ -1,36 +1,7 @@
 import { useState, useCallback } from "react";
-
-interface Customer {
-  id: number;
-  name: string;
-  phone?: string;
-}
-
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1500;
-
-async function fetchWithRetry(
-  url: string,
-  options: RequestInit = {},
-  retries = MAX_RETRIES,
-): Promise<unknown> {
-  try {
-    const response = await fetch(url, options);
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `Server returned ${response.status}: ${errorText || "No error details"}`,
-      );
-    }
-    return await response.json();
-  } catch (error) {
-    if (retries > 0) {
-      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
-      return fetchWithRetry(url, options, retries - 1);
-    }
-    throw error;
-  }
-}
+import { Customer } from "@/types/customer";
+import { api } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
 
 export function useCustomers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -41,13 +12,10 @@ export function useCustomers() {
     setIsLoading(true);
     setError(null);
     try {
-      const data: unknown = await fetchWithRetry(
-        `${import.meta.env.VITE_API_URL}/customers`,
-        { credentials: "include" },
-      );
-      setCustomers(data as Customer[]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      const response = await api.get(API_ENDPOINTS.customers.list);
+      setCustomers(response.data.data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || String(err));
     } finally {
       setIsLoading(false);
     }
