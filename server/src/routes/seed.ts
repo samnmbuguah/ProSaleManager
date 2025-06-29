@@ -3,7 +3,7 @@ import Product from "../models/Product.js";
 import Supplier from "../models/Supplier.js";
 import Customer from "../models/Customer.js";
 import User from "../models/User.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 const router = Router();
 
@@ -16,7 +16,8 @@ router.post("/", async (req, res) => {
     await User.destroy({ where: {} });
 
     // Create admin user
-    const hashedPassword = await bcrypt.hash("admin123", 10);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash("admin123", salt);
     await User.create({
       email: "admin@example.com",
       name: "Admin User",

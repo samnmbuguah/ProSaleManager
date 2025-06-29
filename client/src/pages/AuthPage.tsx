@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import { useLocation } from "wouter";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -33,8 +34,18 @@ export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
+  const [shouldNavigate, setShouldNavigate] = useState(false);
+  const { login, register } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+
+  // Handle navigation after successful auth
+  useEffect(() => {
+    if (shouldNavigate) {
+      setLocation("/pos");
+      setShouldNavigate(false);
+    }
+  }, [shouldNavigate, setLocation]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -62,33 +73,15 @@ export default function AuthPage() {
       });
 
       if (isLogin) {
-        await login(data.email, data.password);
+        await login({ email: data.email, password: data.password });
+        setShouldNavigate(true);
       } else {
-        const response = await fetch(`/api/auth/register`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-          credentials: "include",
+        await register({
+          email: data.email,
+          password: data.password,
+          name: (data as RegisterFormData).name,
         });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.message || "Registration failed");
-        }
-
-        if (result.success) {
-          toast({
-            title: "Success",
-            description: "Account created successfully",
-          });
-          // After successful registration, log in automatically
-          await login(data.email, data.password);
-        } else {
-          throw new Error(result.message || "Registration failed");
-        }
+        setShouldNavigate(true);
       }
     } catch (error) {
       console.error("Auth error:", error);
@@ -156,12 +149,12 @@ export default function AuthPage() {
               {(isLogin
                 ? loginForm.formState.errors.email
                 : registerForm.formState.errors.email) && (
-                <p className="text-sm font-medium text-destructive">
-                  {isLogin
-                    ? loginForm.formState.errors.email?.message
-                    : registerForm.formState.errors.email?.message}
-                </p>
-              )}
+                  <p className="text-sm font-medium text-destructive">
+                    {isLogin
+                      ? loginForm.formState.errors.email?.message
+                      : registerForm.formState.errors.email?.message}
+                  </p>
+                )}
             </div>
 
             {!isLogin && (
@@ -214,23 +207,23 @@ export default function AuthPage() {
               {(isLogin
                 ? loginForm.formState.errors.password
                 : registerForm.formState.errors.password) && (
-                <p className="text-sm font-medium text-destructive">
-                  {isLogin
-                    ? loginForm.formState.errors.password?.message
-                    : registerForm.formState.errors.password?.message}
-                </p>
-              )}
+                  <p className="text-sm font-medium text-destructive">
+                    {isLogin
+                      ? loginForm.formState.errors.password?.message
+                      : registerForm.formState.errors.password?.message}
+                  </p>
+                )}
             </div>
 
             {(isLogin
               ? loginForm.formState.errors.root
               : registerForm.formState.errors.root) && (
-              <p className="text-sm font-medium text-destructive">
-                {isLogin
-                  ? loginForm.formState.errors.root?.message
-                  : registerForm.formState.errors.root?.message}
-              </p>
-            )}
+                <p className="text-sm font-medium text-destructive">
+                  {isLogin
+                    ? loginForm.formState.errors.root?.message
+                    : registerForm.formState.errors.root?.message}
+                </p>
+              )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (

@@ -87,7 +87,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="walk_in">Walk-in Customer</SelectItem>
-              {customers.map((customer) => (
+              {(customers || []).map((customer) => (
                 <SelectItem key={customer.id} value={customer.id.toString()}>
                   {customer.name}
                 </SelectItem>
@@ -103,7 +103,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
             onChange={(e) => setDeliveryFee(Number(e.target.value))}
             min={0}
             step={0.01}
-            placeholder="Enter delivery fee (optional)"
+            placeholder="200"
           />
         </div>
         <div className="pt-4 space-y-2">

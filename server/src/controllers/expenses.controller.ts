@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import Expense from "../models/Expense.js";
-import sequelize from "../config/database.js";
+import { sequelize } from "../config/database.js";
 
 export const getExpenses = async (req: Request, res: Response) => {
   try {

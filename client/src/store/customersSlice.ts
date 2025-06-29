@@ -1,13 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { Customer } from "@/types/customer";
+import { api } from "@/lib/api";
 
 export const fetchCustomers = createAsyncThunk(
   "customers/fetchCustomers",
   async () => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/customers`, {
-      credentials: "include",
-    });
-    return await response.json();
+    const response = await api.get("/api/customers");
+    return response.data.data;
   },
 );
 
@@ -15,22 +14,23 @@ const customersSlice = createSlice({
   name: "customers",
   initialState: {
     items: [] as Customer[],
-    status: "idle",
+    loading: false,
     error: null as string | null,
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchCustomers.pending, (state) => {
-        state.status = "loading";
+        state.loading = true;
+        state.error = null;
       })
       .addCase(fetchCustomers.fulfilled, (state, action) => {
-        state.status = "succeeded";
+        state.loading = false;
         state.items = action.payload;
       })
       .addCase(fetchCustomers.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.error.message || null;
+        state.loading = false;
+        state.error = action.error.message || "Failed to fetch customers";
       });
   },
 });

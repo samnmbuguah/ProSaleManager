@@ -42,7 +42,7 @@ interface PotentialCartItemData {
     name?: unknown;
     selling_price?: unknown;
     stock_unit?: unknown;
-    product_code?: unknown; // Added based on ADD_DELIVERY case check
+    sku?: unknown;
     [key: string]: unknown;
   };
   quantity?: unknown;
@@ -64,7 +64,7 @@ function cartReducer(state: Cart, action: CartAction): Cart {
 
       if (existingItem) {
         // For delivery service, don't update quantity
-        if (product.product_code === "SRV001") {
+        if (product.sku === "SRV001") {
           return state;
         }
 
@@ -206,7 +206,7 @@ function cartReducer(state: Cart, action: CartAction): Cart {
       const { product } = action.payload;
       // Check if delivery is already in cart
       const hasDelivery = state.items.some(
-        (item) => item.product && item.product.product_code === "SRV001",
+        (item) => item.product && item.product.sku === "SRV001",
       );
 
       if (hasDelivery) {

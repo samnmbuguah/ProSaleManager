@@ -1,5 +1,6 @@
 import React from "react";
-import type { Product } from "../../types/product";
+import { Product } from "../../types/product";
+import { formatCurrency } from "../../utils/format";
 
 interface ProductListProps {
   products: Product[];
@@ -16,35 +17,74 @@ const ProductList: React.FC<ProductListProps> = ({
     return <div className="text-gray-500">No products available.</div>;
   }
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {products.map((product) => (
-        <div
-          key={product.id}
-          className="border rounded-lg p-4 bg-white shadow-sm"
-        >
-          <h2 className="text-lg font-semibold mb-1">{product.name}</h2>
-          <p className="text-sm text-gray-600">SKU: {product.product_code}</p>
-          <p className="text-sm text-gray-600">Category: {product.category}</p>
-          <p className="text-sm text-gray-600">
-            Price: {product.selling_price}
-          </p>
-          <p className="text-sm text-gray-600">Stock: {product.stock}</p>
-          <div className="flex justify-end space-x-2 mt-4">
-            <button
-              className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-              onClick={() => onEdit(product)}
-            >
-              Edit
-            </button>
-            <button
-              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-              onClick={() => onDelete(product.id)}
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      ))}
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Name
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              SKU
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Category
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Piece Price
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Pack Price
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Dozen Price
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Quantity
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {products.map((product) => (
+            <tr key={product.id}>
+              <td className="px-6 py-4 whitespace-nowrap">{product.name}</td>
+              <td className="px-6 py-4 whitespace-nowrap">{product.sku}</td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                {product.Category?.name || "N/A"}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                {formatCurrency(product.piece_selling_price)}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                {formatCurrency(product.pack_selling_price)}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                {formatCurrency(product.dozen_selling_price)}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                {product.quantity}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <button
+                  onClick={() => onEdit(product)}
+                  className="text-indigo-600 hover:text-indigo-900 mr-4"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => onDelete(product.id)}
+                  className="text-red-600 hover:text-red-900"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

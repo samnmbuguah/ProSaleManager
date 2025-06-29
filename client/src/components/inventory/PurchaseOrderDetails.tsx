@@ -32,6 +32,7 @@ interface OrderItem {
     id: number;
     name: string;
     stock_unit: string;
+    quantity: number;
   };
 }
 
