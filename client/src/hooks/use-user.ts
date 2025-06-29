@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { api } from "@/lib/api";
 import type { User, InsertUser } from "@/types/schema";
 
 interface UserState {
@@ -21,25 +22,11 @@ export const useUser = create<UserState>((set) => ({
   login: async (credentials) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials),
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: "Login failed" }));
-        throw new Error(errorData.message || "Login failed");
-      }
-
-      const data = await response.json();
-      set({ user: data.data, isLoading: false });
-    } catch (error) {
+      const response = await api.post("/api/auth/login", credentials);
+      set({ user: response.data.data, isLoading: false });
+    } catch (error: any) {
       set({
-        error: error instanceof Error ? error.message : "Login failed",
+        error: error.response?.data?.message || "Login failed",
         isLoading: false,
       });
       throw error;
@@ -49,25 +36,11 @@ export const useUser = create<UserState>((set) => ({
   register: async (userData) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: "Registration failed" }));
-        throw new Error(errorData.message || "Registration failed");
-      }
-
-      const data = await response.json();
-      set({ user: data.data, isLoading: false });
-    } catch (error) {
+      const response = await api.post("/api/auth/register", userData);
+      set({ user: response.data.data, isLoading: false });
+    } catch (error: any) {
       set({
-        error: error instanceof Error ? error.message : "Registration failed",
+        error: error.response?.data?.message || "Registration failed",
         isLoading: false,
       });
       throw error;
@@ -77,14 +50,11 @@ export const useUser = create<UserState>((set) => ({
   logout: async () => {
     set({ isLoading: true, error: null });
     try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
+      await api.post("/api/auth/logout");
       set({ user: null, isLoading: false });
-    } catch (error) {
+    } catch (error: any) {
       set({
-        error: error instanceof Error ? error.message : "Logout failed",
+        error: error.response?.data?.message || "Logout failed",
         isLoading: false,
       });
       throw error;
@@ -94,18 +64,11 @@ export const useUser = create<UserState>((set) => ({
   checkSession: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch("/api/auth/me", {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const data = await response.json();
-        set({ user: data.data, isLoading: false });
-      } else {
-        set({ user: null, isLoading: false });
-      }
-    } catch (error) {
+      const response = await api.get("/api/auth/me");
+      set({ user: response.data.data, isLoading: false });
+    } catch (error: any) {
       set({
-        error: error instanceof Error ? error.message : "Session check failed",
+        error: error.response?.data?.message || "Session check failed",
         isLoading: false,
         user: null,
       });

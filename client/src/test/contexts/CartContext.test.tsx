@@ -35,7 +35,7 @@ const TestComponent = () => {
           addToCart({
             id: 1,
             name: "Test Product",
-            product_code: "TEST001",
+            sku: "TEST001",
             selling_price: "10",
             stock_unit: "piece",
             quantity: 100,
@@ -151,7 +151,7 @@ describe("CartContext", () => {
           product: {
             id: 1,
             name: "Test Product",
-            product_code: "TEST001",
+            sku: "TEST001",
             selling_price: "10",
             buying_price: "5",
             quantity: 100,

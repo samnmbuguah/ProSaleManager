@@ -9,10 +9,14 @@ export const supplierSchema = z.object({
 
 export type SupplierFormData = z.infer<typeof supplierSchema>;
 
-export interface Supplier extends SupplierFormData {
+export interface Supplier {
   id: number;
-  created_at: Date | null;
-  updated_at: Date | null;
-  contact_person?: string | null;
+  name: string;
+  email: string;
+  phone: string | null;
+  address: string | null;
+  contact_person: string | null;
   status: "active" | "inactive";
+  created_at?: string;
+  updated_at?: string;
 }

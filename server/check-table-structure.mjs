@@ -1,7 +1,7 @@
 import { Sequelize } from 'sequelize';
 
 // Create a connection to the database using the configuration from config.json
-const sequelize = new Sequelize('prosale', 'prosalemanager', 'prosalepassword', {
+const sequelize = new Sequelize('prosaledatabase', 'prosalemanager', 'prosalepassword', {
   host: '127.0.0.1',
   port: 5432,
   dialect: 'postgres'

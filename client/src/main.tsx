@@ -14,7 +14,7 @@ import ExpensesPage from "./pages/ExpensesPage";
 import MainNav from "./components/layout/MainNav";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
-import RoleBasedRoute from "./components/auth/RoleBasedRoute";
+import { RoleBasedRoute } from "./components/auth/RoleBasedRoute";
 import { CartProvider } from "@/contexts/CartContext";
 import ProfilePage from "./pages/ProfilePage";
 import { Provider } from "react-redux";
@@ -31,14 +31,11 @@ function App() {
   const [location] = useLocation();
 
   useEffect(() => {
-    console.log('App mounted, checking session...');
     checkSession();
-  }, [location]);
-
-  console.log('App render:', { isLoading, location });
+  }, []);
 
   if (isLoading && location !== "/auth") {
-    console.log('Showing loading state');
+    console.log("Showing loading state");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

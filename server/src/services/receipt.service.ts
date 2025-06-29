@@ -3,6 +3,7 @@ import Sale from "../models/Sale.js";
 import Customer from "../models/Customer.js";
 import Product from "../models/Product.js";
 import SaleItem from "../models/SaleItem.js";
+import User from "../models/User.js";
 
 // Initialize Twilio client
 const twilioClient = twilio(
@@ -15,48 +16,156 @@ const SMS_FROM_NUMBER = process.env.TWILIO_PHONE_NUMBER;
 
 export class ReceiptService {
   static async formatReceiptText(saleId: number): Promise<string> {
-    const sale = await Sale.findByPk(saleId, {
-      include: [
-        { model: Customer },
-        {
-          model: SaleItem,
-          include: [{ model: Product }],
-        },
-      ],
-    });
+    try {
+      console.log(`Formatting receipt text for sale ID: ${saleId}`);
+      
+      const sale = await Sale.findByPk(saleId, {
+        include: [
+          { model: Customer },
+          {
+            model: SaleItem,
+            as: "items",
+            include: [{ model: Product }],
+          },
+        ],
+      });
 
-    if (!sale) {
-      throw new Error("Sale not found");
+      if (!sale) {
+        console.log(`Sale not found for ID: ${saleId}`);
+        throw new Error("Sale not found");
+      }
+
+      console.log(`Sale found:`, {
+        id: sale.id,
+        hasCustomer: !!sale.Customer,
+        hasItems: !!sale.items,
+        itemCount: sale.items?.length || 0
+      });
+
+      // Type assertion for associations
+      const saleWithAssociations = sale as any;
+
+      // Format receipt text with improved formatting
+      let receiptText = `╔══════════════════════════════════════╗\n`;
+      receiptText += `║           🧾 PROSALE MANAGER           ║\n`;
+      receiptText += `╚══════════════════════════════════════╝\n\n`;
+      
+      receiptText += `Receipt #${sale.id.toString().padStart(6, '0')}\n`;
+      receiptText += `Date: ${new Date(sale.createdAt).toLocaleString('en-KE', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })}\n`;
+      receiptText += `Time: ${new Date(sale.createdAt).toLocaleTimeString('en-KE', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      })}\n\n`;
+
+      if (saleWithAssociations.customer) {
+        receiptText += `Customer: ${saleWithAssociations.customer.name}\n`;
+        if (saleWithAssociations.customer.phone) {
+          receiptText += `Phone: ${saleWithAssociations.customer.phone}\n`;
+        }
+        if (saleWithAssociations.customer.email) {
+          receiptText += `Email: ${saleWithAssociations.customer.email}\n`;
+        }
+        receiptText += `\n`;
+      } else {
+        receiptText += `Customer: Walk-in Customer\n\n`;
+      }
+
+      receiptText += `Served by: System Admin\n\n`;
+      
+      receiptText += `╔══════════════════════════════════════╗\n`;
+      receiptText += `║              ITEMS SOLD              ║\n`;
+      receiptText += `╚══════════════════════════════════════╝\n\n`;
+
+      // Use the correct property for sale items (now using 'items' alias)
+      const items = saleWithAssociations.items || [];
+
+      console.log(`Items found: ${items.length}`);
+      if (items.length > 0) {
+        console.log(`First item structure:`, JSON.stringify(items[0], null, 2));
+      }
+
+      let itemNumber = 1;
+      for (const item of items) {
+        // Add null checks for item and Product association
+        if (!item || !item.Product) {
+          console.error(`Missing product data for item:`, item);
+          continue;
+        }
+        
+        receiptText += `${itemNumber.toString().padStart(2, '0')}. ${item.Product.name}\n`;
+        receiptText += `    ${item.quantity} ${item.unit_type} × KSh ${item.unit_price.toLocaleString('en-KE', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })} = KSh ${item.total.toLocaleString('en-KE', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })}\n\n`;
+        itemNumber++;
+      }
+
+      receiptText += `╔══════════════════════════════════════╗\n`;
+      receiptText += `║              SUMMARY                 ║\n`;
+      receiptText += `╚══════════════════════════════════════╝\n\n`;
+
+      const subtotal = sale.total_amount - sale.delivery_fee;
+      receiptText += `Subtotal:                    KSh ${subtotal.toLocaleString('en-KE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}\n`;
+
+      if (sale.delivery_fee > 0) {
+        receiptText += `Delivery Fee:                KSh ${sale.delivery_fee.toLocaleString('en-KE', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })}\n`;
+      }
+
+      receiptText += `──────────────────────────────────────────\n`;
+      receiptText += `TOTAL:                       KSh ${sale.total_amount.toLocaleString('en-KE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}\n\n`;
+
+      receiptText += `Payment Method: ${sale.payment_method.toUpperCase()}\n`;
+
+      if (sale.payment_method === "cash" && sale.amount_paid) {
+        const change = sale.amount_paid - sale.total_amount;
+        receiptText += `Amount Paid:                 KSh ${sale.amount_paid.toLocaleString('en-KE', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })}\n`;
+        receiptText += `Change:                      KSh ${change.toLocaleString('en-KE', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })}\n`;
+      }
+
+      receiptText += `\n`;
+      receiptText += `╔══════════════════════════════════════╗\n`;
+      receiptText += `║         THANK YOU FOR YOUR           ║\n`;
+      receiptText += `║            BUSINESS!                 ║\n`;
+      receiptText += `║                                      ║\n`;
+      receiptText += `║        Please come again!            ║\n`;
+      receiptText += `╚══════════════════════════════════════╝\n\n`;
+      
+      receiptText += `For inquiries: +254 XXX XXX XXX\n`;
+      receiptText += `Email: info@prosalemanager.com\n\n`;
+      
+      receiptText += `Generated by ProSale Manager\n`;
+      receiptText += `© ${new Date().getFullYear()} All rights reserved\n`;
+
+      return receiptText;
+    } catch (error) {
+      console.error("Error formatting receipt text:", error);
+      throw error;
     }
-
-    // Format receipt text
-    let receiptText = `🧾 PROSALE MANAGER\n`;
-    receiptText += `------------------\n`;
-    receiptText += `Receipt #${sale.id}\n`;
-    receiptText += `Date: ${new Date(sale.createdAt).toLocaleString()}\n\n`;
-
-    if (sale.customer) {
-      receiptText += `Customer: ${sale.customer.name}\n`;
-    }
-
-    receiptText += `\nItems:\n`;
-    for (const item of sale.items) {
-      receiptText += `${item.product.name}\n`;
-      receiptText += `${item.quantity} x KSh ${item.unit_price} = KSh ${item.total}\n`;
-    }
-
-    receiptText += `\n------------------\n`;
-    receiptText += `Total: KSh ${sale.total_amount}\n`;
-    receiptText += `Payment Method: ${sale.payment_method}\n`;
-
-    if (sale.payment_method === "cash" && sale.amount_paid) {
-      receiptText += `Amount Paid: KSh ${sale.amount_paid}\n`;
-      receiptText += `Change: KSh ${sale.amount_paid - sale.total_amount}\n`;
-    }
-
-    receiptText += `\nThank you for your business!\n`;
-
-    return receiptText;
   }
 
   static async sendWhatsApp(

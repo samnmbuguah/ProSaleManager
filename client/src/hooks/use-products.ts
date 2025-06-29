@@ -56,44 +56,27 @@ export function useProducts() {
 
   const updateProductMutation = useMutation({
     mutationFn: async (data: Partial<Product> & { id: number }) => {
-      // First, update the unit pricing
-      const defaultUnit = data.price_units?.find((p) => p.is_default);
-      if (defaultUnit) {
-        const productData = {
-          ...data,
-          buying_price: defaultUnit.buying_price,
-          selling_price: defaultUnit.selling_price,
-        };
-
-        const response = await fetch(`/api/products/${data.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(productData),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          if (errorData.code === "23503") {
-            throw new Error(
-              "Cannot update product that has associated sales records",
-            );
-          }
-          throw new Error("Failed to update product");
-        }
-
-        return response.json();
-      }
-
-      // Then update the product details
+      // Prepare the product data
       const productData = {
         name: data.name,
         category: data.category,
-        stock: data.stock,
+        quantity: data.quantity,
         min_stock: data.min_stock,
         max_stock: data.max_stock,
         reorder_point: data.reorder_point,
         stock_unit: data.stock_unit,
       };
+
+      // If there are price units, update them first
+      if (data.price_units?.length) {
+        const defaultUnit = data.price_units.find((p) => p.is_default);
+        if (defaultUnit) {
+          Object.assign(productData, {
+            buying_price: defaultUnit.buying_price,
+            selling_price: defaultUnit.selling_price,
+          });
+        }
+      }
 
       const response = await fetch(`/api/products/${data.id}`, {
         method: "PUT",

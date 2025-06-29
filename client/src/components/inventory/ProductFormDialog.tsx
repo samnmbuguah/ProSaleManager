@@ -187,11 +187,11 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
             />
           </div>
           <div>
-            <Label htmlFor="product_code">Product Code</Label>
+            <Label htmlFor="sku">Product Code</Label>
             <Input
-              id="product_code"
-              name="product_code"
-              value={formData.product_code}
+              id="sku"
+              name="sku"
+              value={formData.sku}
               onChange={handleInputChange}
             />
           </div>

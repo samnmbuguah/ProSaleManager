@@ -10,86 +10,81 @@ export type ProductUnitString = "per_unit" | "per_kg" | "per_liter";
 
 const priceUnitSchema = z.object({
   unit_type: z.string(),
-  quantity: z.number().min(0, "Quantity per unit cannot be negative"),
-  buying_price: z.string().min(0, "Buying price cannot be negative"),
-  selling_price: z.string().min(0, "Selling price cannot be negative"),
-  manual: z.boolean().optional(),
+  price: z.number().min(0, "Price cannot be negative"),
   is_default: z.boolean().optional(),
 });
 
 export interface ProductPriceUnit {
+  id: number;
+  product_id: number;
   unit_type: string;
-  buying_price: string;
-  selling_price: string;
-  manual?: boolean;
-  is_default?: boolean;
-  quantity: number;
+  price: number;
+  is_default: boolean;
 }
 
 export const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  product_code: z.string().optional(),
-  category: z.enum(PRODUCT_CATEGORIES as unknown as [string, ...string[]]),
-  stock_unit: z.enum(STOCK_UNITS),
-  stock: z.number().min(0, "Stock cannot be negative"),
-  min_stock: z.number().min(0, "Minimum stock cannot be negative"),
-  max_stock: z.number().min(0, "Maximum stock cannot be negative").optional(),
-  reorder_point: z
-    .number()
-    .min(0, "Reorder point cannot be negative")
-    .optional(),
-  buying_price: z.string().min(0, "Buying price is required"),
-  selling_price: z.string().min(0, "Selling price is required"),
-  image: z.instanceof(File).optional(),
-  price_units: z.array(priceUnitSchema),
+  description: z.string().optional(),
+  sku: z.string().optional(),
+  barcode: z.string().optional(),
+  category_id: z.number(),
+  price: z.number().min(0, "Price cannot be negative"),
+  cost_price: z.number().min(0, "Cost price cannot be negative"),
+  quantity: z.number().min(0, "Quantity cannot be negative"),
+  min_quantity: z.number().min(0, "Minimum quantity cannot be negative"),
+  image_url: z.string().optional(),
+  is_active: z.boolean().default(true),
 });
 
 // Define ProductFormData explicitly to ensure consistent type for react-hook-form
 export type ProductFormData = {
   name: string;
-  product_code?: string;
-  category: z.infer<typeof productSchema.shape.category>; // Use z.infer for enum types
-  stock_unit: z.infer<typeof productSchema.shape.stock_unit>; // Use z.infer for enum types
-  stock: number;
-  min_stock: number;
-  max_stock?: number;
-  reorder_point?: number;
-  buying_price: string;
-  selling_price: string;
-  image?: File;
-  price_units: ProductPriceUnit[];
+  description: string;
+  sku: string;
+  barcode: string;
+  category_id: number;
+  piece_buying_price: number;
+  piece_selling_price: number;
+  pack_buying_price: number;
+  pack_selling_price: number;
+  dozen_buying_price: number;
+  dozen_selling_price: number;
+  quantity: number;
+  min_quantity: number;
+  image_url: string;
+  is_active: boolean;
 };
 
 export interface Product {
   id: number;
   name: string;
-  sku?: string | null;
-  product_code: string | null;
-  category: string;
-  stock_unit: (typeof STOCK_UNITS)[number];
-  stock: number;
-  available_units: number;
-  min_stock: number;
-  max_stock?: number;
-  reorder_point?: number;
-  buying_price: string;
-  selling_price: string;
-  image_url: string | null;
-  createdAt: string;
-  updatedAt: string;
-  price_units?: ProductPriceUnit[];
-  price: number;
-  unit: ProductUnitString;
-  low_stock_threshold: number;
+  description: string;
+  sku: string;
+  barcode: string;
+  category_id: number;
+  piece_buying_price: number;
+  piece_selling_price: number;
+  pack_buying_price: number;
+  pack_selling_price: number;
+  dozen_buying_price: number;
+  dozen_selling_price: number;
+  quantity: number;
+  min_quantity: number;
+  image_url: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  Category?: {
+    id: number;
+    name: string;
+  };
 }
 
-export type ProductInsert = Omit<Product, "id">;
-
+export type ProductInsert = Omit<Product, "id" | "created_at" | "updated_at">;
 export type ProductUpdate = Partial<ProductInsert>;
 
 export interface UnitType {
-  unit_type: "dozen" | "pack" | "piece";
-  buying_price: string;
-  selling_price: string;
-  manual: boolean;
+  unit_type: string;
+  price: number;
+  is_default: boolean;
 }

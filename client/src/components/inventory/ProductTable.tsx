@@ -54,10 +54,10 @@ export function ProductTable({
   }
 
   const getStockStatus = (product: Product) => {
-    if (product.stock <= (product.min_stock || 0)) {
+    if (product.quantity <= (product.min_stock || 0)) {
       return { label: "Low Stock", variant: "destructive" as const };
     }
-    if (product.stock >= (product.max_stock || Infinity)) {
+    if (product.quantity >= (product.max_stock || Infinity)) {
       return { label: "Overstocked", variant: "destructive" as const };
     }
     return { label: "In Stock", variant: "default" as const };
@@ -121,7 +121,7 @@ export function ProductTable({
                       defaultPricing.selling_price,
                     )}
                   </TableCell>
-                  <TableCell>{product.stock}</TableCell>
+                  <TableCell>{product.quantity}</TableCell>
                   <TableCell>
                     <Badge variant={getStockStatus(product).variant}>
                       {getStockStatus(product).label}
@@ -168,7 +168,7 @@ export function ProductTable({
                 name: editingProduct.name,
                 sku: editingProduct.sku,
                 category: editingProduct.category || "",
-                stock: editingProduct.stock,
+                quantity: Number(editingProduct.quantity),
                 min_stock: editingProduct.min_stock || 0,
                 max_stock: editingProduct.max_stock || 0,
                 reorder_point: editingProduct.reorder_point || 0,
@@ -208,7 +208,7 @@ export function ProductTable({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h3 className="font-medium">Stock Information</h3>
-                  <p>Current Stock: {selectedProduct.stock}</p>
+                  <p>Current Stock: {selectedProduct.quantity}</p>
                   <p>Minimum Stock: {selectedProduct.min_stock || "Not set"}</p>
                   <p>Maximum Stock: {selectedProduct.max_stock || "Not set"}</p>
                   <p>

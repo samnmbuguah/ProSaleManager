@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react";
-import type { Product } from "@/types/product";
+import { Product } from "@/types";
+import { api } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1500;
@@ -36,13 +38,10 @@ export function useProducts() {
     setIsLoading(true);
     setError(null);
     try {
-      const data: unknown = await fetchWithRetry(
-        `${import.meta.env.VITE_API_URL}/products`,
-        { credentials: "include" },
-      );
-      setProducts(data as Product[]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      const response = await api.get(API_ENDPOINTS.products.list);
+      setProducts(response.data.data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || String(err));
     } finally {
       setIsLoading(false);
     }

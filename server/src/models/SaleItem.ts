@@ -1,7 +1,7 @@
 import { Model, DataTypes } from "sequelize";
-import sequelize from "../config/database.js";
+import { sequelize } from "../config/database.js";
 
-export class SaleItem extends Model {
+class SaleItem extends Model {
   declare id: number;
   declare sale_id: number;
   declare product_id: number;
