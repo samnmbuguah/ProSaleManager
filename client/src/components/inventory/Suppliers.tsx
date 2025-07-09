@@ -22,6 +22,7 @@ import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "@/store";
 import { fetchSuppliers } from "@/store/suppliersSlice";
 import type { Supplier, SupplierFormData } from "@/types/supplier";
+import Swal from 'sweetalert2';
 
 const Suppliers = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -73,11 +74,26 @@ const Suppliers = () => {
         credentials: "include",
       });
 
-      if (!response.ok) throw new Error("Failed to save supplier");
+      if (!response.ok) {
+        let errorMsg = `Failed to ${selectedSupplier ? "update" : "create"} supplier`;
+        try {
+          const errorData = await response.json();
+          if (errorData && errorData.error) {
+            errorMsg = errorData.error;
+          }
+        } catch {}
+        await Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: errorMsg,
+        });
+        throw new Error(errorMsg);
+      }
 
-      toast({
-        title: "Success",
-        description: `Supplier ${selectedSupplier ? "updated" : "created"} successfully`,
+      await Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: `Supplier ${selectedSupplier ? "updated" : "created"} successfully`,
       });
 
       setFormData({
@@ -124,11 +140,18 @@ const Suppliers = () => {
         },
       );
 
-      if (!response.ok) throw new Error("Failed to delete supplier");
-
-      toast({
-        title: "Success",
-        description: "Supplier deleted successfully",
+      if (!response.ok) {
+        await Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to delete supplier',
+        });
+        throw new Error('Failed to delete supplier');
+      }
+      await Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Supplier deleted successfully',
       });
     } catch (error) {
       console.error("Error:", error);
