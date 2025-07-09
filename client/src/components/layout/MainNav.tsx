@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import {
   Store,
   PackageSearch,
@@ -40,7 +40,7 @@ const ROLE_ROUTES = {
 
 export default function MainNav() {
   const [location] = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuthContext();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
 
