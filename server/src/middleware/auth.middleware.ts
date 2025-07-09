@@ -37,7 +37,11 @@ export const protect = catchAsync(async (req: Request, res: Response, next: Next
   const token = req.cookies.token;
 
   if (!token) {
-    throw new ApiError(401, 'Not authenticated');
+    return res.status(401).json({
+      success: false,
+      message: 'Not authenticated',
+      error: 'No token provided',
+    });
   }
 
   try {
@@ -47,19 +51,31 @@ export const protect = catchAsync(async (req: Request, res: Response, next: Next
     // Get user from token
     const user = await User.findByPk(decoded.id);
     if (!user) {
-      throw new ApiError(401, 'User not found');
+      return res.status(401).json({
+        success: false,
+        message: 'Not authenticated',
+        error: 'User not found',
+      });
     }
 
     // Check if user is active
     if (!user.is_active) {
-      throw new ApiError(401, 'User is inactive');
+      return res.status(401).json({
+        success: false,
+        message: 'Not authenticated',
+        error: 'User is inactive',
+      });
     }
 
     // Attach user to request
     req.user = user;
     next();
   } catch (error) {
-    throw new ApiError(401, 'Not authenticated');
+    return res.status(401).json({
+      success: false,
+      message: 'Not authenticated',
+      error: error instanceof Error ? error.message : error,
+    });
   }
 });
 
