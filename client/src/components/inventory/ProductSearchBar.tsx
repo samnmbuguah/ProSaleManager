@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 interface ProductSearchBarProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  onSearch: () => void;
+  onSearch: (query: string) => void;
 }
 
 const ProductSearchBar: React.FC<ProductSearchBarProps> = ({
@@ -16,10 +16,11 @@ const ProductSearchBar: React.FC<ProductSearchBarProps> = ({
   const debounceRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+    const value = e.target.value;
+    setSearchQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      onSearch();
+      onSearch(value);
     }, 300);
   };
 
