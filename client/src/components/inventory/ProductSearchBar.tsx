@@ -1,6 +1,5 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 interface ProductSearchBarProps {
   searchQuery: string;
@@ -12,16 +11,28 @@ const ProductSearchBar: React.FC<ProductSearchBarProps> = ({
   searchQuery,
   setSearchQuery,
   onSearch,
-}) => (
-  <div className="flex gap-2">
-    <Input
-      placeholder="Search products..."
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      className="w-64"
-    />
-    <Button onClick={onSearch}>Search</Button>
-  </div>
-);
+}) => {
+  // Debounce search
+  const debounceRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onSearch();
+    }, 300);
+  };
+
+  return (
+    <div className="flex gap-2">
+      <Input
+        placeholder="Search products..."
+        value={searchQuery}
+        onChange={handleChange}
+        className="w-64"
+      />
+    </div>
+  );
+};
 
 export default ProductSearchBar;
