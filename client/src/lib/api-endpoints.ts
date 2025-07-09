@@ -19,7 +19,7 @@ export const API_ENDPOINTS = {
     update: (id: number) => `/products/${id}`,
     delete: (id: number) => `/products/${id}`,
     search: (query: string) =>
-      `/products/search?query=${encodeURIComponent(query)}`,
+      `/products/search?q=${encodeURIComponent(query)}`,
   },
   categories: {
     list: "/categories",
