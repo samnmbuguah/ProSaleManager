@@ -1,9 +1,9 @@
 import { Router } from "express";
 import Product from "../models/Product.js";
-import Supplier from "../models/Supplier";
-import ProductSupplier from "../models/ProductSupplier";
+import Supplier from "../models/Supplier.js";
+import ProductSupplier from "../models/ProductSupplier.js";
 import { Op } from "sequelize";
-import upload from "../middleware/upload.js";
+import upload, { getImageUrl } from "../middleware/upload.js";
 import cloudinary from "../config/cloudinary.js";
 import PurchaseOrderItem from "../models/PurchaseOrderItem.js";
 
@@ -46,22 +46,19 @@ router.get("/", async (req, res) => {
 router.get("/search", async (req, res) => {
   try {
     const query = req.query.q as string;
-    if (!query || typeof query !== "string") {
-      return res.json([]);
+    console.log("Received search query:", query);
+    if (!query || typeof query !== "string" || query.trim() === "") {
+      return res.json({ success: true, data: [] });
     }
 
     const products = await Product.findAll({
       where: {
-        [Op.or]: [
-          { name: { [Op.iLike]: `%${query}%` } },
-          { product_code: { [Op.iLike]: `%${query}%` } },
-          { category: { [Op.iLike]: `%${query}%` } },
-        ],
+        name: { [Op.iLike]: `%${query}%` },
       },
       order: [["name", "ASC"]],
     });
-
-    return res.json(products);
+    console.log("Products found:", products.length);
+    return res.json({ success: true, data: products });
   } catch (error) {
     console.error("Error searching products:", error);
     return res.status(500).json({
@@ -97,24 +94,65 @@ router.post("/", upload.single("image"), async (req, res) => {
   try {
     const productData = req.body;
 
+    // Log the raw body for debugging
+    console.log('[ProductRoute] Received req.body:', req.body);
+
+    // Coerce all fields to correct types and only keep model fields
+    const toNumber = (v) => v === undefined || v === null || v === '' ? null : Number(v);
+    const toBool = (v) => v === 'true' || v === true;
+
+    const cleanProduct = {
+      name: productData.name,
+      description: productData.description || undefined,
+      sku: productData.sku || undefined,
+      barcode: productData.barcode || undefined,
+      category_id: toNumber(productData.category_id),
+      piece_buying_price: toNumber(productData.piece_buying_price),
+      piece_selling_price: toNumber(productData.piece_selling_price),
+      pack_buying_price: toNumber(productData.pack_buying_price),
+      pack_selling_price: toNumber(productData.pack_selling_price),
+      dozen_buying_price: toNumber(productData.dozen_buying_price),
+      dozen_selling_price: toNumber(productData.dozen_selling_price),
+      quantity: toNumber(productData.quantity),
+      min_quantity: toNumber(productData.min_quantity),
+      is_active: toBool(productData.is_active),
+      // image_url will be added below
+    };
+
+    // Log the cleaned and coerced data
+    console.log('[ProductRoute] Cleaned product data:', cleanProduct);
+
     // Upload image if provided
     let image_url = null;
     if (req.file) {
-      image_url = await uploadToCloudinary(req.file);
+      if (process.env.CLOUDINARY_URL) {
+        try {
+          image_url = await uploadToCloudinary(req.file);
+        } catch (cloudErr) {
+          return res.status(400).json({
+            message: "Image upload failed",
+            error: cloudErr instanceof Error ? cloudErr.message : cloudErr,
+          });
+        }
+      } else {
+        image_url = getImageUrl(req.file);
+      }
     }
+    cleanProduct.image_url = image_url;
 
-    const product = await Product.create({
-      ...productData,
-      image_url,
-    });
+    // Create the product
+    const product = await Product.create(cleanProduct);
 
     // Return product with price_units
     const productWithUnits = await Product.findByPk(product.id);
     res.status(201).json(productWithUnits);
   } catch (error) {
-    console.error("Error creating product:", error);
+    let errorMsg = "Error creating product";
+    if (error instanceof Error && error.message.includes("image")) {
+      errorMsg = error.message;
+    }
     res.status(500).json({
-      message: "Error creating product",
+      message: errorMsg,
       error: error instanceof Error ? error.message : error,
     });
   }
@@ -132,8 +170,19 @@ router.put("/:id", upload.single("image"), async (req, res) => {
 
     // Upload new image if provided
     if (req.file) {
-      const image_url = await uploadToCloudinary(req.file);
-      productData.image_url = image_url;
+      if (process.env.CLOUDINARY_URL) {
+        try {
+          const image_url = await uploadToCloudinary(req.file);
+          productData.image_url = image_url;
+        } catch (cloudErr) {
+          return res.status(400).json({
+            message: "Image upload failed",
+            error: cloudErr instanceof Error ? cloudErr.message : cloudErr,
+          });
+        }
+      } else {
+        productData.image_url = getImageUrl(req.file);
+      }
     }
 
     // Ensure quantity is a number
@@ -151,9 +200,12 @@ router.put("/:id", upload.single("image"), async (req, res) => {
 
     res.json(updatedProduct);
   } catch (error) {
-    console.error("Error updating product:", error);
+    let errorMsg = "Error updating product";
+    if (error instanceof Error && error.message.includes("image")) {
+      errorMsg = error.message;
+    }
     res.status(500).json({
-      message: "Error updating product",
+      message: errorMsg,
       error: error instanceof Error ? error.message : error,
     });
   }
