@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { Loader2, User, Save, Eye, EyeOff } from "lucide-react";
@@ -31,8 +31,7 @@ export default function ProfilePage() {
     user,
     isAuthenticated,
     isLoading: authLoading,
-    checkSession,
-  } = useAuth();
+  } = useAuthContext();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -73,9 +72,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!isAuthenticated && !authLoading) {
-      checkSession();
+      // checkSession(); // Not needed, handled by AuthProvider
     }
-  }, [isAuthenticated, authLoading, checkSession]);
+  }, [isAuthenticated, authLoading]);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -312,7 +311,7 @@ export default function ProfilePage() {
                       value={
                         user.role
                           ? user.role.charAt(0).toUpperCase() +
-                            user.role.slice(1)
+                          user.role.slice(1)
                           : ""
                       }
                       disabled
