@@ -8,6 +8,7 @@ import routes from './routes/index.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { ApiError } from './utils/api-error.js';
 import { setupAssociations } from './models/associations.js';
+import path from "path";
 
 const app = express();
 
@@ -27,6 +28,9 @@ app.use(cookieParser());
 
 // Routes
 app.use('/api', routes);
+
+// Serve uploads directory for local file storage
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // 404 handler - must be after all routes
 app.use((req, res, next) => {
