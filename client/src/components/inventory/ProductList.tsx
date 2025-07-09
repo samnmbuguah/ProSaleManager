@@ -28,9 +28,6 @@ const ProductList: React.FC<ProductListProps> = ({
               SKU
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Category
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Piece Price
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -52,9 +49,6 @@ const ProductList: React.FC<ProductListProps> = ({
             <tr key={product.id}>
               <td className="px-6 py-4 whitespace-nowrap">{product.name}</td>
               <td className="px-6 py-4 whitespace-nowrap">{product.sku}</td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                {product.Category?.name || "N/A"}
-              </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 {formatCurrency(product.piece_selling_price)}
               </td>
