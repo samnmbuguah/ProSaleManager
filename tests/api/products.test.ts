@@ -123,4 +123,29 @@ describe("Products API", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveLength(0);
   });
+
+  it("POST /api/products should add a product with valid auth and csrf", async () => {
+    const jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBwcm9zYWxlLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1MTk3NjIzOCwiZXhwIjoxNzUyMDYyNjM4fQ.UJ23MfS1iQQbBiuDHVngjLezSc1yg57NPl9C-okQUCc";
+    const csrf = "1af322f09f6c8d111a0945b0f4b658a3c08775371ad364d06f16bf159ff45f06";
+    const productPayload = {
+      name: "Test Product API",
+      category_id: 1,
+      piece_buying_price: 10,
+      piece_selling_price: 15,
+      pack_buying_price: 40,
+      pack_selling_price: 60,
+      dozen_buying_price: 120,
+      dozen_selling_price: 180,
+      quantity: 5,
+      min_quantity: 2,
+      is_active: true
+    };
+    const res = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${jwt}`)
+      .set("x-csrf-token", csrf)
+      .send(productPayload);
+    expect(res.statusCode).toBe(201);
+    expect(res.body.name).toBe("Test Product API");
+  });
 });
