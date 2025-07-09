@@ -10,10 +10,10 @@ router.get("/", async (req, res) => {
     const suppliers = await Supplier.findAll({
       order: [["name", "ASC"]],
     });
-    res.json(suppliers);
+    res.json({ success: true, data: suppliers });
   } catch (error) {
     console.error("Error fetching suppliers:", error);
-    res.status(500).json({ error: "Failed to fetch suppliers" });
+    res.status(500).json({ success: false, error: "Failed to fetch suppliers" });
   }
 });
 
@@ -31,10 +31,10 @@ router.get("/search", async (req, res) => {
       },
       order: [["name", "ASC"]],
     });
-    res.json(suppliers);
+    res.json({ success: true, data: suppliers });
   } catch (error) {
     console.error("Error searching suppliers:", error);
-    res.status(500).json({ error: "Failed to search suppliers" });
+    res.status(500).json({ success: false, error: "Failed to search suppliers" });
   }
 });
 
@@ -43,12 +43,12 @@ router.get("/:id", async (req, res) => {
   try {
     const supplier = await Supplier.findByPk(req.params.id);
     if (!supplier) {
-      return res.status(404).json({ error: "Supplier not found" });
+      return res.status(404).json({ success: false, error: "Supplier not found" });
     }
-    res.json(supplier);
+    res.json({ success: true, data: supplier });
   } catch (error) {
     console.error("Error fetching supplier:", error);
-    res.status(500).json({ error: "Failed to fetch supplier" });
+    res.status(500).json({ success: false, error: "Failed to fetch supplier" });
   }
 });
 
@@ -56,10 +56,13 @@ router.get("/:id", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const supplier = await Supplier.create(req.body);
-    res.status(201).json(supplier);
+    res.status(201).json({ success: true, data: supplier });
   } catch (error) {
+    if (error.name === "SequelizeUniqueConstraintError") {
+      return res.status(400).json({ success: false, error: "A supplier with this email already exists." });
+    }
     console.error("Error creating supplier:", error);
-    res.status(400).json({ error: "Failed to create supplier" });
+    res.status(400).json({ success: false, error: "Failed to create supplier" });
   }
 });
 
@@ -68,13 +71,13 @@ router.put("/:id", async (req, res) => {
   try {
     const supplier = await Supplier.findByPk(req.params.id);
     if (!supplier) {
-      return res.status(404).json({ error: "Supplier not found" });
+      return res.status(404).json({ success: false, error: "Supplier not found" });
     }
     await supplier.update(req.body);
-    res.json(supplier);
+    res.json({ success: true, data: supplier });
   } catch (error) {
     console.error("Error updating supplier:", error);
-    res.status(400).json({ error: "Failed to update supplier" });
+    res.status(400).json({ success: false, error: "Failed to update supplier" });
   }
 });
 
@@ -83,13 +86,13 @@ router.delete("/:id", async (req, res) => {
   try {
     const supplier = await Supplier.findByPk(req.params.id);
     if (!supplier) {
-      return res.status(404).json({ error: "Supplier not found" });
+      return res.status(404).json({ success: false, error: "Supplier not found" });
     }
     await supplier.destroy();
-    res.json({ message: "Supplier deleted successfully" });
+    res.json({ success: true, message: "Supplier deleted successfully" });
   } catch (error) {
     console.error("Error deleting supplier:", error);
-    res.status(500).json({ error: "Failed to delete supplier" });
+    res.status(500).json({ success: false, error: "Failed to delete supplier" });
   }
 });
 
