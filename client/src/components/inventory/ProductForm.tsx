@@ -32,8 +32,6 @@ export function ProductForm({
       sku: "",
       barcode: "",
       category_id: 1,
-      price: 0,
-      cost_price: 0,
       quantity: 0,
       min_quantity: 0,
       is_active: true,
@@ -88,35 +86,7 @@ export function ProductForm({
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="price">Price</Label>
-            <Input
-              id="price"
-              type="number"
-              {...form.register("price", { valueAsNumber: true })}
-              placeholder="Enter price"
-            />
-            {form.formState.errors.price && (
-              <p className="text-sm text-red-500">
-                {form.formState.errors.price.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <Label htmlFor="cost_price">Cost Price</Label>
-            <Input
-              id="cost_price"
-              type="number"
-              {...form.register("cost_price", { valueAsNumber: true })}
-              placeholder="Enter cost price"
-            />
-            {form.formState.errors.cost_price && (
-              <p className="text-sm text-red-500">
-                {form.formState.errors.cost_price.message}
-              </p>
-            )}
-          </div>
+          {/* Remove Price and Cost Price fields */}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
