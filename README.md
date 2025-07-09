@@ -132,3 +132,26 @@ npm run build
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Product Image Upload Flow
+
+- **Frontend:**
+  - Validates image type (must be image) and size (max 5MB) before upload.
+  - Shows error messages for invalid files.
+  - Shows a progress indicator while uploading.
+  - Sends product data and image as multipart/form-data to the backend.
+
+- **Backend:**
+  - Uses Multer middleware to handle file uploads.
+  - Validates file type and size server-side.
+  - If `CLOUDINARY_URL` is set in environment variables, uploads images to Cloudinary and stores the URL in the database.
+  - If `CLOUDINARY_URL` is not set (e.g., on cPanel), saves images to `/uploads/products` on the server and stores the relative path in the database.
+  - Serves `/uploads` as static files for local access.
+
+### Deployment on cPanel
+
+- By default, images will be stored locally in `/uploads/products`.
+- Ensure the `/uploads` directory is writable by the server process.
+- The backend serves `/uploads` as static files, so product images are accessible via URLs like `https://yourdomain.com/uploads/products/filename.jpg`.
+- If you want to use Cloudinary, set the `CLOUDINARY_URL` environment variable in your deployment environment.
+- No code changes are needed to switch between local and Cloudinary storage—just set or unset the environment variable.
