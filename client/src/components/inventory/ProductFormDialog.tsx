@@ -18,7 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { UNIT_CONVERSIONS, UnitConversions } from "@/constants/priceUnits";
 
 interface ProductFormDialogProps {
   open: boolean;
@@ -43,6 +42,65 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
 }) => {
   // Local state for image file
   const [localImageFile, setLocalImageFile] = React.useState<File | null>(null);
+  const [imageError, setImageError] = React.useState<string | null>(null);
+
+  // Add local state to track which price field was last edited
+  const [lastEditedPrice, setLastEditedPrice] = React.useState<
+    | 'piece_buying_price'
+    | 'pack_buying_price'
+    | 'dozen_buying_price'
+    | 'piece_selling_price'
+    | 'pack_selling_price'
+    | 'dozen_selling_price'
+    | null
+  >(null);
+
+  // Key for localStorage
+  const FORM_DRAFT_KEY = 'productFormDraft';
+
+  // Load draft from localStorage on mount (only for add, not edit)
+  React.useEffect(() => {
+    if (!selectedProduct) {
+      const draft = localStorage.getItem(FORM_DRAFT_KEY);
+      if (draft) {
+        try {
+          setFormData({ ...formData, ...JSON.parse(draft) });
+        } catch { }
+      }
+    }
+    // eslint-disable-next-line
+  }, [selectedProduct]);
+
+  // Save formData to localStorage on change (only for add, not edit)
+  React.useEffect(() => {
+    if (!selectedProduct) {
+      localStorage.setItem(FORM_DRAFT_KEY, JSON.stringify(formData));
+    }
+  }, [formData, selectedProduct]);
+
+  // Set default min_quantity to 5 if not already set
+  React.useEffect(() => {
+    if (!selectedProduct && (!formData.min_quantity || formData.min_quantity === 0)) {
+      setFormData({ ...formData, min_quantity: 5 });
+    }
+    // eslint-disable-next-line
+  }, [selectedProduct]);
+
+  // Set default values for price fields to empty string for new products
+  React.useEffect(() => {
+    if (!selectedProduct) {
+      setFormData({
+        ...formData,
+        piece_buying_price: formData.piece_buying_price || '',
+        piece_selling_price: formData.piece_selling_price || '',
+        pack_buying_price: formData.pack_buying_price || '',
+        pack_selling_price: formData.pack_selling_price || '',
+        dozen_buying_price: formData.dozen_buying_price || '',
+        dozen_selling_price: formData.dozen_selling_price || '',
+      });
+    }
+    // eslint-disable-next-line
+  }, [selectedProduct]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
@@ -53,87 +111,165 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setImageError(null);
     const file = e.target.files?.[0];
     if (file) {
+      // Validate type
+      if (!file.type.startsWith("image/")) {
+        setImageError("Only image files are allowed.");
+        return;
+      }
+      // Validate size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setImageError("Image size must be less than 5MB.");
+        return;
+      }
       setLocalImageFile(file);
       const previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
     }
   };
 
-  // Initialize price_units if not present
-  const priceUnits = formData.price_units || [
-    {
-      unit_type: "dozen",
-      quantity: 12,
-      buying_price: "",
-      selling_price: "",
-      manual: false,
-    },
-    {
-      unit_type: "pack",
-      quantity: 3,
-      buying_price: "",
-      selling_price: "",
-      manual: false,
-    },
-    {
-      unit_type: "piece",
-      quantity: 1,
-      buying_price: "",
-      selling_price: "",
-      manual: false,
-    },
-  ];
-
-  // Handler for price change with correct auto-calc logic
-  const handlePriceChange = (
-    unit: string,
-    field: "buying_price" | "selling_price",
-    value: string,
-  ) => {
-    const updatedUnits = priceUnits.map((u) => {
-      if (u.unit_type === unit) {
-        return { ...u, [field]: value, manual: true };
-      }
-      return { ...u };
-    });
-    // Auto-calc logic
-    const changed = updatedUnits.find((u) => u.unit_type === unit);
-    if (changed && !isNaN(Number(value)) && value !== "") {
-      Object.keys(UNIT_CONVERSIONS[unit as keyof UnitConversions]).forEach(
-        (otherUnit) => {
-          const conv =
-            UNIT_CONVERSIONS[unit as keyof UnitConversions][otherUnit];
-          const other = updatedUnits.find((u) => u.unit_type === otherUnit);
-          if (other && !other.manual) {
-            updatedUnits.forEach((u, idx) => {
-              if (u.unit_type === otherUnit) {
-                let newValue;
-                if (conv > 1) {
-                  newValue = (Number(value) / conv).toString();
-                } else {
-                  newValue = (Number(value) * (1 / conv)).toString();
-                }
-                updatedUnits[idx] = {
-                  ...u,
-                  [field]: newValue,
-                };
-              }
-            });
-          }
-        },
-      );
+  // Helper to update prices based on which field was edited
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const num = Number(value);
+    let newFormData = { ...formData };
+    setLastEditedPrice(name as any);
+    if (name === 'piece_buying_price') {
+      newFormData.piece_buying_price = num;
+      newFormData.pack_buying_price = Number((num * 4).toFixed(2));
+      newFormData.dozen_buying_price = Number((num * 12).toFixed(2));
+    } else if (name === 'pack_buying_price') {
+      newFormData.pack_buying_price = num;
+      newFormData.piece_buying_price = Number((num / 4).toFixed(2));
+      newFormData.dozen_buying_price = Number(((num / 4) * 12).toFixed(2));
+    } else if (name === 'dozen_buying_price') {
+      newFormData.dozen_buying_price = num;
+      newFormData.piece_buying_price = Number((num / 12).toFixed(2));
+      newFormData.pack_buying_price = Number(((num / 12) * 4).toFixed(2));
+    } else if (name === 'piece_selling_price') {
+      newFormData.piece_selling_price = num;
+      newFormData.pack_selling_price = Number((num * 4).toFixed(2));
+      newFormData.dozen_selling_price = Number((num * 12).toFixed(2));
+    } else if (name === 'pack_selling_price') {
+      newFormData.pack_selling_price = num;
+      newFormData.piece_selling_price = Number((num / 4).toFixed(2));
+      newFormData.dozen_selling_price = Number(((num / 4) * 12).toFixed(2));
+    } else if (name === 'dozen_selling_price') {
+      newFormData.dozen_selling_price = num;
+      newFormData.piece_selling_price = Number((num / 12).toFixed(2));
+      newFormData.pack_selling_price = Number(((num / 12) * 4).toFixed(2));
     }
-    setFormData({ ...formData, price_units: updatedUnits });
+    setFormData(newFormData);
   };
 
-  // Handler to allow manual override
-  const handleManualOverride = (unit: string) => {
-    const updatedUnits = priceUnits.map((u) =>
-      u.unit_type === unit ? { ...u, manual: true } : u,
-    );
-    setFormData({ ...formData, price_units: updatedUnits });
+  // Helper to build the payload for submission, converting numbers
+  const buildProductPayload = () => {
+    const requiredFields = [
+      'name',
+      'category_id',
+      'piece_buying_price',
+      'piece_selling_price',
+      'pack_buying_price',
+      'pack_selling_price',
+      'dozen_buying_price',
+      'dozen_selling_price',
+      'quantity',
+      'min_quantity',
+      'is_active',
+    ];
+    const optionalFields = [
+      'description',
+      'sku',
+      'barcode',
+      'image_url',
+    ];
+    const payload = {};
+    for (const field of requiredFields) {
+      // Convert to number for numeric fields
+      if ([
+        'category_id',
+        'piece_buying_price',
+        'piece_selling_price',
+        'pack_buying_price',
+        'pack_selling_price',
+        'dozen_buying_price',
+        'dozen_selling_price',
+        'quantity',
+        'min_quantity',
+      ].includes(field)) {
+        payload[field] = Number(formData[field as keyof typeof formData]);
+      } else {
+        payload[field] = formData[field as keyof typeof formData];
+      }
+    }
+    for (const field of optionalFields) {
+      const value = formData[field as keyof typeof formData];
+      if (value !== undefined && value !== null && value !== "") {
+        payload[field] = value;
+      }
+    }
+    return payload;
+  };
+
+  // Validate required fields before submit
+  const validateForm = () => {
+    const requiredFields = [
+      'name',
+      'category_id',
+      'piece_buying_price',
+      'piece_selling_price',
+      'pack_buying_price',
+      'pack_selling_price',
+      'dozen_buying_price',
+      'dozen_selling_price',
+      'quantity',
+      'min_quantity',
+    ];
+    for (const field of requiredFields) {
+      const value = formData[field as keyof typeof formData];
+      if (
+        value === undefined ||
+        value === null ||
+        value === '' ||
+        (typeof value === 'number' && isNaN(value))
+      ) {
+        return field;
+      }
+    }
+    return null;
+  };
+
+  // Clear draft on successful submit (add product)
+  const handleSubmit = async (e: React.FormEvent, localImageFile?: File) => {
+    e.preventDefault();
+    const invalidField = validateForm();
+    if (invalidField) {
+      alert(`Please fill the required field: ${invalidField.replace(/_/g, ' ')}`);
+      return;
+    }
+    const payload = buildProductPayload();
+    console.log('[ProductFormDialog] Submitting payload:', payload);
+    let submitResult;
+    try {
+      if (localImageFile) {
+        const formDataToSend = new FormData();
+        Object.entries(payload).forEach(([key, value]) => {
+          formDataToSend.append(key, String(value));
+        });
+        formDataToSend.append("image", localImageFile);
+        submitResult = await onSubmit(e, localImageFile);
+      } else {
+        submitResult = await onSubmit(e);
+      }
+      console.log('[ProductFormDialog] Submit response:', submitResult);
+    } catch (err) {
+      console.error('[ProductFormDialog] Submit error:', err);
+    }
+    if (!selectedProduct) {
+      localStorage.removeItem(FORM_DRAFT_KEY);
+    }
   };
 
   return (
@@ -148,12 +284,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
         <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (typeof onSubmit === "function") {
-              onSubmit(e, localImageFile || undefined);
-            }
-          }}
+          onSubmit={handleSubmit}
           className="space-y-4"
         >
           <div className="space-y-2">
@@ -166,6 +297,9 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
               onChange={handleImageChange}
               className="mt-1"
             />
+            {imageError && (
+              <div className="text-red-500 text-sm mt-1">{imageError}</div>
+            )}
             {imagePreview && (
               <div className="mt-2">
                 <img
@@ -187,53 +321,23 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
             />
           </div>
           <div>
-            <Label htmlFor="sku">Product Code</Label>
-            <Input
-              id="sku"
-              name="sku"
-              value={formData.sku}
-              onChange={handleInputChange}
-            />
-          </div>
-          <div>
-            <Label htmlFor="category">Category *</Label>
-            <Select
-              value={formData.category}
-              onValueChange={(value) =>
-                setFormData({ ...formData, category: value })
-              }
+            <Label htmlFor="category_id">Category *</Label>
+            <select
+              id="category_id"
+              name="category_id"
+              value={formData.category_id}
+              onChange={e => setFormData({
+                ...formData,
+                category_id: Number(e.target.value)
+              })}
+              required
+              className="block w-full border rounded px-3 py-2"
             >
-              <SelectTrigger className="bg-white text-black">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                {PRODUCT_CATEGORIES.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="stock_unit">Stock Unit *</Label>
-            <Select
-              value={formData.stock_unit || ""}
-              onValueChange={(value: typeof formData.stock_unit) =>
-                setFormData({ ...formData, stock_unit: value })
-              }
-            >
-              <SelectTrigger className="bg-white text-black">
-                <SelectValue placeholder="Select a stock unit" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                {STOCK_UNITS.map((unit) => (
-                  <SelectItem key={unit} value={unit}>
-                    {unit.charAt(0).toUpperCase() + unit.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <option value="" disabled>Select category</option>
+              {PRODUCT_CATEGORIES.map((cat, idx) => (
+                <option key={cat} value={idx + 1}>{cat}</option>
+              ))}
+            </select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -242,70 +346,128 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                 id="quantity"
                 name="quantity"
                 type="number"
-                value={formData.stock}
+                value={formData.quantity}
                 onChange={handleInputChange}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="min_stock">Minimum Stock *</Label>
+              <Label htmlFor="min_quantity">Minimum Stock *</Label>
               <Input
-                id="min_stock"
-                name="min_stock"
+                id="min_quantity"
+                name="min_quantity"
                 type="number"
-                value={formData.min_stock}
+                value={formData.min_quantity}
                 onChange={handleInputChange}
                 required
               />
             </div>
           </div>
-          {/* Multiple Unit Prices */}
-          <div>
-            <Label>Unit Prices</Label>
-            <div className="grid grid-cols-3 gap-4">
-              {priceUnits.map((unit) => (
-                <div key={unit.unit_type} className="border rounded p-2">
-                  <div className="font-semibold capitalize mb-1">
-                    {unit.unit_type}
-                  </div>
-                  <div>
-                    <Label>Buying Price</Label>
-                    <Input
-                      type="number"
-                      value={unit.buying_price}
-                      onChange={(e) =>
-                        handlePriceChange(
-                          unit.unit_type,
-                          "buying_price",
-                          e.target.value,
-                        )
-                      }
-                      onFocus={() => handleManualOverride(unit.unit_type)}
-                    />
-                  </div>
-                  <div>
-                    <Label>Selling Price</Label>
-                    <Input
-                      type="number"
-                      value={unit.selling_price}
-                      onChange={(e) =>
-                        handlePriceChange(
-                          unit.unit_type,
-                          "selling_price",
-                          e.target.value,
-                        )
-                      }
-                      onFocus={() => handleManualOverride(unit.unit_type)}
-                    />
-                  </div>
-                  {unit.manual && (
-                    <div className="text-xs text-green-600 mt-1">
-                      Manual override
-                    </div>
-                  )}
-                </div>
-              ))}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="piece_buying_price">Piece Buying Price *</Label>
+              <Input
+                id="piece_buying_price"
+                name="piece_buying_price"
+                type="number"
+                value={formData.piece_buying_price}
+                onChange={handlePriceChange}
+                required
+              />
             </div>
+            <div>
+              <Label htmlFor="piece_selling_price">Piece Selling Price *</Label>
+              <Input
+                id="piece_selling_price"
+                name="piece_selling_price"
+                type="number"
+                value={formData.piece_selling_price}
+                onChange={handlePriceChange}
+                required
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="pack_buying_price">Pack Buying Price</Label>
+              <Input
+                id="pack_buying_price"
+                name="pack_buying_price"
+                type="number"
+                value={formData.pack_buying_price}
+                onChange={handlePriceChange}
+              />
+            </div>
+            <div>
+              <Label htmlFor="pack_selling_price">Pack Selling Price</Label>
+              <Input
+                id="pack_selling_price"
+                name="pack_selling_price"
+                type="number"
+                value={formData.pack_selling_price}
+                onChange={handlePriceChange}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="dozen_buying_price">Dozen Buying Price</Label>
+              <Input
+                id="dozen_buying_price"
+                name="dozen_buying_price"
+                type="number"
+                value={formData.dozen_buying_price}
+                onChange={handlePriceChange}
+              />
+            </div>
+            <div>
+              <Label htmlFor="dozen_selling_price">Dozen Selling Price</Label>
+              <Input
+                id="dozen_selling_price"
+                name="dozen_selling_price"
+                type="number"
+                value={formData.dozen_selling_price}
+                onChange={handlePriceChange}
+              />
+            </div>
+          </div>
+          {/* Optional fields */}
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Input
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+            />
+          </div>
+          <div>
+            <Label htmlFor="sku">SKU</Label>
+            <Input
+              id="sku"
+              name="sku"
+              value={formData.sku}
+              onChange={handleInputChange}
+            />
+          </div>
+          <div>
+            <Label htmlFor="barcode">Barcode</Label>
+            <Input
+              id="barcode"
+              name="barcode"
+              value={formData.barcode}
+              onChange={handleInputChange}
+            />
+          </div>
+          <div>
+            <Label htmlFor="is_active">Active</Label>
+            <input
+              id="is_active"
+              name="is_active"
+              type="checkbox"
+              checked={formData.is_active}
+              onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
+            />
           </div>
           <Button type="submit" className="w-full">
             {selectedProduct ? "Update Product" : "Add Product"}
