@@ -29,7 +29,33 @@ export const getProduct = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const createProduct = catchAsync(async (req: Request, res: Response) => {
-  const product = await Product.create(req.body);
+  // Coerce and sanitize input
+  const productData = {
+    name: req.body.name,
+    description: req.body.description || null,
+    sku: req.body.sku || null,
+    barcode: req.body.barcode || null,
+    category_id: Number(req.body.category_id),
+    piece_buying_price: Number(req.body.piece_buying_price),
+    piece_selling_price: Number(req.body.piece_selling_price),
+    pack_buying_price: Number(req.body.pack_buying_price),
+    pack_selling_price: Number(req.body.pack_selling_price),
+    dozen_buying_price: Number(req.body.dozen_buying_price),
+    dozen_selling_price: Number(req.body.dozen_selling_price),
+    quantity: Number(req.body.quantity),
+    min_quantity: Number(req.body.min_quantity),
+    image_url: req.body.image_url || null,
+    is_active: req.body.is_active === 'true' || req.body.is_active === true,
+  };
+
+  // Remove any undefined or NaN values for required fields
+  for (const key in productData) {
+    if (productData[key] === undefined || (typeof productData[key] === 'number' && isNaN(productData[key]))) {
+      return res.status(400).json({ success: false, message: `Invalid or missing value for field: ${key}` });
+    }
+  }
+
+  const product = await Product.create(productData);
   res.status(201).json({
     success: true,
     data: product
