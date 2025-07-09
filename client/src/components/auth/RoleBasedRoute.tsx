@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { AuthState } from "@/types/user";
 
 interface RoleBasedRouteProps {
@@ -12,7 +12,7 @@ export const RoleBasedRoute = ({
   children,
   allowedRoles = ["admin", "user"],
 }: RoleBasedRouteProps) => {
-  const { isAuthenticated, user, isLoading } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuthContext();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
