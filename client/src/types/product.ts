@@ -28,8 +28,6 @@ export const productSchema = z.object({
   sku: z.string().optional(),
   barcode: z.string().optional(),
   category_id: z.number(),
-  price: z.number().min(0, "Price cannot be negative"),
-  cost_price: z.number().min(0, "Cost price cannot be negative"),
   quantity: z.number().min(0, "Quantity cannot be negative"),
   min_quantity: z.number().min(0, "Minimum quantity cannot be negative"),
   image_url: z.string().optional(),
