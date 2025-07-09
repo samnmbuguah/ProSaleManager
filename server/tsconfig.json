@@ -12,6 +12,7 @@
     "allowJs": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "types": ["jest", "node"],
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },
   "include": ["src/**/*"],
