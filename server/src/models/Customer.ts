@@ -11,12 +11,12 @@ interface CustomerAttributes {
 }
 
 class Customer extends Model<CustomerAttributes> implements CustomerAttributes {
-  public id!: number;
-  public name!: string;
-  public email!: string;
-  public phone!: string;
-  public address!: string;
-  public is_active!: boolean;
+  declare id: number;
+  declare name: string;
+  declare email?: string;
+  declare phone?: string;
+  declare address?: string;
+  declare is_active: boolean;
 }
 
 Customer.init(
