@@ -52,13 +52,20 @@ export const updateProduct = createAsyncThunk(
 
 const initialFormData: ProductFormData = {
   name: "",
-  product_code: "",
-  category: "",
-  stock_unit: "piece",
+  description: "",
+  sku: "",
+  barcode: "",
+  category_id: 1,
+  piece_buying_price: 0,
+  piece_selling_price: 0,
+  pack_buying_price: 0,
+  pack_selling_price: 0,
+  dozen_buying_price: 0,
+  dozen_selling_price: 0,
   quantity: 0,
-  min_stock: 0,
-  buying_price: "0",
-  selling_price: "0",
+  min_quantity: 0,
+  image_url: "",
+  is_active: true,
 };
 
 interface ProductsState {
