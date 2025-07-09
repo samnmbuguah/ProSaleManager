@@ -10,6 +10,8 @@ import expensesRoutes from './expenses.js';
 import suppliersRoutes from './suppliers.js';
 import seedRoutes from './seed.js';
 import posRoutes from './pos.routes.js';
+import purchaseOrdersRoutes from './purchase-orders.js';
+import productSuppliersRoutes from './product-suppliers.js';
 import { protect } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -20,13 +22,14 @@ router.use('/auth', authRoutes);
 // Protected routes
 router.use('/users', protect, userRoutes);
 router.use('/products', protect, productRoutes);
-router.use('/categories', protect, categoryRoutes);
-router.use('/orders', protect, orderRoutes);
-router.use('/customers', protect, customersRoutes);
-router.use('/sales', salesRoutes);
-router.use('/expenses', protect, expensesRoutes);
+router.use('/product-suppliers', protect, productSuppliersRoutes);
 router.use('/suppliers', protect, suppliersRoutes);
-router.use('/seed', protect, seedRoutes);
+router.use('/customers', protect, customersRoutes);
+router.use('/expenses', protect, expensesRoutes);
 router.use('/pos', protect, posRoutes);
+router.use('/purchase-orders', protect, purchaseOrdersRoutes);
+router.use('/sales', protect, salesRoutes);
+router.use('/categories', protect, categoryRoutes);
+router.use('/seed', seedRoutes);
 
 export default router; 
