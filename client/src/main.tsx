@@ -19,6 +19,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import ProfilePage from "./pages/ProfilePage";
 import { Provider } from "react-redux";
 import { store } from "./store";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 // Force light mode by removing the 'dark' class from html and body
 if (typeof document !== "undefined") {
@@ -27,28 +28,14 @@ if (typeof document !== "undefined") {
 }
 
 function App() {
-  const { checkSession, isLoading } = useAuth();
-  const [location] = useLocation();
-
-  useEffect(() => {
-    checkSession();
-  }, []);
-
-  if (isLoading && location !== "/auth") {
-    console.log("Showing loading state");
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <CartProvider>
-        <Router />
-      </CartProvider>
-    </QueryClientProvider>
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <CartProvider>
+          <Router />
+        </CartProvider>
+      </QueryClientProvider>
+    </AuthProvider>
   );
 }
 
