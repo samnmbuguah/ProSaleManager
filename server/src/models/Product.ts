@@ -115,12 +115,7 @@ const Product = sequelize.define<ProductInstance>('Product', {
 
 // Add instance method to update prices
 (Product as any).prototype.updatePrices = async function(unit: 'piece' | 'pack' | 'dozen', buyingPrice: number, sellingPrice: number) {
-  const PACK_DISCOUNT = 0.95; // 5% discount for pack
-  const DOZEN_DISCOUNT = 0.90; // 10% discount for dozen
-
-  console.log('Updating prices for unit:', unit);
-  console.log('Buying price:', buyingPrice);
-  console.log('Selling price:', sellingPrice);
+  // No discounts: pack = 4 pieces, dozen = 12 pieces
 
   // Ensure all price fields are numbers
   this.set("piece_buying_price", Number(this.get("piece_buying_price")));
@@ -135,47 +130,38 @@ const Product = sequelize.define<ProductInstance>('Product', {
     this.set("piece_buying_price", Number(buyingPrice));
     this.set("piece_selling_price", Number(sellingPrice));
     
-    // Calculate pack prices (3 pieces with 5% discount)
-    this.set("pack_buying_price", Number((buyingPrice * 3 * PACK_DISCOUNT).toFixed(2)));
-    this.set("pack_selling_price", Number((sellingPrice * 3 * PACK_DISCOUNT).toFixed(2)));
+    // Calculate pack prices (4 pieces, no discount)
+    this.set("pack_buying_price", Number((buyingPrice * 4).toFixed(2)));
+    this.set("pack_selling_price", Number((sellingPrice * 4).toFixed(2)));
     
-    // Calculate dozen prices (12 pieces with 10% discount)
-    this.set("dozen_buying_price", Number((buyingPrice * 12 * DOZEN_DISCOUNT).toFixed(2)));
-    this.set("dozen_selling_price", Number((sellingPrice * 12 * DOZEN_DISCOUNT).toFixed(2)));
+    // Calculate dozen prices (12 pieces, no discount)
+    this.set("dozen_buying_price", Number((buyingPrice * 12).toFixed(2)));
+    this.set("dozen_selling_price", Number((sellingPrice * 12).toFixed(2)));
   } else if (unit === 'pack') {
     // Set both buying and selling prices for pack
     this.set("pack_buying_price", Number(buyingPrice));
     this.set("pack_selling_price", Number(sellingPrice));
     
-    // Calculate piece prices (pack price divided by 3 pieces, adjusted for discount)
-    this.set("piece_buying_price", Number((buyingPrice / (3 * PACK_DISCOUNT)).toFixed(2)));
-    this.set("piece_selling_price", Number((sellingPrice / (3 * PACK_DISCOUNT)).toFixed(2)));
+    // Calculate piece prices (pack price divided by 4 pieces)
+    this.set("piece_buying_price", Number((buyingPrice / 4).toFixed(2)));
+    this.set("piece_selling_price", Number((sellingPrice / 4).toFixed(2)));
     
-    // Calculate dozen prices (12 pieces with 10% discount)
-    this.set("dozen_buying_price", Number((this.get("piece_buying_price") * 12 * DOZEN_DISCOUNT).toFixed(2)));
-    this.set("dozen_selling_price", Number((this.get("piece_selling_price") * 12 * DOZEN_DISCOUNT).toFixed(2)));
+    // Calculate dozen prices (12 pieces)
+    this.set("dozen_buying_price", Number((this.get("piece_buying_price") * 12).toFixed(2)));
+    this.set("dozen_selling_price", Number((this.get("piece_selling_price") * 12).toFixed(2)));
   } else if (unit === 'dozen') {
     // Set both buying and selling prices for dozen
     this.set("dozen_buying_price", Number(buyingPrice));
     this.set("dozen_selling_price", Number(sellingPrice));
     
-    // Calculate piece prices (dozen price divided by 12 pieces, adjusted for discount)
-    this.set("piece_buying_price", Number((buyingPrice / (12 * DOZEN_DISCOUNT)).toFixed(2)));
-    this.set("piece_selling_price", Number((sellingPrice / (12 * DOZEN_DISCOUNT)).toFixed(2)));
+    // Calculate piece prices (dozen price divided by 12 pieces)
+    this.set("piece_buying_price", Number((buyingPrice / 12).toFixed(2)));
+    this.set("piece_selling_price", Number((sellingPrice / 12).toFixed(2)));
     
-    // Calculate pack prices (3 pieces with 5% discount)
-    this.set("pack_buying_price", Number((this.get("piece_buying_price") * 3 * PACK_DISCOUNT).toFixed(2)));
-    this.set("pack_selling_price", Number((this.get("piece_selling_price") * 3 * PACK_DISCOUNT).toFixed(2)));
+    // Calculate pack prices (4 pieces)
+    this.set("pack_buying_price", Number((this.get("piece_buying_price") * 4).toFixed(2)));
+    this.set("pack_selling_price", Number((this.get("piece_selling_price") * 4).toFixed(2)));
   }
-
-  console.log('Updated prices:', {
-    piece_buying_price: this.get("piece_buying_price"),
-    piece_selling_price: this.get("piece_selling_price"),
-    pack_buying_price: this.get("pack_buying_price"),
-    pack_selling_price: this.get("pack_selling_price"),
-    dozen_buying_price: this.get("dozen_buying_price"),
-    dozen_selling_price: this.get("dozen_selling_price"),
-  });
 
   await this.save();
 };
