@@ -49,6 +49,9 @@ const InventoryPage: React.FC = () => {
   const formData = useSelector((state: RootState) => state.products.formData);
   const { toast } = useToast();
 
+  const [uploading, setUploading] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState<number | null>(null);
+
   const defaultUnitTypes: UnitType[] = [
     { unit_type: "dozen", buying_price: "", selling_price: "", manual: false },
     { unit_type: "pack", buying_price: "", selling_price: "", manual: false },
@@ -61,8 +64,6 @@ const InventoryPage: React.FC = () => {
     sku: "",
     barcode: "",
     category_id: 1, // Default category ID
-    price: "0",
-    cost_price: "0",
     quantity: 0,
     min_quantity: 0,
     is_active: true,
@@ -76,20 +77,46 @@ const InventoryPage: React.FC = () => {
 
   const handleSubmit = async (_unused: unknown, localImageFile?: File) => {
     try {
-      const formDataToSend = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        formDataToSend.append(key, value.toString());
-      });
-      if (localImageFile) {
-        formDataToSend.append("image", localImageFile);
-      }
+      setUploading(true);
+      setUploadProgress(null);
+      let response;
       const url = selectedProduct
         ? `${import.meta.env.VITE_API_URL}/products/${selectedProduct.id}`
         : `${import.meta.env.VITE_API_URL}/products`;
-      const response = await fetch(url, {
-        method: selectedProduct ? "PUT" : "POST",
-        body: formDataToSend,
-      });
+      if (localImageFile) {
+        // Use FormData if uploading an image
+        const formDataToSend = new FormData();
+        Object.entries(formData).forEach(([key, value]) => {
+          if (typeof value === 'number' || typeof value === 'boolean') {
+            formDataToSend.append(key, value.toString());
+          } else {
+            formDataToSend.append(key, value ?? '');
+          }
+        });
+        formDataToSend.append("image", localImageFile);
+        response = await fetch(url, {
+          method: selectedProduct ? "PUT" : "POST",
+          body: formDataToSend,
+          credentials: "include",
+        });
+      } else {
+        // Only include the correct fields for the backend
+        const allowedFields = [
+          'name', 'description', 'sku', 'barcode', 'category_id',
+          'piece_buying_price', 'piece_selling_price', 'pack_buying_price', 'pack_selling_price',
+          'dozen_buying_price', 'dozen_selling_price', 'quantity', 'min_quantity', 'image_url', 'is_active'
+        ];
+        const payload = {};
+        allowedFields.forEach((field) => {
+          if (formData[field] !== undefined) payload[field] = formData[field];
+        });
+        response = await fetch(url, {
+          method: selectedProduct ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          credentials: "include",
+        });
+      }
       if (!response.ok) throw new Error("Failed to save product");
       toast({
         title: "Success",
@@ -106,6 +133,9 @@ const InventoryPage: React.FC = () => {
         description: `Failed to ${selectedProduct ? "update" : "create"} product`,
         variant: "destructive",
       });
+    } finally {
+      setUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -148,7 +178,7 @@ const InventoryPage: React.FC = () => {
           if (errorData && errorData.message) {
             errorMsg = errorData.message;
           }
-        } catch {}
+        } catch { }
         throw new Error(errorMsg);
       }
       toast({
@@ -166,9 +196,9 @@ const InventoryPage: React.FC = () => {
     }
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (query: string) => {
     try {
-      await dispatch(searchProducts(searchQuery));
+      await dispatch(searchProducts(query));
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -229,6 +259,19 @@ const InventoryPage: React.FC = () => {
         onSubmit={handleSubmit}
         selectedProduct={selectedProduct}
       />
+      {uploading && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+          <div className="bg-white p-6 rounded shadow flex flex-col items-center">
+            <div className="mb-2">Uploading product...</div>
+            <div className="w-48 h-2 bg-gray-200 rounded">
+              <div
+                className="h-2 bg-blue-500 rounded"
+                style={{ width: uploadProgress !== null ? `${uploadProgress}%` : "100%" }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
       {activeTab === "suppliers" && <Suppliers />}
       {activeTab === "purchase-orders" && <PurchaseOrders />}
     </div>
