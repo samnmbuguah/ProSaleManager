@@ -16,6 +16,6 @@ router.post('/login', login);
 router.post('/logout', logout);
 
 // Public route that handles both authenticated and unauthenticated states
-router.get('/me', getMe);
+router.get('/me', protect, getMe);
 
 export default router; 
