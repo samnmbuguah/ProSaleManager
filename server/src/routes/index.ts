@@ -1,20 +1,23 @@
 import { Router } from 'express';
-import authRoutes from './auth.routes.js';
-import userRoutes from './user.routes.js';
-import productRoutes from './product.routes.js';
-import categoryRoutes from './category.routes.js';
-import orderRoutes from './order.routes.js';
-import customersRoutes from './customers.ts';
-import salesRoutes from './sales.js';
-import expensesRoutes from './expenses.js';
-import suppliersRoutes from './suppliers.js';
-import seedRoutes from './seed.js';
-import posRoutes from './pos.routes.js';
-import purchaseOrdersRoutes from './purchase-orders.js';
-import productSuppliersRoutes from './product-suppliers.js';
+import authRoutes from './auth.routes';
+import userRoutes from './user.routes';
+import productRoutes from './product.routes';
+import categoryRoutes from './category.routes';
+import orderRoutes from './order.routes';
+import customersRoutes from './customers';
+import salesRoutes from './sales';
+import expensesRoutes from './expenses';
+import suppliersRoutes from './suppliers';
+import seedRoutes from './seed';
+import posRoutes from './pos.routes';
+import purchaseOrdersRoutes from './purchase-orders';
+import productSuppliersRoutes from './product-suppliers';
 import { protect } from '../middleware/auth.middleware.js';
 
 const router = Router();
+
+// Test route to verify API router is working
+router.get('/test', (req, res) => res.send('API router is working!'));
 
 // Public routes
 router.use('/auth', authRoutes);
