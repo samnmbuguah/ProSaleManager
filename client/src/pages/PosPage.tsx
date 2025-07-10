@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import type { Product } from "@/types/product";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -12,7 +13,13 @@ import { ReceiptDialog } from "@/components/pos/ReceiptDialog";
 import { useProducts } from "@/hooks/useProducts";
 import { useCustomers } from "@/hooks/useCustomers";
 import { api } from "@/lib/api";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -51,13 +58,15 @@ const PosPage: React.FC = () => {
   useEffect(() => {
     fetchProducts();
     fetchCustomers();
-  }, []); // Empty dependency array to run only once on mount
+  }, [fetchProducts, fetchCustomers]);
 
   // Set Walk-in Customer as default when customers are loaded
   useEffect(() => {
     if (customers.length > 0 && !selectedCustomer) {
       // Find the Walk-in Customer (should be the first customer with ID 1)
-      const walkInCustomer = customers.find(c => c.name === "Walk-in Customer");
+      const walkInCustomer = customers.find(
+        (c) => c.name === "Walk-in Customer",
+      );
       if (walkInCustomer) {
         setSelectedCustomer(walkInCustomer.id);
       }
@@ -65,7 +74,7 @@ const PosPage: React.FC = () => {
   }, [customers, selectedCustomer]);
 
   // Enhanced add to cart function that defaults to piece pricing
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = (product: Product) => {
     // Default to piece pricing
     const unitType = "piece";
     const unitPrice = product.piece_selling_price || 0;
@@ -176,7 +185,7 @@ const PosPage: React.FC = () => {
     }
   };
 
-  const selectedCustomerData = customers.find(c => c.id === selectedCustomer);
+  const selectedCustomerData = customers.find((c) => c.id === selectedCustomer);
 
   return (
     <div className="container mx-auto p-4 mt-16">
@@ -189,7 +198,12 @@ const PosPage: React.FC = () => {
               <User className="h-5 w-5 text-gray-500" />
               <span className="text-sm text-gray-600">Customer:</span>
             </div>
-            <Select value={selectedCustomer?.toString() || ""} onValueChange={(value) => setSelectedCustomer(value ? parseInt(value) : null)}>
+            <Select
+              value={selectedCustomer?.toString() || ""}
+              onValueChange={(value) =>
+                setSelectedCustomer(value ? parseInt(value) : null)
+              }
+            >
               <SelectTrigger className="w-64">
                 <SelectValue placeholder="Select a customer" />
               </SelectTrigger>
@@ -216,12 +230,18 @@ const PosPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-semibold">{selectedCustomerData.name}</p>
-                  <p className="text-sm text-gray-600">{selectedCustomerData.phone}</p>
+                  <p className="text-sm text-gray-600">
+                    {selectedCustomerData.phone}
+                  </p>
                   {selectedCustomerData.email && (
-                    <p className="text-sm text-gray-600">{selectedCustomerData.email}</p>
+                    <p className="text-sm text-gray-600">
+                      {selectedCustomerData.email}
+                    </p>
                   )}
                 </div>
-                <Badge variant="secondary">Customer ID: {selectedCustomerData.id}</Badge>
+                <Badge variant="secondary">
+                  Customer ID: {selectedCustomerData.id}
+                </Badge>
               </div>
             </CardContent>
           </Card>
