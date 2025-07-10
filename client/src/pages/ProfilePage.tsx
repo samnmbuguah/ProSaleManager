@@ -27,11 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function ProfilePage() {
-  const {
-    user,
-    isAuthenticated,
-    isLoading: authLoading,
-  } = useAuthContext();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuthContext();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -311,7 +307,7 @@ export default function ProfilePage() {
                       value={
                         user.role
                           ? user.role.charAt(0).toUpperCase() +
-                          user.role.slice(1)
+                            user.role.slice(1)
                           : ""
                       }
                       disabled
