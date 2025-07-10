@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Customer, CustomerInsert } from "@/types/customer";
 import { useToast } from "@/components/ui/use-toast";
 import { api } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
 
 interface APIError {
   error: string;
@@ -10,49 +11,20 @@ interface APIError {
 
 async function fetchWithRetry(
   url: string,
-  options?: RequestInit,
+  options?: any,
   retries = 3,
-): Promise<Response> {
-  const reportError = async (error: Error, attempt: number) => {
-    try {
-      await fetch("/api/client-error", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          error: error.message,
-          stack: error.stack,
-          component: "useCustomers",
-          context: { url, attempt },
-        }),
-      });
-    } catch (e) {
-      console.error("Failed to report error:", e);
-    }
-  };
-
+): Promise<any> {
   for (let i = 0; i < retries; i++) {
     try {
-      const response = await fetch(url, options);
-      if (response.ok || response.status === 401) {
-        return response;
-      }
-
-      const errorData = await response
-        .json()
-        .catch(() => ({ error: "Unknown error" }));
-      const error = new Error(errorData.error || `HTTP ${response.status}`);
-      await reportError(error, i + 1);
-
+      const response = await api.get(url);
+      return response;
+    } catch (error: any) {
       if (i < retries - 1) {
         const delay = Math.min(1000 * Math.pow(2, i), 5000);
-        console.warn(
-          `Attempt ${i + 1} failed for ${url}. Retrying in ${delay}ms`,
-        );
         await new Promise((resolve) => setTimeout(resolve, delay));
+      } else {
+        throw error;
       }
-    } catch (error) {
-      await reportError(error as Error, i + 1);
-      if (i === retries - 1) throw error;
     }
   }
   throw new Error(`Failed after ${retries} retries`);
@@ -71,7 +43,7 @@ export function useCustomers() {
     queryFn: async () => {
       try {
         console.log("[Customers] Fetching customers data");
-        const response = await api.get("/api/customers");
+        const response = await api.get(API_ENDPOINTS.customers.list);
         console.log(
           "[Customers] Successfully fetched customers:",
           response.data.data.length,
@@ -89,7 +61,7 @@ export function useCustomers() {
 
   const createCustomerMutation = useMutation<Customer, Error, CustomerInsert>({
     mutationFn: async (customer) => {
-      const response = await api.post("/api/customers", customer);
+      const response = await api.post(API_ENDPOINTS.customers.create, customer);
       return response.data.data;
     },
     onSuccess: () => {

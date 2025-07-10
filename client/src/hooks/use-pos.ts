@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Product, PriceUnit } from "@/types/product";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
+import api from "@/lib/api";
 
 interface ProductWithPriceUnits extends Product {
   price_units: PriceUnit[];
@@ -68,20 +70,8 @@ export function usePos() {
 
   const fetchAllProducts = async () => {
     try {
-      const response = await fetch("/api/pos/products", {
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      if (data.message === "getProducts stub") {
-        throw new Error("Stub response received - API not properly configured");
-      }
-      setProducts(data);
+      const response = await api.get(API_ENDPOINTS.products.list);
+      setProducts(response.data);
       setError(null);
     } catch (error) {
       setProducts([]);
@@ -98,20 +88,8 @@ export function usePos() {
     }
 
     try {
-      const response = await fetch(
-        `/api/products/search?q=${encodeURIComponent(query)}`,
-        {
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        },
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setProducts(data);
+      const response = await api.get(API_ENDPOINTS.products.search(query));
+      setProducts(response.data);
       setError(null);
     } catch (error) {
       setProducts([]);
@@ -125,26 +103,12 @@ export function usePos() {
     setIsProcessing(true);
     try {
       console.log("Creating sale with data:", saleData);
-      const response = await fetch("/api/sales", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...saleData,
-          customer_id: saleData.customer_id || null,
-        }),
-        credentials: "include",
+      const response = await api.post(API_ENDPOINTS.sales.create, {
+        ...saleData,
+        customer_id: saleData.customer_id || null,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create sale");
-      }
-
-      const result = await response.json();
       setError(null);
-      return result;
+      return response.data;
     } catch (error) {
       console.error("Sale creation error:", error);
       const errorMessage =

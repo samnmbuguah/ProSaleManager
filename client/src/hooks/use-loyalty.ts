@@ -1,5 +1,7 @@
 import type { LoyaltyPoints, LoyaltyTransaction } from "@/types/schema";
 import { create } from "zustand";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
+import { api } from "@/lib/api";
 
 interface LoyaltyState {
   points: LoyaltyPoints | null;
@@ -21,9 +23,8 @@ export const useLoyalty = create<LoyaltyState>((set) => ({
   fetchPoints: async (customerId: number) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`/api/loyalty/points/${customerId}`);
-      if (!response.ok) throw new Error("Failed to fetch loyalty points");
-      const points = await response.json();
+      const response = await api.get(API_ENDPOINTS.loyalty.points(customerId));
+      const points = response.data;
       set({ points, isLoading: false });
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
@@ -33,9 +34,8 @@ export const useLoyalty = create<LoyaltyState>((set) => ({
   fetchTransactions: async (customerId: number) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`/api/loyalty/transactions/${customerId}`);
-      if (!response.ok) throw new Error("Failed to fetch loyalty transactions");
-      const transactions = await response.json();
+      const response = await api.get(API_ENDPOINTS.loyalty.transactions(customerId));
+      const transactions = response.data;
       set({ transactions, isLoading: false });
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
@@ -45,13 +45,8 @@ export const useLoyalty = create<LoyaltyState>((set) => ({
   addPoints: async (customerId: number, points: number) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch("/api/loyalty/points/add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerId, points }),
-      });
-      if (!response.ok) throw new Error("Failed to add loyalty points");
-      const updatedPoints = await response.json();
+      const response = await api.post(API_ENDPOINTS.loyalty.addPoints, { customerId, points });
+      const updatedPoints = response.data;
       set((state) => ({
         points: updatedPoints,
         transactions: [updatedPoints, ...state.transactions],
@@ -65,13 +60,8 @@ export const useLoyalty = create<LoyaltyState>((set) => ({
   redeemPoints: async (customerId: number, points: number) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch("/api/loyalty/points/redeem", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerId, points }),
-      });
-      if (!response.ok) throw new Error("Failed to redeem loyalty points");
-      const updatedPoints = await response.json();
+      const response = await api.post(API_ENDPOINTS.loyalty.redeemPoints, { customerId, points });
+      const updatedPoints = response.data;
       set((state) => ({
         points: updatedPoints,
         transactions: [updatedPoints, ...state.transactions],
