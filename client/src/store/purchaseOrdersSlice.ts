@@ -1,14 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { PurchaseOrder } from "@/types/purchase-order";
+import { api, API_ENDPOINTS } from "@/lib/api";
 
 export const fetchPurchaseOrders = createAsyncThunk(
   "purchaseOrders/fetchPurchaseOrders",
   async () => {
-    const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/purchase-orders`,
-      { credentials: "include" },
-    );
-    return await response.json();
+    const response = await api.get(API_ENDPOINTS.purchaseOrders.list);
+    return response.data;
   },
 );
 
