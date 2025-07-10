@@ -6,17 +6,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { ProductFormData, STOCK_UNITS, Product } from "@/types/product";
+import { ProductFormData, Product } from "@/types/product";
 import { PRODUCT_CATEGORIES } from "@/constants/categories";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
 interface ProductFormDialogProps {
@@ -40,23 +33,8 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   onSubmit,
   selectedProduct,
 }) => {
-  // Local state for image file
-  const [localImageFile, setLocalImageFile] = React.useState<File | null>(null);
-  const [imageError, setImageError] = React.useState<string | null>(null);
-
-  // Add local state to track which price field was last edited
-  const [lastEditedPrice, setLastEditedPrice] = React.useState<
-    | 'piece_buying_price'
-    | 'pack_buying_price'
-    | 'dozen_buying_price'
-    | 'piece_selling_price'
-    | 'pack_selling_price'
-    | 'dozen_selling_price'
-    | null
-  >(null);
-
   // Key for localStorage
-  const FORM_DRAFT_KEY = 'productFormDraft';
+  const FORM_DRAFT_KEY = "productFormDraft";
 
   // Load draft from localStorage on mount (only for add, not edit)
   React.useEffect(() => {
@@ -65,7 +43,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       if (draft) {
         try {
           setFormData({ ...formData, ...JSON.parse(draft) });
-        } catch { }
+        } catch {}
       }
     }
     // eslint-disable-next-line
@@ -80,7 +58,10 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
 
   // Set default min_quantity to 5 if not already set
   React.useEffect(() => {
-    if (!selectedProduct && (!formData.min_quantity || formData.min_quantity === 0)) {
+    if (
+      !selectedProduct &&
+      (!formData.min_quantity || formData.min_quantity === 0)
+    ) {
       setFormData({ ...formData, min_quantity: 5 });
     }
     // eslint-disable-next-line
@@ -91,12 +72,12 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
     if (!selectedProduct) {
       setFormData({
         ...formData,
-        piece_buying_price: formData.piece_buying_price || '',
-        piece_selling_price: formData.piece_selling_price || '',
-        pack_buying_price: formData.pack_buying_price || '',
-        pack_selling_price: formData.pack_selling_price || '',
-        dozen_buying_price: formData.dozen_buying_price || '',
-        dozen_selling_price: formData.dozen_selling_price || '',
+        piece_buying_price: formData.piece_buying_price || "",
+        piece_selling_price: formData.piece_selling_price || "",
+        pack_buying_price: formData.pack_buying_price || "",
+        pack_selling_price: formData.pack_selling_price || "",
+        dozen_buying_price: formData.dozen_buying_price || "",
+        dozen_selling_price: formData.dozen_selling_price || "",
       });
     }
     // eslint-disable-next-line
@@ -111,20 +92,18 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setImageError(null);
     const file = e.target.files?.[0];
     if (file) {
       // Validate type
       if (!file.type.startsWith("image/")) {
-        setImageError("Only image files are allowed.");
+        alert("Only image files are allowed.");
         return;
       }
       // Validate size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        setImageError("Image size must be less than 5MB.");
+        alert("Image size must be less than 5MB.");
         return;
       }
-      setLocalImageFile(file);
       const previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
     }
@@ -134,29 +113,28 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     const num = Number(value);
-    let newFormData = { ...formData };
-    setLastEditedPrice(name as any);
-    if (name === 'piece_buying_price') {
+    const newFormData = { ...formData };
+    if (name === "piece_buying_price") {
       newFormData.piece_buying_price = num;
       newFormData.pack_buying_price = Number((num * 4).toFixed(2));
       newFormData.dozen_buying_price = Number((num * 12).toFixed(2));
-    } else if (name === 'pack_buying_price') {
+    } else if (name === "pack_buying_price") {
       newFormData.pack_buying_price = num;
       newFormData.piece_buying_price = Number((num / 4).toFixed(2));
       newFormData.dozen_buying_price = Number(((num / 4) * 12).toFixed(2));
-    } else if (name === 'dozen_buying_price') {
+    } else if (name === "dozen_buying_price") {
       newFormData.dozen_buying_price = num;
       newFormData.piece_buying_price = Number((num / 12).toFixed(2));
       newFormData.pack_buying_price = Number(((num / 12) * 4).toFixed(2));
-    } else if (name === 'piece_selling_price') {
+    } else if (name === "piece_selling_price") {
       newFormData.piece_selling_price = num;
       newFormData.pack_selling_price = Number((num * 4).toFixed(2));
       newFormData.dozen_selling_price = Number((num * 12).toFixed(2));
-    } else if (name === 'pack_selling_price') {
+    } else if (name === "pack_selling_price") {
       newFormData.pack_selling_price = num;
       newFormData.piece_selling_price = Number((num / 4).toFixed(2));
       newFormData.dozen_selling_price = Number(((num / 4) * 12).toFixed(2));
-    } else if (name === 'dozen_selling_price') {
+    } else if (name === "dozen_selling_price") {
       newFormData.dozen_selling_price = num;
       newFormData.piece_selling_price = Number((num / 12).toFixed(2));
       newFormData.pack_selling_price = Number(((num / 12) * 4).toFixed(2));
@@ -167,38 +145,35 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   // Helper to build the payload for submission, converting numbers
   const buildProductPayload = () => {
     const requiredFields = [
-      'name',
-      'category_id',
-      'piece_buying_price',
-      'piece_selling_price',
-      'pack_buying_price',
-      'pack_selling_price',
-      'dozen_buying_price',
-      'dozen_selling_price',
-      'quantity',
-      'min_quantity',
-      'is_active',
+      "name",
+      "category_id",
+      "piece_buying_price",
+      "piece_selling_price",
+      "pack_buying_price",
+      "pack_selling_price",
+      "dozen_buying_price",
+      "dozen_selling_price",
+      "quantity",
+      "min_quantity",
+      "is_active",
     ];
-    const optionalFields = [
-      'description',
-      'sku',
-      'barcode',
-      'image_url',
-    ];
+    const optionalFields = ["description", "sku", "barcode", "image_url"];
     const payload = {};
     for (const field of requiredFields) {
       // Convert to number for numeric fields
-      if ([
-        'category_id',
-        'piece_buying_price',
-        'piece_selling_price',
-        'pack_buying_price',
-        'pack_selling_price',
-        'dozen_buying_price',
-        'dozen_selling_price',
-        'quantity',
-        'min_quantity',
-      ].includes(field)) {
+      if (
+        [
+          "category_id",
+          "piece_buying_price",
+          "piece_selling_price",
+          "pack_buying_price",
+          "pack_selling_price",
+          "dozen_buying_price",
+          "dozen_selling_price",
+          "quantity",
+          "min_quantity",
+        ].includes(field)
+      ) {
         payload[field] = Number(formData[field as keyof typeof formData]);
       } else {
         payload[field] = formData[field as keyof typeof formData];
@@ -216,24 +191,24 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   // Validate required fields before submit
   const validateForm = () => {
     const requiredFields = [
-      'name',
-      'category_id',
-      'piece_buying_price',
-      'piece_selling_price',
-      'pack_buying_price',
-      'pack_selling_price',
-      'dozen_buying_price',
-      'dozen_selling_price',
-      'quantity',
-      'min_quantity',
+      "name",
+      "category_id",
+      "piece_buying_price",
+      "piece_selling_price",
+      "pack_buying_price",
+      "pack_selling_price",
+      "dozen_buying_price",
+      "dozen_selling_price",
+      "quantity",
+      "min_quantity",
     ];
     for (const field of requiredFields) {
       const value = formData[field as keyof typeof formData];
       if (
         value === undefined ||
         value === null ||
-        value === '' ||
-        (typeof value === 'number' && isNaN(value))
+        value === "" ||
+        (typeof value === "number" && isNaN(value))
       ) {
         return field;
       }
@@ -246,11 +221,13 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
     e.preventDefault();
     const invalidField = validateForm();
     if (invalidField) {
-      alert(`Please fill the required field: ${invalidField.replace(/_/g, ' ')}`);
+      alert(
+        `Please fill the required field: ${invalidField.replace(/_/g, " ")}`,
+      );
       return;
     }
     const payload = buildProductPayload();
-    console.log('[ProductFormDialog] Submitting payload:', payload);
+    console.log("[ProductFormDialog] Submitting payload:", payload);
     let submitResult;
     try {
       if (localImageFile) {
@@ -263,9 +240,9 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       } else {
         submitResult = await onSubmit(e);
       }
-      console.log('[ProductFormDialog] Submit response:', submitResult);
+      console.log("[ProductFormDialog] Submit response:", submitResult);
     } catch (err) {
-      console.error('[ProductFormDialog] Submit error:', err);
+      console.error("[ProductFormDialog] Submit error:", err);
     }
     if (!selectedProduct) {
       localStorage.removeItem(FORM_DRAFT_KEY);
@@ -283,10 +260,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
             Fill in the product details below.
           </DialogDescription>
         </DialogHeader>
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4"
-        >
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="image">Product Image (Optional)</Label>
             <Input
@@ -297,9 +271,6 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
               onChange={handleImageChange}
               className="mt-1"
             />
-            {imageError && (
-              <div className="text-red-500 text-sm mt-1">{imageError}</div>
-            )}
             {imagePreview && (
               <div className="mt-2">
                 <img
@@ -326,16 +297,22 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
               id="category_id"
               name="category_id"
               value={formData.category_id}
-              onChange={e => setFormData({
-                ...formData,
-                category_id: Number(e.target.value)
-              })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  category_id: Number(e.target.value),
+                })
+              }
               required
               className="block w-full border rounded px-3 py-2"
             >
-              <option value="" disabled>Select category</option>
+              <option value="" disabled>
+                Select category
+              </option>
               {PRODUCT_CATEGORIES.map((cat, idx) => (
-                <option key={cat} value={idx + 1}>{cat}</option>
+                <option key={cat} value={idx + 1}>
+                  {cat}
+                </option>
               ))}
             </select>
           </div>
@@ -466,7 +443,9 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
               name="is_active"
               type="checkbox"
               checked={formData.is_active}
-              onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
+              onChange={(e) =>
+                setFormData({ ...formData, is_active: e.target.checked })
+              }
             />
           </div>
           <Button type="submit" className="w-full">
