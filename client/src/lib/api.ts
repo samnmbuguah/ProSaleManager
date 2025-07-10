@@ -5,7 +5,7 @@ const isDevelopment = process.env.NODE_ENV === "development";
 
 // API Configuration
 const API_CONFIG = {
-  baseURL: "http://localhost:5000/api",
+  baseURL: "/api",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
