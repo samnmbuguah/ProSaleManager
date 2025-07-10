@@ -20,8 +20,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { CustomerForm } from "./CustomerForm";
+import { api, API_ENDPOINTS } from "@/lib/api";
 
 interface Customer {
   id: number;
@@ -46,13 +48,10 @@ export function CustomerSearch({
   const { data: customers, isLoading } = useQuery<Customer[]>({
     queryKey: ["customers", search],
     queryFn: async () => {
-      const response = await fetch(
-        `/api/customers/search?q=${encodeURIComponent(search)}`,
+      const response = await api.get(
+        `/customers/search?q=${encodeURIComponent(search)}`,
       );
-      if (!response.ok) {
-        throw new Error("Failed to fetch customers");
-      }
-      return response.json();
+      return response.data;
     },
   });
 
@@ -163,20 +162,14 @@ export function CustomerSearch({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Customer</DialogTitle>
+            <DialogDescription>
+              Fill in the customer information below to add a new customer to your system.
+            </DialogDescription>
           </DialogHeader>
           <CustomerForm
             onSubmit={async (data) => {
-              const response = await fetch("/api/customers", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-              });
-
-              if (!response.ok) {
-                throw new Error("Failed to create customer");
-              }
-
-              const newCustomer = await response.json();
+              const response = await api.post(API_ENDPOINTS.customers.create, data);
+              const newCustomer = response.data;
               onSelect(newCustomer);
               setIsNewCustomerDialogOpen(false);
             }}
