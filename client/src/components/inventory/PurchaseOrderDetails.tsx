@@ -15,6 +15,8 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import type { Supplier } from "@/types/supplier";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
+import { api } from "@/lib/api";
 
 interface PurchaseOrderDetailsProps {
   orderId: number | null;
@@ -42,15 +44,11 @@ export function PurchaseOrderDetails({
   onClose,
   supplier,
 }: PurchaseOrderDetailsProps) {
-  const { data: items, isLoading } = useQuery<OrderItem[]>({
+  const { data: items, isLoading } = useQuery({
     queryKey: ["purchase-order-items", orderId],
     queryFn: async () => {
-      if (!orderId) return [];
-      const response = await fetch(`/api/purchase-orders/${orderId}/items`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch order items");
-      }
-      return response.json();
+      const response = await api.get(API_ENDPOINTS.purchaseOrders.items(orderId));
+      return response.data;
     },
     enabled: !!orderId,
   });
