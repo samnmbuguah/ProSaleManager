@@ -149,12 +149,12 @@ export default function AuthPage() {
               {(isLogin
                 ? loginForm.formState.errors.email
                 : registerForm.formState.errors.email) && (
-                  <p className="text-sm font-medium text-destructive">
-                    {isLogin
-                      ? loginForm.formState.errors.email?.message
-                      : registerForm.formState.errors.email?.message}
-                  </p>
-                )}
+                <p className="text-sm font-medium text-destructive">
+                  {isLogin
+                    ? loginForm.formState.errors.email?.message
+                    : registerForm.formState.errors.email?.message}
+                </p>
+              )}
             </div>
 
             {!isLogin && (
@@ -207,23 +207,23 @@ export default function AuthPage() {
               {(isLogin
                 ? loginForm.formState.errors.password
                 : registerForm.formState.errors.password) && (
-                  <p className="text-sm font-medium text-destructive">
-                    {isLogin
-                      ? loginForm.formState.errors.password?.message
-                      : registerForm.formState.errors.password?.message}
-                  </p>
-                )}
+                <p className="text-sm font-medium text-destructive">
+                  {isLogin
+                    ? loginForm.formState.errors.password?.message
+                    : registerForm.formState.errors.password?.message}
+                </p>
+              )}
             </div>
 
             {(isLogin
               ? loginForm.formState.errors.root
               : registerForm.formState.errors.root) && (
-                <p className="text-sm font-medium text-destructive">
-                  {isLogin
-                    ? loginForm.formState.errors.root?.message
-                    : registerForm.formState.errors.root?.message}
-                </p>
-              )}
+              <p className="text-sm font-medium text-destructive">
+                {isLogin
+                  ? loginForm.formState.errors.root?.message
+                  : registerForm.formState.errors.root?.message}
+              </p>
+            )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
