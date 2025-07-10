@@ -8,19 +8,13 @@ const RETRY_DELAY = 1500;
 
 async function fetchWithRetry(
   url: string,
-  options: RequestInit = {},
+  options: any = {},
   retries = MAX_RETRIES,
 ): Promise<unknown> {
   try {
-    const response = await fetch(url, options);
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `Server returned ${response.status}: ${errorText || "No error details"}`,
-      );
-    }
-    return await response.json();
-  } catch (error) {
+    const response = await api.get(url);
+    return response.data;
+  } catch (error: any) {
     if (retries > 0) {
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
       return fetchWithRetry(url, options, retries - 1);

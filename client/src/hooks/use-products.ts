@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Product, ProductFormData } from "@/types/product";
 import { useToast } from "@/hooks/use-toast";
+import { api, API_ENDPOINTS } from "@/lib/api";
 
 export function useProducts() {
   const queryClient = useQueryClient();
@@ -9,11 +10,8 @@ export function useProducts() {
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ["products"],
     queryFn: async () => {
-      const response = await fetch("/api/products");
-      if (!response.ok) {
-        throw new Error("Failed to fetch products");
-      }
-      return response.json();
+      const response = await api.get(API_ENDPOINTS.products.list);
+      return response.data;
     },
   });
 
@@ -27,16 +25,8 @@ export function useProducts() {
           selling_price: defaultUnit?.selling_price || "0",
         };
       }
-      const response = await fetch("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create product");
-      }
-      return response.json();
+      const response = await api.post(API_ENDPOINTS.products.create, data);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -78,23 +68,8 @@ export function useProducts() {
         }
       }
 
-      const response = await fetch(`/api/products/${data.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(productData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        if (errorData.code === "23503") {
-          throw new Error(
-            "Cannot update product that has associated sales records",
-          );
-        }
-        throw new Error("Failed to update product");
-      }
-
-      return response.json();
+      const response = await api.put(API_ENDPOINTS.products.update(data.id), productData);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });

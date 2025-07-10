@@ -5,6 +5,8 @@ import type {
   PurchaseOrderSubmitData,
 } from "@/types/purchase-order";
 import { useToast } from "@/hooks/use-toast";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
+import { api } from "@/lib/api";
 
 export function usePurchaseOrders() {
   const queryClient = useQueryClient();
@@ -13,25 +15,15 @@ export function usePurchaseOrders() {
   const { data: purchaseOrders, isLoading } = useQuery<PurchaseOrder[]>({
     queryKey: ["purchase-orders"],
     queryFn: async () => {
-      const response = await fetch("/api/purchase-orders");
-      if (!response.ok) {
-        throw new Error("Failed to fetch purchase orders");
-      }
-      return response.json();
+      const response = await api.get(API_ENDPOINTS.purchaseOrders.list);
+      return response.data;
     },
   });
 
   const createPurchaseOrderMutation = useMutation({
     mutationFn: async (data: PurchaseOrderSubmitData) => {
-      const response = await fetch("/api/purchase-orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to create purchase order");
-      }
-      return response.json();
+      const response = await api.post(API_ENDPOINTS.purchaseOrders.create, data);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
@@ -51,15 +43,8 @@ export function usePurchaseOrders() {
 
   const updatePurchaseOrderStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      const response = await fetch(`/api/purchase-orders/${id}/status`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to update purchase order status");
-      }
-      return response.json();
+      const response = await api.put(`${API_ENDPOINTS.purchaseOrders.update}/${id}/status`, { status });
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
@@ -72,15 +57,8 @@ export function usePurchaseOrders() {
 
   const createPurchaseOrderItemMutation = useMutation({
     mutationFn: async (data: PurchaseOrderItem) => {
-      const response = await fetch("/api/purchase-order-items", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to create purchase order item");
-      }
-      return response.json();
+      const response = await api.post(API_ENDPOINTS.purchaseOrderItems.create, data);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchase-orders"] });
