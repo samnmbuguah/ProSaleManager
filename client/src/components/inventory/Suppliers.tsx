@@ -16,13 +16,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "@/store";
-import { fetchSuppliers } from "@/store/suppliersSlice";
+import { fetchSuppliers, createSupplier, updateSupplier, deleteSupplier } from "@/store/suppliersSlice";
 import type { Supplier, SupplierFormData } from "@/types/supplier";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 
 const Suppliers = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -61,40 +62,21 @@ const Suppliers = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const url = selectedSupplier
-        ? `${import.meta.env.VITE_API_URL}/suppliers/${selectedSupplier.id}`
-        : `${import.meta.env.VITE_API_URL}/suppliers`;
-
-      const response = await fetch(url, {
-        method: selectedSupplier ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        let errorMsg = `Failed to ${selectedSupplier ? "update" : "create"} supplier`;
-        try {
-          const errorData = await response.json();
-          if (errorData && errorData.error) {
-            errorMsg = errorData.error;
-          }
-        } catch {}
+      if (selectedSupplier) {
+        await dispatch(updateSupplier({ id: selectedSupplier.id, data: formData })).unwrap();
         await Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: errorMsg,
+          icon: "success",
+          title: "Success",
+          text: "Supplier updated successfully",
         });
-        throw new Error(errorMsg);
+      } else {
+        await dispatch(createSupplier(formData)).unwrap();
+        await Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Supplier created successfully",
+        });
       }
-
-      await Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: `Supplier ${selectedSupplier ? "updated" : "created"} successfully`,
-      });
 
       setFormData({
         name: "",
@@ -105,6 +87,7 @@ const Suppliers = () => {
       });
       setIsAddDialogOpen(false);
       setIsEditDialogOpen(false);
+      setSelectedSupplier(null);
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -132,26 +115,11 @@ const Suppliers = () => {
       return;
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/suppliers/${id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
-
-      if (!response.ok) {
-        await Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Failed to delete supplier',
-        });
-        throw new Error('Failed to delete supplier');
-      }
+      await dispatch(deleteSupplier(id)).unwrap();
       await Swal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: 'Supplier deleted successfully',
+        icon: "success",
+        title: "Success",
+        text: "Supplier deleted successfully",
       });
     } catch (error) {
       console.error("Error:", error);
@@ -236,53 +204,80 @@ const Suppliers = () => {
       </div>
 
       <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Contact Person</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Address</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {suppliers.map((supplier) => (
-              <TableRow key={supplier.id}>
-                <TableCell className="font-medium">{supplier.name}</TableCell>
-                <TableCell>{supplier.contact_person || "-"}</TableCell>
-                <TableCell>{supplier.email}</TableCell>
-                <TableCell>{supplier.phone}</TableCell>
-                <TableCell>{supplier.address}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(supplier)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(supplier.id)}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </TableCell>
+        {suppliersStatus === "loading" ? (
+          <div className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-2 text-sm text-gray-600">Loading suppliers...</p>
+          </div>
+        ) : suppliersStatus === "failed" ? (
+          <div className="p-8 text-center">
+            <p className="text-red-600">Failed to load suppliers</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => dispatch(fetchSuppliers())}
+              className="mt-2"
+            >
+              Retry
+            </Button>
+          </div>
+        ) : suppliers.length === 0 ? (
+          <div className="p-8 text-center">
+            <p className="text-gray-600">No suppliers found</p>
+            <p className="text-sm text-gray-500 mt-1">Add your first supplier to get started</p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Contact Person</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Address</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {suppliers.map((supplier) => (
+                <TableRow key={supplier.id}>
+                  <TableCell className="font-medium">{supplier.name}</TableCell>
+                  <TableCell>{supplier.contact_person || "-"}</TableCell>
+                  <TableCell>{supplier.email}</TableCell>
+                  <TableCell>{supplier.phone}</TableCell>
+                  <TableCell>{supplier.address}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(supplier)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDelete(supplier.id)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </div>
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Supplier</DialogTitle>
+            <DialogDescription>
+              Fill in the supplier information below to add a new supplier to your system.
+            </DialogDescription>
           </DialogHeader>
           <SupplierForm />
         </DialogContent>
@@ -292,6 +287,9 @@ const Suppliers = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Supplier</DialogTitle>
+            <DialogDescription>
+              Update the supplier information below. All fields marked with * are required.
+            </DialogDescription>
           </DialogHeader>
           <SupplierForm />
         </DialogContent>
