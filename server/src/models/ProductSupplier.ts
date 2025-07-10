@@ -53,6 +53,7 @@ ProductSupplier.init(
     sequelize,
     modelName: "ProductSupplier",
     tableName: "product_suppliers",
+    underscored: true, // This tells Sequelize to use snake_case for column names
     indexes: [
       {
         unique: true,
