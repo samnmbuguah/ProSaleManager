@@ -1,8 +1,13 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Trash2, User, ShoppingCart } from "lucide-react";
 import { CartItem } from "../../types/pos";
 import type { Customer } from "@/types/customer";
@@ -39,7 +44,7 @@ export const Cart: React.FC<CartProps> = ({
     })}`;
   };
 
-  const getUnitPrice = (product: any, unitType: string) => {
+  const getUnitPrice = (product: CartItem["product"], unitType: string) => {
     switch (unitType) {
       case "piece":
         return product.piece_selling_price || 0;
@@ -53,7 +58,7 @@ export const Cart: React.FC<CartProps> = ({
   };
 
   const handleUnitTypeChange = (productId: number, unitType: string) => {
-    const item = items.find(item => item.product.id === productId);
+    const item = items.find((item) => item.product.id === productId);
     if (item) {
       const newPrice = getUnitPrice(item.product, unitType);
       onUpdateUnitType(productId, unitType);
@@ -76,7 +81,9 @@ export const Cart: React.FC<CartProps> = ({
           <div className="mb-4 p-3 bg-blue-50 rounded-lg border">
             <div className="flex items-center gap-2 mb-2">
               <User className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">Customer</span>
+              <span className="text-sm font-medium text-blue-800">
+                Customer
+              </span>
             </div>
             <p className="font-semibold text-sm">{selectedCustomer.name}</p>
             <p className="text-xs text-gray-600">{selectedCustomer.phone}</p>
@@ -89,7 +96,9 @@ export const Cart: React.FC<CartProps> = ({
             <div className="text-gray-400 text-center py-8">
               <ShoppingCart className="h-12 w-12 mx-auto mb-2 opacity-50" />
               <p>Cart is empty</p>
-              <p className="text-xs">Search and select products to add to cart</p>
+              <p className="text-xs">
+                Search and select products to add to cart
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -100,8 +109,12 @@ export const Cart: React.FC<CartProps> = ({
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <div className="font-semibold text-sm">{item.product.name}</div>
-                      <div className="text-xs text-gray-500">{item.product.sku}</div>
+                      <div className="font-semibold text-sm">
+                        {item.product.name}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {item.product.sku}
+                      </div>
                     </div>
                     {onRemoveItem && (
                       <Button
@@ -117,12 +130,22 @@ export const Cart: React.FC<CartProps> = ({
 
                   <div className="grid grid-cols-2 gap-2 mb-2">
                     <div>
-                      <label className="text-xs text-gray-600">Unit Type</label>
+                      <label
+                        htmlFor={`unit-type-${item.product.id}`}
+                        className="text-xs text-gray-600"
+                      >
+                        Unit Type
+                      </label>
                       <Select
                         value={item.unit_type}
-                        onValueChange={(value) => handleUnitTypeChange(item.product.id, value)}
+                        onValueChange={(value) =>
+                          handleUnitTypeChange(item.product.id, value)
+                        }
                       >
-                        <SelectTrigger className="h-8 text-xs">
+                        <SelectTrigger
+                          id={`unit-type-${item.product.id}`}
+                          className="h-8 text-xs"
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -133,8 +156,14 @@ export const Cart: React.FC<CartProps> = ({
                       </Select>
                     </div>
                     <div>
-                      <label className="text-xs text-gray-600">Quantity</label>
+                      <label
+                        htmlFor={`quantity-${item.product.id}`}
+                        className="text-xs text-gray-600"
+                      >
+                        Quantity
+                      </label>
                       <input
+                        id={`quantity-${item.product.id}`}
                         type="number"
                         min={1}
                         value={item.quantity}
@@ -180,7 +209,9 @@ export const Cart: React.FC<CartProps> = ({
             onClick={onCheckout}
             disabled={items.length === 0 || !selectedCustomer}
           >
-            {!selectedCustomer ? "Select Customer First" : "Proceed to Checkout"}
+            {!selectedCustomer
+              ? "Select Customer First"
+              : "Proceed to Checkout"}
           </Button>
 
           {!selectedCustomer && (
