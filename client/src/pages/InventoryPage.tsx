@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Product, UnitType } from "@/types/product";
+import { Product } from "@/types/product";
 import Suppliers from "@/components/inventory/Suppliers";
 import { PurchaseOrders } from "@/components/inventory/PurchaseOrders";
 import { useSelector, useDispatch } from "react-redux";
@@ -50,13 +50,9 @@ const InventoryPage: React.FC = () => {
   const { toast } = useToast();
 
   const [uploading, setUploading] = React.useState(false);
-  const [uploadProgress, setUploadProgress] = React.useState<number | null>(null);
-
-  const defaultUnitTypes: UnitType[] = [
-    { unit_type: "dozen", buying_price: "", selling_price: "", manual: false },
-    { unit_type: "pack", buying_price: "", selling_price: "", manual: false },
-    { unit_type: "piece", buying_price: "", selling_price: "", manual: false },
-  ];
+  const [uploadProgress, setUploadProgress] = React.useState<number | null>(
+    null,
+  );
 
   const initialFormData = {
     name: "",
@@ -87,10 +83,10 @@ const InventoryPage: React.FC = () => {
         // Use FormData if uploading an image
         const formDataToSend = new FormData();
         Object.entries(formData).forEach(([key, value]) => {
-          if (typeof value === 'number' || typeof value === 'boolean') {
+          if (typeof value === "number" || typeof value === "boolean") {
             formDataToSend.append(key, value.toString());
           } else {
-            formDataToSend.append(key, value ?? '');
+            formDataToSend.append(key, value ?? "");
           }
         });
         formDataToSend.append("image", localImageFile);
@@ -102,9 +98,21 @@ const InventoryPage: React.FC = () => {
       } else {
         // Only include the correct fields for the backend
         const allowedFields = [
-          'name', 'description', 'sku', 'barcode', 'category_id',
-          'piece_buying_price', 'piece_selling_price', 'pack_buying_price', 'pack_selling_price',
-          'dozen_buying_price', 'dozen_selling_price', 'quantity', 'min_quantity', 'image_url', 'is_active'
+          "name",
+          "description",
+          "sku",
+          "barcode",
+          "category_id",
+          "piece_buying_price",
+          "piece_selling_price",
+          "pack_buying_price",
+          "pack_selling_price",
+          "dozen_buying_price",
+          "dozen_selling_price",
+          "quantity",
+          "min_quantity",
+          "image_url",
+          "is_active",
         ];
         const payload = {};
         allowedFields.forEach((field) => {
@@ -178,7 +186,7 @@ const InventoryPage: React.FC = () => {
           if (errorData && errorData.message) {
             errorMsg = errorData.message;
           }
-        } catch { }
+        } catch {}
         throw new Error(errorMsg);
       }
       toast({
@@ -266,7 +274,10 @@ const InventoryPage: React.FC = () => {
             <div className="w-48 h-2 bg-gray-200 rounded">
               <div
                 className="h-2 bg-blue-500 rounded"
-                style={{ width: uploadProgress !== null ? `${uploadProgress}%` : "100%" }}
+                style={{
+                  width:
+                    uploadProgress !== null ? `${uploadProgress}%` : "100%",
+                }}
               />
             </div>
           </div>
