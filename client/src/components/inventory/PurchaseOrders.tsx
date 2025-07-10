@@ -39,6 +39,10 @@ import type {
   PurchaseOrderFormData,
   PurchaseOrderItem,
 } from "@/types/purchase-order"; // Import PurchaseOrderItem
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
+import { api } from "@/lib/api";
+import type { Product } from "@/types/product";
+import { PurchaseOrderForm } from "./PurchaseOrderForm";
 
 export function PurchaseOrders() {
   const dispatch = useDispatch<AppDispatch>();
@@ -48,8 +52,8 @@ export function PurchaseOrders() {
   const purchaseOrdersStatus = useSelector(
     (state: RootState) => state.purchaseOrders.status,
   );
-  const { suppliers = [] } = useSuppliers();
-  const { products = [] } = useInventory();
+  const { suppliers, isLoading: suppliersLoading } = useSuppliers();
+  const { products, isLoading: productsLoading } = useInventory();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [formData, setFormData] = useState<PurchaseOrderFormData>({
@@ -135,20 +139,20 @@ export function PurchaseOrders() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Prevent submission if any item has invalid product_id
+    const invalidItem = formData.items.find(
+      (item) => !item.product_id || item.product_id === 0
+    );
+    if (invalidItem) {
+      toast({
+        title: "Error",
+        description: "Please select a valid product for each item before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/purchase-orders`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-          credentials: "include",
-        },
-      );
-
-      if (!response.ok) throw new Error("Failed to create purchase order");
+      await api.post(API_ENDPOINTS.purchaseOrders.create, formData);
 
       toast({
         title: "Success",
@@ -178,19 +182,9 @@ export function PurchaseOrders() {
     newStatus: PurchaseOrder["status"],
   ) => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/purchase-orders/${orderId}/status`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ status: newStatus }),
-          credentials: "include",
-        },
-      );
-
-      if (!response.ok) throw new Error("Failed to update status");
+      await api.put(`${API_ENDPOINTS.purchaseOrders.update(orderId)}/status`, {
+        status: newStatus,
+      });
 
       toast({
         title: "Success",
@@ -223,131 +217,8 @@ export function PurchaseOrders() {
     }
   };
 
-  const PurchaseOrderForm = () => (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="supplier_id">Supplier</Label>
-        <Select
-          value={formData.supplier_id}
-          onValueChange={(value) =>
-            setFormData((prev) => ({ ...prev, supplier_id: value }))
-          }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select a supplier" />
-          </SelectTrigger>
-          <SelectContent>
-            {suppliers.map((supplier) => (
-              <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                {supplier.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label htmlFor="expected_delivery_date">Expected Delivery Date</Label>
-        <Input
-          id="expected_delivery_date"
-          name="expected_delivery_date"
-          type="date"
-          value={formData.expected_delivery_date}
-          onChange={handleInputChange}
-          required
-        />
-      </div>
-
-      <div>
-        <Label>Items</Label>
-        {formData.items.map(
-          (
-            item: PurchaseOrderItem,
-            index: number, // Explicitly type map parameters
-          ) => (
-            <div key={index} className="grid grid-cols-3 gap-2 mt-2">
-              <ProductSearch
-                products={products}
-                onSelect={(product) => handleProductSelect(index, product)}
-                searchProducts={async () => {
-                  /* Implement search logic */
-                }}
-              />
-              <Input
-                type="number"
-                min="1"
-                value={item.quantity}
-                onChange={(e) =>
-                  handleItemChange(index, "quantity", parseInt(e.target.value))
-                }
-                placeholder="Quantity"
-              />
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={item.buying_price}
-                  onChange={(e) =>
-                    handleItemChange(
-                      index,
-                      "buying_price",
-                      parseFloat(e.target.value),
-                    )
-                  }
-                  placeholder="Buying Price"
-                />
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={item.selling_price}
-                  onChange={(e) =>
-                    handleItemChange(
-                      index,
-                      "selling_price",
-                      parseFloat(e.target.value),
-                    )
-                  }
-                  placeholder="Selling Price"
-                />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => removeItem(index)}
-                >
-                  Remove
-                </Button>
-              </div>
-            </div>
-          ),
-        )}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={addItem}
-          className="mt-2"
-        >
-          Add Item
-        </Button>
-      </div>
-
-      <div>
-        <Label htmlFor="notes">Notes</Label>
-        <Input
-          id="notes"
-          name="notes"
-          value={formData.notes}
-          onChange={handleInputChange}
-        />
-      </div>
-
-      <DialogFooter>
-        <Button type="submit">Create Purchase Order</Button>
-      </DialogFooter>
-    </form>
+  const submitDisabled = formData.items.some(
+    (item) => !item.product_id || item.product_id === 0,
   );
 
   return (
@@ -359,78 +230,95 @@ export function PurchaseOrders() {
         </Button>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Order Number</TableHead>
-              <TableHead>Supplier</TableHead>
-              <TableHead>Order Date</TableHead>
-              <TableHead>Expected Delivery</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Total Amount</TableHead>
-              <TableHead>Notes</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {purchaseOrders.map(
-              (
-                order: PurchaseOrder & { supplier?: { name: string } }, // Explicitly type order and include optional supplier with name
-              ) => (
-                <TableRow key={order.id}>
-                  <TableCell>{order.id}</TableCell>{" "}
-                  {/* Assuming id is used for order number */}
-                  <TableCell>
-                    {order.supplier?.name || "Unknown Supplier"}
-                  </TableCell>
-                  <TableCell>
-                    {order.created_at
-                      ? format(new Date(order.created_at), "PPP")
-                      : "N/A"}
-                  </TableCell>
-                  <TableCell>
-                    {order.expected_delivery_date
-                      ? format(new Date(order.expected_delivery_date), "PPP")
-                      : "Not set"}{" "}
-                    {/* Check for null before formatting */}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusBadgeVariant(order.status)}>
-                      {order.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    KSh {order.total_amount.toLocaleString()}
-                  </TableCell>
-                  <TableCell>{order.notes || "No notes"}</TableCell>
-                  <TableCell>
-                    <Select
-                      value={order.status}
-                      onValueChange={(value) =>
-                        handleStatusChange(
-                          order.id,
-                          value as PurchaseOrder["status"],
-                        )
-                      }
-                    >
-                      <SelectTrigger className="w-[130px]">
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="approved">Approved</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                      </SelectContent>
-                    </Select>
+      {/* Error handling for non-array purchaseOrders */}
+      {(!Array.isArray(purchaseOrders) || purchaseOrders.length === 0) ? (
+        <div className="p-4 text-center text-muted-foreground">
+          {purchaseOrdersStatus === "loading"
+            ? "Loading purchase orders..."
+            : "No purchase orders found or failed to load."}
+        </div>
+      ) : (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Order Number</TableHead>
+                <TableHead>Supplier</TableHead>
+                <TableHead>Order Date</TableHead>
+                <TableHead>Expected Delivery</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Total Amount</TableHead>
+                <TableHead>Notes</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {purchaseOrders.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center text-muted-foreground">
+                    No purchase orders found or failed to load.
                   </TableCell>
                 </TableRow>
-              ),
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ) : (
+                purchaseOrders.map(
+                  (
+                    order: PurchaseOrder & { supplier?: { name: string } },
+                  ) => (
+                    <TableRow key={order.id}>
+                      <TableCell>{order.id}</TableCell>{" "}
+                      {/* Assuming id is used for order number */}
+                      <TableCell>
+                        {order.supplier?.name || "Unknown Supplier"}
+                      </TableCell>
+                      <TableCell>
+                        {order.created_at
+                          ? format(new Date(order.created_at), "PPP")
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        {order.expected_delivery_date
+                          ? format(new Date(order.expected_delivery_date), "PPP")
+                          : "Not set"}{" "}
+                        {/* Check for null before formatting */}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusBadgeVariant(order.status)}>
+                          {order.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        KSh {order.total_amount.toLocaleString()}
+                      </TableCell>
+                      <TableCell>{order.notes || "No notes"}</TableCell>
+                      <TableCell>
+                        <Select
+                          value={order.status}
+                          onValueChange={(value) =>
+                            handleStatusChange(
+                              order.id,
+                              value as PurchaseOrder["status"],
+                            )
+                          }
+                        >
+                          <SelectTrigger className="w-[130px]">
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="approved">Approved</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
+                            <SelectItem value="completed">Completed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                    </TableRow>
+                  ),
+                )
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -440,7 +328,22 @@ export function PurchaseOrders() {
               Fill in the purchase order details below.
             </DialogDescription>
           </DialogHeader>
-          <PurchaseOrderForm />
+          <PurchaseOrderForm
+            suppliers={Array.isArray(suppliers) ? suppliers : []}
+            suppliersLoading={suppliersLoading}
+            products={Array.isArray(products) ? products : []}
+            formData={formData}
+            onSupplierChange={(value) =>
+              setFormData((prev) => ({ ...prev, supplier_id: value }))
+            }
+            onInputChange={handleInputChange}
+            onProductSelect={handleProductSelect}
+            onItemChange={handleItemChange}
+            onRemoveItem={removeItem}
+            onAddItem={addItem}
+            onSubmit={handleSubmit}
+            submitDisabled={submitDisabled}
+          />
         </DialogContent>
       </Dialog>
 
