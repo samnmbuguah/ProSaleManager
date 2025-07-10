@@ -5,6 +5,7 @@ import SaleItem from "./SaleItem.js";
 import Product from "./Product.js";
 import Expense from "./Expense.js";
 import Supplier from "./Supplier.js";
+import ProductSupplier from "./ProductSupplier.js";
 import PurchaseOrder from "./PurchaseOrder.js";
 import PurchaseOrderItem from "./PurchaseOrderItem.js";
 import Category from './Category.js';
@@ -30,14 +31,14 @@ export function setupAssociations() {
   User.hasMany(Expense, { foreignKey: "user_id", as: "expenses" });
   Expense.belongsTo(User, { foreignKey: "user_id", as: "user" });
 
-  // Product and Supplier associations
+  // Product and Supplier associations through ProductSupplier
   Product.belongsToMany(Supplier, {
-    through: "product_suppliers",
+    through: ProductSupplier,
     foreignKey: "product_id",
     otherKey: "supplier_id",
   });
   Supplier.belongsToMany(Product, {
-    through: "product_suppliers",
+    through: ProductSupplier,
     foreignKey: "supplier_id",
     otherKey: "product_id",
   });
