@@ -1,11 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { Customer } from "@/types/customer";
 import { api } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
 
 export const fetchCustomers = createAsyncThunk(
   "customers/fetchCustomers",
   async () => {
-    const response = await api.get("/api/customers");
+    const response = await api.get(API_ENDPOINTS.customers.list);
     return response.data.data;
   },
 );
