@@ -3,12 +3,14 @@ import { seedCategories } from '../seed/categories.js';
 import { seedProducts } from '../seed/products.js';
 import { seedUsers } from '../seed/users.js';
 import { seedCustomers } from '../seed/customers.js';
+import { seedSuppliers } from '../seed/suppliers.js';
 import dotenv from 'dotenv';
 import { sequelize } from '../src/config/database.js';
 import User from '../src/models/User.js';
 import Product from '../src/models/Product.js';
 import Category from '../src/models/Category.js';
 import Customer from '../src/models/Customer.js';
+import Supplier from '../src/models/Supplier.js';
 import { setupAssociations } from '../src/models/associations.js';
 
 dotenv.config();
@@ -59,6 +61,10 @@ async function setupDatabase() {
     await seedCustomers();
     console.log('✅ Customers seeded');
 
+    // Seed suppliers
+    await seedSuppliers();
+    console.log('✅ Suppliers seeded');
+
     // Verify seeded data
     const customers = await Customer.findAll({
       attributes: ['id', 'name', 'email', 'phone', 'address', 'is_active']
@@ -67,6 +73,15 @@ async function setupDatabase() {
     customers.forEach(customer => {
       const customerData = customer.toJSON();
       console.log(`- ${customerData.name} (${customerData.email})`);
+    });
+
+    const suppliers = await Supplier.findAll({
+      attributes: ['id', 'name', 'email', 'phone', 'address', 'contact_person']
+    });
+    console.log('\n📊 Seeded Suppliers:', suppliers.length);
+    suppliers.forEach(supplier => {
+      const supplierData = supplier.toJSON();
+      console.log(`- ${supplierData.name} (${supplierData.email})`);
     });
 
     const products = await Product.findAll({
