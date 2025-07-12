@@ -28,13 +28,13 @@ interface ReceiptData {
   status: string;
   payment_status: string;
   createdAt: string;
-  customer?: {
+  Customer?: {
     id: number;
     name: string;
     email: string | null;
     phone: string | null;
   };
-  user?: {
+  User?: {
     id: number;
     name: string;
     email: string;
@@ -45,7 +45,7 @@ interface ReceiptData {
     unit_price: number;
     total: number;
     unit_type: string;
-    product: {
+    Product: {
       id: number;
       name: string;
       sku?: string;
@@ -138,7 +138,7 @@ export const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
             <div class="items">
               ${receiptData?.items?.map(item => `
                 <div class="item">
-                  <strong>${item.product?.name || 'Unknown Product'}</strong><br>
+                  <strong>${item.Product?.name || 'Unknown Product'}</strong><br>
                   ${item.quantity} ${item.unit_type} x ${formatCurrency(item.unit_price)} = ${formatCurrency(item.total)}
                 </div>
               `).join('') || 'No items found'}
@@ -218,19 +218,19 @@ export const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
                   <div>
                     <h3 className="font-semibold text-sm text-muted-foreground">CUSTOMER</h3>
                     <p className="font-medium">
-                      {receiptData.customer?.name || 'Walk-in Customer'}
+                      {receiptData.Customer?.name || 'Walk-in Customer'}
                     </p>
-                    {receiptData.customer?.phone && (
+                    {receiptData.Customer?.phone && (
                       <p className="text-sm text-muted-foreground">
-                        {receiptData.customer.phone}
+                        {receiptData.Customer.phone}
                       </p>
                     )}
                   </div>
                   <div>
                     <h3 className="font-semibold text-sm text-muted-foreground">SERVED BY</h3>
-                    <p className="font-medium">{receiptData.user?.name || 'Unknown User'}</p>
+                    <p className="font-medium">{receiptData.User?.name || 'Unknown User'}</p>
                     <p className="text-sm text-muted-foreground">
-                      {receiptData.user?.email || 'No email'}
+                      {receiptData.User?.email || 'No email'}
                     </p>
                   </div>
                 </div>
@@ -245,7 +245,7 @@ export const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
                   {receiptData.items?.map((item) => (
                     <div key={item.id} className="flex justify-between items-start">
                       <div className="flex-1">
-                        <p className="font-medium">{item.product?.name || 'Unknown Product'}</p>
+                        <p className="font-medium">{item.Product?.name || 'Unknown Product'}</p>
                         <p className="text-sm text-muted-foreground">
                           {item.quantity} {item.unit_type} × {formatCurrency(item.unit_price)}
                         </p>
