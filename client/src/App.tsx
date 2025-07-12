@@ -13,6 +13,7 @@ import { SalesPage } from '@/pages/SalesPage'
 import CustomersPage from '@/pages/CustomersPage'
 import POSPage from '@/pages/PosPage'
 import ProfilePage from '@/pages/ProfilePage'
+import ReportsPage from '@/pages/ReportsPage'
 
 function ProtectedRoute ({
   component: Component,
@@ -67,6 +68,10 @@ function App () {
 
         <Route path="/customers">
           <ProtectedRoute component={CustomersPage} roles={['admin']} />
+        </Route>
+
+        <Route path="/reports">
+          <ProtectedRoute component={ReportsPage} roles={['admin']} />
         </Route>
 
         <Route path="/profile">

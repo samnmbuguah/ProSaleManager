@@ -73,5 +73,10 @@ export const API_ENDPOINTS = {
     create: `${API_BASE_URL}/expenses`,
     update: (id: number) => `${API_BASE_URL}/expenses/${id}`,
     delete: (id: number) => `${API_BASE_URL}/expenses/${id}`
+  },
+  reports: {
+    inventory: `${API_BASE_URL}/reports/inventory`,
+    productPerformance: `${API_BASE_URL}/reports/product-performance`,
+    salesSummary: `${API_BASE_URL}/reports/sales-summary`
   }
 } as const
