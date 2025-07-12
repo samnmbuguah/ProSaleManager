@@ -1,16 +1,16 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
+import React from 'react'
+import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, User, ShoppingCart } from "lucide-react";
-import { CartItem } from "../../types/pos";
-import type { Customer } from "@/types/customer";
+  SelectValue
+} from '@/components/ui/select'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Trash2, User, ShoppingCart } from 'lucide-react'
+import { CartItem } from '../../types/pos'
+import type { Customer } from '@/types/customer'
 
 interface CartProps {
   items: CartItem[];
@@ -35,36 +35,36 @@ export const Cart: React.FC<CartProps> = ({
   onRemoveItem,
   onCheckout,
   total,
-  selectedCustomer,
+  selectedCustomer
 }) => {
   const formatPrice = (price: string | number) => {
-    return `KSh ${Number(price).toLocaleString("en-KE", {
+    return `KSh ${Number(price).toLocaleString('en-KE', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
+      maximumFractionDigits: 2
+    })}`
+  }
 
-  const getUnitPrice = (product: CartItem["product"], unitType: string) => {
+  const getUnitPrice = (product: CartItem['product'], unitType: string) => {
     switch (unitType) {
-      case "piece":
-        return product.piece_selling_price || 0;
-      case "pack":
-        return product.pack_selling_price || 0;
-      case "dozen":
-        return product.dozen_selling_price || 0;
+      case 'piece':
+        return product.piece_selling_price || 0
+      case 'pack':
+        return product.pack_selling_price || 0
+      case 'dozen':
+        return product.dozen_selling_price || 0
       default:
-        return product.piece_selling_price || 0;
+        return product.piece_selling_price || 0
     }
-  };
+  }
 
   const handleUnitTypeChange = (productId: number, unitType: string) => {
-    const item = items.find((item) => item.product.id === productId);
+    const item = items.find((item) => item.product.id === productId)
     if (item) {
-      const newPrice = getUnitPrice(item.product, unitType);
-      onUpdateUnitType(productId, unitType);
-      onUpdateUnitPrice(productId, newPrice);
+      const newPrice = getUnitPrice(item.product, unitType)
+      onUpdateUnitType(productId, unitType)
+      onUpdateUnitPrice(productId, newPrice)
     }
-  };
+  }
 
   return (
     <Card className="h-full flex flex-col">
@@ -92,7 +92,8 @@ export const Cart: React.FC<CartProps> = ({
 
         {/* Cart Items */}
         <div className="flex-1 overflow-auto space-y-3">
-          {items.length === 0 ? (
+          {items.length === 0
+            ? (
             <div className="text-gray-400 text-center py-8">
               <ShoppingCart className="h-12 w-12 mx-auto mb-2 opacity-50" />
               <p>Cart is empty</p>
@@ -100,7 +101,8 @@ export const Cart: React.FC<CartProps> = ({
                 Search and select products to add to cart
               </p>
             </div>
-          ) : (
+              )
+            : (
             <div className="space-y-3">
               {items.map((item) => (
                 <div
@@ -171,7 +173,7 @@ export const Cart: React.FC<CartProps> = ({
                           onUpdateQuantity(
                             item.product.id,
                             item.unit_type,
-                            Number(e.target.value),
+                            Number(e.target.value)
                           )
                         }
                         className="w-full h-8 border rounded px-2 text-xs"
@@ -193,7 +195,7 @@ export const Cart: React.FC<CartProps> = ({
                 </div>
               ))}
             </div>
-          )}
+              )}
         </div>
 
         {/* Cart Summary */}
@@ -210,8 +212,8 @@ export const Cart: React.FC<CartProps> = ({
             disabled={items.length === 0 || !selectedCustomer}
           >
             {!selectedCustomer
-              ? "Select Customer First"
-              : "Proceed to Checkout"}
+              ? 'Select Customer First'
+              : 'Proceed to Checkout'}
           </Button>
 
           {!selectedCustomer && (
@@ -222,5 +224,5 @@ export const Cart: React.FC<CartProps> = ({
         </div>
       </CardContent>
     </Card>
-  );
-};
+  )
+}

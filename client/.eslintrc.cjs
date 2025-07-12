@@ -34,13 +34,11 @@ module.exports = {
     'eslint:recommended',
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
-    'plugin:@typescript-eslint/recommended',
-    'prettier'
+    'plugin:@typescript-eslint/recommended'
   ],
   plugins: [
     'react',
     '@typescript-eslint',
-    'prettier',
     'jsx-a11y'
   ],
   ignorePatterns: ['vite-env.d.ts', 'node_modules/', 'dist/'],
@@ -48,7 +46,6 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
     'react/no-unescaped-entities': 'off',
     'react/prop-types': 'off',
-    '@typescript-eslint/no-unused-vars': 'error',
-    'prettier/prettier': 'error'
+    '@typescript-eslint/no-unused-vars': 'error'
   },
 }; 

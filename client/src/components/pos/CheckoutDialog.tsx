@@ -1,22 +1,22 @@
-import React from "react";
+import React from 'react'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  DialogFooter
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue
+} from '@/components/ui/select'
 
 interface Customer {
   id: number;
@@ -30,8 +30,8 @@ interface CheckoutDialogProps {
   cartTotal: number;
   deliveryFee: number;
   setDeliveryFee: (fee: number) => void;
-  paymentMethod: "cash" | "mpesa";
-  setPaymentMethod: (method: "cash" | "mpesa") => void;
+  paymentMethod: 'cash' | 'mpesa';
+  setPaymentMethod: (method: 'cash' | 'mpesa') => void;
   customers: Customer[];
   selectedCustomer: number | null;
   setSelectedCustomer: (id: number | null) => void;
@@ -51,7 +51,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   selectedCustomer,
   setSelectedCustomer,
   onCheckout,
-  isLoadingCheckout,
+  isLoadingCheckout
 }) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent>
@@ -77,9 +77,9 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
         <div className="space-y-2">
           <Label>Customer (Optional)</Label>
           <Select
-            value={selectedCustomer ? selectedCustomer.toString() : "walk_in"}
+            value={selectedCustomer ? selectedCustomer.toString() : 'walk_in'}
             onValueChange={(value) =>
-              setSelectedCustomer(value !== "walk_in" ? parseInt(value) : null)
+              setSelectedCustomer(value !== 'walk_in' ? parseInt(value) : null)
             }
           >
             <SelectTrigger>
@@ -118,9 +118,9 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
           Cancel
         </Button>
         <Button onClick={onCheckout} disabled={isLoadingCheckout}>
-          {isLoadingCheckout ? "Processing..." : "Complete Sale"}
+          {isLoadingCheckout ? 'Processing...' : 'Complete Sale'}
         </Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
-);
+)

@@ -1,3 +1,20 @@
+export interface SaleItem {
+  id: number;
+  sale_id: number;
+  product_id: number;
+  quantity: number;
+  unit_price: number;
+  total: number;
+  unit_type: string;
+  createdAt: string;
+  updatedAt: string;
+  product: {
+    id: number;
+    name: string;
+    sku?: string;
+  };
+}
+
 export interface Sale {
   id: number;
   customer_id: number | null;
@@ -27,23 +44,6 @@ export interface Sale {
     email: string;
   };
   items: SaleItem[];
-}
-
-export interface SaleItem {
-  id: number;
-  sale_id: number;
-  product_id: number;
-  quantity: number;
-  unit_price: number;
-  total: number;
-  unit_type: string;
-  createdAt: string;
-  updatedAt: string;
-  product: {
-    id: number;
-    name: string;
-    sku?: string;
-  };
 }
 
 export interface CreateSaleRequest {

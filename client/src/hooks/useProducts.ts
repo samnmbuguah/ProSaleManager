@@ -1,45 +1,26 @@
-import { useState, useCallback } from "react";
-import { Product } from "@/types";
-import { api } from "@/lib/api";
-import { API_ENDPOINTS } from "@/lib/api-endpoints";
+import { useState, useCallback } from 'react'
+import { Product } from '@/types'
+import { api } from '@/lib/api'
+import { API_ENDPOINTS } from '@/lib/api-endpoints'
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1500;
-
-async function fetchWithRetry(
-  url: string,
-  options: any = {},
-  retries = MAX_RETRIES,
-): Promise<unknown> {
-  try {
-    const response = await api.get(url);
-    return response.data;
-  } catch (error: any) {
-    if (retries > 0) {
-      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
-      return fetchWithRetry(url, options, retries - 1);
-    }
-    throw error;
-  }
-}
-
-export function useProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function useProducts () {
+  const [products, setProducts] = useState<Product[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchProducts = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+    setIsLoading(true)
+    setError(null)
     try {
-      const response = await api.get(API_ENDPOINTS.products.list);
-      setProducts(response.data.data);
-    } catch (err: any) {
-      setError(err.response?.data?.message || String(err));
+      const response = await api.get(API_ENDPOINTS.products.list)
+      setProducts(response.data.data)
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      setError(errorMessage)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, []);
+  }, [])
 
-  return { products, isLoading, error, fetchProducts, setProducts };
+  return { products, isLoading, error, fetchProducts, setProducts }
 }

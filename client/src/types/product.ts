@@ -1,38 +1,23 @@
-import { z } from "zod";
-import { PRODUCT_CATEGORIES } from "@/constants/categories";
+import { z } from 'zod'
 
-export const STOCK_UNITS = ["piece", "pack", "dozen"] as const;
+export const STOCK_UNITS = ['piece', 'pack', 'dozen'] as const
 
 export type StockUnitType = (typeof STOCK_UNITS)[number];
 
 // Define type for product unit strings
-export type ProductUnitString = "per_unit" | "per_kg" | "per_liter";
-
-const priceUnitSchema = z.object({
-  unit_type: z.string(),
-  price: z.number().min(0, "Price cannot be negative"),
-  is_default: z.boolean().optional(),
-});
-
-export interface ProductPriceUnit {
-  id: number;
-  product_id: number;
-  unit_type: string;
-  price: number;
-  is_default: boolean;
-}
+export type ProductUnitString = 'per_unit' | 'per_kg' | 'per_liter';
 
 export const productSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
   sku: z.string().optional(),
   barcode: z.string().optional(),
   category_id: z.number(),
-  quantity: z.number().min(0, "Quantity cannot be negative"),
-  min_quantity: z.number().min(0, "Minimum quantity cannot be negative"),
+  quantity: z.number().min(0, 'Quantity cannot be negative'),
+  min_quantity: z.number().min(0, 'Minimum quantity cannot be negative'),
   image_url: z.string().optional(),
-  is_active: z.boolean().default(true),
-});
+  is_active: z.boolean().default(true)
+})
 
 // Define ProductFormData explicitly to ensure consistent type for react-hook-form
 export type ProductFormData = {
@@ -78,7 +63,7 @@ export interface Product {
   };
 }
 
-export type ProductInsert = Omit<Product, "id" | "created_at" | "updated_at">;
+export type ProductInsert = Omit<Product, 'id' | 'created_at' | 'updated_at'>;
 export type ProductUpdate = Partial<ProductInsert>;
 
 export interface UnitType {

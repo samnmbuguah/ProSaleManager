@@ -1,27 +1,27 @@
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn } from 'react-hook-form'
 import {
   FormField,
   FormItem,
   FormLabel,
   FormControl,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+  FormMessage
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { PRODUCT_CATEGORIES } from "@/constants/categories";
-import { type ProductFormData } from "@/types/product";
+  SelectValue
+} from '@/components/ui/select'
+import { PRODUCT_CATEGORIES } from '@/constants/categories'
+import { type ProductFormData } from '@/types/product'
 
 interface BasicInfoSectionProps {
   form: UseFormReturn<ProductFormData>;
 }
 
-export function BasicInfoSection({ form }: BasicInfoSectionProps) {
+export function BasicInfoSection ({ form }: BasicInfoSectionProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <FormField
@@ -31,7 +31,7 @@ export function BasicInfoSection({ form }: BasicInfoSectionProps) {
           <FormItem>
             <FormLabel>Product Name</FormLabel>
             <FormControl>
-              <Input {...field} value={field.value || ""} />
+              <Input {...field} value={field.value || ''} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -45,7 +45,7 @@ export function BasicInfoSection({ form }: BasicInfoSectionProps) {
           <FormItem>
             <FormLabel>Product Code</FormLabel>
             <FormControl>
-              <Input {...field} value={field.value || ""} />
+              <Input {...field} value={field.value || ''} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -77,5 +77,5 @@ export function BasicInfoSection({ form }: BasicInfoSectionProps) {
         )}
       />
     </div>
-  );
+  )
 }

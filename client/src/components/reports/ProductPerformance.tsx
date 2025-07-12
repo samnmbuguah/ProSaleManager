@@ -1,22 +1,22 @@
-import { useState } from "react";
-import type { Product } from "@/types/schema";
+import { useState } from 'react'
+import type { Product } from '@/types/schema'
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+  TableRow
+} from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue
+} from '@/components/ui/select'
 
 interface ProductSales {
   productId: number;
@@ -33,24 +33,24 @@ interface ProductPerformanceProps {
   onSortChange: (sortBy: string) => void;
 }
 
-export default function ProductPerformance({
+export default function ProductPerformance ({
   products,
   sales,
   onDateRangeChange,
-  onSortChange,
+  onSortChange
 }: ProductPerformanceProps) {
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>('')
+  const [endDate, setEndDate] = useState<string>('')
 
   const handleDateRangeSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     if (startDate && endDate) {
-      onDateRangeChange(new Date(startDate), new Date(endDate));
+      onDateRangeChange(new Date(startDate), new Date(endDate))
     }
-  };
+  }
 
-  const totalRevenue = sales.reduce((sum, s) => sum + s.revenue, 0);
-  const totalProfit = sales.reduce((sum, s) => sum + s.profit, 0);
+  const totalRevenue = sales.reduce((sum, s) => sum + s.revenue, 0)
+  const totalProfit = sales.reduce((sum, s) => sum + s.profit, 0)
 
   return (
     <div className="space-y-6">
@@ -63,7 +63,7 @@ export default function ProductPerformance({
         </div>
         <div className="text-right">
           <p className="text-lg">
-            Total Revenue:{" "}
+            Total Revenue:{' '}
             <span className="font-bold">${totalRevenue.toFixed(2)}</span>
           </p>
           <p className="text-sm text-muted-foreground">
@@ -128,8 +128,8 @@ export default function ProductPerformance({
               quantity: 0,
               revenue: 0,
               profit: 0,
-              lastSold: null,
-            };
+              lastSold: null
+            }
             return (
               <TableRow key={product.id}>
                 <TableCell>{product.name}</TableCell>
@@ -144,13 +144,13 @@ export default function ProductPerformance({
                 <TableCell>
                   {sale.lastSold
                     ? new Date(sale.lastSold).toLocaleDateString()
-                    : "Never"}
+                    : 'Never'}
                 </TableCell>
               </TableRow>
-            );
+            )
           })}
         </TableBody>
       </Table>
     </div>
-  );
+  )
 }

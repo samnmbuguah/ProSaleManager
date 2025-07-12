@@ -1,5 +1,5 @@
-import React from "react";
-import type { Customer } from "@/types/customer";
+import React from 'react'
+import type { Customer } from '@/types/customer'
 
 interface CustomerCardProps {
   customer: Customer;
@@ -19,7 +19,7 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer }) => {
         <p className="text-sm text-gray-600">Address: {customer.address}</p>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default CustomerCard;
+export default CustomerCard

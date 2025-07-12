@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import type { Product, PriceUnit } from "@/types/product";
-import { API_ENDPOINTS } from "@/lib/api-endpoints";
-import api from "@/lib/api";
+import { useState, useEffect } from 'react'
+import type { Product, PriceUnit } from '@/types/product'
+import { API_ENDPOINTS } from '@/lib/api-endpoints'
+import api from '@/lib/api'
 
 interface ProductWithPriceUnits extends Product {
   price_units: PriceUnit[];
@@ -59,72 +59,72 @@ interface SaleData {
   customer_id?: number | null;
 }
 
-export function usePos() {
-  const [products, setProducts] = useState<ProductWithPriceUnits[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function usePos () {
+  const [products, setProducts] = useState<ProductWithPriceUnits[]>([])
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchAllProducts();
-  }, []);
+    fetchAllProducts()
+  }, [])
 
   const fetchAllProducts = async () => {
     try {
-      const response = await api.get(API_ENDPOINTS.products.list);
-      setProducts(response.data);
-      setError(null);
+      const response = await api.get(API_ENDPOINTS.products.list)
+      setProducts(response.data)
+      setError(null)
     } catch (error) {
-      setProducts([]);
+      setProducts([])
       setError(
-        error instanceof Error ? error.message : "Failed to fetch products",
-      );
+        error instanceof Error ? error.message : 'Failed to fetch products'
+      )
     }
-  };
+  }
 
   const searchProducts = async (query: string) => {
     if (!query.trim()) {
-      fetchAllProducts();
-      return;
+      fetchAllProducts()
+      return
     }
 
     try {
-      const response = await api.get(API_ENDPOINTS.products.search(query));
-      setProducts(response.data);
-      setError(null);
+      const response = await api.get(API_ENDPOINTS.products.search(query))
+      setProducts(response.data)
+      setError(null)
     } catch (error) {
-      setProducts([]);
+      setProducts([])
       setError(
-        error instanceof Error ? error.message : "Failed to search products",
-      );
+        error instanceof Error ? error.message : 'Failed to search products'
+      )
     }
-  };
+  }
 
   const createSale = async (saleData: SaleData) => {
-    setIsProcessing(true);
+    setIsProcessing(true)
     try {
-      console.log("Creating sale with data:", saleData);
+      console.log('Creating sale with data:', saleData)
       const response = await api.post(API_ENDPOINTS.sales.create, {
         ...saleData,
-        customer_id: saleData.customer_id || null,
-      });
-      setError(null);
-      return response.data;
+        customer_id: saleData.customer_id || null
+      })
+      setError(null)
+      return response.data
     } catch (error) {
-      console.error("Sale creation error:", error);
+      console.error('Sale creation error:', error)
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to create sale";
-      setError(errorMessage);
-      throw new Error(errorMessage);
+        error instanceof Error ? error.message : 'Failed to create sale'
+      setError(errorMessage)
+      throw new Error(errorMessage)
     } finally {
-      setIsProcessing(false);
+      setIsProcessing(false)
     }
-  };
+  }
 
   return {
     products,
     searchProducts,
     createSale,
     isProcessing,
-    error,
-  };
+    error
+  }
 }

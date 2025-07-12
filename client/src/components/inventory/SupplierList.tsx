@@ -1,5 +1,5 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
+import React from 'react'
+import { Button } from '@/components/ui/button'
 
 interface Supplier {
   id: number;
@@ -8,7 +8,7 @@ interface Supplier {
   phone: string;
   address: string;
   contact_person?: string;
-  status: "active" | "inactive";
+  status: 'active' | 'inactive';
 }
 
 interface SupplierListProps {
@@ -20,7 +20,7 @@ interface SupplierListProps {
 const SupplierList: React.FC<SupplierListProps> = ({
   suppliers,
   onEdit,
-  onDelete,
+  onDelete
 }) => (
   <div className="rounded-md border">
     <table className="min-w-full divide-y divide-gray-200">
@@ -38,7 +38,7 @@ const SupplierList: React.FC<SupplierListProps> = ({
         {suppliers.map((supplier) => (
           <tr key={supplier.id}>
             <td>{supplier.name}</td>
-            <td>{supplier.contact_person || "-"}</td>
+            <td>{supplier.contact_person || '-'}</td>
             <td>{supplier.email}</td>
             <td>{supplier.phone}</td>
             <td>{supplier.address}</td>
@@ -63,6 +63,6 @@ const SupplierList: React.FC<SupplierListProps> = ({
       </tbody>
     </table>
   </div>
-);
+)
 
-export default SupplierList;
+export default SupplierList

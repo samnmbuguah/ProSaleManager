@@ -1,94 +1,94 @@
-import { useState } from "react";
-import { ReceiptSettings } from "@/components/pos/ReceiptSettings";
-import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { useState } from 'react'
+import { ReceiptSettings } from '@/components/pos/ReceiptSettings'
+import { useQuery } from '@tanstack/react-query'
+import { format } from 'date-fns'
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  TableRow
+} from '@/components/ui/table'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Receipt, Loader2 } from "lucide-react";
+  DialogTrigger
+} from '@/components/ui/dialog'
+import { Receipt, Loader2 } from 'lucide-react'
 import {
   Pagination,
   PaginationContent,
   PaginationItem,
-  PaginationLink,
-} from "@/components/ui/pagination";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Sale, SaleItem } from "@/types/sale";
+  PaginationLink
+} from '@/components/ui/pagination'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Sale, SaleItem } from '@/types/sale'
 
-export function SalesPage() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
-  const pageSize = 10;
+export function SalesPage () {
+  const [currentPage, setCurrentPage] = useState(1)
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
+  const pageSize = 10
 
   const { data: salesData, isLoading } = useQuery<{
     sales: Sale[];
     total: number;
   }>({
-    queryKey: ["sales", currentPage],
+    queryKey: ['sales', currentPage],
     queryFn: async () => {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/sales?page=${currentPage}&pageSize=${pageSize}`,
-        { credentials: "include" },
-      );
+        { credentials: 'include' }
+      )
       if (!response.ok) {
-        throw new Error("Failed to fetch sales");
+        throw new Error('Failed to fetch sales')
       }
-      return response.json();
-    },
-  });
+      return response.json()
+    }
+  })
 
   const { isLoading: isLoadingSaleItems } = useQuery<SaleItem[]>({
-    queryKey: ["sale-items", selectedSale?.id],
+    queryKey: ['sale-items', selectedSale?.id],
     queryFn: async () => {
-      if (!selectedSale) return [];
+      if (!selectedSale) return []
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/sales/${selectedSale.id}/items`,
-        { credentials: "include" },
-      );
+        { credentials: 'include' }
+      )
       if (!response.ok) {
-        throw new Error("Failed to fetch sale items");
+        throw new Error('Failed to fetch sale items')
       }
-      return response.json();
+      return response.json()
     },
-    enabled: !!selectedSale,
-  });
+    enabled: !!selectedSale
+  })
 
-  const totalPages = salesData ? Math.ceil(salesData.total / pageSize) : 1;
+  const totalPages = salesData ? Math.ceil(salesData.total / pageSize) : 1
 
   const formatCurrency = (amount: string | number) => {
-    return `KSh ${Number(amount).toLocaleString("en-KE", {
+    return `KSh ${Number(amount).toLocaleString('en-KE', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
+      maximumFractionDigits: 2
+    })}`
+  }
 
   const getPaymentStatusColor = (status: string | undefined) => {
-    if (!status) return "bg-gray-500";
+    if (!status) return 'bg-gray-500'
 
     switch (status.toLowerCase()) {
-      case "paid":
-        return "bg-green-500";
-      case "pending":
-        return "bg-yellow-500";
-      case "failed":
-        return "bg-red-500";
+      case 'paid':
+        return 'bg-green-500'
+      case 'pending':
+        return 'bg-yellow-500'
+      case 'failed':
+        return 'bg-red-500'
       default:
-        return "bg-gray-500";
+        return 'bg-gray-500'
     }
-  };
+  }
 
   return (
     <div className="container mx-auto p-4 mt-16">
@@ -110,11 +110,13 @@ export function SalesPage() {
         </Dialog>
       </div>
 
-      {isLoading ? (
+      {isLoading
+        ? (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      ) : (
+          )
+        : (
         <>
           <div className="rounded-md border">
             <Table>
@@ -134,13 +136,13 @@ export function SalesPage() {
                 {salesData?.sales.map((sale) => (
                   <TableRow key={sale.id}>
                     <TableCell>
-                      {format(new Date(sale.createdAt), "PPp")}
+                      {format(new Date(sale.createdAt), 'PPp')}
                     </TableCell>
                     <TableCell>
-                      {sale.customer?.name || "Walk-in Customer"}
+                      {sale.customer?.name || 'Walk-in Customer'}
                     </TableCell>
                     <TableCell>
-                      {sale.user?.name || sale.user?.email || "Unknown User"}
+                      {sale.user?.name || sale.user?.email || 'Unknown User'}
                     </TableCell>
                     <TableCell className="capitalize">
                       {sale.payment_method}
@@ -151,11 +153,12 @@ export function SalesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {sale.receiptStatus ? (
+                      {sale.receiptStatus
+                        ? (
                         <div className="flex gap-2">
                           <Badge
                             variant={
-                              sale.receiptStatus.sms ? "default" : "outline"
+                              sale.receiptStatus.sms ? 'default' : 'outline'
                             }
                           >
                             SMS
@@ -163,18 +166,19 @@ export function SalesPage() {
                           <Badge
                             variant={
                               sale.receiptStatus.whatsapp
-                                ? "default"
-                                : "outline"
+                                ? 'default'
+                                : 'outline'
                             }
                           >
                             WhatsApp
                           </Badge>
                         </div>
-                      ) : (
+                          )
+                        : (
                         <span className="text-muted-foreground text-sm">
                           Not sent
                         </span>
-                      )}
+                          )}
                     </TableCell>
                     <TableCell className="text-right">
                       {formatCurrency(sale.total_amount)}
@@ -217,7 +221,7 @@ export function SalesPage() {
                       {page}
                     </PaginationLink>
                   </PaginationItem>
-                ),
+                )
               )}
               <PaginationItem>
                 <Button
@@ -234,7 +238,7 @@ export function SalesPage() {
             </PaginationContent>
           </Pagination>
         </>
-      )}
+          )}
 
       <Dialog
         open={!!selectedSale}
@@ -251,7 +255,7 @@ export function SalesPage() {
               <div className="flex flex-col md:grid md:grid-cols-3 gap-6 md:gap-4 border-b pb-6">
                 <div>
                   <h3 className="font-semibold mb-2">Customer Information</h3>
-                  <p>{selectedSale.customer?.name || "Walk-in Customer"}</p>
+                  <p>{selectedSale.customer?.name || 'Walk-in Customer'}</p>
                   {selectedSale.customer?.email && (
                     <p className="text-sm text-muted-foreground">
                       {selectedSale.customer.email}
@@ -269,7 +273,7 @@ export function SalesPage() {
                     Method: {selectedSale.payment_method}
                   </p>
                   <p>
-                    Status:{" "}
+                    Status:{' '}
                     <Badge
                       className={getPaymentStatusColor(selectedSale.status)}
                     >
@@ -286,7 +290,7 @@ export function SalesPage() {
                     <div className="mt-2 flex gap-2">
                       <Badge
                         variant={
-                          selectedSale.receiptStatus.sms ? "default" : "outline"
+                          selectedSale.receiptStatus.sms ? 'default' : 'outline'
                         }
                       >
                         SMS
@@ -294,8 +298,8 @@ export function SalesPage() {
                       <Badge
                         variant={
                           selectedSale.receiptStatus.whatsapp
-                            ? "default"
-                            : "outline"
+                            ? 'default'
+                            : 'outline'
                         }
                       >
                         WhatsApp
@@ -305,12 +309,12 @@ export function SalesPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">Sale Information</h3>
-                  <p>Date: {format(new Date(selectedSale.createdAt), "PPp")}</p>
+                  <p>Date: {format(new Date(selectedSale.createdAt), 'PPp')}</p>
                   <p>
-                    Cashier:{" "}
+                    Cashier:{' '}
                     {selectedSale.user?.name ||
                       selectedSale.user?.email ||
-                      "Unknown User"}
+                      'Unknown User'}
                   </p>
                   {selectedSale.status && <p>Status: {selectedSale.status}</p>}
                   {selectedSale.id && <p>Sale ID: {selectedSale.id}</p>}
@@ -320,11 +324,13 @@ export function SalesPage() {
               {/* Items Section */}
               <div>
                 <h3 className="font-semibold mb-2">Items</h3>
-                {isLoadingSaleItems ? (
+                {isLoadingSaleItems
+                  ? (
                   <div className="flex items-center justify-center py-4">
                     <Loader2 className="h-4 w-4 animate-spin" />
                   </div>
-                ) : (
+                    )
+                  : (
                   <div className="rounded-md border overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -357,12 +363,12 @@ export function SalesPage() {
                       </TableBody>
                     </Table>
                   </div>
-                )}
+                    )}
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }

@@ -1,10 +1,10 @@
 export type ExpenseCategory =
-  | "Food"
-  | "Transportation"
-  | "Housing"
-  | "Utilities"
-  | "Entertainment"
-  | "Other";
+  | 'Food'
+  | 'Transportation'
+  | 'Housing'
+  | 'Utilities'
+  | 'Entertainment'
+  | 'Other';
 
 export interface Expense {
   id: number;

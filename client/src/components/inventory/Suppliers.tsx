@@ -1,135 +1,134 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react'
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+  TableRow
+} from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
-import { useSelector, useDispatch } from "react-redux";
-import type { RootState, AppDispatch } from "@/store";
-import { fetchSuppliers, createSupplier, updateSupplier, deleteSupplier } from "@/store/suppliersSlice";
-import type { Supplier, SupplierFormData } from "@/types/supplier";
-import Swal from "sweetalert2";
+  DialogDescription
+} from '@/components/ui/dialog'
+import { useToast } from '@/components/ui/use-toast'
+import { useSelector, useDispatch } from 'react-redux'
+import type { RootState, AppDispatch } from '@/store'
+import { fetchSuppliers, createSupplier, updateSupplier, deleteSupplier } from '@/store/suppliersSlice'
+import type { Supplier, SupplierFormData } from '@/types/supplier'
+import Swal from 'sweetalert2'
 
 const Suppliers = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const suppliers = useSelector((state: RootState) => state.suppliers.items);
+  const dispatch = useDispatch<AppDispatch>()
+  const suppliers = useSelector((state: RootState) => state.suppliers.items)
   const suppliersStatus = useSelector(
-    (state: RootState) => state.suppliers.status,
-  );
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    (state: RootState) => state.suppliers.status
+  )
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
-    null,
-  );
+    null
+  )
   const [formData, setFormData] = useState<SupplierFormData>({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    contact_person: "",
-  });
-  const { toast } = useToast();
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    contact_person: ''
+  })
+  const { toast } = useToast()
 
   useEffect(() => {
-    if (suppliersStatus === "idle") {
-      dispatch(fetchSuppliers());
+    if (suppliersStatus === 'idle') {
+      dispatch(fetchSuppliers())
     }
-  }, [dispatch, suppliersStatus]);
+  }, [dispatch, suppliersStatus])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
-    }));
-  };
+      [name]: value
+    }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     try {
       if (selectedSupplier) {
-        await dispatch(updateSupplier({ id: selectedSupplier.id, data: formData })).unwrap();
+        await dispatch(updateSupplier({ id: selectedSupplier.id, data: formData })).unwrap()
         await Swal.fire({
-          icon: "success",
-          title: "Success",
-          text: "Supplier updated successfully",
-        });
+          icon: 'success',
+          title: 'Success',
+          text: 'Supplier updated successfully'
+        })
       } else {
-        await dispatch(createSupplier(formData)).unwrap();
+        await dispatch(createSupplier(formData)).unwrap()
         await Swal.fire({
-          icon: "success",
-          title: "Success",
-          text: "Supplier created successfully",
-        });
+          icon: 'success',
+          title: 'Success',
+          text: 'Supplier created successfully'
+        })
       }
 
       setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        address: "",
-        contact_person: "",
-      });
-      setIsAddDialogOpen(false);
-      setIsEditDialogOpen(false);
-      setSelectedSupplier(null);
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        contact_person: ''
+      })
+      setIsAddDialogOpen(false)
+      setIsEditDialogOpen(false)
+      setSelectedSupplier(null)
     } catch (error) {
-      console.error("Error:", error);
+      console.error('Error:', error)
       toast({
-        title: "Error",
-        description: `Failed to ${selectedSupplier ? "update" : "create"} supplier`,
-        variant: "destructive",
-      });
+        title: 'Error',
+        description: `Failed to ${selectedSupplier ? 'update' : 'create'} supplier`,
+        variant: 'destructive'
+      })
     }
-  };
+  }
 
   const handleEdit = (supplier: Supplier) => {
-    setSelectedSupplier(supplier);
+    setSelectedSupplier(supplier)
     setFormData({
       name: supplier.name,
       email: supplier.email,
       phone: supplier.phone,
       address: supplier.address,
-      contact_person: supplier.contact_person || "",
-    });
-    setIsEditDialogOpen(true);
-  };
+      contact_person: supplier.contact_person || ''
+    })
+    setIsEditDialogOpen(true)
+  }
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this supplier?"))
-      return;
+    if (!window.confirm('Are you sure you want to delete this supplier?')) { return }
 
     try {
-      await dispatch(deleteSupplier(id)).unwrap();
+      await dispatch(deleteSupplier(id)).unwrap()
       await Swal.fire({
-        icon: "success",
-        title: "Success",
-        text: "Supplier deleted successfully",
-      });
+        icon: 'success',
+        title: 'Success',
+        text: 'Supplier deleted successfully'
+      })
     } catch (error) {
-      console.error("Error:", error);
+      console.error('Error:', error)
       toast({
-        title: "Error",
-        description: "Failed to delete supplier",
-        variant: "destructive",
-      });
+        title: 'Error',
+        description: 'Failed to delete supplier',
+        variant: 'destructive'
+      })
     }
-  };
+  }
 
   const SupplierForm = () => (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -190,11 +189,11 @@ const Suppliers = () => {
 
       <DialogFooter>
         <Button type="submit">
-          {selectedSupplier ? "Update Supplier" : "Add Supplier"}
+          {selectedSupplier ? 'Update Supplier' : 'Add Supplier'}
         </Button>
       </DialogFooter>
     </form>
-  );
+  )
 
   return (
     <div className="space-y-4">
@@ -204,29 +203,35 @@ const Suppliers = () => {
       </div>
 
       <div className="rounded-md border">
-        {suppliersStatus === "loading" ? (
+        {suppliersStatus === 'loading'
+          ? (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
             <p className="mt-2 text-sm text-gray-600">Loading suppliers...</p>
           </div>
-        ) : suppliersStatus === "failed" ? (
+            )
+          : suppliersStatus === 'failed'
+            ? (
           <div className="p-8 text-center">
             <p className="text-red-600">Failed to load suppliers</p>
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => dispatch(fetchSuppliers())}
               className="mt-2"
             >
               Retry
             </Button>
           </div>
-        ) : suppliers.length === 0 ? (
+              )
+            : suppliers.length === 0
+              ? (
           <div className="p-8 text-center">
             <p className="text-gray-600">No suppliers found</p>
             <p className="text-sm text-gray-500 mt-1">Add your first supplier to get started</p>
           </div>
-        ) : (
+                )
+              : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -242,7 +247,7 @@ const Suppliers = () => {
               {suppliers.map((supplier) => (
                 <TableRow key={supplier.id}>
                   <TableCell className="font-medium">{supplier.name}</TableCell>
-                  <TableCell>{supplier.contact_person || "-"}</TableCell>
+                  <TableCell>{supplier.contact_person || '-'}</TableCell>
                   <TableCell>{supplier.email}</TableCell>
                   <TableCell>{supplier.phone}</TableCell>
                   <TableCell>{supplier.address}</TableCell>
@@ -268,7 +273,7 @@ const Suppliers = () => {
               ))}
             </TableBody>
           </Table>
-        )}
+                )}
       </div>
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -295,7 +300,7 @@ const Suppliers = () => {
         </DialogContent>
       </Dialog>
     </div>
-  );
-};
+  )
+}
 
-export default Suppliers;
+export default Suppliers

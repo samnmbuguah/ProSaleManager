@@ -1,5 +1,5 @@
-import React from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React from 'react'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface TabsNavProps {
   activeTab: string;
@@ -19,6 +19,6 @@ const TabsNav: React.FC<TabsNavProps> = ({ activeTab, setActiveTab }) => (
       <TabsTrigger value="purchase-orders">Purchase Orders</TabsTrigger>
     </TabsList>
   </Tabs>
-);
+)
 
-export default TabsNav;
+export default TabsNav

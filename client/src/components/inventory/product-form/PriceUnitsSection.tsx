@@ -1,24 +1,24 @@
-import { UseFormReturn, useFieldArray } from "react-hook-form";
+import { UseFormReturn, useFieldArray } from 'react-hook-form'
 import {
   FormField,
   FormItem,
   FormLabel,
   FormControl,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { type ProductFormData } from "@/types/product";
+  FormMessage
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { type ProductFormData } from '@/types/product'
 
 interface PriceUnitsSectionProps {
   form: UseFormReturn<ProductFormData>;
 }
 
-export function PriceUnitsSection({ form }: PriceUnitsSectionProps) {
+export function PriceUnitsSection ({ form }: PriceUnitsSectionProps) {
   const { fields } = useFieldArray({
     control: form.control,
-    name: "price_units",
-  });
+    name: 'price_units'
+  })
 
   return (
     <div className="col-span-2">
@@ -30,8 +30,8 @@ export function PriceUnitsSection({ form }: PriceUnitsSectionProps) {
         >
           <div className="col-span-2 flex justify-between items-center">
             <h4 className="font-medium mb-2">
-              {field.unit_type} ({field.quantity}{" "}
-              {field.quantity === 1 ? "piece" : "pieces"})
+              {field.unit_type} ({field.quantity}{' '}
+              {field.quantity === 1 ? 'piece' : 'pieces'})
             </h4>
             <FormField
               control={form.control}
@@ -78,5 +78,5 @@ export function PriceUnitsSection({ form }: PriceUnitsSectionProps) {
         </div>
       ))}
     </div>
-  );
+  )
 }

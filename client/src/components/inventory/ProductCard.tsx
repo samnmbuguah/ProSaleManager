@@ -1,14 +1,14 @@
-import React from "react";
-import { Product } from "@/types/product";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import React from 'react'
+import { Product } from '@/types/product'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 
 interface ProductCardProps {
   product: Product;
   onClick?: () => void;
 }
 
-export function ProductCard({ product, onClick }: ProductCardProps) {
+export function ProductCard ({ product, onClick }: ProductCardProps) {
   return (
     <Card
       className="cursor-pointer hover:shadow-md transition-shadow"
@@ -38,12 +38,12 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
             </p>
           </div>
           <div className="flex justify-end">
-            <Badge variant={product.is_active ? "default" : "destructive"}>
-              {product.is_active ? "Active" : "Inactive"}
+            <Badge variant={product.is_active ? 'default' : 'destructive'}>
+              {product.is_active ? 'Active' : 'Inactive'}
             </Badge>
           </div>
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

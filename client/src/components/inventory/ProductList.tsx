@@ -1,6 +1,6 @@
-import React from "react";
-import { Product } from "../../types/product";
-import { formatCurrency } from "../../utils/format";
+import React from 'react'
+import { Product } from '../../types/product'
+import { formatCurrency } from '../../utils/format'
 
 interface ProductListProps {
   products: Product[];
@@ -11,10 +11,10 @@ interface ProductListProps {
 const ProductList: React.FC<ProductListProps> = ({
   products,
   onEdit,
-  onDelete,
+  onDelete
 }) => {
   if (!products.length) {
-    return <div className="text-gray-500">No products available.</div>;
+    return <div className="text-gray-500">No products available.</div>
   }
   return (
     <div className="overflow-x-auto">
@@ -80,9 +80,9 @@ const ProductList: React.FC<ProductListProps> = ({
         </tbody>
       </table>
     </div>
-  );
-};
+  )
+}
 
-export default ProductList;
+export default ProductList
 
-export {};
+export {}

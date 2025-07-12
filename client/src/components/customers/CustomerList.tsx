@@ -1,6 +1,6 @@
-import React from "react";
-import { Customer } from "@/types/customer";
-import CustomerCard from "./CustomerCard";
+import React from 'react'
+import { Customer } from '@/types/customer'
+import CustomerCard from './CustomerCard'
 
 interface CustomerListProps {
   customers: Customer[];
@@ -13,7 +13,7 @@ const CustomerList: React.FC<CustomerListProps> = ({
   customers,
   onEdit,
   onDelete,
-  isSubmitting,
+  isSubmitting
 }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
     {customers.map((customer) => (
@@ -26,6 +26,6 @@ const CustomerList: React.FC<CustomerListProps> = ({
     ))}
     {isSubmitting && <div>Loading...</div>}
   </div>
-);
+)
 
-export default CustomerList;
+export default CustomerList
