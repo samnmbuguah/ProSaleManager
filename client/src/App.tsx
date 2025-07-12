@@ -3,17 +3,35 @@ import { Route, Switch } from 'wouter'
 import { Toaster } from '@/components/ui/toaster'
 import { useAuth } from '@/hooks/use-auth'
 import { RoleBasedRoute } from '@/components/auth/RoleBasedRoute'
+import MainNav from '@/components/layout/MainNav'
 
 // Import your pages
 import AuthPage from '@/pages/AuthPage'
-import DashboardPage from '@/pages/DashboardPage'
-import ProductsPage from '@/pages/ProductsPage'
+import InventoryPage from '@/pages/InventoryPage'
 import ExpensesPage from '@/pages/ExpensesPage'
 import { SalesPage } from '@/pages/SalesPage'
 import CustomersPage from '@/pages/CustomersPage'
-import SuppliersPage from '@/pages/SuppliersPage'
-import POSPage from '@/pages/POSPage'
+import POSPage from '@/pages/PosPage'
 import ProfilePage from '@/pages/ProfilePage'
+
+function ProtectedRoute ({
+  component: Component,
+  roles
+}: {
+  component: React.ComponentType
+  roles?: ('admin' | 'user')[]
+}) {
+  return (
+    <RoleBasedRoute allowedRoles={roles || ['admin', 'user']}>
+      <div className="min-h-screen bg-background flex flex-col">
+        <MainNav />
+        <main className="flex-1">
+          <Component />
+        </main>
+      </div>
+    </RoleBasedRoute>
+  )
+}
 
 function App () {
   const { checkSession } = useAuth()
@@ -28,51 +46,31 @@ function App () {
         <Route path="/auth" component={AuthPage} />
 
         <Route path="/">
-          <RoleBasedRoute allowedRoles={['admin', 'user']}>
-            <DashboardPage />
-          </RoleBasedRoute>
+          <ProtectedRoute component={POSPage} roles={['admin', 'user']} />
         </Route>
 
         <Route path="/pos">
-          <RoleBasedRoute allowedRoles={['admin', 'user']}>
-            <POSPage />
-          </RoleBasedRoute>
+          <ProtectedRoute component={POSPage} roles={['admin', 'user']} />
         </Route>
 
         <Route path="/inventory">
-          <RoleBasedRoute allowedRoles={['admin', 'user']}>
-            <ProductsPage />
-          </RoleBasedRoute>
+          <ProtectedRoute component={InventoryPage} roles={['admin', 'user']} />
         </Route>
 
         <Route path="/expenses">
-          <RoleBasedRoute allowedRoles={['admin', 'user']}>
-            <ExpensesPage />
-          </RoleBasedRoute>
+          <ProtectedRoute component={ExpensesPage} roles={['admin', 'user']} />
         </Route>
 
         <Route path="/sales">
-          <RoleBasedRoute allowedRoles={['admin']}>
-            <SalesPage />
-          </RoleBasedRoute>
+          <ProtectedRoute component={SalesPage} roles={['admin']} />
         </Route>
 
         <Route path="/customers">
-          <RoleBasedRoute allowedRoles={['admin']}>
-            <CustomersPage />
-          </RoleBasedRoute>
-        </Route>
-
-        <Route path="/suppliers">
-          <RoleBasedRoute allowedRoles={['admin']}>
-            <SuppliersPage />
-          </RoleBasedRoute>
+          <ProtectedRoute component={CustomersPage} roles={['admin']} />
         </Route>
 
         <Route path="/profile">
-          <RoleBasedRoute allowedRoles={['admin', 'user']}>
-            <ProfilePage />
-          </RoleBasedRoute>
+          <ProtectedRoute component={ProfilePage} roles={['admin', 'user']} />
         </Route>
       </Switch>
       <Toaster />
