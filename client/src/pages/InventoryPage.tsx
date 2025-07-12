@@ -22,6 +22,7 @@ import ProductFormDialog from '@/components/inventory/ProductFormDialog'
 import ProductSearchBar from '@/components/inventory/ProductSearchBar'
 import TabsNav from '@/components/inventory/TabsNav'
 import { ProductFormData } from '@/types/product'
+import { fetchPurchaseOrdersApi } from '@/lib/api'
 
 const InventoryPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>()
@@ -54,6 +55,18 @@ const InventoryPage: React.FC = () => {
   const [uploadProgress, setUploadProgress] = React.useState<number | null>(
     null
   )
+  const [purchaseOrders, setPurchaseOrders] = React.useState([])
+  const [purchaseOrdersLoading, setPurchaseOrdersLoading] = React.useState(false)
+
+  React.useEffect(() => {
+    if (activeTab === 'purchase-orders') {
+      setPurchaseOrdersLoading(true)
+      fetchPurchaseOrdersApi()
+        .then((data) => setPurchaseOrders(data))
+        .catch(() => toast({ title: 'Error', description: 'Failed to fetch purchase orders', variant: 'destructive' }))
+        .finally(() => setPurchaseOrdersLoading(false))
+    }
+  }, [activeTab])
 
   const initialFormData = {
     name: '',
@@ -286,7 +299,7 @@ const InventoryPage: React.FC = () => {
         </div>
       )}
       {activeTab === 'suppliers' && <Suppliers />}
-      {activeTab === 'purchase-orders' && <PurchaseOrders />}
+      {activeTab === 'purchase-orders' && <PurchaseOrders purchaseOrders={purchaseOrders} loading={purchaseOrdersLoading} />}
     </div>
   )
 }
