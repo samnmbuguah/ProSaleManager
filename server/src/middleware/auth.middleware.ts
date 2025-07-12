@@ -1,94 +1,66 @@
-import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-import env from "../config/env.js";
-import User from "../models/User.js";
-import rateLimit from 'express-rate-limit';
-import { ApiError } from '../utils/api-error.js';
-import { catchAsync } from '../utils/catch-async.js';
+import { Request, Response, NextFunction } from 'express'
+import jwt from 'jsonwebtoken'
 
+// Extend Express Request interface
 declare global {
   namespace Express {
     interface Request {
-      user?: User;
+      user?: {
+        id: number
+        email: string
+        role: string
+      }
     }
   }
 }
 
-// Rate limiting for auth endpoints
-export const authLimiter = rateLimit({
-  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 5, // 5 attempts
-  message: 'Too many login attempts, please try again later',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Rate limiting for general API endpoints
-export const apiLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 100, // 100 requests per minute
-  message: 'Too many requests, please try again later',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-export const protect = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  // Get token from cookie
-  const token = req.cookies.token;
+export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
+  const authHeader = req.headers['authorization']
+  const token = authHeader && authHeader.split(' ')[1]
 
   if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: 'Not authenticated',
-      error: 'No token provided',
-    });
+    return res.status(401).json({ message: 'Access token required' })
   }
 
-  try {
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as { id: number };
-
-    // Get user from token
-    const user = await User.findByPk(decoded.id);
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Not authenticated',
-        error: 'User not found',
-      });
+  const jwtSecret = process.env.JWT_SECRET || 'fallback-secret'
+  
+  jwt.verify(token, jwtSecret, (err: any, user: any) => {
+    if (err) {
+      return res.status(403).json({ message: 'Invalid or expired token' })
     }
+    req.user = user
+    next()
+  })
+}
 
-    // Check if user is active
-    if (!user.is_active) {
-      return res.status(401).json({
-        success: false,
-        message: 'Not authenticated',
-        error: 'User is inactive',
-      });
-    }
-
-    // Attach user to request
-    req.user = user;
-    next();
-  } catch (error) {
-    return res.status(401).json({
-      success: false,
-      message: 'Not authenticated',
-      error: error instanceof Error ? error.message : error,
-    });
-  }
-});
-
-export const restrictTo = (...roles: string[]) => {
+export const requireRole = (roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
-      throw new ApiError(401, 'Not authenticated');
+      return res.status(401).json({ message: 'Authentication required' })
     }
 
     if (!roles.includes(req.user.role)) {
-      throw new ApiError(403, 'Not authorized');
+      return res.status(403).json({ message: 'Insufficient permissions' })
     }
 
-    next();
-  };
-};
+    next()
+  }
+}
+
+export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+  const token = req.cookies.token || req.headers.authorization?.split(' ')[1]
+
+  if (!token) {
+    return res.status(401).json({ message: 'Authentication required' })
+  }
+
+  const jwtSecret = process.env.JWT_SECRET || 'fallback-secret'
+  
+  jwt.verify(token, jwtSecret, (err: any, decoded: any) => {
+    if (err) {
+      return res.status(401).json({ message: 'Invalid token' })
+    }
+    req.user = decoded
+    next()
+  })
+}

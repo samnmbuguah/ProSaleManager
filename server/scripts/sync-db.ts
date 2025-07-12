@@ -1,34 +1,17 @@
-import { sequelize } from '../src/config/database';
-import Product from '../src/models/Product';
-import Category from '../src/models/Category';
-import User from '../src/models/User';
-import Customer from '../src/models/Customer';
-import { seedProducts } from '../seed/products.js';
-import { seedUsers } from '../seed/users.js';
-import { seedCustomers } from '../seed/customers.js';
-import { setupAssociations } from '../src/models/associations';
+import { sequelize } from '../src/config/database.js'
 
-async function syncAndSeedDatabase() {
+const syncDatabase = async () => {
   try {
-    await sequelize.sync({ force: true });
-    console.log('Database synced successfully.');
-
-    // Set up associations
-    setupAssociations();
-
-    // Run seeds in sequence
-    console.log('Seeding products...');
-    await seedProducts();
-    console.log('Seeding users...');
-    await seedUsers();
-    console.log('Seeding customers...');
-    await seedCustomers();
-    console.log('Database seeding completed successfully!');
+    console.log('Starting database synchronization...')
+    
+    await sequelize.sync({ alter: true })
+    
+    console.log('Database synchronized successfully!')
+    process.exit(0)
   } catch (error) {
-    console.error('Error syncing or seeding database:', error);
-  } finally {
-    await sequelize.close();
+    console.error('Error synchronizing database:', error)
+    process.exit(1)
   }
 }
 
-syncAndSeedDatabase(); 
+syncDatabase() 

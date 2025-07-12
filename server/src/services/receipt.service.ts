@@ -3,7 +3,6 @@ import Sale from "../models/Sale.js";
 import Customer from "../models/Customer.js";
 import Product from "../models/Product.js";
 import SaleItem from "../models/SaleItem.js";
-import User from "../models/User.js";
 
 // Initialize Twilio client
 const twilioClient = twilio(

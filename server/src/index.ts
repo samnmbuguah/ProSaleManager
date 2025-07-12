@@ -1,5 +1,4 @@
 import "./config/env.js";
-import env from "./config/env.js";
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -7,10 +6,10 @@ import { sequelize } from './config/database.js';
 import routes from './routes/index.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { ApiError } from './utils/api-error.js';
-import { setupAssociations } from './models/associations.js';
 import path from "path";
+import app from './app.js'
 
-const app = express();
+const PORT = process.env.PORT || 5000;
 
 // CORS configuration
 app.use(cors({
@@ -40,27 +39,57 @@ app.use((req, res, next) => {
 // Error handling middleware - must be last
 app.use(errorHandler);
 
-// Database connection and server start
-const PORT = process.env.PORT || 5000;
-
-async function startServer() {
+// Test database connection
+async function testConnection() {
   try {
-    await sequelize.authenticate();
-    console.log('Database connection has been established successfully.');
-    
-    // Set up model associations before syncing
-    setupAssociations();
-    
-    await sequelize.sync();
-    console.log('All models synchronized successfully.');
-
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
+    await sequelize.authenticate()
+    console.log('Database connection has been established successfully.')
   } catch (error) {
-    console.error('Server startup failed:', error);
-    process.exit(1);
+    console.error('Unable to connect to the database:', error)
+    process.exit(1)
   }
 }
 
-startServer();
+// Sync database models
+async function syncDatabase() {
+  try {
+    await sequelize.sync({ alter: true })
+    console.log('All models synchronized successfully.')
+  } catch (error) {
+    console.error('Error synchronizing database:', error)
+    process.exit(1)
+  }
+}
+
+// Initialize database
+async function initializeDatabase() {
+  await testConnection()
+  await syncDatabase()
+}
+
+// Start server
+async function startServer() {
+  try {
+    await initializeDatabase()
+    
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`)
+    })
+  } catch (error) {
+    console.error('Failed to start server:', error)
+    process.exit(1)
+  }
+}
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully')
+  process.exit(0)
+})
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully')
+  process.exit(0)
+})
+
+startServer()

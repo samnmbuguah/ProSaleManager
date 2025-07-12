@@ -1,4 +1,7 @@
-import { DataTypes, Model, Optional } from "sequelize";
+import {
+  Model,
+  DataTypes
+} from 'sequelize'
 import { sequelize } from "../config/database.js";
 
 interface ProductAttributes {
