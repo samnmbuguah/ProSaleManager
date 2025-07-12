@@ -2,6 +2,7 @@ import { Router } from "express";
 import PurchaseOrder from "../models/PurchaseOrder.js";
 import PurchaseOrderItem from "../models/PurchaseOrderItem.js";
 import Supplier from "../models/Supplier.js";
+import Product from "../models/Product.js";
 import { generateOrderNumber } from "../utils/helpers.js";
 
 const router = Router();
@@ -120,13 +121,18 @@ router.put("/:id/status", async (req, res) => {
     if (status === "received") {
       const items = await PurchaseOrderItem.findAll({
         where: { purchase_order_id: order.id },
-        include: ["product"],
+        include: [Product],
       });
 
       await Promise.all(
         items.map(async (item) => {
           const product = item.product;
-          await product.increment("quantity", { by: item.quantity });
+          if (!product) {
+            throw new Error(`Product with id ${item.product_id} not found for order item ${item.id}`);
+          }
+          // Directly update the quantity field instead of using increment
+          product.quantity = (product.quantity || 0) + item.quantity;
+          await product.save();
         }),
       );
     }
