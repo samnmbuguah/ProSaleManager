@@ -261,14 +261,14 @@ export function SalesPage() {
                   <p className="capitalize">
                     Method: {selectedSale.payment_method}
                   </p>
-                  <p>
-                    Status:{' '}
+                  <div className="flex items-center gap-2">
+                    <span>Status:</span>
                     <Badge
                       className={getPaymentStatusColor(selectedSale.status)}
                     >
                       {selectedSale.status}
                     </Badge>
-                  </p>
+                  </div>
                   <p>Total: {formatCurrency(selectedSale.total_amount)}</p>
                   {selectedSale.receipt_status && (
                     <div className="mt-4">
