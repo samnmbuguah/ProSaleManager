@@ -153,19 +153,19 @@ export function SalesPage () {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {sale.receiptStatus
+                      {sale.receipt_status
                         ? (
                         <div className="flex gap-2">
                           <Badge
                             variant={
-                              sale.receiptStatus.sms ? 'default' : 'outline'
+                              sale.receipt_status?.sms ? 'default' : 'outline'
                             }
                           >
                             SMS
                           </Badge>
                           <Badge
                             variant={
-                              sale.receiptStatus.whatsapp
+                              sale.receipt_status?.whatsapp
                                 ? 'default'
                                 : 'outline'
                             }
@@ -281,29 +281,25 @@ export function SalesPage () {
                     </Badge>
                   </p>
                   <p>Total: {formatCurrency(selectedSale.total_amount)}</p>
-                  {selectedSale.change_amount && (
-                    <p>
-                      Change Given: {formatCurrency(selectedSale.change_amount)}
-                    </p>
-                  )}
-                  {selectedSale.receiptStatus && (
-                    <div className="mt-2 flex gap-2">
-                      <Badge
-                        variant={
-                          selectedSale.receiptStatus.sms ? 'default' : 'outline'
-                        }
-                      >
-                        SMS
-                      </Badge>
-                      <Badge
-                        variant={
-                          selectedSale.receiptStatus.whatsapp
-                            ? 'default'
-                            : 'outline'
-                        }
-                      >
-                        WhatsApp
-                      </Badge>
+                  {selectedSale.receipt_status && (
+                    <div className="mt-4">
+                      <h4 className="font-medium mb-2">Receipt Status</h4>
+                      <div className="flex gap-2">
+                        <Badge
+                          variant={
+                            selectedSale.receipt_status.sms ? 'default' : 'outline'
+                          }
+                        >
+                          SMS: {selectedSale.receipt_status.sms ? 'Sent' : 'Not Sent'}
+                        </Badge>
+                        <Badge
+                          variant={
+                            selectedSale.receipt_status.whatsapp ? 'default' : 'outline'
+                          }
+                        >
+                          WhatsApp: {selectedSale.receipt_status.whatsapp ? 'Sent' : 'Not Sent'}
+                        </Badge>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -348,7 +344,7 @@ export function SalesPage () {
                         {selectedSale.items?.map((item) => (
                           <TableRow key={item.id}>
                             <TableCell>{item.product.name}</TableCell>
-                            <TableCell>{item.product.product_number}</TableCell>
+                            <TableCell>{item.product.sku || 'N/A'}</TableCell>
                             <TableCell className="text-right">
                               {formatCurrency(item.unit_price)}
                             </TableCell>

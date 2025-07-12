@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { Product } from '@/types'
+import { Product } from '@/types/product'
 import { api } from '@/lib/api'
 import { API_ENDPOINTS } from '@/lib/api-endpoints'
 

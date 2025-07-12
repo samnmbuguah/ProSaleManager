@@ -38,16 +38,16 @@ interface SupplierPricingProps {
   product: Product;
 }
 
-export function SupplierPricing ({ product }: SupplierPricingProps) {
+export function SupplierPricing({ product }: SupplierPricingProps) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isLinkFormOpen, setIsLinkFormOpen] = useState(false)
   const {
     suppliers,
     productSuppliers,
     createSupplier,
-    linkProductToSupplier,
+    createProductSupplier,
     isCreating,
-    isLinking
+    isCreatingProductSupplier
   } = useSuppliers()
 
   const form = useForm<SupplierFormData>({
@@ -56,7 +56,9 @@ export function SupplierPricing ({ product }: SupplierPricingProps) {
       name: '',
       email: '',
       phone: '',
-      address: ''
+      address: '',
+      contact_person: '',
+      status: 'active'
     }
   })
 
@@ -71,20 +73,30 @@ export function SupplierPricing ({ product }: SupplierPricingProps) {
   })
 
   const onSubmit = async (data: SupplierFormData) => {
-    await createSupplier(data)
+    await createSupplier({
+      ...data,
+      contact_person: data.contact_person || '',
+      status: 'active',
+      address: data.address || null,
+      phone: data.phone || null
+    })
     setIsFormOpen(false)
     form.reset()
   }
 
   const onLinkSubmit = async (data: ProductSupplierFormData) => {
-    await linkProductToSupplier(data)
+    await createProductSupplier({
+      product_id: Number(data.product_id),
+      supplier_id: Number(data.supplier_id),
+      price: parseFloat(data.cost_price)
+    })
     setIsLinkFormOpen(false)
     linkForm.reset()
   }
 
   const productSuppliersList =
     productSuppliers?.filter(
-      (ps) => Number(ps.product_id) === Number(product.id)
+      (ps: any) => Number(ps.product_id) === Number(product.id)
     ) || []
 
   return (
@@ -112,10 +124,10 @@ export function SupplierPricing ({ product }: SupplierPricingProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {productSuppliersList.map((ps) => (
+          {productSuppliersList.map((ps: any) => (
             <TableRow key={ps.id}>
               <TableCell>
-                {suppliers?.find((s) => s.id === Number(ps.supplier_id))
+                {suppliers?.find((s: any) => s.id === Number(ps.supplier_id))
                   ?.name || 'Unknown Supplier'}
               </TableCell>
               <TableCell>KSh {Number(ps.cost_price).toFixed(2)}</TableCell>
@@ -228,7 +240,7 @@ export function SupplierPricing ({ product }: SupplierPricingProps) {
                         }
                       >
                         <option value="">Select a supplier</option>
-                        {suppliers?.map((supplier) => (
+                        {suppliers?.map((supplier: any) => (
                           <option key={supplier.id} value={supplier.id}>
                             {supplier.name}
                           </option>
@@ -275,7 +287,7 @@ export function SupplierPricing ({ product }: SupplierPricingProps) {
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={isLinking}>
+              <Button type="submit" disabled={isCreatingProductSupplier}>
                 Link Supplier
               </Button>
             </form>

@@ -4,7 +4,7 @@ import CustomerCard from './CustomerCard'
 
 interface CustomerListProps {
   customers: Customer[];
-  onAdd: (customer: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  onAdd: (customer: Omit<Customer, 'id' | 'created_at' | 'updated_at'>) => void;
   onEdit: (customer: Customer) => void;
   onDelete: (id: number) => void;
   isSubmitting: boolean;
@@ -26,7 +26,7 @@ const CustomerList: React.FC<CustomerListProps> = ({
           email: null,
           phone: '',
           address: null,
-          notes: null
+          notes: undefined
         })}
         disabled={isSubmitting}
         className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md disabled:opacity-50"

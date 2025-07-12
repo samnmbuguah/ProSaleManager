@@ -34,7 +34,7 @@ export function PurchaseOrderDetails ({
   const { data: items, isLoading } = useQuery({
     queryKey: ['purchase-order-items', orderId],
     queryFn: async () => {
-      const response = await api.get(API_ENDPOINTS.purchaseOrders.items(orderId))
+      const response = await api.get(API_ENDPOINTS.purchaseOrders.items(orderId || 0))
       return response.data
     },
     enabled: !!orderId
@@ -83,7 +83,7 @@ export function PurchaseOrderDetails ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items?.map((item) => (
+                {items?.map((item: any) => (
                   <TableRow key={item.id}>
                     <TableCell>{item.product.name}</TableCell>
                     <TableCell>{item.product.stock_unit}</TableCell>

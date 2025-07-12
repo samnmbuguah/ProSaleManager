@@ -9,7 +9,7 @@ import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useLocation } from 'wouter'
 
-export default function ExpensesPage () {
+export default function ExpensesPage() {
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const {
@@ -92,10 +92,7 @@ export default function ExpensesPage () {
       return
     }
 
-    createExpenseMutation.mutate({
-      ...newExpense,
-      user_id: user.id
-    })
+    createExpenseMutation.mutate(newExpense)
   }
 
   const handleDeleteExpense = (expenseId: number) => {

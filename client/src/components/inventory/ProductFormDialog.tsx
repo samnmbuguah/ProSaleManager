@@ -72,12 +72,12 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
     if (!selectedProduct) {
       setFormData({
         ...formData,
-        piece_buying_price: formData.piece_buying_price || '',
-        piece_selling_price: formData.piece_selling_price || '',
-        pack_buying_price: formData.pack_buying_price || '',
-        pack_selling_price: formData.pack_selling_price || '',
-        dozen_buying_price: formData.dozen_buying_price || '',
-        dozen_selling_price: formData.dozen_selling_price || ''
+        piece_buying_price: Number(formData.piece_buying_price) || 0,
+        piece_selling_price: Number(formData.piece_selling_price) || 0,
+        pack_buying_price: Number(formData.pack_buying_price) || 0,
+        pack_selling_price: Number(formData.pack_selling_price) || 0,
+        dozen_buying_price: Number(formData.dozen_buying_price) || 0,
+        dozen_selling_price: Number(formData.dozen_selling_price) || 0
       })
     }
     // eslint-disable-next-line
@@ -144,8 +144,11 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
 
   // Helper to build the payload for submission, converting numbers
   const buildProductPayload = () => {
-    const requiredFields = [
+    const allowedFields = [
       'name',
+      'description',
+      'sku',
+      'barcode',
       'category_id',
       'piece_buying_price',
       'piece_selling_price',
@@ -155,36 +158,18 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       'dozen_selling_price',
       'quantity',
       'min_quantity',
+      'image_url',
       'is_active'
     ]
-    const optionalFields = ['description', 'sku', 'barcode', 'image_url']
-    const payload = {}
-    for (const field of requiredFields) {
-      // Convert to number for numeric fields
-      if (
-        [
-          'category_id',
-          'piece_buying_price',
-          'piece_selling_price',
-          'pack_buying_price',
-          'pack_selling_price',
-          'dozen_buying_price',
-          'dozen_selling_price',
-          'quantity',
-          'min_quantity'
-        ].includes(field)
-      ) {
-        payload[field] = Number(formData[field as keyof typeof formData])
-      } else {
-        payload[field] = formData[field as keyof typeof formData]
+    const payload: Partial<ProductFormData> = {}
+    allowedFields.forEach((field) => {
+      if (formData[field as keyof ProductFormData] !== undefined) {
+        const value = formData[field as keyof ProductFormData]
+        if (typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean') {
+          (payload as any)[field] = value
+        }
       }
-    }
-    for (const field of optionalFields) {
-      const value = formData[field as keyof typeof formData]
-      if (value !== undefined && value !== null && value !== '') {
-        payload[field] = value
-      }
-    }
+    })
     return payload
   }
 
@@ -203,7 +188,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       'min_quantity'
     ]
     for (const field of requiredFields) {
-      const value = formData[field as keyof typeof formData]
+      const value = formData[field as keyof ProductFormData]
       if (
         value === undefined ||
         value === null ||

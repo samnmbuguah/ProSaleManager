@@ -54,7 +54,7 @@ export function PurchaseOrderList ({ onCreateOrder }: PurchaseOrderListProps) {
   }
 
   const getSupplier = (supplierId: number) => {
-    return suppliers?.find((s) => s.id === supplierId)
+    return suppliers?.find((s: any) => s.id === supplierId)
   }
 
   return (
@@ -137,11 +137,17 @@ export function PurchaseOrderList ({ onCreateOrder }: PurchaseOrderListProps) {
         supplier={
           selectedOrder
             ? {
-                name: getSupplier(selectedOrder.supplier_id)?.name || '',
-                email: getSupplier(selectedOrder.supplier_id)?.email || null,
-                phone: getSupplier(selectedOrder.supplier_id)?.phone || null
+                id: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.id,
+                name: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.name,
+                email: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.email,
+                phone: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.phone,
+                address: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.address,
+                contact_person: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.contact_person,
+                status: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.status,
+                created_at: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.created_at,
+                updated_at: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.updated_at
               }
-            : undefined
+            : null
         }
       />
     </div>

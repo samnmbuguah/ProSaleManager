@@ -1,66 +1,49 @@
 import { DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { SupplierSelect } from './SupplierSelect'
 import { PurchaseOrderItemsList } from './PurchaseOrderItemsList'
-import type { Supplier } from '@/types/supplier'
+import type { PurchaseOrderFormData } from '@/types/purchase-order'
 import type { Product } from '@/types/product'
-import type { PurchaseOrderItem, PurchaseOrderFormData } from '@/types/purchase-order'
 import { Button } from '@/components/ui/button'
 
 interface PurchaseOrderFormProps {
-  suppliers: Supplier[];
-  suppliersLoading: boolean;
-  products: Product[];
-  formData: PurchaseOrderFormData;
-  onSupplierChange: (value: string) => void;
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onProductSelect: (index: number, product: Product) => void;
-  onItemChange: (index: number, field: keyof PurchaseOrderItem, value: string | number) => void;
-  onRemoveItem: (index: number) => void;
-  onAddItem: () => void;
-  onSubmit: (e: React.FormEvent) => void;
-  submitDisabled: boolean;
+  formData: PurchaseOrderFormData
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
+  onItemChange: (index: number, field: string, value: any) => void
+  onRemoveItem: (index: number) => void
+  onAddItem: () => void
+  products: Product[]
 }
 
-export function PurchaseOrderForm ({
-  suppliers,
-  suppliersLoading,
-  products,
+export function PurchaseOrderForm({
   formData,
-  onSupplierChange,
   onInputChange,
-  onProductSelect,
   onItemChange,
   onRemoveItem,
   onAddItem,
-  onSubmit,
-  submitDisabled
+  products
 }: PurchaseOrderFormProps) {
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <SupplierSelect
-        suppliers={suppliers}
-        value={formData.supplier_id}
-        onChange={onSupplierChange}
-        loading={suppliersLoading}
+    <form className="space-y-4">
+      {/* Add your form fields here, e.g. supplier, expected_delivery_date, notes, etc. */}
+      {/* Example: */}
+      <input
+        type="text"
+        name="expected_delivery_date"
+        value={formData.expected_delivery_date}
+        onChange={onInputChange}
+        placeholder="Expected Delivery Date"
+        className="w-full px-2 py-1 border rounded"
       />
-      <div>
-        <Label htmlFor="expected_delivery_date">Expected Delivery Date</Label>
-        <Input
-          id="expected_delivery_date"
-          name="expected_delivery_date"
-          type="date"
-          value={formData.expected_delivery_date}
-          onChange={onInputChange}
-          required
-        />
-      </div>
+      {/* Items list */}
       <PurchaseOrderItemsList
         items={formData.items}
         products={products}
-        onProductSelect={onProductSelect}
-        onItemChange={onItemChange}
+        onItemChange={(index: number, field: string, value: any) => {
+          const newItems = [...formData.items]
+          newItems[index] = { ...newItems[index], [field]: value }
+          onItemChange(index, field, value)
+        }}
         onRemoveItem={onRemoveItem}
         onAddItem={onAddItem}
       />
@@ -74,9 +57,7 @@ export function PurchaseOrderForm ({
         />
       </div>
       <DialogFooter>
-        <Button type="submit" disabled={submitDisabled}>
-          Create Purchase Order
-        </Button>
+        <Button type="submit">Submit</Button>
       </DialogFooter>
     </form>
   )

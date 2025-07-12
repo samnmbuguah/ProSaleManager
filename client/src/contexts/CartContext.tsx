@@ -18,9 +18,9 @@ interface CartContextType {
 // Define action types
 type CartAction =
   | {
-      type: 'ADD_ITEM';
-      payload: { product: Product; unitType: string; unitPrice: number };
-    }
+    type: 'ADD_ITEM';
+    payload: { product: Product; unitType: string; unitPrice: number };
+  }
   | { type: 'REMOVE_ITEM'; payload: { itemId: number } }
   | { type: 'UPDATE_QUANTITY'; payload: { itemId: number; quantity: number } }
   | { type: 'UPDATE_UNIT_PRICE'; payload: { itemId: number; price: number } }
@@ -54,7 +54,7 @@ interface PotentialCartItemData {
 }
 
 // Reducer function to handle cart state updates
-function cartReducer (state: Cart, action: CartAction): Cart {
+function cartReducer(state: Cart, action: CartAction): Cart {
   switch (action.type) {
     case 'ADD_ITEM': {
       const { product, unitType, unitPrice } = action.payload
@@ -214,14 +214,14 @@ function cartReducer (state: Cart, action: CartAction): Cart {
       }
 
       // Add delivery to cart
-      const unitPrice = parseFloat(product.selling_price)
+      const unitPrice = parseFloat(product.piece_selling_price.toString())
       const newItem: CartItem = {
         id: Date.now(),
         product,
         quantity: 1,
         unit_price: unitPrice,
         total: unitPrice,
-        unit_type: product.stock_unit
+        unit_type: 'piece' // Default to piece since stock_unit doesn't exist
       }
 
       const updatedItems = [...state.items, newItem]

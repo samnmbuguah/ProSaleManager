@@ -78,5 +78,11 @@ export const API_ENDPOINTS = {
     inventory: `${API_BASE_URL}/reports/inventory`,
     productPerformance: `${API_BASE_URL}/reports/product-performance`,
     salesSummary: `${API_BASE_URL}/reports/sales-summary`
+  },
+  loyalty: {
+    points: (customerId: number) => `${API_BASE_URL}/customers/${customerId}/loyalty/points`,
+    transactions: (customerId: number) => `${API_BASE_URL}/customers/${customerId}/loyalty/transactions`,
+    addPoints: `${API_BASE_URL}/loyalty/add-points`,
+    redeemPoints: `${API_BASE_URL}/loyalty/redeem-points`
   }
 } as const

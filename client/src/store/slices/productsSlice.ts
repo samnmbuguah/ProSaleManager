@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { Product, ProductFormData } from '../../types/product'
-import { api } from '../../services/api'
+import { Product, ProductFormData } from '@/types/product'
+import { api } from '@/lib/api'
 
 interface ProductsState {
   items: Product[];

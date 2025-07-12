@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import type { Product, PriceUnit } from '@/types/product'
+import type { Product } from '@/types/product'
 import { API_ENDPOINTS } from '@/lib/api-endpoints'
-import api from '@/lib/api'
+import { api } from '@/lib/api'
 
 interface ProductWithPriceUnits extends Product {
-  price_units: PriceUnit[];
+  price_units: any[];
 }
 
 export interface ReceiptData {

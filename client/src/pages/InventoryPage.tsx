@@ -21,6 +21,7 @@ import ProductList from '@/components/inventory/ProductList'
 import ProductFormDialog from '@/components/inventory/ProductFormDialog'
 import ProductSearchBar from '@/components/inventory/ProductSearchBar'
 import TabsNav from '@/components/inventory/TabsNav'
+import { ProductFormData } from '@/types/product'
 
 const InventoryPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>()
@@ -114,9 +115,11 @@ const InventoryPage: React.FC = () => {
           'image_url',
           'is_active'
         ]
-        const payload = {}
+        const payload: Partial<ProductFormData> = {}
         allowedFields.forEach((field) => {
-          if (formData[field] !== undefined) payload[field] = formData[field]
+          if (formData[field as keyof ProductFormData] !== undefined) {
+            payload[field as keyof ProductFormData] = formData[field as keyof ProductFormData] as any
+          }
         })
         response = await fetch(url, {
           method: selectedProduct ? 'PUT' : 'POST',
@@ -185,7 +188,7 @@ const InventoryPage: React.FC = () => {
           if (errorData && errorData.message) {
             errorMsg = errorData.message
           }
-        } catch {}
+        } catch { }
         throw new Error(errorMsg)
       }
       toast({

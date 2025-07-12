@@ -6,7 +6,7 @@ import { api } from '@/lib/api'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '@/store'
 import { fetchCustomers } from '@/store/customersSlice'
-import { Customer as CustomerType } from '@/types/customer'
+import type { Customer } from '@/types/customer'
 
 const CustomersPage = () => {
   const { toast } = useToast()
@@ -26,7 +26,7 @@ const CustomersPage = () => {
 
   const createCustomerMutation = useMutation({
     mutationFn: async (
-      customer: Omit<CustomerType, 'id' | 'createdAt' | 'updatedAt'>
+      customer: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>
     ) => {
       const response = await api.post('/api/customers', customer)
       return response.data
@@ -58,7 +58,7 @@ const CustomersPage = () => {
       data
     }: {
       id: number;
-      data: Partial<CustomerType>;
+      data: Partial<Customer>;
     }) => {
       const response = await api.put(`/api/customers/${id}`, data)
       return response.data
@@ -109,13 +109,11 @@ const CustomersPage = () => {
     }
   })
 
-  const handleAddCustomer = async (
-    customer: Omit<CustomerType, 'id' | 'createdAt' | 'updatedAt'>
-  ) => {
-    await createCustomerMutation.mutateAsync(customer)
+  const handleAddCustomer = async (customer: Omit<Customer, 'id' | 'created_at' | 'updated_at'>) => {
+    await createCustomerMutation.mutateAsync(customer as any)
   }
 
-  const handleEditCustomer = (customer: CustomerType) => {
+  const handleEditCustomer = (customer: Customer) => {
     // TODO: Implement edit dialog
     console.log('Edit customer:', customer)
   }
