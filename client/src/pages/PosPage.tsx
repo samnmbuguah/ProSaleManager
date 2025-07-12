@@ -130,15 +130,8 @@ const PosPage: React.FC = () => {
         change_amount: 0
       }
 
-      console.log('CHECKOUT - Sending sale data:', JSON.stringify(saleData))
-
       // Use the configured API instance
       const response = await api.post('/sales', saleData)
-
-      console.log(
-        'CHECKOUT - Sale created successfully, response:',
-        response.data
-      )
 
       // Verify response format and extract sale ID
       let saleId
@@ -168,8 +161,6 @@ const PosPage: React.FC = () => {
       // Open the receipt dialog immediately
       setIsReceiptDialogOpen(true)
     } catch (error: unknown) {
-      console.error('CHECKOUT - Error:', error)
-
       // Show detailed error message
       const errorMessage =
         error instanceof Error

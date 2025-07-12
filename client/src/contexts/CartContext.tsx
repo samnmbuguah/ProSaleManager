@@ -258,11 +258,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
       // Only load cart if it exists and is less than 24 hours old
       // (prevents loading very stale data)
       if (savedCart && cartAge < 24 * 60 * 60 * 1000) {
-        console.log(
-          'Found cart in localStorage, age:',
-          Math.round(cartAge / 1000 / 60),
-          'minutes'
-        )
         const parsedCart = JSON.parse(savedCart)
 
         if (parsedCart && parsedCart.items && Array.isArray(parsedCart.items)) {

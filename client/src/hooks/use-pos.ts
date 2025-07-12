@@ -102,7 +102,6 @@ export function usePos () {
   const createSale = async (saleData: SaleData) => {
     setIsProcessing(true)
     try {
-      console.log('Creating sale with data:', saleData)
       const response = await api.post(API_ENDPOINTS.sales.create, {
         ...saleData,
         customer_id: saleData.customer_id || null
@@ -110,7 +109,6 @@ export function usePos () {
       setError(null)
       return response.data
     } catch (error) {
-      console.error('Sale creation error:', error)
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to create sale'
       setError(errorMessage)

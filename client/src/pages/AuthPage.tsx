@@ -67,10 +67,6 @@ export default function AuthPage () {
   const onSubmit = async (data: LoginFormData | RegisterFormData) => {
     try {
       setIsLoading(true)
-      console.log('Sending auth request with data:', {
-        ...data,
-        password: '***'
-      })
 
       if (isLogin) {
         await login({ email: data.email, password: data.password })
