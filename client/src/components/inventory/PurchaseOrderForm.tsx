@@ -5,6 +5,7 @@ import { PurchaseOrderItemsList } from './PurchaseOrderItemsList'
 import type { PurchaseOrderFormData } from '@/types/purchase-order'
 import type { Product } from '@/types/product'
 import { Button } from '@/components/ui/button'
+import { SupplierSelect } from './SupplierSelect'
 
 interface PurchaseOrderFormProps {
   formData: PurchaseOrderFormData
@@ -13,6 +14,10 @@ interface PurchaseOrderFormProps {
   onRemoveItem: (index: number) => void
   onAddItem: () => void
   products: Product[]
+  suppliers: { id: number | string; name: string }[]
+  suppliersLoading?: boolean
+  productDropdownOpen: boolean[]
+  setProductDropdownOpen: (index: number, open: boolean) => void
 }
 
 export function PurchaseOrderForm({
@@ -21,31 +26,40 @@ export function PurchaseOrderForm({
   onItemChange,
   onRemoveItem,
   onAddItem,
-  products
+  products,
+  suppliers,
+  suppliersLoading,
+  productDropdownOpen,
+  setProductDropdownOpen
 }: PurchaseOrderFormProps) {
   return (
-    <form className="space-y-4">
-      {/* Add your form fields here, e.g. supplier, expected_delivery_date, notes, etc. */}
-      {/* Example: */}
-      <input
-        type="text"
-        name="expected_delivery_date"
-        value={formData.expected_delivery_date}
-        onChange={onInputChange}
-        placeholder="Expected Delivery Date"
-        className="w-full px-2 py-1 border rounded"
+    <div className="space-y-4">
+      <SupplierSelect
+        suppliers={suppliers}
+        value={formData.supplier_id}
+        onChange={(value) => onInputChange({ target: { name: 'supplier_id', value } } as any)}
+        loading={suppliersLoading}
       />
+      <div>
+        <Label htmlFor="expected_delivery_date">Expected Delivery Date</Label>
+        <Input
+          type="date"
+          id="expected_delivery_date"
+          name="expected_delivery_date"
+          value={formData.expected_delivery_date}
+          onChange={onInputChange}
+          required
+        />
+      </div>
       {/* Items list */}
       <PurchaseOrderItemsList
         items={formData.items}
         products={products}
-        onItemChange={(index: number, field: string, value: any) => {
-          const newItems = [...formData.items]
-          newItems[index] = { ...newItems[index], [field]: value }
-          onItemChange(index, field, value)
-        }}
+        onItemChange={onItemChange}
         onRemoveItem={onRemoveItem}
         onAddItem={onAddItem}
+        dropdownOpen={productDropdownOpen}
+        setDropdownOpen={setProductDropdownOpen}
       />
       <div>
         <Label htmlFor="notes">Notes</Label>
@@ -59,6 +73,6 @@ export function PurchaseOrderForm({
       <DialogFooter>
         <Button type="submit">Submit</Button>
       </DialogFooter>
-    </form>
+    </div>
   )
 }
