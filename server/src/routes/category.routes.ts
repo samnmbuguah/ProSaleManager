@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { protect, restrictTo } from '../middleware/auth.middleware';
+import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 import {
   getCategories,
   getCategory,
@@ -15,8 +15,8 @@ router.get('/', getCategories);
 router.get('/:id', getCategory);
 
 // Only admin and manager can modify categories
-router.use(protect);
-router.use(restrictTo('admin', 'manager'));
+router.use(requireAuth);
+router.use(requireRole(['admin', 'manager']));
 router.post('/', createCategory);
 router.put('/:id', updateCategory);
 router.delete('/:id', deleteCategory);

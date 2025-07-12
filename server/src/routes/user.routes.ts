@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { protect, restrictTo } from '../middleware/auth.middleware.js';
+import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 import { 
   getUsers,
   getUser,
@@ -11,8 +11,8 @@ import {
 const router = Router();
 
 // Admin only routes
-router.use(protect);
-router.use(restrictTo('admin'));
+router.use(requireAuth);
+router.use(requireRole(['admin']));
 
 router.get('/', getUsers);
 router.get('/:id', getUser);

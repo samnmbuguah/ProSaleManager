@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { protect, restrictTo } from '../middleware/auth.middleware';
+import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
 import {
   getProducts,
   getProduct,
@@ -47,8 +47,8 @@ router.get('/', getProducts);
 router.get('/:id', getProduct);
 
 // Only admin and manager can modify products
-router.use(protect);
-router.use(restrictTo('admin', 'manager'));
+router.use(requireAuth);
+router.use(requireRole(['admin', 'manager']));
 router.post('/', createProduct);
 router.put('/:id', updateProduct);
 router.delete('/:id', deleteProduct);

@@ -1,5 +1,5 @@
 import express from "express";
-import { protect } from "../middleware/auth.middleware.js";
+import { requireAuth } from "../middleware/auth.middleware.js";
 import {
   createSale,
   getSales,
@@ -11,7 +11,7 @@ import { ReceiptService } from "../services/receipt.service.js";
 const router = express.Router();
 
 // Authenticate all other sales routes
-router.use(protect);
+router.use(requireAuth);
 
 // Create a new sale
 router.post("/", createSale);
