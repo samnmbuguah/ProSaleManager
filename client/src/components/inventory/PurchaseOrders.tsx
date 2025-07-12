@@ -37,16 +37,15 @@ import { API_ENDPOINTS } from '@/lib/api-endpoints'
 import { api } from '@/lib/api'
 import { PurchaseOrderForm } from './PurchaseOrderForm'
 import ProductSearchBar from './ProductSearchBar'
+import { useSuppliers } from '@/hooks/use-suppliers'
+import { purchaseOrderSchema } from '@/types/purchase-order'
+import { useAuthContext } from '@/contexts/AuthContext'
+import { Loader2 } from 'lucide-react'
 
-export function PurchaseOrders() {
-  const dispatch = useDispatch<AppDispatch>()
-  const purchaseOrders = useSelector(
-    (state: RootState) => state.purchaseOrders.items
-  )
-  const purchaseOrdersStatus = useSelector(
-    (state: RootState) => state.purchaseOrders.status
-  )
+export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: any[]; loading: boolean }) {
   const { products } = useInventory()
+  const { suppliers, isLoading: suppliersLoading } = useSuppliers()
+  const { user } = useAuthContext();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [formData, setFormData] = useState<PurchaseOrderFormData>({
@@ -56,9 +55,15 @@ export function PurchaseOrders() {
     notes: ''
   })
   const { toast } = useToast()
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
   // Product search state for purchase order dialog
   const [searchQuery, setSearchQuery] = useState('')
+  const { refetch: refetchInventory } = useInventory();
+  const [markingReceivedId, setMarkingReceivedId] = useState<number | null>(null);
+  const [productsList, setProductsList] = useState(products)
+  const [productsLoading, setProductsLoading] = useState(false)
+  const [productDropdownOpen, setProductDropdownOpen] = useState<boolean[]>([])
 
   useEffect(() => {
     if (Array.isArray(products)) {
@@ -66,21 +71,31 @@ export function PurchaseOrders() {
     }
   }, [products])
 
-  const handleProductSearch = (query: string) => {
+  const handleProductSearch = async (query: string) => {
     setSearchQuery(query)
-    if (!query.trim() && Array.isArray(products)) {
-      // setFilteredProducts(products) // This line is removed
+    if (!query.trim()) {
+      setProductsList(products)
+      setProductDropdownOpen((prev) => {
+        const arr = [...prev]
+        if (formData.items.length > 0) arr[formData.items.length - 1] = true
+        return arr
+      })
       return
     }
-    if (Array.isArray(products)) {
-      // setFilteredProducts( // This line is removed
-      //   products.filter(
-      //     (p) =>
-      //       p.name.toLowerCase().includes(lower) ||
-      //       (p.sku && p.sku.toLowerCase().includes(lower)) ||
-      //       (p.barcode && p.barcode.toLowerCase().includes(lower))
-      //   )
-      // )
+    setProductsLoading(true)
+    try {
+      const response = await api.get(`/products/search?q=${encodeURIComponent(query)}`)
+      setProductsList(response.data.data)
+      // Open dropdown for the most recent item
+      setProductDropdownOpen((prev) => {
+        const arr = [...prev]
+        if (formData.items.length > 0) arr[formData.items.length - 1] = true
+        return arr
+      })
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to search products', variant: 'destructive' })
+    } finally {
+      setProductsLoading(false)
     }
   }
 
@@ -103,6 +118,7 @@ export function PurchaseOrders() {
       selling_price: 0
     }
     setFormData((prev) => ({ ...prev, items: [...prev.items, newItem] }))
+    setProductDropdownOpen((prev) => [...prev, false])
   }
 
   const handleStatusChange = async (
@@ -117,7 +133,7 @@ export function PurchaseOrders() {
         title: 'Success',
         description: 'Status updated successfully'
       })
-      dispatch(fetchPurchaseOrders())
+      // dispatch(fetchPurchaseOrders()) // This line is removed
     } catch (error) {
       console.error('Error:', error)
       toast({
@@ -127,6 +143,21 @@ export function PurchaseOrders() {
       })
     }
   }
+
+  const handleMarkReceived = async (orderId: number) => {
+    if (!window.confirm('Are you sure you want to mark this order as received? This will update inventory quantities.')) return;
+    setMarkingReceivedId(orderId);
+    try {
+      await api.put(`/purchase-orders/${orderId}/status`, { status: 'received' });
+      toast({ title: 'Order marked as received', description: 'Inventory has been updated.' });
+      // dispatch(fetchPurchaseOrders()); // This line is removed
+      refetchInventory && refetchInventory();
+    } catch (err) {
+      toast({ title: 'Error', description: 'Failed to mark as received', variant: 'destructive' });
+    } finally {
+      setMarkingReceivedId(null);
+    }
+  };
 
   const getStatusBadgeVariant = (status: PurchaseOrder['status']) => {
     switch (status) {
@@ -143,18 +174,45 @@ export function PurchaseOrders() {
     }
   }
 
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormErrors({});
+    try {
+      // Validate form data
+      const validated = purchaseOrderSchema.parse(formData);
+      // Submit to backend
+      await api.post('/purchase-orders', validated);
+      toast({ title: 'Success', description: 'Purchase order created successfully.' });
+      setIsAddDialogOpen(false);
+      setFormData({ items: [], supplier_id: '', expected_delivery_date: '', notes: '' });
+      // dispatch(fetchPurchaseOrders()); // This line is removed
+    } catch (err: any) {
+      if (err.errors) {
+        // Zod validation errors
+        const errors: { [key: string]: string } = {};
+        err.errors.forEach((e: any) => { errors[e.path[0]] = e.message; });
+        setFormErrors(errors);
+      } else {
+        toast({ title: 'Error', description: 'Failed to create purchase order', variant: 'destructive' });
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Purchase Orders</h2>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          Create Purchase Order
-        </Button>
+        {/* Allow both admin and cashier to create purchase orders */}
+        {(user?.role === 'admin' || user?.role === 'cashier') && (
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            Create Purchase Order
+          </Button>
+        )}
       </div>
       {!Array.isArray(purchaseOrders) || purchaseOrders.length === 0
         ? (
           <div className="p-4 text-center text-muted-foreground">
-            {purchaseOrdersStatus === 'loading'
+            {loading
               ? 'Loading purchase orders...'
               : 'No purchase orders found or failed to load.'}
           </div>
@@ -194,13 +252,13 @@ export function PurchaseOrders() {
                             {order.supplier?.name || 'Unknown Supplier'}
                           </TableCell>
                           <TableCell>
-                            {order.created_at
-                              ? format(new Date(order.created_at), 'PPP')
+                            {(order.created_at || order.createdAt)
+                              ? format(new Date(order.created_at || order.createdAt), 'PPP')
                               : 'N/A'}
                           </TableCell>
                           <TableCell>
-                            {order.expected_delivery_date
-                              ? format(new Date(order.expected_delivery_date), 'PPP')
+                            {(order.expected_delivery_date || order.expectedDeliveryDate)
+                              ? format(new Date(order.expected_delivery_date || order.expectedDeliveryDate), 'PPP')
                               : 'Not set'}
                           </TableCell>
                           <TableCell>
@@ -209,29 +267,55 @@ export function PurchaseOrders() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            KSh {order.total_amount.toLocaleString()}
+                            KSh {order.total_amount != null && !isNaN(Number(order.total_amount))
+                              ? Number(order.total_amount).toLocaleString()
+                              : '0'}
                           </TableCell>
                           <TableCell>{order.notes || 'No notes'}</TableCell>
                           <TableCell>
-                            <Select
-                              value={order.status}
-                              onValueChange={(value) =>
-                                handleStatusChange(
-                                  order.id,
-                                  value as PurchaseOrder['status']
-                                )
-                              }
-                            >
-                              <SelectTrigger className="w-[130px]">
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="approved">Approved</SelectItem>
-                                <SelectItem value="rejected">Rejected</SelectItem>
-                                <SelectItem value="completed">Completed</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            {/* Only admins can approve/reject orders */}
+                            {user?.role === 'admin' ? (
+                              <>
+                                <Select
+                                  value={order.status}
+                                  onValueChange={(value) =>
+                                    handleStatusChange(
+                                      order.id,
+                                      value as PurchaseOrder['status']
+                                    )
+                                  }
+                                >
+                                  <SelectTrigger className="w-[130px]">
+                                    <SelectValue placeholder="Select status" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="approved">Approved</SelectItem>
+                                    <SelectItem value="rejected">Rejected</SelectItem>
+                                    <SelectItem value="completed">Completed</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                {/* Mark as Received button for approved orders */}
+                                {order.status === 'approved' && (
+                                  <Button
+                                    variant="success"
+                                    size="sm"
+                                    className="ml-2"
+                                    disabled={markingReceivedId === order.id}
+                                    onClick={() => handleMarkReceived(order.id)}
+                                  >
+                                    {markingReceivedId === order.id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      'Mark as Received'
+                                    )}
+                                  </Button>
+                                )}
+                              </>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">{order.status}</span>
+                            )}
+                            {/* TODO: After admin approval and order confirmation, update inventory */}
                           </TableCell>
                         </TableRow>
                       )
@@ -249,24 +333,79 @@ export function PurchaseOrders() {
               Fill in the purchase order details below.
             </DialogDescription>
           </DialogHeader>
-          {/* Product search bar for purchase order dialog */}
           <ProductSearchBar
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             onSearch={handleProductSearch}
           />
-          <PurchaseOrderForm
-            formData={formData}
-            onInputChange={handleInputChange}
-            onItemChange={(index: number, field: string, value: any) => {
-              const newItems = [...formData.items]
-              newItems[index] = { ...newItems[index], [field]: value }
-              setFormData((prev) => ({ ...prev, items: newItems }))
-            }}
-            onRemoveItem={removeItem}
-            onAddItem={addItem}
-            products={products}
-          />
+          {searchQuery && productsList.length > 0 && (
+            <div className="mb-4 border rounded p-2 bg-gray-50">
+              <div className="font-semibold mb-2">Search Results</div>
+              <ul className="space-y-1">
+                {productsList.map((product) => {
+                  const alreadyAdded = formData.items.some(item => item.product_id === product.id)
+                  return (
+                    <li key={product.id} className="flex items-center justify-between p-1 border-b last:border-b-0">
+                      <span>{product.name} {product.sku ? `(${product.sku})` : ''}</span>
+                      <button
+                        type="button"
+                        className={`ml-2 px-2 py-1 rounded text-white ${alreadyAdded ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                        disabled={alreadyAdded}
+                        onClick={() => {
+                          if (!alreadyAdded) {
+                            setFormData(prev => ({
+                              ...prev,
+                              items: [
+                                ...prev.items,
+                                {
+                                  product_id: product.id,
+                                  product_name: product.name + (product.sku ? ` (${product.sku})` : ''),
+                                  quantity: 1,
+                                  buying_price: product.piece_buying_price || 0,
+                                  selling_price: product.piece_selling_price || 0
+                                }
+                              ]
+                            }))
+                          }
+                        }}
+                      >
+                        {alreadyAdded ? 'Added' : 'Add'}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
+          {/* Show form errors if any */}
+          {Object.values(formErrors).length > 0 && (
+            <div className="mb-2 text-red-600 text-sm">
+              {Object.values(formErrors).map((msg, i) => (
+                <div key={i}>{msg}</div>
+              ))}
+            </div>
+          )}
+          <form onSubmit={handleFormSubmit}>
+            <PurchaseOrderForm
+              formData={formData}
+              onInputChange={handleInputChange}
+              onItemChange={(index: number, field: string, value: any) => {
+                const newItems = [...formData.items]
+                newItems[index] = { ...newItems[index], [field]: value }
+                setFormData((prev) => ({ ...prev, items: newItems }))
+              }}
+              onRemoveItem={removeItem}
+              products={productsList}
+              suppliers={suppliers || []}
+              suppliersLoading={suppliersLoading}
+              productDropdownOpen={productDropdownOpen}
+              setProductDropdownOpen={(index, open) => setProductDropdownOpen((prev) => {
+                const arr = [...prev]
+                arr[index] = open
+                return arr
+              })}
+            />
+          </form>
         </DialogContent>
       </Dialog>
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
