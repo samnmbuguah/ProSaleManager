@@ -115,7 +115,6 @@ const CustomersPage = () => {
 
   const handleEditCustomer = (customer: Customer) => {
     // TODO: Implement edit dialog
-    console.log('Edit customer:', customer)
   }
 
   const handleDeleteCustomer = async (id: number) => {

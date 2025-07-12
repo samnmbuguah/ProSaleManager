@@ -16,12 +16,7 @@ export function useCustomers () {
     queryKey: ['customers'],
     queryFn: async () => {
       try {
-        console.log('[Customers] Fetching customers data')
         const response = await api.get(API_ENDPOINTS.customers.list)
-        console.log(
-          '[Customers] Successfully fetched customers:',
-          response.data.data.length
-        )
         return response.data.data
       } catch (error) {
         console.error('[Customers] Error fetching customers:', error)

@@ -34,22 +34,18 @@ export default function ReportsPage() {
 
   const handleDateRangeChange = (startDate: Date, endDate: Date) => {
     // This will be implemented to refetch data with date filters
-    console.log('Date range changed:', startDate, endDate)
   }
   
   const handleSortChange = (sortBy: string) => {
     // This will be implemented to sort the data
-    console.log('Sort changed:', sortBy)
   }
   
   const handleSearch = async (query: string) => {
     // This will be implemented to search products
-    console.log('Search query:', query)
   }
   
   const handleFilter = async (category: string) => {
     // This will be implemented to filter by category
-    console.log('Filter category:', category)
   }
 
   if (inventoryLoading || performanceLoading) {
