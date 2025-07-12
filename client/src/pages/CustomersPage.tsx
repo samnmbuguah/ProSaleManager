@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import CustomerList from '../components/customers/CustomerList'
 import { useToast } from '@/components/ui/use-toast'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -7,6 +7,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '@/store'
 import { fetchCustomers } from '@/store/customersSlice'
 import type { Customer } from '@/types/customer'
+import CustomerFormDialog from '../components/customers/CustomerFormDialog'
 
 const CustomersPage = () => {
   const { toast } = useToast()
@@ -17,6 +18,9 @@ const CustomersPage = () => {
     (state: RootState) => state.customers.status
   )
   const isLoading = customersStatus === 'loading'
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [formData, setFormData] = useState<Partial<Customer>>({})
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
 
   useEffect(() => {
     if (customersStatus === 'idle') {
@@ -28,7 +32,8 @@ const CustomersPage = () => {
     mutationFn: async (
       customer: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>
     ) => {
-      const response = await api.post('/api/customers', customer)
+      // FIX: Remove double /api prefix
+      const response = await api.post('/customers', customer)
       return response.data
     },
     onSuccess: () => {
@@ -60,7 +65,8 @@ const CustomersPage = () => {
       id: number;
       data: Partial<Customer>;
     }) => {
-      const response = await api.put(`/api/customers/${id}`, data)
+      // FIX: Remove double /api prefix
+      const response = await api.put(`/customers/${id}`, data)
       return response.data
     },
     onSuccess: () => {
@@ -86,7 +92,8 @@ const CustomersPage = () => {
 
   const deleteCustomerMutation = useMutation({
     mutationFn: async (id: number) => {
-      await api.delete(`/api/customers/${id}`)
+      // FIX: Remove double /api prefix
+      await api.delete(`/customers/${id}`)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] })
@@ -109,12 +116,39 @@ const CustomersPage = () => {
     }
   })
 
-  const handleAddCustomer = async (customer: Omit<Customer, 'id' | 'created_at' | 'updated_at'>) => {
-    await createCustomerMutation.mutateAsync(customer as any)
+  // Add customer: open dialog with empty form
+  const handleAddCustomer = () => {
+    setFormData({ name: '', email: '', phone: '', address: '', notes: '' })
+    setSelectedCustomer(null)
+    setIsDialogOpen(true)
   }
 
+  // Edit customer: open dialog with prefilled form
   const handleEditCustomer = (customer: Customer) => {
-    // TODO: Implement edit dialog
+    setFormData({
+      name: customer.name || '',
+      email: customer.email || '',
+      phone: customer.phone || '',
+      address: customer.address || '',
+      notes: customer.notes || ''
+    })
+    setSelectedCustomer(customer)
+    setIsDialogOpen(true)
+  }
+
+  // Dialog submit handler
+  const handleDialogSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (selectedCustomer) {
+      // Edit
+      await updateCustomerMutation.mutateAsync({ id: selectedCustomer.id, data: formData })
+    } else {
+      // Add
+      await createCustomerMutation.mutateAsync(formData as any)
+    }
+    setIsDialogOpen(false)
+    setFormData({})
+    setSelectedCustomer(null)
   }
 
   const handleDeleteCustomer = async (id: number) => {
@@ -142,6 +176,20 @@ const CustomersPage = () => {
         isSubmitting={
           createCustomerMutation.isPending || updateCustomerMutation.isPending
         }
+      />
+      <CustomerFormDialog
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open)
+          if (!open) {
+            setFormData({})
+            setSelectedCustomer(null)
+          }
+        }}
+        formData={formData}
+        setFormData={setFormData}
+        onSubmit={handleDialogSubmit}
+        selectedCustomer={selectedCustomer}
       />
     </div>
   )

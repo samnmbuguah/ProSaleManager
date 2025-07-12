@@ -212,7 +212,6 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       return
     }
     const payload = buildProductPayload()
-    let submitResult
     try {
       if (localImageFile) {
         const formDataToSend = new FormData()
@@ -220,9 +219,9 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
           formDataToSend.append(key, String(value))
         })
         formDataToSend.append('image', localImageFile)
-        submitResult = await onSubmit(e, localImageFile)
+        await onSubmit(e, localImageFile)
       } else {
-        submitResult = await onSubmit(e)
+        await onSubmit(e)
       }
     } catch (err) {
       console.error('[ProductFormDialog] Submit error:', err)

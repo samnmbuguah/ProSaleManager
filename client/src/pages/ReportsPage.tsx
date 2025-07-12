@@ -32,19 +32,19 @@ export default function ReportsPage() {
   const { data: performanceData, isLoading: performanceLoading, error: performanceError } = useProductPerformanceReport()
   const [tab, setTab] = useState('inventory')
 
-  const handleDateRangeChange = (startDate: Date, endDate: Date) => {
+  const handleDateRangeChange = () => {
     // This will be implemented to refetch data with date filters
   }
   
-  const handleSortChange = (sortBy: string) => {
+  const handleSortChange = () => {
     // This will be implemented to sort the data
   }
   
-  const handleSearch = async (query: string) => {
+  const handleSearch = async () => {
     // This will be implemented to search products
   }
   
-  const handleFilter = async (category: string) => {
+  const handleFilter = async () => {
     // This will be implemented to filter by category
   }
 
