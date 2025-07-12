@@ -95,4 +95,10 @@ api.interceptors.response.use(
   }
 )
 
+// Centralized API function to fetch all purchase orders
+export async function fetchPurchaseOrdersApi() {
+  const response = await api.get(API_ENDPOINTS.purchaseOrders.list)
+  return response.data
+}
+
 export { API_ENDPOINTS }
