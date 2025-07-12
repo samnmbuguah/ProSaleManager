@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import { User } from '../models/index.js';
 import { ApiError } from '../utils/api-error.js';
 import { catchAsync } from '../utils/catch-async.js';
 

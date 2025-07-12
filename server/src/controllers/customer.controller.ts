@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Op } from "sequelize";
-import Customer from "../models/Customer";
+import { Customer } from "../models/index.js";
 
 export const searchCustomers = async (req: Request, res: Response) => {
   try {
