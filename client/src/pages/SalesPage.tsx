@@ -29,7 +29,7 @@ import { Badge } from '@/components/ui/badge'
 import { Sale, SaleItem } from '@/types/sale'
 import { api } from '@/lib/api'
 
-export function SalesPage () {
+export function SalesPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const pageSize = 10
@@ -101,133 +101,133 @@ export function SalesPage () {
 
       {isLoading
         ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-          )
-        : (
-        <>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Cashier</TableHead>
-                  <TableHead>Payment Method</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Receipt Status</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {salesData?.sales.map((sale) => (
-                  <TableRow key={sale.id}>
-                    <TableCell>
-                      {format(new Date(sale.createdAt), 'PPp')}
-                    </TableCell>
-                    <TableCell>
-                      {sale.customer?.name || 'Walk-in Customer'}
-                    </TableCell>
-                    <TableCell>
-                      {sale.user?.name || sale.user?.email || 'Unknown User'}
-                    </TableCell>
-                    <TableCell className="capitalize">
-                      {sale.payment_method}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getPaymentStatusColor(sale.status)}>
-                        {sale.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {sale.receipt_status
-                        ? (
-                        <div className="flex gap-2">
-                          <Badge
-                            variant={
-                              sale.receipt_status?.sms ? 'default' : 'outline'
-                            }
-                          >
-                            SMS
-                          </Badge>
-                          <Badge
-                            variant={
-                              sale.receipt_status?.whatsapp
-                                ? 'default'
-                                : 'outline'
-                            }
-                          >
-                            WhatsApp
-                          </Badge>
-                        </div>
-                          )
-                        : (
-                        <span className="text-muted-foreground text-sm">
-                          Not sent
-                        </span>
-                          )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(sale.total_amount)}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        onClick={() => setSelectedSale(sale)}
-                      >
-                        View Details
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
+        )
+        : (
+          <>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Cashier</TableHead>
+                    <TableHead>Payment Method</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Receipt Status</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {salesData?.sales.map((sale) => (
+                    <TableRow key={sale.id}>
+                      <TableCell>
+                        {format(new Date(sale.createdAt), 'PPp')}
+                      </TableCell>
+                      <TableCell>
+                        {sale.customer?.name || 'Walk-in Customer'}
+                      </TableCell>
+                      <TableCell>
+                        {sale.User?.name || sale.User?.email || 'Unknown User'}
+                      </TableCell>
+                      <TableCell className="capitalize">
+                        {sale.payment_method}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getPaymentStatusColor(sale.status)}>
+                          {sale.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {sale.receipt_status
+                          ? (
+                            <div className="flex gap-2">
+                              <Badge
+                                variant={
+                                  sale.receipt_status?.sms ? 'default' : 'outline'
+                                }
+                              >
+                                SMS
+                              </Badge>
+                              <Badge
+                                variant={
+                                  sale.receipt_status?.whatsapp
+                                    ? 'default'
+                                    : 'outline'
+                                }
+                              >
+                                WhatsApp
+                              </Badge>
+                            </div>
+                          )
+                          : (
+                            <span className="text-muted-foreground text-sm">
+                              Not sent
+                            </span>
+                          )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(sale.total_amount)}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          onClick={() => setSelectedSale(sale)}
+                        >
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
 
-          <Pagination className="mt-4">
-            <PaginationContent>
-              <PaginationItem>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-              </PaginationItem>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
-                  <PaginationItem key={page}>
-                    <PaginationLink
-                      onClick={() => setCurrentPage(page)}
-                      isActive={currentPage === page}
-                    >
-                      {page}
-                    </PaginationLink>
-                  </PaginationItem>
-                )
-              )}
-              <PaginationItem>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </>
-          )}
+            <Pagination className="mt-4">
+              <PaginationContent>
+                <PaginationItem>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                </PaginationItem>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(page)}
+                        isActive={currentPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                )}
+                <PaginationItem>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </>
+        )}
 
       <Dialog
         open={!!selectedSale}
@@ -297,8 +297,8 @@ export function SalesPage () {
                   <p>Date: {format(new Date(selectedSale.createdAt), 'PPp')}</p>
                   <p>
                     Cashier:{' '}
-                    {selectedSale.user?.name ||
-                      selectedSale.user?.email ||
+                    {selectedSale.User?.name ||
+                      selectedSale.User?.email ||
                       'Unknown User'}
                   </p>
                   {selectedSale.status && <p>Status: {selectedSale.status}</p>}
@@ -311,44 +311,46 @@ export function SalesPage () {
                 <h3 className="font-semibold mb-2">Items</h3>
                 {isLoadingSaleItems
                   ? (
-                  <div className="flex items-center justify-center py-4">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  </div>
-                    )
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </div>
+                  )
                   : (
-                  <div className="rounded-md border overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Product</TableHead>
-                          <TableHead>Product Number</TableHead>
-                          <TableHead className="text-right">
-                            Unit Price
-                          </TableHead>
-                          <TableHead className="text-right">Quantity</TableHead>
-                          <TableHead className="text-right">Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedSale.items?.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>{item.product.name}</TableCell>
-                            <TableCell>{item.product.sku || 'N/A'}</TableCell>
-                            <TableCell className="text-right">
-                              {formatCurrency(item.unit_price)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {item.quantity}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {formatCurrency(item.total)}
-                            </TableCell>
+                    <div className="rounded-md border overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Product</TableHead>
+                            <TableHead>Product Number</TableHead>
+                            <TableHead className="text-right">
+                              Unit Price
+                            </TableHead>
+                            <TableHead className="text-right">Quantity</TableHead>
+                            <TableHead className="text-right">Total</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                    )}
+                        </TableHeader>
+                        <TableBody>
+                          {selectedSale.items?.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell>
+                                {item.Product?.name || 'Unknown Product'}
+                              </TableCell>
+                              <TableCell>{item.Product?.sku || 'N/A'}</TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(item.unit_price)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {item.quantity}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(item.total)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
               </div>
             </div>
           )}
