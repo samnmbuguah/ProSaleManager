@@ -128,7 +128,7 @@ export function SalesPage() {
                         {format(new Date(sale.createdAt), 'PPp')}
                       </TableCell>
                       <TableCell>
-                        {sale.customer?.name || 'Walk-in Customer'}
+                        {sale.Customer?.name || 'Walk-in Customer'}
                       </TableCell>
                       <TableCell>
                         {sale.User?.name || sale.User?.email || 'Unknown User'}
@@ -244,15 +244,15 @@ export function SalesPage() {
               <div className="flex flex-col md:grid md:grid-cols-3 gap-6 md:gap-4 border-b pb-6">
                 <div>
                   <h3 className="font-semibold mb-2">Customer Information</h3>
-                  <p>{selectedSale.customer?.name || 'Walk-in Customer'}</p>
-                  {selectedSale.customer?.email && (
+                  <p>{selectedSale.Customer?.name || 'Walk-in Customer'}</p>
+                  {selectedSale.Customer?.email && (
                     <p className="text-sm text-muted-foreground">
-                      {selectedSale.customer.email}
+                      {selectedSale.Customer.email}
                     </p>
                   )}
-                  {selectedSale.customer?.phone && (
+                  {selectedSale.Customer?.phone && (
                     <p className="text-sm text-muted-foreground">
-                      {selectedSale.customer.phone}
+                      {selectedSale.Customer.phone}
                     </p>
                   )}
                 </div>
