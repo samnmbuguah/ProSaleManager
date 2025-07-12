@@ -1,12 +1,12 @@
 import express from "express";
 import { Op } from "sequelize";
 import Customer from "../models/Customer.js";
-import { protect } from "../middleware/auth.middleware.js";
+import { requireAuth } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
 // Apply authentication middleware to all customer routes
-router.use(protect);
+router.use(requireAuth);
 
 // Get all customers
 router.get("/", async (req, res) => {

@@ -1,5 +1,5 @@
 import express from "express";
-import { protect } from "../middleware/auth.middleware.js";
+import { requireAuth } from "../middleware/auth.middleware.js";
 import {
   getExpenses,
   createExpense,
@@ -10,7 +10,7 @@ import {
 const router = express.Router();
 
 // Authenticate all expense routes
-router.use(protect);
+router.use(requireAuth);
 
 // Get all expenses with pagination
 router.get("/", getExpenses);
