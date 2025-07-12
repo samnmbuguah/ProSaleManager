@@ -1,17 +1,17 @@
-import { useState } from "react";
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import type { CartItem } from "@/types/pos";
+  DialogTitle
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import type { CartItem } from '@/types/pos'
 
 export interface PaymentDetails {
-  paymentMethod: "cash" | "mpesa";
+  paymentMethod: 'cash' | 'mpesa';
   amountPaid: number;
   change: number;
 }
@@ -23,35 +23,35 @@ interface PaymentDialogProps {
   onProcessPayment: (details: PaymentDetails) => void;
 }
 
-export function PaymentDialog({
+export function PaymentDialog ({
   isOpen,
   onClose,
   cartItems,
-  onProcessPayment,
+  onProcessPayment
 }: PaymentDialogProps) {
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "mpesa">("cash");
-  const [amountPaid, setAmountPaid] = useState<string>("");
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'mpesa'>('cash')
+  const [amountPaid, setAmountPaid] = useState<string>('')
 
-  const total = cartItems.reduce((sum, item) => sum + item.total, 0);
+  const total = cartItems.reduce((sum, item) => sum + item.total, 0)
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const paid = paymentMethod === "mpesa" ? total : Number(amountPaid);
+    e.preventDefault()
+    const paid = paymentMethod === 'mpesa' ? total : Number(amountPaid)
     onProcessPayment({
       paymentMethod,
       amountPaid: paid,
-      change: Math.max(0, paid - total),
-    });
-  };
+      change: Math.max(0, paid - total)
+    })
+  }
 
-  const handlePaymentMethodSelect = (method: "cash" | "mpesa") => {
-    setPaymentMethod(method);
-    if (method === "mpesa") {
-      setAmountPaid(total.toString());
+  const handlePaymentMethodSelect = (method: 'cash' | 'mpesa') => {
+    setPaymentMethod(method)
+    if (method === 'mpesa') {
+      setAmountPaid(total.toString())
     } else {
-      setAmountPaid("");
+      setAmountPaid('')
     }
-  };
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={() => onClose()}>
@@ -63,17 +63,17 @@ export function PaymentDialog({
           <div className="flex gap-2">
             <Button
               type="button"
-              variant={paymentMethod === "cash" ? "default" : "outline"}
+              variant={paymentMethod === 'cash' ? 'default' : 'outline'}
               className="flex-1"
-              onClick={() => handlePaymentMethodSelect("cash")}
+              onClick={() => handlePaymentMethodSelect('cash')}
             >
               Cash
             </Button>
             <Button
               type="button"
-              variant={paymentMethod === "mpesa" ? "default" : "outline"}
+              variant={paymentMethod === 'mpesa' ? 'default' : 'outline'}
               className="flex-1"
-              onClick={() => handlePaymentMethodSelect("mpesa")}
+              onClick={() => handlePaymentMethodSelect('mpesa')}
             >
               M-Pesa
             </Button>
@@ -89,7 +89,7 @@ export function PaymentDialog({
             />
           </div>
 
-          {paymentMethod === "cash" && (
+          {paymentMethod === 'cash' && (
             <div>
               <Label>Amount Paid</Label>
               <Input
@@ -104,7 +104,7 @@ export function PaymentDialog({
             </div>
           )}
 
-          {paymentMethod === "cash" && amountPaid && (
+          {paymentMethod === 'cash' && amountPaid && (
             <div>
               <Label>Change</Label>
               <Input
@@ -120,7 +120,7 @@ export function PaymentDialog({
             type="submit"
             className="w-full"
             disabled={
-              paymentMethod === "cash" &&
+              paymentMethod === 'cash' &&
               (!amountPaid || Number(amountPaid) < total)
             }
           >
@@ -129,5 +129,5 @@ export function PaymentDialog({
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 export interface ReceiptSettings {
   businessName: string;
@@ -9,8 +9,8 @@ export interface ReceiptSettings {
   website: string;
   thankYouMessage: string;
   showLogo: boolean;
-  fontSize: "small" | "medium" | "large";
-  paperSize: "standard" | "thermal";
+  fontSize: 'small' | 'medium' | 'large';
+  paperSize: 'standard' | 'thermal';
 }
 
 export interface ReceiptTemplate {
@@ -30,16 +30,16 @@ interface ReceiptSettingsStore {
 }
 
 const defaultSettings: ReceiptSettings = {
-  businessName: "My Business",
-  address: "",
-  phone: "",
-  email: "",
-  website: "",
-  thankYouMessage: "Thank you for your business!",
+  businessName: 'My Business',
+  address: '',
+  phone: '',
+  email: '',
+  website: '',
+  thankYouMessage: 'Thank you for your business!',
   showLogo: true,
-  fontSize: "medium",
-  paperSize: "thermal",
-};
+  fontSize: 'medium',
+  paperSize: 'thermal'
+}
 
 export const useReceiptSettings = create<ReceiptSettingsStore>()(
   persist(
@@ -49,39 +49,39 @@ export const useReceiptSettings = create<ReceiptSettingsStore>()(
       activeTemplateId: null,
       updateSettings: (newSettings) =>
         set((state) => ({
-          settings: { ...state.settings, ...newSettings },
+          settings: { ...state.settings, ...newSettings }
         })),
       saveTemplate: (name) =>
         set((state) => {
-          const id = crypto.randomUUID();
+          const id = crypto.randomUUID()
           const newTemplate = {
             id,
             name,
-            settings: { ...state.settings },
-          };
+            settings: { ...state.settings }
+          }
           return {
             templates: [...state.templates, newTemplate],
-            activeTemplateId: id,
-          };
+            activeTemplateId: id
+          }
         }),
       deleteTemplate: (id) =>
         set((state) => ({
           templates: state.templates.filter((t) => t.id !== id),
           activeTemplateId:
-            state.activeTemplateId === id ? null : state.activeTemplateId,
+            state.activeTemplateId === id ? null : state.activeTemplateId
         })),
       loadTemplate: (id) =>
         set((state) => {
-          const template = state.templates.find((t) => t.id === id);
-          if (!template) return state;
+          const template = state.templates.find((t) => t.id === id)
+          if (!template) return state
           return {
             settings: { ...template.settings },
-            activeTemplateId: id,
-          };
-        }),
+            activeTemplateId: id
+          }
+        })
     }),
     {
-      name: "receipt-settings",
-    },
-  ),
-);
+      name: 'receipt-settings'
+    }
+  )
+)

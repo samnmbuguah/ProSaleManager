@@ -3,39 +3,39 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  CardTitle
+} from '@/components/ui/card'
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import type { Expense } from "@/types/expense";
+  TableRow
+} from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Trash2 } from 'lucide-react'
+import type { Expense } from '@/types/expense'
 
 interface ExpenseListProps {
   expenses: Expense[];
   onDeleteExpense: (id: number) => void;
 }
 
-export default function ExpenseList({
+export default function ExpenseList ({
   expenses = [],
-  onDeleteExpense,
+  onDeleteExpense
 }: ExpenseListProps) {
   const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString();
-  };
+    return new Date(dateString).toLocaleDateString()
+  }
 
   const formatAmount = (amount: number): string => {
-    return new Intl.NumberFormat("en-KE", {
-      style: "currency",
-      currency: "KES",
-    }).format(amount);
-  };
+    return new Intl.NumberFormat('en-KE', {
+      style: 'currency',
+      currency: 'KES'
+    }).format(amount)
+  }
 
   if (!Array.isArray(expenses) || expenses.length === 0) {
     return (
@@ -50,7 +50,7 @@ export default function ExpenseList({
           No expenses recorded yet
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
@@ -94,5 +94,5 @@ export default function ExpenseList({
         </Table>
       </CardContent>
     </Card>
-  );
+  )
 }

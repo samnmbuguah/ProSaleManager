@@ -1,27 +1,27 @@
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn } from 'react-hook-form'
 import {
   FormField,
   FormItem,
   FormLabel,
   FormControl,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+  FormMessage
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { PRICE_UNITS } from "@/constants/priceUnits";
-import { type ProductFormData } from "@/types/product";
+  SelectValue
+} from '@/components/ui/select'
+import { PRICE_UNITS } from '@/constants/priceUnits'
+import { type ProductFormData } from '@/types/product'
 
 interface StockSectionProps {
   form: UseFormReturn<ProductFormData>;
 }
 
-export function StockSection({ form }: StockSectionProps) {
+export function StockSection ({ form }: StockSectionProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <FormField
@@ -101,5 +101,5 @@ export function StockSection({ form }: StockSectionProps) {
         )}
       />
     </div>
-  );
+  )
 }

@@ -1,12 +1,12 @@
-import { DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { SupplierSelect } from "./SupplierSelect";
-import { PurchaseOrderItemsList } from "./PurchaseOrderItemsList";
-import type { Supplier } from "@/types/supplier";
-import type { Product } from "@/types/product";
-import type { PurchaseOrderItem, PurchaseOrderFormData } from "@/types/purchase-order";
-import { Button } from "@/components/ui/button";
+import { DialogFooter } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { SupplierSelect } from './SupplierSelect'
+import { PurchaseOrderItemsList } from './PurchaseOrderItemsList'
+import type { Supplier } from '@/types/supplier'
+import type { Product } from '@/types/product'
+import type { PurchaseOrderItem, PurchaseOrderFormData } from '@/types/purchase-order'
+import { Button } from '@/components/ui/button'
 
 interface PurchaseOrderFormProps {
   suppliers: Supplier[];
@@ -23,7 +23,7 @@ interface PurchaseOrderFormProps {
   submitDisabled: boolean;
 }
 
-export function PurchaseOrderForm({
+export function PurchaseOrderForm ({
   suppliers,
   suppliersLoading,
   products,
@@ -35,7 +35,7 @@ export function PurchaseOrderForm({
   onRemoveItem,
   onAddItem,
   onSubmit,
-  submitDisabled,
+  submitDisabled
 }: PurchaseOrderFormProps) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -79,5 +79,5 @@ export function PurchaseOrderForm({
         </Button>
       </DialogFooter>
     </form>
-  );
+  )
 }

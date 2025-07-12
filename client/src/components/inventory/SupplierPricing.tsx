@@ -1,91 +1,91 @@
-import { useState } from "react";
-import type { Product } from "@/types/product";
-import type { SupplierFormData } from "@/types/supplier";
-import type { ProductSupplierFormData } from "@/types/product-supplier";
-import { useSuppliers } from "../../hooks/use-suppliers";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react'
+import type { Product } from '@/types/product'
+import type { SupplierFormData } from '@/types/supplier'
+import type { ProductSupplierFormData } from '@/types/product-supplier'
+import { useSuppliers } from '../../hooks/use-suppliers'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  DialogTitle
+} from '@/components/ui/dialog'
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { supplierSchema } from "@/types/supplier";
-import { productSupplierSchema } from "@/types/product-supplier";
+  FormMessage
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { supplierSchema } from '@/types/supplier'
+import { productSupplierSchema } from '@/types/product-supplier'
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Plus } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
+  TableRow
+} from '@/components/ui/table'
+import { Plus } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
 
 interface SupplierPricingProps {
   product: Product;
 }
 
-export function SupplierPricing({ product }: SupplierPricingProps) {
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isLinkFormOpen, setIsLinkFormOpen] = useState(false);
+export function SupplierPricing ({ product }: SupplierPricingProps) {
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [isLinkFormOpen, setIsLinkFormOpen] = useState(false)
   const {
     suppliers,
     productSuppliers,
     createSupplier,
     linkProductToSupplier,
     isCreating,
-    isLinking,
-  } = useSuppliers();
+    isLinking
+  } = useSuppliers()
 
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-    },
-  });
+      name: '',
+      email: '',
+      phone: '',
+      address: ''
+    }
+  })
 
   const linkForm = useForm<ProductSupplierFormData>({
     resolver: zodResolver(productSupplierSchema),
     defaultValues: {
       product_id: String(product.id),
-      supplier_id: "",
-      cost_price: "",
-      is_preferred: "false",
-    },
-  });
+      supplier_id: '',
+      cost_price: '',
+      is_preferred: 'false'
+    }
+  })
 
   const onSubmit = async (data: SupplierFormData) => {
-    await createSupplier(data);
-    setIsFormOpen(false);
-    form.reset();
-  };
+    await createSupplier(data)
+    setIsFormOpen(false)
+    form.reset()
+  }
 
   const onLinkSubmit = async (data: ProductSupplierFormData) => {
-    await linkProductToSupplier(data);
-    setIsLinkFormOpen(false);
-    linkForm.reset();
-  };
+    await linkProductToSupplier(data)
+    setIsLinkFormOpen(false)
+    linkForm.reset()
+  }
 
   const productSuppliersList =
     productSuppliers?.filter(
-      (ps) => Number(ps.product_id) === Number(product.id),
-    ) || [];
+      (ps) => Number(ps.product_id) === Number(product.id)
+    ) || []
 
   return (
     <div className="space-y-4">
@@ -116,14 +116,14 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
             <TableRow key={ps.id}>
               <TableCell>
                 {suppliers?.find((s) => s.id === Number(ps.supplier_id))
-                  ?.name || "Unknown Supplier"}
+                  ?.name || 'Unknown Supplier'}
               </TableCell>
               <TableCell>KSh {Number(ps.cost_price).toFixed(2)}</TableCell>
-              <TableCell>{ps.is_preferred ? "Yes" : "No"}</TableCell>
+              <TableCell>{ps.is_preferred ? 'Yes' : 'No'}</TableCell>
               <TableCell>
                 {ps.last_supply_date
                   ? new Date(ps.last_supply_date).toLocaleDateString()
-                  : "Never"}
+                  : 'Never'}
               </TableCell>
             </TableRow>
           ))}
@@ -144,7 +144,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                   <FormItem>
                     <FormLabel>Name</FormLabel>
                     <FormControl>
-                      <Input {...field} value={field.value || ""} />
+                      <Input {...field} value={field.value || ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -160,7 +160,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                       <Input
                         type="email"
                         {...field}
-                        value={field.value || ""}
+                        value={field.value || ''}
                       />
                     </FormControl>
                     <FormMessage />
@@ -174,7 +174,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input {...field} value={field.value || ""} />
+                      <Input {...field} value={field.value || ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -187,7 +187,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                   <FormItem>
                     <FormLabel>Address</FormLabel>
                     <FormControl>
-                      <Input {...field} value={field.value || ""} />
+                      <Input {...field} value={field.value || ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -223,7 +223,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                         className="w-full p-2 border rounded"
                         onChange={(e) =>
                           field.onChange(
-                            e.target.value ? Number(e.target.value) : undefined,
+                            e.target.value ? Number(e.target.value) : undefined
                           )
                         }
                       >
@@ -250,7 +250,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                         type="number"
                         step="0.01"
                         {...field}
-                        value={field.value || ""}
+                        value={field.value || ''}
                       />
                     </FormControl>
                     <FormMessage />
@@ -264,7 +264,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                   <FormItem className="flex flex-row items-center space-x-2">
                     <FormControl>
                       <Checkbox
-                        checked={field.value === "true"}
+                        checked={field.value === 'true'}
                         onCheckedChange={(checked) =>
                           field.onChange(String(checked))
                         }
@@ -283,5 +283,5 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }

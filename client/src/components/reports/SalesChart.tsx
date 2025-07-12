@@ -6,11 +6,11 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
-} from "recharts";
-import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+  Legend
+} from 'recharts'
+import { format } from 'date-fns'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 
 interface SalesData {
   date: string;
@@ -21,45 +21,45 @@ interface SalesData {
 
 interface SalesChartProps {
   data: SalesData[];
-  period: "today" | "week" | "month" | "year";
-  onPeriodChange: (period: "today" | "week" | "month" | "year") => void;
+  period: 'today' | 'week' | 'month' | 'year';
+  onPeriodChange: (period: 'today' | 'week' | 'month' | 'year') => void;
 }
 
 // Format number as KSh currency
-function formatCurrency(amount: number): string {
-  return `KSh ${amount.toLocaleString("en-KE", {
+function formatCurrency (amount: number): string {
+  return `KSh ${amount.toLocaleString('en-KE', {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+    maximumFractionDigits: 2
+  })}`
 }
 
-export function SalesChart({
+export function SalesChart ({
   data = [],
   period,
-  onPeriodChange,
+  onPeriodChange
 }: SalesChartProps) {
   const getDateFormat = (period: string) => {
     switch (period) {
-      case "today":
-        return "HH:mm";
-      case "week":
-        return "EEE";
-      case "month":
-        return "MMM d";
-      case "year":
-        return "MMM";
+      case 'today':
+        return 'HH:mm'
+      case 'week':
+        return 'EEE'
+      case 'month':
+        return 'MMM d'
+      case 'year':
+        return 'MMM'
       default:
-        return "HH:mm";
+        return 'HH:mm'
     }
-  };
+  }
 
   // Add proper type checking and default value
   const chartData = Array.isArray(data)
     ? data.map((sale) => ({
-        ...sale,
-        date: format(new Date(sale.date), getDateFormat(period)),
-      }))
-    : [];
+      ...sale,
+      date: format(new Date(sale.date), getDateFormat(period))
+    }))
+    : []
 
   if (chartData.length === 0) {
     return (
@@ -68,29 +68,29 @@ export function SalesChart({
           <h2 className="text-lg font-semibold">Sales Overview</h2>
           <div className="flex gap-2">
             <Button
-              variant={period === "today" ? "default" : "outline"}
-              onClick={() => onPeriodChange("today")}
+              variant={period === 'today' ? 'default' : 'outline'}
+              onClick={() => onPeriodChange('today')}
               size="sm"
             >
               Today
             </Button>
             <Button
-              variant={period === "week" ? "default" : "outline"}
-              onClick={() => onPeriodChange("week")}
+              variant={period === 'week' ? 'default' : 'outline'}
+              onClick={() => onPeriodChange('week')}
               size="sm"
             >
               This Week
             </Button>
             <Button
-              variant={period === "month" ? "default" : "outline"}
-              onClick={() => onPeriodChange("month")}
+              variant={period === 'month' ? 'default' : 'outline'}
+              onClick={() => onPeriodChange('month')}
               size="sm"
             >
               This Month
             </Button>
             <Button
-              variant={period === "year" ? "default" : "outline"}
-              onClick={() => onPeriodChange("year")}
+              variant={period === 'year' ? 'default' : 'outline'}
+              onClick={() => onPeriodChange('year')}
               size="sm"
             >
               This Year
@@ -103,7 +103,7 @@ export function SalesChart({
           </p>
         </div>
       </Card>
-    );
+    )
   }
 
   return (
@@ -112,29 +112,29 @@ export function SalesChart({
         <h2 className="text-lg font-semibold">Sales Overview</h2>
         <div className="flex gap-2">
           <Button
-            variant={period === "today" ? "default" : "outline"}
-            onClick={() => onPeriodChange("today")}
+            variant={period === 'today' ? 'default' : 'outline'}
+            onClick={() => onPeriodChange('today')}
             size="sm"
           >
             Today
           </Button>
           <Button
-            variant={period === "week" ? "default" : "outline"}
-            onClick={() => onPeriodChange("week")}
+            variant={period === 'week' ? 'default' : 'outline'}
+            onClick={() => onPeriodChange('week')}
             size="sm"
           >
             This Week
           </Button>
           <Button
-            variant={period === "month" ? "default" : "outline"}
-            onClick={() => onPeriodChange("month")}
+            variant={period === 'month' ? 'default' : 'outline'}
+            onClick={() => onPeriodChange('month')}
             size="sm"
           >
             This Month
           </Button>
           <Button
-            variant={period === "year" ? "default" : "outline"}
-            onClick={() => onPeriodChange("year")}
+            variant={period === 'year' ? 'default' : 'outline'}
+            onClick={() => onPeriodChange('year')}
             size="sm"
           >
             This Year
@@ -148,7 +148,7 @@ export function SalesChart({
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
             <YAxis
-              tickFormatter={(value) => `KSh ${value.toLocaleString("en-KE")}`}
+              tickFormatter={(value) => `KSh ${value.toLocaleString('en-KE')}`}
             />
             <Tooltip
               formatter={(value: number) => formatCurrency(value)}
@@ -180,5 +180,5 @@ export function SalesChart({
         </ResponsiveContainer>
       </div>
     </Card>
-  );
+  )
 }

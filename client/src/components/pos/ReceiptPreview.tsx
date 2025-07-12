@@ -1,51 +1,51 @@
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { formatCurrency } from "@/lib/utils";
-import { MessageSquare } from "lucide-react";
-import { FaWhatsapp } from "react-icons/fa";
-import type { ReceiptData } from "@/hooks/use-pos";
-import { useReceiptSettings } from "@/lib/receipt-settings";
+  CardTitle
+} from '@/components/ui/card'
+import { formatCurrency } from '@/lib/utils'
+import { MessageSquare } from 'lucide-react'
+import { FaWhatsapp } from 'react-icons/fa'
+import type { ReceiptData } from '@/hooks/use-pos'
+import { useReceiptSettings } from '@/lib/receipt-settings'
 
 interface ReceiptPreviewProps {
   receipt: ReceiptData;
-  onSend: (method: "whatsapp" | "sms") => Promise<void>;
+  onSend: (method: 'whatsapp' | 'sms') => Promise<void>;
   onClose: () => void;
 }
 
-export function ReceiptPreview({
+export function ReceiptPreview ({
   receipt,
   onSend,
-  onClose,
+  onClose
 }: ReceiptPreviewProps) {
-  const { settings } = useReceiptSettings();
+  const { settings } = useReceiptSettings()
   const fontSize =
-    settings.fontSize === "small"
-      ? "text-sm"
-      : settings.fontSize === "large"
-        ? "text-lg"
-        : "text-base";
+    settings.fontSize === 'small'
+      ? 'text-sm'
+      : settings.fontSize === 'large'
+        ? 'text-lg'
+        : 'text-base'
 
   if (!receipt) {
-    return null;
+    return null
   }
 
   // Format date safely
   const formattedDate = receipt.timestamp
-    ? new Date(receipt.timestamp).toLocaleString("en-KE", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
-    : "Invalid Date";
+    ? new Date(receipt.timestamp).toLocaleString('en-KE', {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    })
+    : 'Invalid Date'
 
   return (
     <Card
-      className={`w-full ${settings.paperSize === "thermal" ? "max-w-[302px]" : "max-w-md"} mx-auto ${fontSize}`}
+      className={`w-full ${settings.paperSize === 'thermal' ? 'max-w-[302px]' : 'max-w-md'} mx-auto ${fontSize}`}
     >
       <CardHeader>
         <CardTitle className="text-center">{settings.businessName}</CardTitle>
@@ -66,7 +66,7 @@ export function ReceiptPreview({
           </div>
         )}
         <div className="text-center text-muted-foreground mt-2">
-          <p>Transaction ID: {receipt.transaction_id || "N/A"}</p>
+          <p>Transaction ID: {receipt.transaction_id || 'N/A'}</p>
           <p>{formattedDate}</p>
         </div>
       </CardHeader>
@@ -93,13 +93,13 @@ export function ReceiptPreview({
                 total: number;
                 unit_type?: string;
               },
-              index: number,
+              index: number
             ) => (
               <div key={index} className="flex justify-between text-sm">
                 <div>
                   <span>{item.quantity}x </span>
                   <span>
-                    {item.name} {item.unit_type ? `(${item.unit_type})` : ""}
+                    {item.name} {item.unit_type ? `(${item.unit_type})` : ''}
                   </span>
                 </div>
                 <div className="text-right">
@@ -107,7 +107,7 @@ export function ReceiptPreview({
                   <div>{formatCurrency(item.total)}</div>
                 </div>
               </div>
-            ),
+            )
           )}
         </div>
 
@@ -117,10 +117,10 @@ export function ReceiptPreview({
             <span>{formatCurrency(receipt.total)}</span>
           </div>
           <div className="text-sm text-muted-foreground">
-            Paid via {receipt.payment_method || "Unknown"}
-            {receipt.payment_method === "cash" && (
+            Paid via {receipt.payment_method || 'Unknown'}
+            {receipt.payment_method === 'cash' && (
               <div className="mt-2">
-                {typeof receipt.cash_amount === "number" && (
+                {typeof receipt.cash_amount === 'number' && (
                   <>
                     <div className="flex justify-between text-sm">
                       <span>Cash Tendered:</span>
@@ -145,14 +145,14 @@ export function ReceiptPreview({
       </CardContent>
 
       <CardFooter className="flex gap-2 justify-end">
-        <Button variant="outline" size="sm" onClick={() => onSend("whatsapp")}>
+        <Button variant="outline" size="sm" onClick={() => onSend('whatsapp')}>
           <FaWhatsapp className="w-4 h-4 mr-2" />
           WhatsApp
           {receipt.receipt_status?.whatsapp && (
             <span className="ml-2 text-green-500">✓</span>
           )}
         </Button>
-        <Button variant="outline" size="sm" onClick={() => onSend("sms")}>
+        <Button variant="outline" size="sm" onClick={() => onSend('sms')}>
           <MessageSquare className="w-4 h-4 mr-2" />
           SMS
           {receipt.receipt_status?.sms && (
@@ -164,5 +164,5 @@ export function ReceiptPreview({
         </Button>
       </CardFooter>
     </Card>
-  );
+  )
 }

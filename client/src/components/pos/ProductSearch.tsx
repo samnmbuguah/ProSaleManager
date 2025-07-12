@@ -1,10 +1,10 @@
-import React, { useState } from "react";
-import type { Product } from "@/types/product";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Search, Package, ShoppingCart } from "lucide-react";
+import React, { useState } from 'react'
+import type { Product } from '@/types/product'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Search, Package, ShoppingCart } from 'lucide-react'
 
 interface ProductSearchProps {
   products: Product[];
@@ -15,28 +15,28 @@ interface ProductSearchProps {
 export const ProductSearch: React.FC<ProductSearchProps> = ({
   products,
   onSelect,
-  searchProducts,
+  searchProducts
 }) => {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('')
 
   const handleSearch = async () => {
     if (search.trim()) {
-      await searchProducts(search);
+      await searchProducts(search)
     }
-  };
+  }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSearch();
+    if (e.key === 'Enter') {
+      handleSearch()
     }
-  };
+  }
 
   const formatPrice = (price: number) => {
-    return `KSh ${price.toLocaleString("en-KE", {
+    return `KSh ${price.toLocaleString('en-KE', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
+      maximumFractionDigits: 2
+    })}`
+  }
 
   return (
     <div className="space-y-4">
@@ -59,14 +59,16 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
 
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {products.length === 0 ? (
+        {products.length === 0
+          ? (
           <div className="col-span-full text-center py-8 text-gray-500">
             <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p>No products found</p>
             <p className="text-sm">Try searching for a product</p>
           </div>
-        ) : (
-          products.map((product) => (
+            )
+          : (
+              products.map((product) => (
             <Card
               key={product.id}
               className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-blue-300"
@@ -80,7 +82,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                       <p className="text-xs text-gray-500">{product.sku}</p>
                     </div>
                     <Badge variant="outline" className="text-xs">
-                      {product.Category?.name || "No Category"}
+                      {product.Category?.name || 'No Category'}
                     </Badge>
                   </div>
 
@@ -107,8 +109,8 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                       size="sm"
                       className="h-6 px-2 text-xs"
                       onClick={(e) => {
-                        e.stopPropagation();
-                        onSelect(product);
+                        e.stopPropagation()
+                        onSelect(product)
                       }}
                     >
                       <ShoppingCart className="h-3 w-3 mr-1" />
@@ -118,9 +120,9 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
+              ))
+            )}
       </div>
     </div>
-  );
-};
+  )
+}

@@ -2,21 +2,21 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  DialogTitle
+} from '@/components/ui/dialog'
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
-import type { Supplier } from "@/types/supplier";
-import { API_ENDPOINTS } from "@/lib/api-endpoints";
-import { api } from "@/lib/api";
+  TableRow
+} from '@/components/ui/table'
+import { useQuery } from '@tanstack/react-query'
+import { Loader2 } from 'lucide-react'
+import type { Supplier } from '@/types/supplier'
+import { API_ENDPOINTS } from '@/lib/api-endpoints'
+import { api } from '@/lib/api'
 
 interface PurchaseOrderDetailsProps {
   orderId: number | null;
@@ -25,40 +25,27 @@ interface PurchaseOrderDetailsProps {
   supplier?: Supplier | null;
 }
 
-interface OrderItem {
-  id: number;
-  quantity: number;
-  buying_price: string;
-  selling_price: string;
-  product: {
-    id: number;
-    name: string;
-    stock_unit: string;
-    quantity: number;
-  };
-}
-
-export function PurchaseOrderDetails({
+export function PurchaseOrderDetails ({
   orderId,
   isOpen,
   onClose,
-  supplier,
+  supplier
 }: PurchaseOrderDetailsProps) {
   const { data: items, isLoading } = useQuery({
-    queryKey: ["purchase-order-items", orderId],
+    queryKey: ['purchase-order-items', orderId],
     queryFn: async () => {
-      const response = await api.get(API_ENDPOINTS.purchaseOrders.items(orderId));
-      return response.data;
+      const response = await api.get(API_ENDPOINTS.purchaseOrders.items(orderId))
+      return response.data
     },
-    enabled: !!orderId,
-  });
+    enabled: !!orderId
+  })
 
   const formatCurrency = (amount: string) => {
-    return `KSh ${Number(amount).toLocaleString("en-KE", {
+    return `KSh ${Number(amount).toLocaleString('en-KE', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
+      maximumFractionDigits: 2
+    })}`
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={() => onClose()}>
@@ -76,11 +63,13 @@ export function PurchaseOrderDetails({
           </div>
         )}
 
-        {isLoading ? (
+        {isLoading
+          ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : (
+            )
+          : (
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -103,7 +92,7 @@ export function PurchaseOrderDetails({
                     <TableCell>{formatCurrency(item.selling_price)}</TableCell>
                     <TableCell>
                       {formatCurrency(
-                        (Number(item.buying_price) * item.quantity).toString(),
+                        (Number(item.buying_price) * item.quantity).toString()
                       )}
                     </TableCell>
                   </TableRow>
@@ -111,8 +100,8 @@ export function PurchaseOrderDetails({
               </TableBody>
             </Table>
           </div>
-        )}
+            )}
       </DialogContent>
     </Dialog>
-  );
+  )
 }

@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { useLoyalty } from "@/hooks/use-loyalty";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState, useEffect } from 'react'
+import { useLoyalty } from '@/hooks/use-loyalty'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 interface LoyaltyPointsSectionProps {
   customerId?: number;
@@ -10,42 +10,42 @@ interface LoyaltyPointsSectionProps {
   onPointsUse: (points: number) => void;
 }
 
-export function LoyaltyPointsSection({
+export function LoyaltyPointsSection ({
   customerId,
   total,
-  onPointsUse,
+  onPointsUse
 }: LoyaltyPointsSectionProps) {
-  const { points, fetchPoints } = useLoyalty();
-  const [pointsToUse, setPointsToUse] = useState(0);
+  const { points, fetchPoints } = useLoyalty()
+  const [pointsToUse, setPointsToUse] = useState(0)
 
   useEffect(() => {
     if (customerId) {
-      fetchPoints(customerId);
+      fetchPoints(customerId)
     }
-  }, [customerId, fetchPoints]);
+  }, [customerId, fetchPoints])
 
   // Each point is worth $1
   const maxPoints = points?.points
     ? Math.min(points.points, Math.floor(total))
-    : 0;
+    : 0
 
   const handlePointsChange = (value: string) => {
-    const numPoints = Number(value);
+    const numPoints = Number(value)
     if (isNaN(numPoints) || numPoints < 0) {
-      setPointsToUse(0);
+      setPointsToUse(0)
     } else if (numPoints > maxPoints) {
-      setPointsToUse(maxPoints);
+      setPointsToUse(maxPoints)
     } else {
-      setPointsToUse(numPoints);
+      setPointsToUse(numPoints)
     }
-  };
+  }
 
   const handleApplyPoints = () => {
-    onPointsUse(pointsToUse);
-  };
+    onPointsUse(pointsToUse)
+  }
 
   if (!customerId || !points) {
-    return null;
+    return null
   }
 
   return (
@@ -64,9 +64,9 @@ export function LoyaltyPointsSection({
         </div>
         <p className="text-sm text-muted-foreground">
           {pointsToUse > 0 &&
-            `This will reduce the total by KSh ${pointsToUse.toLocaleString("en-KE")}`}
+            `This will reduce the total by KSh ${pointsToUse.toLocaleString('en-KE')}`}
         </p>
       </div>
     </div>
-  );
+  )
 }

@@ -1,48 +1,48 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { supplierSchema, type SupplierFormData } from "@/types/supplier";
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { supplierSchema, type SupplierFormData } from '@/types/supplier'
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+  FormMessage
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 interface SupplierFormProps {
   onSubmit: (data: SupplierFormData) => Promise<void>;
   isSubmitting: boolean;
 }
 
-export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
+export function SupplierForm ({ onSubmit, isSubmitting }: SupplierFormProps) {
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      address: "",
-    },
-  });
+      name: '',
+      email: '',
+      phone: '',
+      address: ''
+    }
+  })
 
   const handleSubmit = async (data: SupplierFormData) => {
     try {
-      await onSubmit(data);
+      await onSubmit(data)
     } catch (error) {
       // Don't reset form or close dialog on error
       if (error instanceof Error) {
-        form.setError("email", {
-          type: "manual",
-          message: error.message.includes("email already exists")
-            ? "This email is already registered"
-            : "Failed to create supplier",
-        });
+        form.setError('email', {
+          type: 'manual',
+          message: error.message.includes('email already exists')
+            ? 'This email is already registered'
+            : 'Failed to create supplier'
+        })
       }
     }
-  };
+  }
 
   return (
     <Form {...form}>
@@ -70,7 +70,7 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
               <FormControl>
                 <Input
                   {...field}
-                  value={field.value || ""}
+                  value={field.value || ''}
                   type="email"
                   placeholder="Enter email address"
                 />
@@ -89,7 +89,7 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
               <FormControl>
                 <Input
                   {...field}
-                  value={field.value || ""}
+                  value={field.value || ''}
                   type="tel"
                   placeholder="Enter phone number"
                 />
@@ -108,7 +108,7 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
               <FormControl>
                 <Input
                   {...field}
-                  value={field.value || ""}
+                  value={field.value || ''}
                   placeholder="Enter address"
                 />
               </FormControl>
@@ -118,9 +118,9 @@ export function SupplierForm({ onSubmit, isSubmitting }: SupplierFormProps) {
         />
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Creating..." : "Create Supplier"}
+          {isSubmitting ? 'Creating...' : 'Create Supplier'}
         </Button>
       </form>
     </Form>
-  );
+  )
 }

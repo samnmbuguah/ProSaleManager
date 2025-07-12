@@ -1,27 +1,27 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { customerSchema, type CustomerInsert } from "@/types/customer";
+  FormMessage
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { customerSchema, type CustomerInsert } from '@/types/customer'
 
 const customerSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address").nullable(),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address').nullable(),
   phone: z
     .string()
-    .regex(/^\+?[0-9]{10,}$/, "Phone number must be at least 10 digits")
+    .regex(/^\+?[0-9]{10,}$/, 'Phone number must be at least 10 digits')
     .nullable(),
-  address: z.string().optional(),
-});
+  address: z.string().optional()
+})
 
 interface CustomerFormProps {
   onSubmit: (data: CustomerInsert) => Promise<void>;
@@ -29,20 +29,20 @@ interface CustomerFormProps {
   defaultValues?: Partial<CustomerInsert>;
 }
 
-export function CustomerForm({
+export function CustomerForm ({
   onSubmit,
   isSubmitting = false,
-  defaultValues,
+  defaultValues
 }: CustomerFormProps) {
   const form = useForm<CustomerInsert>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
-      name: defaultValues?.name || "",
+      name: defaultValues?.name || '',
       email: defaultValues?.email || null,
       phone: defaultValues?.phone || null,
-      address: defaultValues?.address || "",
-    },
-  });
+      address: defaultValues?.address || ''
+    }
+  })
 
   return (
     <Form {...form}>
@@ -54,7 +54,7 @@ export function CustomerForm({
             <FormItem>
               <FormLabel>Customer Name</FormLabel>
               <FormControl>
-                <Input {...field} value={field.value || ""} />
+                <Input {...field} value={field.value || ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -70,7 +70,7 @@ export function CustomerForm({
               <FormControl>
                 <Input
                   type="email"
-                  value={value || ""}
+                  value={value || ''}
                   onChange={(e) => onChange(e.target.value || null)}
                   {...field}
                 />
@@ -88,7 +88,7 @@ export function CustomerForm({
               <FormLabel>Phone Number</FormLabel>
               <FormControl>
                 <Input
-                  value={value || ""}
+                  value={value || ''}
                   onChange={(e) => onChange(e.target.value || null)}
                   placeholder="+254700000000"
                   {...field}
@@ -106,7 +106,7 @@ export function CustomerForm({
             <FormItem>
               <FormLabel>Address</FormLabel>
               <FormControl>
-                <Input {...field} value={field.value || ""} />
+                <Input {...field} value={field.value || ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -114,9 +114,9 @@ export function CustomerForm({
         />
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Adding..." : "Add Customer"}
+          {isSubmitting ? 'Adding...' : 'Add Customer'}
         </Button>
       </form>
     </Form>
-  );
+  )
 }

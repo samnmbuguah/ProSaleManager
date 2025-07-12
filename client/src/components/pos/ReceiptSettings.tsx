@@ -1,29 +1,29 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { useReceiptSettings } from "@/lib/receipt-settings";
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
+import { useReceiptSettings } from '@/lib/receipt-settings'
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  DialogTrigger
+} from '@/components/ui/dialog'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue
+} from '@/components/ui/select'
 
-export function ReceiptSettings() {
+export function ReceiptSettings () {
   const {
     settings,
     updateSettings,
@@ -31,18 +31,18 @@ export function ReceiptSettings() {
     saveTemplate,
     deleteTemplate,
     loadTemplate,
-    activeTemplateId,
-  } = useReceiptSettings();
-  const [newTemplateName, setNewTemplateName] = useState("");
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
+    activeTemplateId
+  } = useReceiptSettings()
+  const [newTemplateName, setNewTemplateName] = useState('')
+  const [showSaveDialog, setShowSaveDialog] = useState(false)
 
   const handleSaveTemplate = () => {
     if (newTemplateName.trim()) {
-      saveTemplate(newTemplateName.trim());
-      setNewTemplateName("");
-      setShowSaveDialog(false);
+      saveTemplate(newTemplateName.trim())
+      setNewTemplateName('')
+      setShowSaveDialog(false)
     }
-  };
+  }
 
   return (
     <Card>
@@ -52,7 +52,7 @@ export function ReceiptSettings() {
       <CardContent className="space-y-6">
         <div className="flex items-center gap-4 mb-6">
           <Select
-            value={activeTemplateId || ""}
+            value={activeTemplateId || ''}
             onValueChange={(value) => value && loadTemplate(value)}
           >
             <SelectTrigger className="w-[200px]">
@@ -182,7 +182,7 @@ export function ReceiptSettings() {
               value={settings.fontSize}
               onValueChange={(value) =>
                 updateSettings({
-                  fontSize: value as "small" | "medium" | "large",
+                  fontSize: value as 'small' | 'medium' | 'large'
                 })
               }
             >
@@ -206,7 +206,7 @@ export function ReceiptSettings() {
             <RadioGroup
               value={settings.paperSize}
               onValueChange={(value) =>
-                updateSettings({ paperSize: value as "standard" | "thermal" })
+                updateSettings({ paperSize: value as 'standard' | 'thermal' })
               }
             >
               <div className="flex items-center space-x-2">
@@ -222,5 +222,5 @@ export function ReceiptSettings() {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

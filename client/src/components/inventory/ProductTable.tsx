@@ -1,28 +1,28 @@
-import { useState } from "react";
+import { useState } from 'react'
 import type {
   Product,
   StockUnitType,
   PriceUnit,
-  ProductFormData,
-} from "@/types/product";
+  ProductFormData
+} from '@/types/product'
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+  TableRow
+} from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { ProductForm } from "./ProductForm";
-import { Settings, Edit } from "lucide-react";
+  DialogTitle
+} from '@/components/ui/dialog'
+import { ProductForm } from './ProductForm'
+import { Settings, Edit } from 'lucide-react'
 
 export type ProductWithPricing = Product & {
   price_units?: PriceUnit[];
@@ -37,54 +37,54 @@ interface ProductTableProps {
   ) => Promise<void>;
 }
 
-export function ProductTable({
+export function ProductTable ({
   products = [],
   isLoading,
-  onUpdateProduct,
+  onUpdateProduct
 }: ProductTableProps) {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>Loading...</div>
   }
 
   if (!Array.isArray(products)) {
-    return <div>No products found</div>;
+    return <div>No products found</div>
   }
 
   const getStockStatus = (product: Product) => {
     if (product.quantity <= (product.min_stock || 0)) {
-      return { label: "Low Stock", variant: "destructive" as const };
+      return { label: 'Low Stock', variant: 'destructive' as const }
     }
     if (product.quantity >= (product.max_stock || Infinity)) {
-      return { label: "Overstocked", variant: "destructive" as const };
+      return { label: 'Overstocked', variant: 'destructive' as const }
     }
-    return { label: "In Stock", variant: "default" as const };
-  };
+    return { label: 'In Stock', variant: 'default' as const }
+  }
 
   const calculateProfitMargin = (
     buyingPrice: number | string,
-    sellingPrice: number | string,
+    sellingPrice: number | string
   ) => {
-    const buying = Number(buyingPrice);
-    const selling = Number(sellingPrice);
-    if (buying <= 0) return "N/A";
-    return (((selling - buying) / buying) * 100).toFixed(1) + "%";
-  };
+    const buying = Number(buyingPrice)
+    const selling = Number(sellingPrice)
+    if (buying <= 0) return 'N/A'
+    return (((selling - buying) / buying) * 100).toFixed(1) + '%'
+  }
 
   const getDefaultPricing = (product: Product) => {
     const defaultUnit = product.price_units?.find(
-      (unit: PriceUnit) => unit.is_default,
-    );
+      (unit: PriceUnit) => unit.is_default
+    )
     return (
       defaultUnit || {
-        buying_price: "0",
-        selling_price: "0",
-        unit_type: product.stock_unit,
+        buying_price: '0',
+        selling_price: '0',
+        unit_type: product.stock_unit
       }
-    );
-  };
+    )
+  }
 
   return (
     <>
@@ -105,7 +105,7 @@ export function ProductTable({
           </TableHeader>
           <TableBody>
             {products.map((product) => {
-              const defaultPricing = getDefaultPricing(product);
+              const defaultPricing = getDefaultPricing(product)
               return (
                 <TableRow key={product.id}>
                   <TableCell className="font-medium">{product.name}</TableCell>
@@ -113,12 +113,12 @@ export function ProductTable({
                   <TableCell>{product.category}</TableCell>
                   <TableCell>{product.stock_unit}</TableCell>
                   <TableCell>
-                    {`KSh ${Number(defaultPricing.buying_price).toLocaleString("en-KE")} / KSh ${Number(defaultPricing.selling_price).toLocaleString("en-KE")}`}
+                    {`KSh ${Number(defaultPricing.buying_price).toLocaleString('en-KE')} / KSh ${Number(defaultPricing.selling_price).toLocaleString('en-KE')}`}
                   </TableCell>
                   <TableCell>
                     {calculateProfitMargin(
                       defaultPricing.buying_price,
-                      defaultPricing.selling_price,
+                      defaultPricing.selling_price
                     )}
                   </TableCell>
                   <TableCell>{product.quantity}</TableCell>
@@ -148,7 +148,7 @@ export function ProductTable({
                     </div>
                   </TableCell>
                 </TableRow>
-              );
+              )
             })}
           </TableBody>
         </Table>
@@ -167,7 +167,7 @@ export function ProductTable({
               initialData={{
                 name: editingProduct.name,
                 sku: editingProduct.sku,
-                category: editingProduct.category || "",
+                category: editingProduct.category || '',
                 quantity: Number(editingProduct.quantity),
                 min_stock: editingProduct.min_stock || 0,
                 max_stock: editingProduct.max_stock || 0,
@@ -178,13 +178,13 @@ export function ProductTable({
                   quantity: Number(unit.quantity),
                   buying_price: String(unit.buying_price),
                   selling_price: String(unit.selling_price),
-                  is_default: Boolean(unit.is_default),
-                })),
+                  is_default: Boolean(unit.is_default)
+                }))
               }}
               onSubmit={async (data: ProductFormData) => {
                 if (onUpdateProduct && editingProduct.id) {
-                  await onUpdateProduct(editingProduct.id, data);
-                  setEditingProduct(null);
+                  await onUpdateProduct(editingProduct.id, data)
+                  setEditingProduct(null)
                 }
               }}
               isSubmitting={false}
@@ -209,10 +209,10 @@ export function ProductTable({
                 <div>
                   <h3 className="font-medium">Stock Information</h3>
                   <p>Current Stock: {selectedProduct.quantity}</p>
-                  <p>Minimum Stock: {selectedProduct.min_stock || "Not set"}</p>
-                  <p>Maximum Stock: {selectedProduct.max_stock || "Not set"}</p>
+                  <p>Minimum Stock: {selectedProduct.min_stock || 'Not set'}</p>
+                  <p>Maximum Stock: {selectedProduct.max_stock || 'Not set'}</p>
                   <p>
-                    Reorder Point: {selectedProduct.reorder_point || "Not set"}
+                    Reorder Point: {selectedProduct.reorder_point || 'Not set'}
                   </p>
                 </div>
                 <div>
@@ -220,7 +220,7 @@ export function ProductTable({
                   {selectedProduct.price_units?.map((unit: PriceUnit) => (
                     <div key={unit.unit_type} className="mb-2">
                       <p className="capitalize">
-                        {unit.unit_type.replace("_", " ")}:
+                        {unit.unit_type.replace('_', ' ')}:
                       </p>
                       <p className="ml-4">
                         Buy: KSh {Number(unit.buying_price).toFixed(2)}
@@ -229,10 +229,10 @@ export function ProductTable({
                         Sell: KSh {Number(unit.selling_price).toFixed(2)}
                       </p>
                       <p className="ml-4">
-                        Margin:{" "}
+                        Margin:{' '}
                         {calculateProfitMargin(
                           unit.buying_price,
-                          unit.selling_price,
+                          unit.selling_price
                         )}
                       </p>
                     </div>
@@ -244,5 +244,5 @@ export function ProductTable({
         </DialogContent>
       </Dialog>
     </>
-  );
+  )
 }

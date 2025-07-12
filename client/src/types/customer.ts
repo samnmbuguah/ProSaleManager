@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod'
 
 export interface Customer {
   id: number;
@@ -20,9 +20,9 @@ export interface CustomerInsert {
 }
 
 export const customerSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, 'Name is required'),
   email: z.string().email().nullable(),
-  phone: z.string().min(1, "Phone is required"),
+  phone: z.string().min(1, 'Phone is required'),
   address: z.string().nullable(),
-  notes: z.string().nullable(),
-});
+  notes: z.string().nullable()
+})

@@ -1,21 +1,21 @@
-import type { Product } from "@/types/schema";
+import type { Product } from '@/types/schema'
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+  TableRow
+} from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectValue
+} from '@/components/ui/select'
 
 interface InventoryStatusProps {
   products: Product[];
@@ -23,34 +23,34 @@ interface InventoryStatusProps {
   onFilter: (category: string) => void;
 }
 
-export default function InventoryStatus({
+export default function InventoryStatus ({
   products,
   onSearch,
-  onFilter,
+  onFilter
 }: InventoryStatusProps) {
   const getStockStatus = (quantity: number) => {
-    if (quantity <= 0) return { label: "Out of Stock", variant: "destructive" };
-    if (quantity < 10) return { label: "Low Stock", variant: "warning" };
-    return { label: "In Stock", variant: "success" };
-  };
+    if (quantity <= 0) return { label: 'Out of Stock', variant: 'destructive' }
+    if (quantity < 10) return { label: 'Low Stock', variant: 'warning' }
+    return { label: 'In Stock', variant: 'success' }
+  }
 
   const categories = Array.from(
-    new Set(products.map((p) => p.category).filter(Boolean)),
-  );
+    new Set(products.map((p) => p.category).filter(Boolean))
+  )
 
   const totalValue = products.reduce(
     (sum, product) => sum + product.price * product.quantity,
-    0,
-  );
+    0
+  )
 
   const handleFilterChange = (value: string) => {
-    onFilter(value === "all" ? "" : value);
-  };
+    onFilter(value === 'all' ? '' : value)
+  }
 
   const formatCurrency = (amount: number | null | undefined) => {
-    if (amount === null || amount === undefined) return "KSh 0.00";
-    return `KSh ${Number(amount).toFixed(2)}`;
-  };
+    if (amount === null || amount === undefined) return 'KSh 0.00'
+    return `KSh ${Number(amount).toFixed(2)}`
+  }
 
   return (
     <div className="space-y-6">
@@ -63,7 +63,7 @@ export default function InventoryStatus({
         </div>
         <div className="text-right">
           <p className="text-lg">
-            Total Value:{" "}
+            Total Value:{' '}
             <span className="font-bold">{formatCurrency(totalValue)}</span>
           </p>
         </div>
@@ -105,13 +105,13 @@ export default function InventoryStatus({
         </TableHeader>
         <TableBody>
           {products.map((product) => {
-            const status = getStockStatus(product.quantity);
-            const value = product.price * product.quantity;
+            const status = getStockStatus(product.quantity)
+            const value = product.price * product.quantity
             return (
               <TableRow key={product.id}>
                 <TableCell>{product.name}</TableCell>
                 <TableCell>{product.sku}</TableCell>
-                <TableCell>{product.category || "Uncategorized"}</TableCell>
+                <TableCell>{product.category || 'Uncategorized'}</TableCell>
                 <TableCell className="text-right">
                   {formatCurrency(product.price)}
                 </TableCell>
@@ -125,10 +125,10 @@ export default function InventoryStatus({
                   {formatCurrency(value)}
                 </TableCell>
               </TableRow>
-            );
+            )
           })}
         </TableBody>
       </Table>
     </div>
-  );
+  )
 }
