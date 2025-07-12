@@ -180,8 +180,13 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
     try {
       // Validate form data
       const validated = purchaseOrderSchema.parse(formData);
+      // Ensure each item has unit_price set to buying_price
+      const itemsWithUnitPrice = validated.items.map(item => ({
+        ...item,
+        unit_price: item.buying_price ?? 0,
+      }));
       // Submit to backend
-      await api.post('/purchase-orders', validated);
+      await api.post('/purchase-orders', { ...validated, items: itemsWithUnitPrice });
       toast({ title: 'Success', description: 'Purchase order created successfully.' });
       setIsAddDialogOpen(false);
       setFormData({ items: [], supplier_id: '', expected_delivery_date: '', notes: '' });

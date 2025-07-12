@@ -33,7 +33,7 @@ router.post("/", async (req, res) => {
 
     // Calculate total amount
     const total_amount = items.reduce(
-      (sum, item) => sum + item.quantity * item.unit_price,
+      (sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.unit_price ?? item.buying_price) || 0),
       0,
     );
 
