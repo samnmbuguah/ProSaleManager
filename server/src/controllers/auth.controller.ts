@@ -123,8 +123,19 @@ export const getMe = catchAsync(async (req: Request, res: Response) => {
     });
   }
   
+  // Fetch the full user data from database
+  const user = await User.findByPk(req.user.id);
+  
+  if (!user) {
+    return res.json({
+      success: true,
+      data: null,
+      authenticated: false
+    });
+  }
+  
   // Return user data (excluding password)
-  const userData = req.user.toJSON();
+  const userData = user.toJSON();
   delete userData.password;
 
   res.json({
