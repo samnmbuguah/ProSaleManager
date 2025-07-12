@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import type { Product } from '@/types/schema'
 import {
   Table,
   TableBody,
@@ -18,33 +17,49 @@ import {
   SelectValue
 } from '@/components/ui/select'
 
-interface ProductSales {
+interface ProductPerformanceData {
   productId: number
+  productName: string
+  productSku: string
   quantity: number
   revenue: number
   profit: number
-  lastSold: Date
+  lastSold: string | null
+  averagePrice: number
+  totalSales: number
+}
+
+interface ProductPerformanceSummary {
+  totalRevenue: number
+  totalProfit: number
+  totalQuantity: number
+  totalProducts: number
+  averageRevenue: number
+  averageProfit: number
 }
 
 interface ProductPerformanceProps {
-  products: Product[]
-  sales: ProductSales[]
+  products: ProductPerformanceData[]
+  summary?: ProductPerformanceSummary
   onDateRangeChange: (startDate: Date, endDate: Date) => void
   onSortChange: (sortBy: string) => void
 }
 
-export default function ProductPerformance ({
+export default function ProductPerformance({
   products,
-  sales,
+  summary,
   onDateRangeChange,
   onSortChange
 }: ProductPerformanceProps) {
   const [startDate, setStartDate] = useState<string>('')
   const [endDate, setEndDate] = useState<string>('')
 
-  // Ensure products and sales are always arrays
+  // Ensure products is always an array
   const safeProducts = Array.isArray(products) ? products : []
-  const safeSales = Array.isArray(sales) ? sales : []
+
+  if (!Array.isArray(products)) {
+    return <div className="text-center text-red-500 py-12">Failed to load products data.</div>
+  }
 
   const handleDateRangeSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,9 +67,6 @@ export default function ProductPerformance ({
       onDateRangeChange(new Date(startDate), new Date(endDate))
     }
   }
-
-  const totalRevenue = safeSales.reduce((sum, s) => sum + s.revenue, 0)
-  const totalProfit = safeSales.reduce((sum, s) => sum + s.profit, 0)
 
   return (
     <div className="space-y-6">
@@ -68,10 +80,10 @@ export default function ProductPerformance ({
         <div className="text-right">
           <p className="text-lg">
             Total Revenue:{' '}
-            <span className="font-bold">${totalRevenue.toFixed(2)}</span>
+            <span className="font-bold">${(summary?.totalRevenue || 0).toFixed(2)}</span>
           </p>
           <p className="text-sm text-muted-foreground">
-            Total Profit: ${totalProfit.toFixed(2)}
+            Total Profit: ${(summary?.totalProfit || 0).toFixed(2)}
           </p>
         </div>
       </div>
@@ -123,46 +135,40 @@ export default function ProductPerformance ({
             <TableHead className="text-right">Quantity Sold</TableHead>
             <TableHead className="text-right">Revenue</TableHead>
             <TableHead className="text-right">Profit</TableHead>
+            <TableHead className="text-right">Avg Price</TableHead>
             <TableHead>Last Sold</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {safeProducts.length === 0
-            ? (
+          {safeProducts.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground">
-                No products found
+              <TableCell colSpan={7} className="text-center text-muted-foreground">
+                No products found. Add products and sales to see performance.
               </TableCell>
             </TableRow>
-              )
-            : (
-                safeProducts.map((product) => {
-                  const sale = safeSales.find((s) => s.productId === product.id) || {
-                    quantity: 0,
-                    revenue: 0,
-                    profit: 0,
-                    lastSold: null
-                  }
-                  return (
-                <TableRow key={product.id}>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.sku}</TableCell>
-                  <TableCell className="text-right">{sale.quantity}</TableCell>
-                  <TableCell className="text-right">
-                    ${sale.revenue.toFixed(2)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    ${sale.profit.toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    {sale.lastSold
-                      ? new Date(sale.lastSold).toLocaleDateString()
-                      : 'Never'}
-                  </TableCell>
-                </TableRow>
-                  )
-                })
-              )}
+          ) : (
+            safeProducts.map((product) => (
+              <TableRow key={product.productId}>
+                <TableCell>{product.productName}</TableCell>
+                <TableCell>{product.productSku}</TableCell>
+                <TableCell className="text-right">{product.quantity}</TableCell>
+                <TableCell className="text-right">
+                  ${product.revenue.toFixed(2)}
+                </TableCell>
+                <TableCell className="text-right">
+                  ${product.profit.toFixed(2)}
+                </TableCell>
+                <TableCell className="text-right">
+                  ${product.averagePrice.toFixed(2)}
+                </TableCell>
+                <TableCell>
+                  {product.lastSold
+                    ? new Date(product.lastSold).toLocaleDateString()
+                    : 'Never'}
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </div>

@@ -12,6 +12,7 @@ import seedRoutes from './seed';
 import posRoutes from './pos.routes';
 import purchaseOrdersRoutes from './purchase-orders';
 import productSuppliersRoutes from './product-suppliers';
+import reportsRoutes from './reports';
 import { protect } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -33,6 +34,7 @@ router.use('/pos', protect, posRoutes);
 router.use('/purchase-orders', protect, purchaseOrdersRoutes);
 router.use('/sales', protect, salesRoutes);
 router.use('/categories', protect, categoryRoutes);
+router.use('/reports', protect, reportsRoutes);
 router.use('/seed', seedRoutes);
 
 export default router; 

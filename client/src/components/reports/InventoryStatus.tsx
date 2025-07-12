@@ -31,6 +31,10 @@ export default function InventoryStatus ({
   // Ensure products is always an array
   const safeProducts = Array.isArray(products) ? products : []
 
+  if (!Array.isArray(products)) {
+    return <div className="text-center text-red-500 py-12">Failed to load products data.</div>
+  }
+
   const getStockStatus = (quantity: number) => {
     if (quantity <= 0) return { label: 'Out of Stock', variant: 'destructive' }
     if (quantity < 10) return { label: 'Low Stock', variant: 'warning' }
@@ -109,34 +113,34 @@ export default function InventoryStatus ({
         <TableBody>
           {safeProducts.length === 0
             ? (
-            <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground">
-                No products found
-              </TableCell>
-            </TableRow>
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  No products found. Add products to see inventory status.
+                </TableCell>
+              </TableRow>
               )
             : (
                 safeProducts.map((product) => {
                   const status = getStockStatus(product.quantity || 0)
                   const value = (product.price || 0) * (product.quantity || 0)
                   return (
-                <TableRow key={product.id}>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.sku}</TableCell>
-                  <TableCell>{product.category || 'Uncategorized'}</TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(product.price)}
-                  </TableCell>
-                  <TableCell className="text-right">{product.quantity || 0}</TableCell>
-                  <TableCell>
-                    <Badge variant={status.variant as unknown}>
-                      {status.label}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(value)}
-                  </TableCell>
-                </TableRow>
+                  <TableRow key={product.id}>
+                    <TableCell>{product.name}</TableCell>
+                    <TableCell>{product.sku}</TableCell>
+                    <TableCell>{product.category || 'Uncategorized'}</TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(product.price)}
+                    </TableCell>
+                    <TableCell className="text-right">{product.quantity || 0}</TableCell>
+                    <TableCell>
+                      <Badge variant={status.variant as unknown}>
+                        {status.label}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(value)}
+                    </TableCell>
+                  </TableRow>
                   )
                 })
               )}

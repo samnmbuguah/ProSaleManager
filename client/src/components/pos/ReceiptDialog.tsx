@@ -138,7 +138,7 @@ export const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
             <div class="items">
               ${receiptData?.items?.map(item => `
                 <div class="item">
-                  <strong>${item.product.name}</strong><br>
+                  <strong>${item.product?.name || 'Unknown Product'}</strong><br>
                   ${item.quantity} ${item.unit_type} x ${formatCurrency(item.unit_price)} = ${formatCurrency(item.total)}
                 </div>
               `).join('') || 'No items found'}
@@ -147,10 +147,10 @@ export const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
               <strong>Total: ${formatCurrency(receiptData?.total_amount || 0)}</strong><br>
               Payment Method: ${receiptData?.payment_method}<br>
               ${receiptData?.payment_method === 'cash' && receiptData?.amount_paid
-          ? `Amount Paid: ${formatCurrency(receiptData.amount_paid)}<br>
-                 Change: ${formatCurrency(receiptData.amount_paid - receiptData.total_amount)}`
-: ''
-        }
+                ? `Amount Paid: ${formatCurrency(receiptData.amount_paid)}<br>
+                   Change: ${formatCurrency(receiptData.amount_paid - receiptData.total_amount)}`
+                : ''
+              }
             </div>
             <div class="footer">
               Thank you for your business!
@@ -245,7 +245,7 @@ export const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
                   {receiptData.items?.map((item) => (
                     <div key={item.id} className="flex justify-between items-start">
                       <div className="flex-1">
-                        <p className="font-medium">{item.product.name}</p>
+                        <p className="font-medium">{item.product?.name || 'Unknown Product'}</p>
                         <p className="text-sm text-muted-foreground">
                           {item.quantity} {item.unit_type} × {formatCurrency(item.unit_price)}
                         </p>
@@ -255,9 +255,9 @@ export const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
                       </div>
                     </div>
                   )) || (
-                      <div className="text-center text-muted-foreground py-4">
-                        No items found
-                      </div>
+                    <div className="text-center text-muted-foreground py-4">
+                      No items found
+                    </div>
                   )}
                 </div>
 
