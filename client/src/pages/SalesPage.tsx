@@ -27,6 +27,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Sale, SaleItem } from '@/types/sale'
+import { api } from '@/lib/api'
 
 export function SalesPage () {
   const [currentPage, setCurrentPage] = useState(1)
@@ -39,14 +40,8 @@ export function SalesPage () {
   }>({
     queryKey: ['sales', currentPage],
     queryFn: async () => {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/sales?page=${currentPage}&pageSize=${pageSize}`,
-        { credentials: 'include' }
-      )
-      if (!response.ok) {
-        throw new Error('Failed to fetch sales')
-      }
-      return response.json()
+      const response = await api.get(`/sales?page=${currentPage}&pageSize=${pageSize}`)
+      return response.data
     }
   })
 
@@ -54,14 +49,8 @@ export function SalesPage () {
     queryKey: ['sale-items', selectedSale?.id],
     queryFn: async () => {
       if (!selectedSale) return []
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/sales/${selectedSale.id}/items`,
-        { credentials: 'include' }
-      )
-      if (!response.ok) {
-        throw new Error('Failed to fetch sale items')
-      }
-      return response.json()
+      const response = await api.get(`/sales/${selectedSale.id}/items`)
+      return response.data
     },
     enabled: !!selectedSale
   })
