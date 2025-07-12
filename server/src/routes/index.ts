@@ -1,40 +1,30 @@
-import { Router } from 'express';
-import authRoutes from './auth.routes';
-import userRoutes from './user.routes';
-import productRoutes from './product.routes';
-import categoryRoutes from './category.routes';
-import orderRoutes from './order.routes';
-import customersRoutes from './customers';
-import salesRoutes from './sales';
-import expensesRoutes from './expenses';
-import suppliersRoutes from './suppliers';
-import seedRoutes from './seed';
-import posRoutes from './pos.routes';
-import purchaseOrdersRoutes from './purchase-orders';
-import productSuppliersRoutes from './product-suppliers';
-import reportsRoutes from './reports';
-import { protect } from '../middleware/auth.middleware.js';
+import express from 'express'
+import authRoutes from './auth.routes.js'
+import productRoutes from './product.routes.js'
+import customerRoutes from './customers.js'
+import supplierRoutes from './suppliers.js'
+import salesRoutes from './sales.js'
+import purchaseOrderRoutes from './purchase-orders.js'
+import reportRoutes from './reports.js'
+import expenseRoutes from './expenses.js'
+import userRoutes from './user.routes.js'
+import categoryRoutes from './category.routes.js'
+import productSupplierRoutes from './product-suppliers.js'
+import seedRoutes from './seed.js'
 
-const router = Router();
+const router = express.Router()
 
-// Test route to verify API router is working
-router.get('/test', (req, res) => res.send('API router is working!'));
+router.use('/auth', authRoutes)
+router.use('/products', productRoutes)
+router.use('/customers', customerRoutes)
+router.use('/suppliers', supplierRoutes)
+router.use('/sales', salesRoutes)
+router.use('/purchase-orders', purchaseOrderRoutes)
+router.use('/reports', reportRoutes)
+router.use('/expenses', expenseRoutes)
+router.use('/users', userRoutes)
+router.use('/categories', categoryRoutes)
+router.use('/product-suppliers', productSupplierRoutes)
+router.use('/seed', seedRoutes)
 
-// Public routes
-router.use('/auth', authRoutes);
-
-// Protected routes
-router.use('/users', protect, userRoutes);
-router.use('/products', protect, productRoutes);
-router.use('/product-suppliers', protect, productSuppliersRoutes);
-router.use('/suppliers', protect, suppliersRoutes);
-router.use('/customers', protect, customersRoutes);
-router.use('/expenses', protect, expensesRoutes);
-router.use('/pos', protect, posRoutes);
-router.use('/purchase-orders', protect, purchaseOrdersRoutes);
-router.use('/sales', protect, salesRoutes);
-router.use('/categories', protect, categoryRoutes);
-router.use('/reports', protect, reportsRoutes);
-router.use('/seed', seedRoutes);
-
-export default router; 
+export default router 

@@ -1,57 +1,60 @@
-import { Request, Response, NextFunction } from 'express';
-import { ApiError } from '../utils/api-error';
+import { Request, Response } from 'express'
 
-export const errorHandler = (
-  err: Error,
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  console.error('Error:', err);
+export interface ApiError extends Error {
+  statusCode?: number
+  isOperational?: boolean
+}
 
-  if (err instanceof ApiError) {
-    return res.status(err.statusCode).json({
-      success: false,
-      message: err.message,
-    });
+export const errorHandler = (err: ApiError, req: Request, res: Response) => {
+  console.error('Error:', err)
+
+  // Default error
+  const error = { ...err }
+  error.message = err.message
+
+  // Sequelize validation error
+  if (err.name === 'SequelizeValidationError') {
+    const message = Object.values((err as any).errors).map((val: any) => val.message)
+    error.message = message.join(', ')
+    error.statusCode = 400
   }
 
-  // Handle mongoose validation errors
-  if (err.name === 'ValidationError') {
-    return res.status(400).json({
-      success: false,
-      message: err.message,
-    });
+  // Sequelize unique constraint error
+  if (err.name === 'SequelizeUniqueConstraintError') {
+    const message = Object.values((err as any).errors).map((val: any) => val.message)
+    error.message = message.join(', ')
+    error.statusCode = 400
   }
 
-  // Handle mongoose duplicate key errors
-  if (err.name === 'MongoServerError' && (err as any).code === 11000) {
-    return res.status(400).json({
-      success: false,
-      message: 'Duplicate field value entered',
-    });
-  }
-
-  // Handle JWT errors
+  // JWT errors
   if (err.name === 'JsonWebTokenError') {
-    return res.status(401).json({
-      success: false,
-      message: 'Invalid token',
-    });
+    error.message = 'Invalid token'
+    error.statusCode = 401
   }
 
   if (err.name === 'TokenExpiredError') {
-    return res.status(401).json({
-      success: false,
-      message: 'Token expired',
-    });
+    error.message = 'Token expired'
+    error.statusCode = 401
   }
 
-  // Default error
-  return res.status(500).json({
+  // Cast error (MongoDB)
+  if (err.name === 'CastError') {
+    error.message = 'Resource not found'
+    error.statusCode = 404
+  }
+
+  // Duplicate key error
+  if (err.code === 11000) {
+    error.message = 'Duplicate field value entered'
+    error.statusCode = 400
+  }
+
+  const statusCode = error.statusCode || 500
+  const message = error.message || 'Server Error'
+
+  res.status(statusCode).json({
     success: false,
-    message: process.env.NODE_ENV === 'production' 
-      ? 'Internal server error' 
-      : err.message,
-  });
-}; 
+    error: message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  })
+} 

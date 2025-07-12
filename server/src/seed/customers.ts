@@ -1,59 +1,48 @@
-import { Customer } from '../models/index.js';
+import { Customer } from '../models/Customer.js'
 
-export const seedCustomers = async (): Promise<void> => {
-  try {
-    // Clear existing customers
-    await Customer.destroy({ where: {} });
-
-    // Create sample customers
-    const customers = await Customer.bulkCreate([
-      {
-        name: 'Walk-in Customer',
-        email: 'walkin@prosale.com',
-        phone: '+254000000000',
-        address: 'Walk-in customer - no address',
-        is_active: true,
-      },
-      {
-        name: 'John Doe',
-        email: 'john@example.com',
-        phone: '+254700000001',
-        address: 'Nairobi, Kenya',
-        is_active: true,
-      },
-      {
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        phone: '+254700000002',
-        address: 'Mombasa, Kenya',
-        is_active: true,
-      },
-      {
-        name: 'Bob Johnson',
-        email: 'bob@example.com',
-        phone: '+254700000003',
-        address: 'Kisumu, Kenya',
-        is_active: true,
-      },
-      {
-        name: 'Alice Brown',
-        email: 'alice@example.com',
-        phone: '+254700000004',
-        address: 'Nakuru, Kenya',
-        is_active: true,
-      },
-      {
-        name: 'Charlie Wilson',
-        email: 'charlie@example.com',
-        phone: '+254700000005',
-        address: 'Eldoret, Kenya',
-        is_active: true,
-      },
-    ]);
-
-    console.log('Customers seeded successfully');
-  } catch (error) {
-    console.error('Error seeding customers:', error);
-    throw error;
+const customerData = [
+  {
+    name: 'John Doe',
+    email: 'john.doe@example.com',
+    phone: '+1234567890',
+    address: '123 Main St, City, State 12345',
+    notes: 'Regular customer'
+  },
+  {
+    name: 'Jane Smith',
+    email: 'jane.smith@example.com',
+    phone: '+1234567891',
+    address: '456 Oak Ave, City, State 12345',
+    notes: 'VIP customer'
+  },
+  {
+    name: 'Bob Johnson',
+    email: 'bob.johnson@example.com',
+    phone: '+1234567892',
+    address: '789 Pine Rd, City, State 12345',
+    notes: 'Wholesale customer'
+  },
+  {
+    name: 'Alice Brown',
+    email: 'alice.brown@example.com',
+    phone: '+1234567893',
+    address: '321 Elm St, City, State 12345',
+    notes: 'New customer'
+  },
+  {
+    name: 'Charlie Wilson',
+    email: 'charlie.wilson@example.com',
+    phone: '+1234567894',
+    address: '654 Maple Dr, City, State 12345',
+    notes: 'Online customer'
   }
-}; 
+]
+
+export const seedCustomers = async () => {
+  try {
+    await Customer.bulkCreate(customerData)
+    console.log('Customers seeded successfully')
+  } catch (error) {
+    console.error('Error seeding customers:', error)
+  }
+} 

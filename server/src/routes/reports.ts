@@ -110,7 +110,6 @@ router.get('/product-performance', async (req, res) => {
         const performance = productPerformanceMap.get(productId)
         const quantity = parseFloat(item.quantity) || 0
         const total = parseFloat(item.total) || 0
-        const unitPrice = parseFloat(item.unit_price) || 0
 
         performance.quantity += quantity
         performance.revenue += total
