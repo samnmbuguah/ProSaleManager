@@ -15,22 +15,22 @@ const customersSlice = createSlice({
   name: 'customers',
   initialState: {
     items: [] as Customer[],
-    loading: false,
+    status: 'idle' as 'idle' | 'loading' | 'succeeded' | 'failed',
     error: null as string | null
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchCustomers.pending, (state) => {
-        state.loading = true
+        state.status = 'loading'
         state.error = null
       })
       .addCase(fetchCustomers.fulfilled, (state, action) => {
-        state.loading = false
+        state.status = 'succeeded'
         state.items = action.payload
       })
       .addCase(fetchCustomers.rejected, (state, action) => {
-        state.loading = false
+        state.status = 'failed'
         state.error = action.error.message || 'Failed to fetch customers'
       })
   }

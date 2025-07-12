@@ -115,10 +115,9 @@ const CustomersPage = () => {
     await createCustomerMutation.mutateAsync(customer)
   }
 
-  const handleEditCustomer = () => {
-    // setIsEditDialogOpen(true);
-    // setSelectedCustomer(customer);
-    // setFormData(customer);
+  const handleEditCustomer = (customer: CustomerType) => {
+    // TODO: Implement edit dialog
+    console.log('Edit customer:', customer)
   }
 
   const handleDeleteCustomer = async (id: number) => {
