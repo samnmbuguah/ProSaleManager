@@ -19,18 +19,18 @@ import {
 } from '@/components/ui/select'
 
 interface ProductSales {
-  productId: number;
-  quantity: number;
-  revenue: number;
-  profit: number;
-  lastSold: Date;
+  productId: number
+  quantity: number
+  revenue: number
+  profit: number
+  lastSold: Date
 }
 
 interface ProductPerformanceProps {
-  products: Product[];
-  sales: ProductSales[];
-  onDateRangeChange: (startDate: Date, endDate: Date) => void;
-  onSortChange: (sortBy: string) => void;
+  products: Product[]
+  sales: ProductSales[]
+  onDateRangeChange: (startDate: Date, endDate: Date) => void
+  onSortChange: (sortBy: string) => void
 }
 
 export default function ProductPerformance ({
@@ -42,6 +42,10 @@ export default function ProductPerformance ({
   const [startDate, setStartDate] = useState<string>('')
   const [endDate, setEndDate] = useState<string>('')
 
+  // Ensure products and sales are always arrays
+  const safeProducts = Array.isArray(products) ? products : []
+  const safeSales = Array.isArray(sales) ? sales : []
+
   const handleDateRangeSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (startDate && endDate) {
@@ -49,8 +53,8 @@ export default function ProductPerformance ({
     }
   }
 
-  const totalRevenue = sales.reduce((sum, s) => sum + s.revenue, 0)
-  const totalProfit = sales.reduce((sum, s) => sum + s.profit, 0)
+  const totalRevenue = safeSales.reduce((sum, s) => sum + s.revenue, 0)
+  const totalProfit = safeSales.reduce((sum, s) => sum + s.profit, 0)
 
   return (
     <div className="space-y-6">
@@ -58,7 +62,7 @@ export default function ProductPerformance ({
         <div>
           <h2 className="text-2xl font-bold">Product Performance</h2>
           <p className="text-muted-foreground">
-            Showing {products.length} products
+            Showing {safeProducts.length} products
           </p>
         </div>
         <div className="text-right">
@@ -123,32 +127,42 @@ export default function ProductPerformance ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product) => {
-            const sale = sales.find((s) => s.productId === product.id) || {
-              quantity: 0,
-              revenue: 0,
-              profit: 0,
-              lastSold: null
-            }
-            return (
-              <TableRow key={product.id}>
-                <TableCell>{product.name}</TableCell>
-                <TableCell>{product.sku}</TableCell>
-                <TableCell className="text-right">{sale.quantity}</TableCell>
-                <TableCell className="text-right">
-                  ${sale.revenue.toFixed(2)}
-                </TableCell>
-                <TableCell className="text-right">
-                  ${sale.profit.toFixed(2)}
-                </TableCell>
-                <TableCell>
-                  {sale.lastSold
-                    ? new Date(sale.lastSold).toLocaleDateString()
-                    : 'Never'}
-                </TableCell>
-              </TableRow>
-            )
-          })}
+          {safeProducts.length === 0
+            ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center text-muted-foreground">
+                No products found
+              </TableCell>
+            </TableRow>
+              )
+            : (
+                safeProducts.map((product) => {
+                  const sale = safeSales.find((s) => s.productId === product.id) || {
+                    quantity: 0,
+                    revenue: 0,
+                    profit: 0,
+                    lastSold: null
+                  }
+                  return (
+                <TableRow key={product.id}>
+                  <TableCell>{product.name}</TableCell>
+                  <TableCell>{product.sku}</TableCell>
+                  <TableCell className="text-right">{sale.quantity}</TableCell>
+                  <TableCell className="text-right">
+                    ${sale.revenue.toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    ${sale.profit.toFixed(2)}
+                  </TableCell>
+                  <TableCell>
+                    {sale.lastSold
+                      ? new Date(sale.lastSold).toLocaleDateString()
+                      : 'Never'}
+                  </TableCell>
+                </TableRow>
+                  )
+                })
+              )}
         </TableBody>
       </Table>
     </div>

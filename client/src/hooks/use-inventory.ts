@@ -7,13 +7,16 @@ export function useInventory () {
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
-  const { data: products, isLoading } = useQuery({
+  const { data: productsRaw, isLoading } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
       const response = await api.get(API_ENDPOINTS.products.list)
       return response.data
     }
   })
+
+  // Ensure products is always an array
+  const products = Array.isArray(productsRaw) ? productsRaw : []
 
   const createProductMutation = useMutation({
     mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {

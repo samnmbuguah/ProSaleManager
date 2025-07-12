@@ -18,9 +18,9 @@ import {
 } from '@/components/ui/select'
 
 interface InventoryStatusProps {
-  products: Product[];
-  onSearch: (query: string) => void;
-  onFilter: (category: string) => void;
+  products: Product[]
+  onSearch: (query: string) => void
+  onFilter: (category: string) => void
 }
 
 export default function InventoryStatus ({
@@ -28,6 +28,9 @@ export default function InventoryStatus ({
   onSearch,
   onFilter
 }: InventoryStatusProps) {
+  // Ensure products is always an array
+  const safeProducts = Array.isArray(products) ? products : []
+
   const getStockStatus = (quantity: number) => {
     if (quantity <= 0) return { label: 'Out of Stock', variant: 'destructive' }
     if (quantity < 10) return { label: 'Low Stock', variant: 'warning' }
@@ -35,11 +38,11 @@ export default function InventoryStatus ({
   }
 
   const categories = Array.from(
-    new Set(products.map((p) => p.category).filter(Boolean))
+    new Set(safeProducts.map((p) => p.category).filter(Boolean))
   )
 
-  const totalValue = products.reduce(
-    (sum, product) => sum + product.price * product.quantity,
+  const totalValue = safeProducts.reduce(
+    (sum, product) => sum + (product.price || 0) * (product.quantity || 0),
     0
   )
 
@@ -58,7 +61,7 @@ export default function InventoryStatus ({
         <div>
           <h2 className="text-2xl font-bold">Inventory Status</h2>
           <p className="text-muted-foreground">
-            Showing {products.length} products
+            Showing {safeProducts.length} products
           </p>
         </div>
         <div className="text-right">
@@ -104,29 +107,39 @@ export default function InventoryStatus ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product) => {
-            const status = getStockStatus(product.quantity)
-            const value = product.price * product.quantity
-            return (
-              <TableRow key={product.id}>
-                <TableCell>{product.name}</TableCell>
-                <TableCell>{product.sku}</TableCell>
-                <TableCell>{product.category || 'Uncategorized'}</TableCell>
-                <TableCell className="text-right">
-                  {formatCurrency(product.price)}
-                </TableCell>
-                <TableCell className="text-right">{product.quantity}</TableCell>
-                <TableCell>
-                  <Badge variant={status.variant as unknown}>
-                    {status.label}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatCurrency(value)}
-                </TableCell>
-              </TableRow>
-            )
-          })}
+          {safeProducts.length === 0
+            ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center text-muted-foreground">
+                No products found
+              </TableCell>
+            </TableRow>
+              )
+            : (
+                safeProducts.map((product) => {
+                  const status = getStockStatus(product.quantity || 0)
+                  const value = (product.price || 0) * (product.quantity || 0)
+                  return (
+                <TableRow key={product.id}>
+                  <TableCell>{product.name}</TableCell>
+                  <TableCell>{product.sku}</TableCell>
+                  <TableCell>{product.category || 'Uncategorized'}</TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(product.price)}
+                  </TableCell>
+                  <TableCell className="text-right">{product.quantity || 0}</TableCell>
+                  <TableCell>
+                    <Badge variant={status.variant as unknown}>
+                      {status.label}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(value)}
+                  </TableCell>
+                </TableRow>
+                  )
+                })
+              )}
         </TableBody>
       </Table>
     </div>
