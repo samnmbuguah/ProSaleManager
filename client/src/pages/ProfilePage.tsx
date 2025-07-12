@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
-import { useAuthContext } from '@/contexts/AuthContext'
+import React, { useState, useEffect } from 'react'
+import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api'
 import { useLocation } from 'wouter'
 import { Loader2, User, Save, Eye, EyeOff } from 'lucide-react'
 import {
@@ -27,15 +28,14 @@ import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export default function ProfilePage () {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuthContext()
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth()
   const { toast } = useToast()
   const [, setLocation] = useLocation()
 
   // Form states
   const [profileData, setProfileData] = useState({
     name: '',
-    email: '',
-    phone: ''
+    email: ''
   })
 
   const [passwordData, setPasswordData] = useState({
@@ -88,13 +88,12 @@ export default function ProfilePage () {
     if (user) {
       setProfileData({
         name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || ''
+        email: user.email || ''
       })
     }
   }, [user])
 
-  const handleUpdateProfile = async (e) => {
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading((prev) => ({ ...prev, profile: true }))
     setErrors((prev) => ({ ...prev, profile: '' }))
@@ -137,7 +136,7 @@ export default function ProfilePage () {
     }
   }
 
-  const handleChangePassword = async (e) => {
+  const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading((prev) => ({ ...prev, password: true }))
     setErrors((prev) => ({ ...prev, password: '' }))
@@ -195,14 +194,14 @@ export default function ProfilePage () {
     }
   }
 
-  const handleTogglePassword = (field) => {
+  const handleTogglePassword = (field: 'current' | 'new' | 'confirm') => {
     setShowPassword((prev) => ({
       ...prev,
       [field]: !prev[field]
     }))
   }
 
-  const handlePreferenceChange = (key, value) => {
+  const handlePreferenceChange = (key: string, value: any) => {
     setPreferences((prev) => ({
       ...prev,
       [key]: value
@@ -288,20 +287,6 @@ export default function ProfilePage () {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={profileData.phone}
-                      onChange={(e) =>
-                        setProfileData({
-                          ...profileData,
-                          phone: e.target.value
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
                     <Label>Role</Label>
                     <Input
                       value={
@@ -318,8 +303,8 @@ export default function ProfilePage () {
                 <div className="pt-4">
                   <Label>Member Since</Label>
                   <p>
-                    {user.createdAt
-                      ? new Date(user.createdAt).toLocaleDateString()
+                    {user.created_at
+                      ? new Date(user.created_at).toLocaleDateString()
                       : 'N/A'}
                   </p>
                 </div>

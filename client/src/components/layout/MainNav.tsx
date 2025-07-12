@@ -46,7 +46,7 @@ export default function MainNav () {
 
   if (!user) return null
 
-  const routes = ROLE_ROUTES[user.role]
+  const routes = ROLE_ROUTES[user.role as keyof typeof ROLE_ROUTES] || ROLE_ROUTES.user
 
   const handleLogout = async () => {
     try {
@@ -66,7 +66,7 @@ export default function MainNav () {
 
   const NavLinks = () => (
     <>
-      {routes.map(({ path, label, icon: Icon }) => (
+      {routes.map(({ path, label, icon: Icon }: { path: string; label: string; icon: React.ComponentType<{ className?: string }> }) => (
         <Link key={path} href={path}>
           <Button
             variant={location === path ? 'default' : 'ghost'}

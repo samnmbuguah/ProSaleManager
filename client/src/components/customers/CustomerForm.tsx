@@ -1,122 +1,134 @@
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
 import { Button } from '@/components/ui/button'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { customerSchema, type CustomerInsert } from '@/types/customer'
 
-const customerSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address').nullable(),
-  phone: z
-    .string()
-    .regex(/^\+?[0-9]{10,}$/, 'Phone number must be at least 10 digits')
-    .nullable(),
-  address: z.string().optional()
-})
-
 interface CustomerFormProps {
-  onSubmit: (data: CustomerInsert) => Promise<void>;
-  isSubmitting?: boolean;
-  defaultValues?: Partial<CustomerInsert>;
+  onSubmit: (data: CustomerInsert) => Promise<void>
+  defaultValues?: Partial<CustomerInsert>
+  isSubmitting?: boolean
 }
 
-export function CustomerForm ({
-  onSubmit,
-  isSubmitting = false,
-  defaultValues
-}: CustomerFormProps) {
+export function CustomerForm({ onSubmit, defaultValues, isSubmitting = false }: CustomerFormProps) {
   const form = useForm<CustomerInsert>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
       name: defaultValues?.name || '',
-      email: defaultValues?.email || null,
-      phone: defaultValues?.phone || null,
-      address: defaultValues?.address || ''
+      email: defaultValues?.email || undefined,
+      phone: defaultValues?.phone || undefined,
+      address: defaultValues?.address || undefined,
+      notes: defaultValues?.notes || ''
     }
   })
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Customer Name</FormLabel>
-              <FormControl>
-                <Input {...field} value={field.value || ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <Controller
+        name="name"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <div className="space-y-2">
+            <Label htmlFor="name">Name *</Label>
+            <Input
+              id="name"
+              {...field}
+              placeholder="Enter customer name"
+              className={fieldState.error ? 'border-red-500' : ''}
+            />
+            {fieldState.error && (
+              <p className="text-sm text-red-500">{fieldState.error.message}</p>
+            )}
+          </div>
+        )}
+      />
 
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field: { value, onChange, ...field } }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input
-                  type="email"
-                  value={value || ''}
-                  onChange={(e) => onChange(e.target.value || null)}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <Controller
+        name="email"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              {...field}
+              value={field.value || ''}
+              placeholder="Enter email address"
+              className={fieldState.error ? 'border-red-500' : ''}
+            />
+            {fieldState.error && (
+              <p className="text-sm text-red-500">{fieldState.error.message}</p>
+            )}
+          </div>
+        )}
+      />
 
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field: { value, onChange, ...field } }) => (
-            <FormItem>
-              <FormLabel>Phone Number</FormLabel>
-              <FormControl>
-                <Input
-                  value={value || ''}
-                  onChange={(e) => onChange(e.target.value || null)}
-                  placeholder="+254700000000"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <Controller
+        name="phone"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone</Label>
+            <Input
+              id="phone"
+              {...field}
+              value={field.value || ''}
+              placeholder="Enter phone number"
+              className={fieldState.error ? 'border-red-500' : ''}
+            />
+            {fieldState.error && (
+              <p className="text-sm text-red-500">{fieldState.error.message}</p>
+            )}
+          </div>
+        )}
+      />
 
-        <FormField
-          control={form.control}
-          name="address"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Address</FormLabel>
-              <FormControl>
-                <Input {...field} value={field.value || ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <Controller
+        name="address"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <div className="space-y-2">
+            <Label htmlFor="address">Address</Label>
+            <Textarea
+              id="address"
+              {...field}
+              value={field.value || ''}
+              placeholder="Enter address"
+              className={fieldState.error ? 'border-red-500' : ''}
+            />
+            {fieldState.error && (
+              <p className="text-sm text-red-500">{fieldState.error.message}</p>
+            )}
+          </div>
+        )}
+      />
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? 'Adding...' : 'Add Customer'}
-        </Button>
-      </form>
-    </Form>
+      <Controller
+        name="notes"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              {...field}
+              value={field.value || ''}
+              placeholder="Enter additional notes"
+              className={fieldState.error ? 'border-red-500' : ''}
+            />
+            {fieldState.error && (
+              <p className="text-sm text-red-500">{fieldState.error.message}</p>
+            )}
+          </div>
+        )}
+      />
+
+      <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting ? 'Saving...' : 'Save Customer'}
+      </Button>
+    </form>
   )
 }

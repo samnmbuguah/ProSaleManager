@@ -1,105 +1,51 @@
-import { UseFormReturn } from 'react-hook-form'
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage
-} from '@/components/ui/form'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import { PRICE_UNITS } from '@/constants/priceUnits'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { UseFormReturn } from 'react-hook-form'
 import { type ProductFormData } from '@/types/product'
 
 interface StockSectionProps {
-  form: UseFormReturn<ProductFormData>;
+  form: UseFormReturn<ProductFormData>
 }
 
-export function StockSection ({ form }: StockSectionProps) {
+export function StockSection({ form }: StockSectionProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <FormField
-        control={form.control}
-        name="quantity"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Current Quantity</FormLabel>
-            <FormControl>
-              <Input type="number" {...field} value={field.value} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="stock_unit"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Stock Unit</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select stock unit" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {PRICE_UNITS.map((unit) => (
-                  <SelectItem key={unit.value} value={unit.value}>
-                    {unit.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="min_stock"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Minimum Stock</FormLabel>
-            <FormControl>
-              <Input type="number" {...field} value={field.value} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="max_stock"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Maximum Stock</FormLabel>
-            <FormControl>
-              <Input type="number" {...field} value={field.value} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="reorder_point"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Reorder Point</FormLabel>
-            <FormControl>
-              <Input type="number" {...field} value={field.value} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Stock Information</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="quantity">Current Quantity</Label>
+            <Input
+              id="quantity"
+              type="number"
+              placeholder="0"
+              {...form.register('quantity', { valueAsNumber: true })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="min_quantity">Minimum Quantity</Label>
+            <Input
+              id="min_quantity"
+              type="number"
+              placeholder="0"
+              {...form.register('min_quantity', { valueAsNumber: true })}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="is_active"
+            checked={form.watch('is_active')}
+            onCheckedChange={(checked) => form.setValue('is_active', checked)}
+          />
+          <Label htmlFor="is_active">Product is active</Label>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

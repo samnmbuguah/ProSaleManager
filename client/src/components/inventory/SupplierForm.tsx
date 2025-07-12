@@ -1,126 +1,130 @@
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { supplierSchema, type SupplierFormData } from '@/types/supplier'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { supplierSchema, type SupplierFormData } from '@/types/supplier'
 
 interface SupplierFormProps {
-  onSubmit: (data: SupplierFormData) => Promise<void>;
-  isSubmitting: boolean;
+  onSubmit: (data: SupplierFormData) => Promise<void>
+  defaultValues?: Partial<SupplierFormData>
+  isSubmitting?: boolean
 }
 
-export function SupplierForm ({ onSubmit, isSubmitting }: SupplierFormProps) {
+export function SupplierForm({ onSubmit, defaultValues, isSubmitting = false }: SupplierFormProps) {
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      phone: '',
-      address: ''
+      name: defaultValues?.name || '',
+      email: defaultValues?.email || '',
+      phone: defaultValues?.phone || '',
+      address: defaultValues?.address || '',
+      contact_person: defaultValues?.contact_person || '',
+      status: defaultValues?.status || 'active'
     }
   })
 
-  const handleSubmit = async (data: SupplierFormData) => {
-    try {
-      await onSubmit(data)
-    } catch (error) {
-      // Don't reset form or close dialog on error
-      if (error instanceof Error) {
-        form.setError('email', {
-          type: 'manual',
-          message: error.message.includes('email already exists')
-            ? 'This email is already registered'
-            : 'Failed to create supplier'
-        })
-      }
-    }
-  }
-
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Supplier Name</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Enter supplier name" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <Controller
+        name="name"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <div className="space-y-2">
+            <Label htmlFor="name">Name *</Label>
+            <Input
+              id="name"
+              {...field}
+              placeholder="Enter supplier name"
+              className={fieldState.error ? 'border-red-500' : ''}
+            />
+            {fieldState.error && (
+              <p className="text-sm text-red-500">{fieldState.error.message}</p>
+            )}
+          </div>
+        )}
+      />
 
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  value={field.value || ''}
-                  type="email"
-                  placeholder="Enter email address"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <Controller
+        name="email"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <div className="space-y-2">
+            <Label htmlFor="email">Email *</Label>
+            <Input
+              id="email"
+              type="email"
+              {...field}
+              placeholder="Enter email address"
+              className={fieldState.error ? 'border-red-500' : ''}
+            />
+            {fieldState.error && (
+              <p className="text-sm text-red-500">{fieldState.error.message}</p>
+            )}
+          </div>
+        )}
+      />
 
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Phone Number</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  value={field.value || ''}
-                  type="tel"
-                  placeholder="Enter phone number"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <Controller
+        name="phone"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone *</Label>
+            <Input
+              id="phone"
+              {...field}
+              placeholder="Enter phone number"
+              className={fieldState.error ? 'border-red-500' : ''}
+            />
+            {fieldState.error && (
+              <p className="text-sm text-red-500">{fieldState.error.message}</p>
+            )}
+          </div>
+        )}
+      />
 
-        <FormField
-          control={form.control}
-          name="address"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Address</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  value={field.value || ''}
-                  placeholder="Enter address"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <Controller
+        name="address"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <div className="space-y-2">
+            <Label htmlFor="address">Address *</Label>
+            <Input
+              id="address"
+              {...field}
+              placeholder="Enter address"
+              className={fieldState.error ? 'border-red-500' : ''}
+            />
+            {fieldState.error && (
+              <p className="text-sm text-red-500">{fieldState.error.message}</p>
+            )}
+          </div>
+        )}
+      />
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? 'Creating...' : 'Create Supplier'}
-        </Button>
-      </form>
-    </Form>
+      <Controller
+        name="contact_person"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <div className="space-y-2">
+            <Label htmlFor="contact_person">Contact Person *</Label>
+            <Input
+              id="contact_person"
+              {...field}
+              placeholder="Enter contact person name"
+              className={fieldState.error ? 'border-red-500' : ''}
+            />
+            {fieldState.error && (
+              <p className="text-sm text-red-500">{fieldState.error.message}</p>
+            )}
+          </div>
+        )}
+      />
+
+      <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting ? 'Saving...' : 'Save Supplier'}
+      </Button>
+    </form>
   )
 }

@@ -1,90 +1,77 @@
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { ProductSearch } from '@/components/pos/ProductSearch'
-import type { Product } from '@/types/product'
-import type { PurchaseOrderItem } from '@/types/purchase-order'
+import { Product } from '@/types/product'
 
 interface PurchaseOrderItemsListProps {
-  items: PurchaseOrderItem[]
+  items: any[]
   products: Product[]
-  onProductSelect: (index: number, product: Product) => void
-  onItemChange: (
-    index: number,
-    field: keyof PurchaseOrderItem,
-    value: string | number
-  ) => void
+  onItemChange: (index: number, field: string, value: any) => void
   onRemoveItem: (index: number) => void
   onAddItem: () => void
 }
 
-export function PurchaseOrderItemsList ({
+export function PurchaseOrderItemsList({
   items,
   products,
-  onProductSelect,
   onItemChange,
   onRemoveItem,
   onAddItem
 }: PurchaseOrderItemsListProps) {
   return (
-    <div>
-      <Label>Items</Label>
-      {items.map((item, index) => (
-        <div key={index} className="grid grid-cols-3 gap-2 mt-2">
-          <ProductSearch
-            products={products}
-            onSelect={(product) => onProductSelect(index, product)}
-          />
-          <Input
-            type="number"
-            min="1"
-            value={item.quantity}
-            onChange={(e) =>
-              onItemChange(index, 'quantity', parseInt(e.target.value))
-            }
-            placeholder="Quantity"
-          />
-          <div className="flex gap-2">
-            <Input
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Order Items</h3>
+        <div className="text-sm text-gray-500">
+          {products.length} products available
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        {items.map((item, index) => (
+          <div key={index} className="flex gap-2 p-2 border rounded">
+            <input
               type="number"
-              min="0"
+              placeholder="Quantity"
+              value={item.quantity || ''}
+              onChange={(e) => onItemChange(index, 'quantity', parseInt(e.target.value))}
+              className="w-20 px-2 py-1 border rounded"
+            />
+            <input
+              type="number"
               step="0.01"
-              value={item.buying_price}
+              placeholder="Buying Price"
+              value={item.buying_price || ''}
               onChange={(e) =>
                 onItemChange(index, 'buying_price', parseFloat(e.target.value))
               }
-              placeholder="Buying Price"
+              className="w-24 px-2 py-1 border rounded"
             />
-            <Input
+            <input
               type="number"
-              min="0"
               step="0.01"
-              value={item.selling_price}
+              placeholder="Selling Price"
+              value={item.selling_price || ''}
               onChange={(e) =>
                 onItemChange(index, 'selling_price', parseFloat(e.target.value))
               }
-              placeholder="Selling Price"
+              className="w-24 px-2 py-1 border rounded"
             />
-            <Button
+            <button
               type="button"
-              variant="destructive"
-              size="sm"
               onClick={() => onRemoveItem(index)}
+              className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
             >
               Remove
-            </Button>
+            </button>
           </div>
-        </div>
-      ))}
-      <Button
+        ))}
+      </div>
+
+      <button
         type="button"
-        variant="outline"
-        size="sm"
         onClick={onAddItem}
-        className="mt-2"
+        className="w-full py-2 border-2 border-dashed border-gray-300 rounded hover:border-gray-400"
       >
         Add Item
-      </Button>
+      </button>
     </div>
   )
 }

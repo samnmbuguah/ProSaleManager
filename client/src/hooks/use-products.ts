@@ -17,15 +17,25 @@ export function useProducts () {
 
   const createProductMutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
-      if (data.price_units?.find((p) => p.is_default)) {
-        const defaultUnit = data.price_units.find((p) => p.is_default)
-        return {
-          ...data,
-          buying_price: defaultUnit?.buying_price || '0',
-          selling_price: defaultUnit?.selling_price || '0'
-        }
+      // Remove price_units logic since it doesn't exist in the Product type
+      const productData = {
+        name: data.name,
+        description: data.description || '',
+        sku: data.sku || '',
+        barcode: data.barcode || '',
+        category_id: data.category_id,
+        piece_buying_price: data.piece_buying_price,
+        piece_selling_price: data.piece_selling_price,
+        pack_buying_price: data.pack_buying_price,
+        pack_selling_price: data.pack_selling_price,
+        dozen_buying_price: data.dozen_buying_price,
+        dozen_selling_price: data.dozen_selling_price,
+        quantity: data.quantity,
+        min_quantity: data.min_quantity,
+        image_url: data.image_url || '',
+        is_active: data.is_active
       }
-      const response = await api.post(API_ENDPOINTS.products.create, data)
+      const response = await api.post(API_ENDPOINTS.products.create, productData)
       return response.data
     },
     onSuccess: () => {
@@ -49,23 +59,20 @@ export function useProducts () {
       // Prepare the product data
       const productData = {
         name: data.name,
-        category: data.category,
+        description: data.description || '',
+        sku: data.sku || '',
+        barcode: data.barcode || '',
+        category_id: data.category_id,
+        piece_buying_price: data.piece_buying_price,
+        piece_selling_price: data.piece_selling_price,
+        pack_buying_price: data.pack_buying_price,
+        pack_selling_price: data.pack_selling_price,
+        dozen_buying_price: data.dozen_buying_price,
+        dozen_selling_price: data.dozen_selling_price,
         quantity: data.quantity,
-        min_stock: data.min_stock,
-        max_stock: data.max_stock,
-        reorder_point: data.reorder_point,
-        stock_unit: data.stock_unit
-      }
-
-      // If there are price units, update them first
-      if (data.price_units?.length) {
-        const defaultUnit = data.price_units.find((p) => p.is_default)
-        if (defaultUnit) {
-          Object.assign(productData, {
-            buying_price: defaultUnit.buying_price,
-            selling_price: defaultUnit.selling_price
-          })
-        }
+        min_quantity: data.min_quantity,
+        image_url: data.image_url || '',
+        is_active: data.is_active
       }
 
       const response = await api.put(API_ENDPOINTS.products.update(data.id), productData)

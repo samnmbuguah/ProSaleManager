@@ -137,7 +137,7 @@ export const useAuth = create<AuthState>()(
       migrate: (persistedState: unknown, version: number) => {
         if (version === 0) {
           return {
-            ...persistedState,
+            ...(persistedState as any),
             version: 1
           }
         }

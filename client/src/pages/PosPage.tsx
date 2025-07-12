@@ -324,7 +324,7 @@ const PosPage: React.FC = () => {
             items={cartItems as unknown as CartItem[]}
             onUpdateQuantity={(
               productId: number,
-              unitType: string,
+              _unitType: string,
               quantity: number
             ) => updateQuantity(productId, quantity)}
             onUpdateUnitType={updateUnitType}

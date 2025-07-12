@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
   PurchaseOrder,
-  PurchaseOrderItem,
   PurchaseOrderSubmitData
 } from '@/types/purchase-order'
 import { useToast } from '@/hooks/use-toast'
@@ -43,7 +42,7 @@ export function usePurchaseOrders () {
 
   const updatePurchaseOrderStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      const response = await api.put(`${API_ENDPOINTS.purchaseOrders.update}/${id}/status`, { status })
+      const response = await api.put(`${API_ENDPOINTS.purchaseOrders.update(id)}/status`, { status })
       return response.data
     },
     onSuccess: () => {
@@ -55,28 +54,10 @@ export function usePurchaseOrders () {
     }
   })
 
-  const createPurchaseOrderItemMutation = useMutation({
-    mutationFn: async (data: PurchaseOrderItem) => {
-      const response = await api.post(API_ENDPOINTS.purchaseOrderItems.create, data)
-      return response.data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] })
-    },
-    onError: (error: Error) => {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message
-      })
-    }
-  })
-
   return {
     purchaseOrders,
     isLoading,
     createPurchaseOrder: createPurchaseOrderMutation.mutateAsync,
-    createPurchaseOrderItem: createPurchaseOrderItemMutation.mutateAsync,
     isCreating: createPurchaseOrderMutation.isPending,
     updatePurchaseOrderStatus: updatePurchaseOrderStatusMutation.mutateAsync,
     isUpdating: updatePurchaseOrderStatusMutation.isPending

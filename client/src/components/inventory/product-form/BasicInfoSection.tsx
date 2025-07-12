@@ -16,12 +16,14 @@ import {
 } from '@/components/ui/select'
 import { PRODUCT_CATEGORIES } from '@/constants/categories'
 import { type ProductFormData } from '@/types/product'
+import { Label } from '@/components/ui/label'
 
 interface BasicInfoSectionProps {
   form: UseFormReturn<ProductFormData>;
 }
 
-export function BasicInfoSection ({ form }: BasicInfoSectionProps) {
+export function BasicInfoSection({ form }: BasicInfoSectionProps) {
+  const { control } = form
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <FormField
@@ -53,12 +55,12 @@ export function BasicInfoSection ({ form }: BasicInfoSectionProps) {
       />
 
       <FormField
-        control={form.control}
-        name="category"
+        name="category_id"
+        control={control}
         render={({ field }) => (
-          <FormItem>
-            <FormLabel>Category</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
+          <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Select onValueChange={(value) => field.onChange(Number(value))} value={String(field.value)}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
@@ -73,7 +75,7 @@ export function BasicInfoSection ({ form }: BasicInfoSectionProps) {
               </SelectContent>
             </Select>
             <FormMessage />
-          </FormItem>
+          </div>
         )}
       />
     </div>

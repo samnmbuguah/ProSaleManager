@@ -22,7 +22,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState, AppDispatch } from '@/store'
 import { fetchSuppliers, createSupplier, updateSupplier, deleteSupplier } from '@/store/suppliersSlice'
-import type { Supplier, SupplierFormData } from '@/types/supplier'
+import type { Supplier } from '@/types/supplier'
 import Swal from 'sweetalert2'
 
 const Suppliers = () => {
@@ -36,12 +36,20 @@ const Suppliers = () => {
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
     null
   )
-  const [formData, setFormData] = useState<SupplierFormData>({
+  const [formData, setFormData] = useState<{
+    name: string
+    email: string
+    address: string
+    phone: string
+    contact_person: string
+    status: 'active' | 'inactive'
+  }>({
     name: '',
     email: '',
-    phone: '',
     address: '',
-    contact_person: ''
+    phone: '',
+    contact_person: '',
+    status: 'active'
   })
   const { toast } = useToast()
 
@@ -83,7 +91,8 @@ const Suppliers = () => {
         email: '',
         phone: '',
         address: '',
-        contact_person: ''
+        contact_person: '',
+        status: 'active' as const
       })
       setIsAddDialogOpen(false)
       setIsEditDialogOpen(false)
@@ -103,9 +112,10 @@ const Suppliers = () => {
     setFormData({
       name: supplier.name,
       email: supplier.email,
-      phone: supplier.phone,
-      address: supplier.address,
-      contact_person: supplier.contact_person || ''
+      phone: supplier.phone || '',
+      address: supplier.address || '',
+      contact_person: supplier.contact_person || '',
+      status: supplier.status
     })
     setIsEditDialogOpen(true)
   }
@@ -205,75 +215,75 @@ const Suppliers = () => {
       <div className="rounded-md border">
         {suppliersStatus === 'loading'
           ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-            <p className="mt-2 text-sm text-gray-600">Loading suppliers...</p>
-          </div>
-            )
+            <div className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+              <p className="mt-2 text-sm text-gray-600">Loading suppliers...</p>
+            </div>
+          )
           : suppliersStatus === 'failed'
             ? (
-          <div className="p-8 text-center">
-            <p className="text-red-600">Failed to load suppliers</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => dispatch(fetchSuppliers())}
-              className="mt-2"
-            >
-              Retry
-            </Button>
-          </div>
-              )
+              <div className="p-8 text-center">
+                <p className="text-red-600">Failed to load suppliers</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => dispatch(fetchSuppliers())}
+                  className="mt-2"
+                >
+                  Retry
+                </Button>
+              </div>
+            )
             : suppliers.length === 0
               ? (
-          <div className="p-8 text-center">
-            <p className="text-gray-600">No suppliers found</p>
-            <p className="text-sm text-gray-500 mt-1">Add your first supplier to get started</p>
-          </div>
-                )
+                <div className="p-8 text-center">
+                  <p className="text-gray-600">No suppliers found</p>
+                  <p className="text-sm text-gray-500 mt-1">Add your first supplier to get started</p>
+                </div>
+              )
               : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Contact Person</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {suppliers.map((supplier) => (
-                <TableRow key={supplier.id}>
-                  <TableCell className="font-medium">{supplier.name}</TableCell>
-                  <TableCell>{supplier.contact_person || '-'}</TableCell>
-                  <TableCell>{supplier.email}</TableCell>
-                  <TableCell>{supplier.phone}</TableCell>
-                  <TableCell>{supplier.address}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(supplier)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDelete(supplier.id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-                )}
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Contact Person</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Address</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {suppliers.map((supplier) => (
+                      <TableRow key={supplier.id}>
+                        <TableCell className="font-medium">{supplier.name}</TableCell>
+                        <TableCell>{supplier.contact_person || '-'}</TableCell>
+                        <TableCell>{supplier.email}</TableCell>
+                        <TableCell>{supplier.phone}</TableCell>
+                        <TableCell>{supplier.address}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(supplier)}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDelete(supplier.id)}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
       </div>
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

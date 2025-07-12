@@ -1,4 +1,4 @@
-import { Expense } from '@/types'
+import { Expense } from '@/types/expense'
 import { api } from '@/lib/api'
 import { API_ENDPOINTS } from '@/lib/api-endpoints'
 

@@ -17,12 +17,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-
-interface Customer {
-  id: number;
-  name: string;
-  phone?: string;
-}
+import type { Customer } from '@/types/customer'
 
 interface CheckoutDialogProps {
   open: boolean;
