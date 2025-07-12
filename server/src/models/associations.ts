@@ -9,6 +9,7 @@ import ProductSupplier from "./ProductSupplier.js";
 import PurchaseOrder from "./PurchaseOrder.js";
 import PurchaseOrderItem from "./PurchaseOrderItem.js";
 import Category from './Category.js';
+import { sequelize } from '../config/database.js';
 
 export function setupAssociations() {
   // User - Sale association
@@ -21,7 +22,7 @@ export function setupAssociations() {
 
   // Sale - SaleItem association
   Sale.hasMany(SaleItem, { foreignKey: "sale_id", as: "items" });
-  SaleItem.belongsTo(Sale, { foreignKey: "sale_id" });
+  SaleItem.belongsTo(Sale, { foreignKey: "sale_id", as: "sale" });
 
   // Product - SaleItem association
   Product.hasMany(SaleItem, { foreignKey: "product_id" });
@@ -69,6 +70,4 @@ export function setupAssociations() {
   // Category - Product association
   Category.hasMany(Product, { foreignKey: 'category_id' });
   Product.belongsTo(Category, { foreignKey: 'category_id' });
-
-  console.log("Model associations have been set up");
 }

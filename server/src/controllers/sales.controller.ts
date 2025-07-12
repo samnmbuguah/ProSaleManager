@@ -1,10 +1,5 @@
 import { Request, Response } from "express";
-import Sale from "../models/Sale.js";
-import SaleItem from "../models/SaleItem.js";
-import { sequelize } from "../config/database.js";
-import User from "../models/User.js";
-import Customer from "../models/Customer.js";
-import Product from "../models/Product.js";
+import { Sale, SaleItem, User, Customer, Product, sequelize } from "../models/index.js";
 
 export const createSale = async (req: Request, res: Response) => {
   let t;
@@ -188,6 +183,7 @@ export const getSales = async (req: Request, res: Response) => {
         {
           model: User,
           attributes: ["id", "name", "email"],
+          required: false,
         },
         {
           model: Customer,
