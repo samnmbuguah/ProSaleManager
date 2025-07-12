@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import Product from '../models/Product.js';
+import { Product } from '../models/index.js';
 import { Op } from 'sequelize';
 
 export const getProducts = async (req: Request, res: Response) => {

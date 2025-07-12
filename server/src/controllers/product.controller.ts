@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import Product from '../models/Product.js';
+import { Product } from '../models/index.js';
 import { catchAsync } from '../utils/catch-async.js';
 import { ApiError } from '../utils/api-error.js';
 

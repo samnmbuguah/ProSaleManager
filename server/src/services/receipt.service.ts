@@ -1,8 +1,5 @@
 import twilio from "twilio";
-import Sale from "../models/Sale.js";
-import Customer from "../models/Customer.js";
-import Product from "../models/Product.js";
-import SaleItem from "../models/SaleItem.js";
+import { Sale, Customer, Product, SaleItem } from "../models/index.js";
 
 // Initialize Twilio client
 const twilioClient = twilio(
