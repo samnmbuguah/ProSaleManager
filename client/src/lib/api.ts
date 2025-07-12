@@ -19,18 +19,12 @@ let csrfToken: string | null = null
 
 // Function to fetch a new CSRF token
 export const fetchCsrfToken = async () => {
-  if (isDevelopment) {
-    console.debug('Fetching CSRF token...')
-  }
-
+  // Only log errors, not every fetch attempt
   try {
     // Create a new axios instance without interceptors for the CSRF token request
     const csrfApi = axios.create(API_CONFIG)
     const response = await csrfApi.get(API_ENDPOINTS.auth.csrfToken)
     csrfToken = response.data.token
-    if (isDevelopment) {
-      console.debug('Successfully fetched CSRF token')
-    }
     return csrfToken
   } catch (error) {
     console.error('Failed to fetch CSRF token:', error)
@@ -40,12 +34,7 @@ export const fetchCsrfToken = async () => {
 
 // Add request interceptor for CSRF token and auth
 api.interceptors.request.use(async (config) => {
-  if (isDevelopment) {
-    console.debug(
-      `Making ${config.method?.toUpperCase()} request to: ${config.url}`
-    )
-  }
-
+  // Remove noisy debug logs
   // Skip CSRF token for:
   // 1. GET requests to non-auth endpoints
   // 2. The CSRF token endpoint itself
@@ -72,9 +61,7 @@ api.interceptors.request.use(async (config) => {
 // Add response interceptor for error handling
 api.interceptors.response.use(
   (response) => {
-    if (isDevelopment) {
-      console.debug(`Response from ${response.config.url}:`, response.status)
-    }
+    // Remove noisy debug logs
     return response
   },
   async (error) => {
