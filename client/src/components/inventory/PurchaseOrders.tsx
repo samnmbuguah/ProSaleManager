@@ -133,6 +133,10 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
         title: 'Success',
         description: 'Status updated successfully'
       })
+      // Refresh the purchase orders list to show updated status
+      if (typeof window !== 'undefined') {
+        window.location.reload()
+      }
       // dispatch(fetchPurchaseOrders()) // This line is removed
     } catch (error) {
       console.error('Error:', error)
@@ -150,6 +154,10 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
     try {
       await api.put(`/purchase-orders/${orderId}/status`, { status: 'received' });
       toast({ title: 'Order marked as received', description: 'Inventory has been updated.' });
+      // Refresh the purchase orders list to show updated status
+      if (typeof window !== 'undefined') {
+        window.location.reload()
+      }
       // dispatch(fetchPurchaseOrders()); // This line is removed
       refetchInventory && refetchInventory();
     } catch (err) {
@@ -167,11 +175,36 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
         return 'default'
       case 'rejected':
         return 'destructive'
-      case 'completed':
-        return 'default'
+      case 'received':
+        return 'outline'
+      case 'cancelled':
+        return 'destructive'
       default:
         return 'default'
     }
+  }
+
+  // Get available status options based on current status
+  const getAvailableStatuses = (currentStatus: PurchaseOrder['status']) => {
+    switch (currentStatus) {
+      case 'pending':
+        return ['approved', 'rejected', 'cancelled']
+      case 'approved':
+        return ['received', 'cancelled']
+      case 'rejected':
+        return ['cancelled'] // Can only cancel rejected orders
+      case 'received':
+        return [] // No further status changes allowed
+      case 'cancelled':
+        return [] // No further status changes allowed
+      default:
+        return ['pending', 'approved', 'rejected', 'cancelled']
+    }
+  }
+
+  // Check if status can be changed
+  const canChangeStatus = (currentStatus: PurchaseOrder['status']) => {
+    return getAvailableStatuses(currentStatus).length > 0
   }
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -254,7 +287,8 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
                         <TableRow key={order.id}>
                           <TableCell>{order.id}</TableCell>
                           <TableCell>
-                            {order.supplier?.name || 'Unknown Supplier'}
+                            {/* Show supplier name regardless of field casing */}
+                            {order.supplier?.name || order.Supplier?.name || 'Unknown Supplier'}
                           </TableCell>
                           <TableCell>
                             {(order.created_at || order.createdAt)
@@ -268,7 +302,7 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
                           </TableCell>
                           <TableCell>
                             <Badge variant={getStatusBadgeVariant(order.status)}>
-                              {order.status}
+                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -281,25 +315,32 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
                             {/* Only admins can approve/reject orders */}
                             {user?.role === 'admin' ? (
                               <>
-                                <Select
-                                  value={order.status}
-                                  onValueChange={(value) =>
-                                    handleStatusChange(
-                                      order.id,
-                                      value as PurchaseOrder['status']
-                                    )
-                                  }
-                                >
-                                  <SelectTrigger className="w-[130px]">
-                                    <SelectValue placeholder="Select status" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="pending">Pending</SelectItem>
-                                    <SelectItem value="approved">Approved</SelectItem>
-                                    <SelectItem value="rejected">Rejected</SelectItem>
-                                    <SelectItem value="completed">Completed</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                {canChangeStatus(order.status) ? (
+                                  <Select
+                                    value={order.status}
+                                    onValueChange={(value) =>
+                                      handleStatusChange(
+                                        order.id,
+                                        value as PurchaseOrder['status']
+                                      )
+                                    }
+                                  >
+                                    <SelectTrigger className="w-[130px]">
+                                      <SelectValue placeholder="Select status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {getAvailableStatuses(order.status).map((status) => (
+                                        <SelectItem key={status} value={status}>
+                                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                ) : (
+                                  <Badge variant={getStatusBadgeVariant(order.status)}>
+                                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                  </Badge>
+                                )}
                                 {/* Mark as Received button for approved orders */}
                                 {order.status === 'approved' && (
                                   <Button
@@ -318,7 +359,9 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
                                 )}
                               </>
                             ) : (
-                              <span className="text-muted-foreground text-sm">{order.status}</span>
+                              <Badge variant={getStatusBadgeVariant(order.status)}>
+                                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                              </Badge>
                             )}
                             {/* TODO: After admin approval and order confirmation, update inventory */}
                           </TableCell>

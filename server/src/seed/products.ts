@@ -5,11 +5,16 @@ const DOZEN_DISCOUNT = 0.90; // 10% discount for dozen
 
 export const seedProducts = async (): Promise<void> => {
   try {
+    console.log('🚀 Starting advanced product seeder...');
+    
     // Clear existing data
+    console.log('🗑️  Clearing existing products and categories...');
     await Product.destroy({ where: {} });
     await Category.destroy({ where: {} });
+    console.log('✅ Existing data cleared');
 
     // Create categories and ensure IDs are returned
+    console.log('📂 Creating categories...');
     const categories = await Category.bulkCreate([
       { name: 'Shoes', description: 'Footwear products' },
       { name: 'Boxers', description: 'Men\'s underwear' },
@@ -18,6 +23,7 @@ export const seedProducts = async (): Promise<void> => {
       { name: 'Oil', description: 'Beauty and wellness products' },
       { name: 'Service', description: 'Service products' },
     ], { returning: true });
+    console.log(`✅ Created ${categories.length} categories`);
 
     const now = new Date();
 
@@ -179,28 +185,68 @@ export const seedProducts = async (): Promise<void> => {
       },
     ];
 
-    // Create products with calculated prices
-    const productsToCreate = baseProducts.map(baseProduct => {
-      const { piece_buying_price, piece_selling_price } = baseProduct;
-
-      // Calculate pack and dozen prices
+    // Generate additional random products
+    const PRODUCT_ADJECTIVES = ['Classic', 'Modern', 'Premium', 'Eco', 'Sport', 'Luxury', 'Basic', 'Smart', 'Pro', 'Ultra'];
+    const PRODUCT_TYPES = ['Sneaker', 'Panty', 'Boxer', 'Bra', 'Oil', 'Service', 'Boot', 'Sandal', 'Shirt', 'Shorts'];
+    const BRANDS = ['Nike', 'Adidas', 'Victoria', 'Calvin Klein', 'Puma', 'Reebok', 'Under Armour', 'Levi\'s', 'Hanes', 'Gucci'];
+    function randomFrom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+    function randomPrice(min, max) { return Math.round((Math.random() * (max - min) + min) * 100) / 100; }
+    const randomProducts = Array.from({ length: 100 }).map((_, i) => {
+      const brand = randomFrom(BRANDS);
+      const type = randomFrom(PRODUCT_TYPES);
+      const adj = randomFrom(PRODUCT_ADJECTIVES);
+      const name = `${brand} ${adj} ${type}`;
+      const sku = `${brand.slice(0, 3).toUpperCase()}${type.slice(0, 2).toUpperCase()}${i + 10}`;
+      const category = randomFrom(categories);
+      const piece_buying_price = randomPrice(100, 2000);
+      const piece_selling_price = piece_buying_price + randomPrice(50, 500);
       const pack_buying_price = piece_buying_price * 3 * PACK_DISCOUNT;
       const pack_selling_price = piece_selling_price * 3 * PACK_DISCOUNT;
       const dozen_buying_price = piece_buying_price * 12 * DOZEN_DISCOUNT;
       const dozen_selling_price = piece_selling_price * 12 * DOZEN_DISCOUNT;
-
+      const image_url = `https://source.unsplash.com/random/400x400?${encodeURIComponent(type)}`;
       return {
-        ...baseProduct,
+        name,
+        description: `A ${adj.toLowerCase()} ${type.toLowerCase()} by ${brand}.`,
+        sku,
+        category_id: category.id,
+        piece_buying_price,
+        piece_selling_price,
         pack_buying_price,
         pack_selling_price,
         dozen_buying_price,
         dozen_selling_price,
+        quantity: Math.floor(Math.random() * 50) + 1,
+        min_quantity: Math.floor(Math.random() * 5) + 1,
+        is_active: true,
+        image_url,
+        created_at: now,
+        updated_at: now,
       };
     });
+    // Combine base and random products
+    const productsToCreate = [
+      ...baseProducts.map(baseProduct => {
+        const { piece_buying_price, piece_selling_price } = baseProduct;
+        const pack_buying_price = piece_buying_price * 3 * PACK_DISCOUNT;
+        const pack_selling_price = piece_selling_price * 3 * PACK_DISCOUNT;
+        const dozen_buying_price = piece_buying_price * 12 * DOZEN_DISCOUNT;
+        const dozen_selling_price = piece_selling_price * 12 * DOZEN_DISCOUNT;
+        return {
+          ...baseProduct,
+          pack_buying_price,
+          pack_selling_price,
+          dozen_buying_price,
+          dozen_selling_price,
+        };
+      }),
+      ...randomProducts
+    ];
 
     // Log the final product data being sent to create
     console.log('\nCreating products with data:', JSON.stringify(productsToCreate, null, 2));
 
+    console.log('Seeding products: count =', productsToCreate.length, 'Sample:', productsToCreate[0]);
     // Create all products at once
     await Product.bulkCreate(productsToCreate, { returning: true });
     
@@ -208,8 +254,18 @@ export const seedProducts = async (): Promise<void> => {
     console.log('\nCreated products:', JSON.stringify(productsToCreate, null, 2));
 
     console.log('Products seeded successfully');
+    
+    // Verify the count in database
+    const finalCount = await Product.count();
+    console.log(`🎉 Advanced product seeder completed successfully!`);
+    console.log(`📊 Total products created: ${finalCount}`);
+    console.log(`📋 Expected count: ${productsToCreate.length}`);
+    
+    if (finalCount !== productsToCreate.length) {
+      console.warn(`⚠️  Warning: Expected ${productsToCreate.length} products but found ${finalCount} in database`);
+    }
   } catch (error) {
-    console.error('Error seeding products:', error);
+    console.error('❌ Error seeding products:', error);
     throw error;
   }
 };

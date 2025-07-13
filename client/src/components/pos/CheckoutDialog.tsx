@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -47,75 +47,111 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   setSelectedCustomer,
   onCheckout,
   isLoadingCheckout
-}) => (
-  <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Complete Sale</DialogTitle>
-        <DialogDescription>
-          Select payment method and customer details
-        </DialogDescription>
-      </DialogHeader>
-      <div className="space-y-4 py-4">
-        <div className="space-y-2">
-          <Label>Payment Method</Label>
-          <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select payment method" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="cash">Cash</SelectItem>
-              <SelectItem value="mpesa">M-Pesa</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>Customer (Optional)</Label>
-          <Select
-            value={selectedCustomer ? selectedCustomer.toString() : 'walk_in'}
-            onValueChange={(value) =>
-              setSelectedCustomer(value !== 'walk_in' ? parseInt(value) : null)
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select customer" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="walk_in">Walk-in Customer</SelectItem>
-              {(customers || []).map((customer) => (
-                <SelectItem key={customer.id} value={customer.id.toString()}>
-                  {customer.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>Delivery Fee</Label>
-          <Input
-            type="number"
-            value={deliveryFee}
-            onChange={(e) => setDeliveryFee(Number(e.target.value))}
-            min={0}
-            step={0.01}
-            placeholder="200"
-          />
-        </div>
-        <div className="pt-4 space-y-2">
-          <div className="flex justify-between text-lg font-bold">
-            <span>Total Amount:</span>
-            <span>KSh {(cartTotal + deliveryFee).toFixed(2)}</span>
+}) => {
+  const [amountTendered, setAmountTendered] = useState('')
+  const total = cartTotal + deliveryFee
+  const tendered = parseFloat(amountTendered)
+  const balance = paymentMethod === 'cash' && !isNaN(tendered) ? tendered - total : 0
+  const canCheckout = paymentMethod === 'cash' ? tendered >= total : true
+
+  React.useEffect(() => {
+    if (paymentMethod !== 'cash') setAmountTendered('')
+  }, [paymentMethod])
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Complete Sale</DialogTitle>
+          <DialogDescription>
+            Select payment method and customer details
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label>Payment Method</Label>
+            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select payment method" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cash">Cash</SelectItem>
+                <SelectItem value="mpesa">M-Pesa</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Customer (Optional)</Label>
+            <Select
+              value={selectedCustomer ? selectedCustomer.toString() : 'walk_in'}
+              onValueChange={(value) =>
+                setSelectedCustomer(value !== 'walk_in' ? parseInt(value) : null)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select customer" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="walk_in">Walk-in Customer</SelectItem>
+                {(customers || []).map((customer) => (
+                  <SelectItem key={customer.id} value={customer.id.toString()}>
+                    {customer.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Delivery Fee</Label>
+            <Input
+              type="number"
+              value={deliveryFee}
+              onChange={(e) => setDeliveryFee(Number(e.target.value))}
+              min={0}
+              step={0.01}
+              placeholder="200"
+            />
+          </div>
+          <div className="pt-4 space-y-2">
+            <div className="flex justify-between text-lg font-bold">
+              <span>Total Amount:</span>
+              <span>KSh {total.toFixed(2)}</span>
+            </div>
+            {paymentMethod === 'cash' && (
+              <div className="space-y-2 mt-2 p-3 rounded bg-blue-50 border">
+                <Label htmlFor="amount-tendered">Amount Tendered</Label>
+                <Input
+                  id="amount-tendered"
+                  type="number"
+                  min={total}
+                  step={0.01}
+                  value={amountTendered}
+                  onChange={e => setAmountTendered(e.target.value)}
+                  placeholder="Enter amount tendered"
+                  autoFocus
+                />
+                <div className="flex justify-between text-base mt-2">
+                  <span>Balance:</span>
+                  <span className={balance < 0 ? 'text-red-600 font-bold' : 'text-green-700 font-bold'}>
+                    KSh {balance >= 0 ? balance.toFixed(2) : '0.00'}
+                  </span>
+                </div>
+                {balance < 0 && (
+                  <div className="text-xs text-red-500 mt-1">Amount tendered must be at least total</div>
+                )}
+              </div>
+            )}
           </div>
         </div>
-      </div>
-      <DialogFooter>
-        <Button variant="outline" onClick={() => onOpenChange(false)}>
-          Cancel
-        </Button>
-        <Button onClick={onCheckout} disabled={isLoadingCheckout}>
-          {isLoadingCheckout ? 'Processing...' : 'Complete Sale'}
-        </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-)
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={onCheckout} disabled={isLoadingCheckout || !canCheckout}>
+            {isLoadingCheckout ? 'Processing...' : 'Complete Sale'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
