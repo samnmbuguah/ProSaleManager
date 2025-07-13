@@ -25,6 +25,14 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
 
   return (
     <Card className="h-full">
+      {/* Product Image */}
+      <div className="w-full flex justify-center items-center pt-4">
+        <img
+          src={product.image_url && product.image_url.trim() !== '' ? product.image_url : 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=120&q=80'}
+          alt={product.name}
+          className="w-28 h-28 object-cover rounded-md border"
+        />
+      </div>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg font-semibold line-clamp-2">
