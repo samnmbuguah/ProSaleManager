@@ -12,6 +12,18 @@ export async function seedCategories() {
       { name: "Bras" },
       { name: "Oil" },
       { name: "Services" },
+      { name: "Shirts" },
+      { name: "Shorts" },
+      { name: "Boots" },
+      { name: "Sandals" },
+      { name: "Accessories" },
+      { name: "Electronics" },
+      { name: "Beauty" },
+      { name: "Wellness" },
+      { name: "Home" },
+      { name: "Kids" },
+      { name: "Men" },
+      { name: "Women" },
     ];
 
     const createdCategories = await Category.bulkCreate(categories, { returning: true });

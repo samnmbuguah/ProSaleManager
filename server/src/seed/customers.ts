@@ -1,4 +1,5 @@
-import { Customer } from '../models/Customer.js'
+import Customer from '../models/Customer.js'
+import { faker } from '@faker-js/faker';
 
 const customerData = [
   {
@@ -37,6 +38,17 @@ const customerData = [
     notes: 'Online customer'
   }
 ]
+
+// Generate additional random customers
+for (let i = 0; i < 100; i++) {
+  customerData.push({
+    name: faker.person.fullName(),
+    email: faker.internet.email(),
+    phone: faker.phone.number('+2547########'),
+    address: faker.address.streetAddress() + ', ' + faker.address.city(),
+    notes: faker.lorem.words(3)
+  });
+}
 
 export const seedCustomers = async () => {
   try {

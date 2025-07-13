@@ -1,11 +1,12 @@
 import Supplier from "../src/models/Supplier.js";
+import { faker } from '@faker-js/faker';
 
 export async function seedSuppliers() {
   try {
     await Supplier.destroy({ where: {} });
     console.log("Cleared existing suppliers");
 
-    await Supplier.bulkCreate([
+    const baseSuppliers = [
       {
         name: "Tech Supplies Ltd",
         email: "info@techsupplies.co.ke",
@@ -41,7 +42,20 @@ export async function seedSuppliers() {
         address: "654 Thika Road, Nairobi",
         contact_person: "Michael Njoroge",
       },
-    ]);
+    ];
+
+    // Generate additional random suppliers
+    for (let i = 0; i < 50; i++) {
+      baseSuppliers.push({
+        name: faker.company.name(),
+        email: faker.internet.email(),
+        phone: faker.phone.number('+2547########'),
+        address: faker.location.streetAddress() + ', ' + faker.location.city(),
+        contact_person: faker.person.fullName(),
+      });
+    }
+
+    await Supplier.bulkCreate(baseSuppliers);
 
     console.log("Suppliers seeded successfully");
   } catch (error) {

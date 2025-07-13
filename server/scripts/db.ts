@@ -1,11 +1,12 @@
 import { sequelize } from '../src/config/database.js'
 
-// Import seed functions
-import { seedUsers } from '../src/seed/users.js'
-import { seedCategories } from '../src/seed/categories.js'
-import { seedProducts } from '../src/seed/products.js'
-import { seedCustomers } from '../src/seed/customers.js'
-import { seedSuppliers } from '../src/seed/suppliers.js'
+// Import advanced seed functions for products and customers
+import { seedProducts } from '../src/seed/products.ts'
+import { seedCustomers } from '../src/seed/customers.ts'
+// Import standard seeders for the rest
+import { seedUsers } from '../seed/users.ts'
+import { seedCategories } from '../seed/categories.ts'
+import { seedSuppliers } from '../seed/suppliers.ts'
 
 const seedAll = async () => {
   try {
