@@ -76,6 +76,14 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
             >
               <CardContent className="p-4">
                 <div className="space-y-2">
+                  {/* Product Image */}
+                  <div className="w-full flex justify-center items-center pb-2">
+                    <img
+                      src={product.image_url && product.image_url.trim() !== '' ? product.image_url : 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=80&q=80'}
+                      alt={product.name}
+                      className="w-20 h-20 object-cover rounded-md border"
+                    />
+                  </div>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h3 className="font-semibold text-sm line-clamp-2">{product.name}</h3>
