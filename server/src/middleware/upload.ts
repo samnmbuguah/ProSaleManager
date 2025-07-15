@@ -44,6 +44,29 @@ const upload = multer({
   },
 });
 
+// CSV file filter
+const csvFileFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback,
+) => {
+  if (
+    file.mimetype === 'text/csv' ||
+    file.originalname.toLowerCase().endsWith('.csv')
+  ) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only CSV files are allowed.'));
+  }
+};
+
+// CSV upload middleware (memory storage)
+export const uploadCsv = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: csvFileFilter,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB max
+});
+
 // Helper to get image URL (local or Cloudinary)
 export function getImageUrl(file: Express.Multer.File | undefined): string | null {
   if (!file) return null;
