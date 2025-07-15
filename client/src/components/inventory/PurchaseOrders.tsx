@@ -25,9 +25,6 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/components/ui/use-toast'
 import { format } from 'date-fns'
-import { useSelector, useDispatch } from 'react-redux'
-import type { RootState, AppDispatch } from '@/store'
-import { fetchPurchaseOrders } from '@/store/purchaseOrdersSlice'
 import { useInventory } from '@/hooks/use-inventory'
 import type {
   PurchaseOrder,
@@ -59,10 +56,8 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
 
   // Product search state for purchase order dialog
   const [searchQuery, setSearchQuery] = useState('')
-  const { refetch: refetchInventory } = useInventory();
   const [markingReceivedId, setMarkingReceivedId] = useState<number | null>(null);
   const [productsList, setProductsList] = useState(products)
-  const [productsLoading, setProductsLoading] = useState(false)
   const [productDropdownOpen, setProductDropdownOpen] = useState<boolean[]>([])
 
   useEffect(() => {
@@ -82,7 +77,7 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
       })
       return
     }
-    setProductsLoading(true)
+    // setProductsLoading(true) // This line is removed
     try {
       const response = await api.get(`/products/search?q=${encodeURIComponent(query)}`)
       setProductsList(response.data.data)
@@ -95,7 +90,7 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to search products', variant: 'destructive' })
     } finally {
-      setProductsLoading(false)
+      // setProductsLoading(false) // This line is removed
     }
   }
 
@@ -159,7 +154,7 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
         window.location.reload()
       }
       // dispatch(fetchPurchaseOrders()); // This line is removed
-      refetchInventory && refetchInventory();
+      // refetchInventory && refetchInventory(); // This line is removed
     } catch (err) {
       toast({ title: 'Error', description: 'Failed to mark as received', variant: 'destructive' });
     } finally {
@@ -175,10 +170,8 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
         return 'default'
       case 'rejected':
         return 'destructive'
-      case 'received':
+      case 'completed':
         return 'outline'
-      case 'cancelled':
-        return 'destructive'
       default:
         return 'default'
     }
@@ -188,17 +181,15 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
   const getAvailableStatuses = (currentStatus: PurchaseOrder['status']) => {
     switch (currentStatus) {
       case 'pending':
-        return ['approved', 'rejected', 'cancelled']
+        return ['approved', 'rejected', 'completed']
       case 'approved':
-        return ['received', 'cancelled']
+        return ['completed']
       case 'rejected':
-        return ['cancelled'] // Can only cancel rejected orders
-      case 'received':
-        return [] // No further status changes allowed
-      case 'cancelled':
+        return ['completed'] // Can only cancel rejected orders
+      case 'completed':
         return [] // No further status changes allowed
       default:
-        return ['pending', 'approved', 'rejected', 'cancelled']
+        return ['pending', 'approved', 'rejected', 'completed']
     }
   }
 
@@ -288,16 +279,16 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
                           <TableCell>{order.id}</TableCell>
                           <TableCell>
                             {/* Show supplier name regardless of field casing */}
-                            {order.supplier?.name || order.Supplier?.name || 'Unknown Supplier'}
+                            {order.supplier?.name || 'Unknown Supplier'}
                           </TableCell>
                           <TableCell>
-                            {(order.created_at || order.createdAt)
-                              ? format(new Date(order.created_at || order.createdAt), 'PPP')
+                            {order.created_at
+                              ? format(new Date(order.created_at), 'PPP')
                               : 'N/A'}
                           </TableCell>
                           <TableCell>
-                            {(order.expected_delivery_date || order.expectedDeliveryDate)
-                              ? format(new Date(order.expected_delivery_date || order.expectedDeliveryDate), 'PPP')
+                            {order.expected_delivery_date
+                              ? format(new Date(order.expected_delivery_date), 'PPP')
                               : 'Not set'}
                           </TableCell>
                           <TableCell>
@@ -344,7 +335,7 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
                                 {/* Mark as Received button for approved orders */}
                                 {order.status === 'approved' && (
                                   <Button
-                                    variant="success"
+                                    variant="default"
                                     size="sm"
                                     className="ml-2"
                                     disabled={markingReceivedId === order.id}
@@ -452,6 +443,7 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
                 arr[index] = open
                 return arr
               })}
+              onAddItem={addItem}
             />
           </form>
         </DialogContent>

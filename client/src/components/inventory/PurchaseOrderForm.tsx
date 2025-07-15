@@ -25,12 +25,9 @@ export function PurchaseOrderForm({
   onInputChange,
   onItemChange,
   onRemoveItem,
-  onAddItem,
   products,
   suppliers,
-  suppliersLoading,
-  productDropdownOpen,
-  setProductDropdownOpen
+  suppliersLoading
 }: PurchaseOrderFormProps) {
   return (
     <div className="space-y-4">
@@ -57,9 +54,6 @@ export function PurchaseOrderForm({
         products={products}
         onItemChange={onItemChange}
         onRemoveItem={onRemoveItem}
-        onAddItem={onAddItem}
-        dropdownOpen={productDropdownOpen}
-        setDropdownOpen={setProductDropdownOpen}
       />
       <div>
         <Label htmlFor="notes">Notes</Label>
