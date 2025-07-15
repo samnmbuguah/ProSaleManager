@@ -1,7 +1,5 @@
 import { Product } from '@/types/product'
-import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { api } from '@/lib/api'
 import { STOCK_UNITS } from '@/types/product'
 
 interface PurchaseOrderItemsListProps {
@@ -9,19 +7,13 @@ interface PurchaseOrderItemsListProps {
   products: Product[]
   onItemChange: (index: number, field: string, value: any) => void
   onRemoveItem: (index: number) => void
-  onAddItem: () => void
-  dropdownOpen: boolean[]
-  setDropdownOpen: (index: number, open: boolean) => void
 }
 
 export function PurchaseOrderItemsList({
   items,
   products, // not used anymore
   onItemChange,
-  onRemoveItem,
-  onAddItem,
-  dropdownOpen,
-  setDropdownOpen
+  onRemoveItem
 }: PurchaseOrderItemsListProps) {
   return (
     <div className="space-y-4">
