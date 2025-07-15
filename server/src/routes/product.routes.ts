@@ -6,9 +6,11 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  bulkUploadProducts,
 } from '../controllers/product.controller';
 import Product from '../models/Product.js';
 import { Op } from 'sequelize';
+import { uploadCsv } from '../middleware/upload';
 
 const router = Router();
 
@@ -49,6 +51,10 @@ router.get('/:id', getProduct);
 // Only admin and manager can modify products
 router.use(requireAuth);
 router.use(requireRole(['admin', 'manager']));
+
+// Bulk upload products via CSV
+router.post('/bulk-upload', uploadCsv.single('file'), bulkUploadProducts);
+
 router.post('/', createProduct);
 router.put('/:id', updateProduct);
 router.delete('/:id', deleteProduct);
