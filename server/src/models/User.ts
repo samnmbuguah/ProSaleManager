@@ -10,8 +10,6 @@ export interface UserAttributes {
   role?: 'admin' | 'sales' | 'manager';
   is_active?: boolean;
   last_login?: Date;
-  created_at?: Date;
-  updated_at?: Date;
 }
 
 class User extends Model<UserAttributes> implements UserAttributes {

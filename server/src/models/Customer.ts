@@ -10,8 +10,6 @@ interface CustomerAttributes {
   notes?: string;
   loyalty_points?: number;
   is_active?: boolean;
-  created_at?: Date;
-  updated_at?: Date;
 }
 
 class Customer extends Model<CustomerAttributes> implements CustomerAttributes {
@@ -37,17 +35,24 @@ Customer.init(
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: {
-        isEmail: true,
-      },
+      unique: true,
     },
     phone: {
       type: DataTypes.STRING,
       allowNull: false,
     },
     address: {
-      type: DataTypes.TEXT,
+      type: DataTypes.STRING,
       allowNull: false,
+    },
+    notes: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    loyalty_points: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0,
     },
     is_active: {
       type: DataTypes.BOOLEAN,
@@ -57,11 +62,11 @@ Customer.init(
   },
   {
     sequelize,
-    modelName: "Customer",
-    tableName: "customers",
+    modelName: 'Customer',
+    tableName: 'customers',
     timestamps: true,
     underscored: true,
-  },
+  }
 );
 
 export default Customer;

@@ -6,8 +6,6 @@ class Category extends Model {
   declare name: string;
   declare description: string;
   declare is_active?: boolean;
-  declare created_at?: Date;
-  declare updated_at?: Date;
 }
 
 Category.init(
@@ -30,16 +28,6 @@ Category.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    updated_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
     },
   },
   {
