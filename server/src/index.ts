@@ -63,7 +63,7 @@ async function syncDatabase() {
 // Initialize database
 async function initializeDatabase() {
   await testConnection()
-  await syncDatabase()
+  // await syncDatabase() // <-- Manual sync only if needed
 }
 
 // Start server
