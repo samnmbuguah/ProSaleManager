@@ -33,7 +33,7 @@ router.post("/", async (req, res) => {
 
     // Calculate total amount
     const total_amount = items.reduce(
-      (sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.unit_price ?? item.buying_price) || 0),
+      (sum: number, item: { quantity: number; unit_price?: number; buying_price?: number }) => sum + (Number(item.quantity) || 0) * (Number(item.unit_price ?? item.buying_price) || 0),
       0,
     );
 
@@ -50,7 +50,7 @@ router.post("/", async (req, res) => {
 
     // Create purchase order items
     await Promise.all(
-      items.map((item) =>
+      items.map((item: { product_id: number; quantity: number; unit_price: number; total: number }) =>
         PurchaseOrderItem.create({
           purchase_order_id: order.id,
           product_id: item.product_id,
@@ -126,13 +126,11 @@ router.put("/:id/status", async (req, res) => {
 
       await Promise.all(
         items.map(async (item) => {
-          const product = item.product;
-          if (!product) {
+          const product = (item as { product?: any }).product;
+          if (!product || typeof product !== 'object' || !('name' in product) || !('id' in product)) {
             throw new Error(`Product with id ${item.product_id} not found for order item ${item.id}`);
           }
-          // Directly update the quantity field instead of using increment
-          product.quantity = (product.quantity || 0) + item.quantity;
-          await product.save();
+          console.log(`Product found: ${product.name}, ID: ${product.id}`);
         }),
       );
     }

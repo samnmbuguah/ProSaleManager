@@ -31,15 +31,19 @@ export class ReceiptService {
         throw new Error("Sale not found");
       }
 
+      const saleWithAssociations = sale as Sale & {
+        Customer?: Customer;
+        items?: SaleItem[];
+      };
       console.log(`Sale found:`, {
-        id: sale.id,
-        hasCustomer: !!sale.Customer,
-        hasItems: !!sale.items,
-        itemCount: sale.items?.length || 0
+        id: saleWithAssociations.id,
+        hasCustomer: !!saleWithAssociations.Customer,
+        hasItems: !!saleWithAssociations.items,
+        itemCount: saleWithAssociations.items?.length || 0
       });
 
       // Type assertion for associations
-      const saleWithAssociations = sale as any;
+      // const saleWithAssociations = sale as any;
 
       // Format receipt text with improved formatting
       let receiptText = `╔══════════════════════════════════════╗\n`;
@@ -60,13 +64,13 @@ export class ReceiptService {
         second: '2-digit'
       })}\n\n`;
 
-      if (saleWithAssociations.customer) {
-        receiptText += `Customer: ${saleWithAssociations.customer.name}\n`;
-        if (saleWithAssociations.customer.phone) {
-          receiptText += `Phone: ${saleWithAssociations.customer.phone}\n`;
+      if (saleWithAssociations.Customer) {
+        receiptText += `Customer: ${saleWithAssociations.Customer.name}\n`;
+        if (saleWithAssociations.Customer.phone) {
+          receiptText += `Phone: ${saleWithAssociations.Customer.phone}\n`;
         }
-        if (saleWithAssociations.customer.email) {
-          receiptText += `Email: ${saleWithAssociations.customer.email}\n`;
+        if (saleWithAssociations.Customer.email) {
+          receiptText += `Email: ${saleWithAssociations.Customer.email}\n`;
         }
         receiptText += `\n`;
       } else {
@@ -90,12 +94,13 @@ export class ReceiptService {
       let itemNumber = 1;
       for (const item of items) {
         // Add null checks for item and Product association
-        if (!item || !item.Product) {
+        const product = (item as any).Product;
+        if (!item || !product) {
           console.error(`Missing product data for item:`, item);
           continue;
         }
         
-        receiptText += `${itemNumber.toString().padStart(2, '0')}. ${item.Product.name}\n`;
+        receiptText += `${itemNumber.toString().padStart(2, '0')}. ${product.name}\n`;
         receiptText += `    ${item.quantity} ${item.unit_type} × KSh ${item.unit_price.toLocaleString('en-KE', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2

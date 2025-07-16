@@ -49,7 +49,7 @@ export async function seedSuppliers() {
       baseSuppliers.push({
         name: faker.company.name(),
         email: faker.internet.email(),
-        phone: faker.phone.number('+2547########'),
+        phone: faker.phone.number(),
         address: faker.location.streetAddress() + ', ' + faker.location.city(),
         contact_person: faker.person.fullName(),
       });

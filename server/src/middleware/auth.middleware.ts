@@ -24,11 +24,13 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
 
   const jwtSecret = process.env.JWT_SECRET || 'fallback-secret'
   
-  jwt.verify(token, jwtSecret, (err: any, user: any) => {
+  jwt.verify(token, jwtSecret, (err: jwt.VerifyErrors | null, decoded: jwt.JwtPayload | string | undefined) => {
     if (err) {
       return res.status(403).json({ message: 'Invalid or expired token' })
     }
-    req.user = user
+    if (typeof decoded === 'object' && decoded && 'id' in decoded && 'email' in decoded && 'role' in decoded) {
+      req.user = { id: (decoded as any).id, email: (decoded as any).email, role: (decoded as any).role };
+    }
     next()
   })
 }
@@ -56,11 +58,13 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
 
   const jwtSecret = process.env.JWT_SECRET || 'fallback-secret'
   
-  jwt.verify(token, jwtSecret, (err: any, decoded: any) => {
+  jwt.verify(token, jwtSecret, (err: jwt.VerifyErrors | null, decoded: jwt.JwtPayload | string | undefined) => {
     if (err) {
       return res.status(401).json({ message: 'Invalid token' })
     }
-    req.user = decoded
+    if (typeof decoded === 'object' && decoded && 'id' in decoded && 'email' in decoded && 'role' in decoded) {
+      req.user = { id: (decoded as any).id, email: (decoded as any).email, role: (decoded as any).role };
+    }
     next()
   })
 }

@@ -1,7 +1,7 @@
 import "./src/config/env";
-import env from "./src/config/env";
-import app from "./src/app";
-import { syncDatabase } from "./src/db/sync";
+import env from "./src/config/env.js";
+import app from "./src/app.js";
+import { syncDatabase } from "./src/db/sync.js";
 
 const port = env.PORT;
 

@@ -4,12 +4,10 @@ import {
 } from 'sequelize'
 import { sequelize } from "../config/database.js";
 
-interface ProductAttributes {
+export interface ProductAttributes {
   id?: number;
   name: string;
-  description?: string;
-  sku?: string;
-  barcode?: string;
+  sku: string;
   category_id: number;
   piece_buying_price: number;
   piece_selling_price: number;
@@ -19,10 +17,12 @@ interface ProductAttributes {
   dozen_selling_price: number;
   quantity: number;
   min_quantity: number;
-  image_url?: string;
-  is_active: boolean;
-  created_at: Date;
-  updated_at: Date;
+  barcode?: string;
+  description?: string;
+  image_url?: string | null;
+  is_active?: boolean;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 interface ProductInstance extends Model<ProductAttributes>, ProductAttributes {
@@ -45,7 +45,7 @@ const Product = sequelize.define<ProductInstance>('Product', {
   },
   sku: {
     type: DataTypes.STRING,
-    allowNull: true,
+    allowNull: false,
     unique: true,
   },
   barcode: {
@@ -117,7 +117,7 @@ const Product = sequelize.define<ProductInstance>('Product', {
 });
 
 // Add instance method to update prices
-(Product as any).prototype.updatePrices = async function(unit: 'piece' | 'pack' | 'dozen', buyingPrice: number, sellingPrice: number) {
+(Product as typeof Product & { prototype: { updatePrices: (unit: 'piece' | 'pack' | 'dozen', buyingPrice: number, sellingPrice: number) => Promise<void> } }).prototype.updatePrices = async function(unit: 'piece' | 'pack' | 'dozen', buyingPrice: number, sellingPrice: number) {
   // No discounts: pack = 4 pieces, dozen = 12 pieces
 
   // Ensure all price fields are numbers
@@ -150,8 +150,8 @@ const Product = sequelize.define<ProductInstance>('Product', {
     this.set("piece_selling_price", Number((sellingPrice / 4).toFixed(2)));
     
     // Calculate dozen prices (12 pieces)
-    this.set("dozen_buying_price", Number((this.get("piece_buying_price") * 12).toFixed(2)));
-    this.set("dozen_selling_price", Number((this.get("piece_selling_price") * 12).toFixed(2)));
+    this.set("dozen_buying_price", Number((Number(this.get("piece_buying_price")) * 12).toFixed(2)));
+    this.set("dozen_selling_price", Number((Number(this.get("piece_selling_price")) * 12).toFixed(2)));
   } else if (unit === 'dozen') {
     // Set both buying and selling prices for dozen
     this.set("dozen_buying_price", Number(buyingPrice));
@@ -162,8 +162,8 @@ const Product = sequelize.define<ProductInstance>('Product', {
     this.set("piece_selling_price", Number((sellingPrice / 12).toFixed(2)));
     
     // Calculate pack prices (4 pieces)
-    this.set("pack_buying_price", Number((this.get("piece_buying_price") * 4).toFixed(2)));
-    this.set("pack_selling_price", Number((this.get("piece_selling_price") * 4).toFixed(2)));
+    this.set("pack_buying_price", Number((Number(this.get("piece_buying_price")) * 4).toFixed(2)));
+    this.set("pack_selling_price", Number((Number(this.get("piece_selling_price")) * 4).toFixed(2)));
   }
 
   await this.save();

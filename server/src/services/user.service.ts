@@ -13,7 +13,7 @@ export const createUser = async (userData: {
     const user = await User.create({
       ...userData,
       password: hashedPassword,
-      role: userData.role || 'user'
+      role: (userData.role as 'admin' | 'sales' | 'manager') || 'sales'
     })
 
     return user

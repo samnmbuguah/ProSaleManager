@@ -2,12 +2,12 @@ import { Model, DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
 
 class Category extends Model {
-  declare id: number;
+  declare id?: number;
   declare name: string;
   declare description: string;
-  declare is_active: boolean;
-  declare created_at: Date;
-  declare updated_at: Date;
+  declare is_active?: boolean;
+  declare created_at?: Date;
+  declare updated_at?: Date;
 }
 
 Category.init(

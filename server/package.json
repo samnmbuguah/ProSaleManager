@@ -20,7 +20,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage --forceExit",
-    "lint": "eslint ."
+    "lint": "eslint src/"
   },
   "keywords": [],
   "author": "",

@@ -1,12 +1,12 @@
 import { sequelize } from '../src/config/database.js'
 
 // Import advanced seed functions for products and customers
-import { seedProducts } from '../src/seed/products.ts'
-import { seedCustomers } from '../src/seed/customers.ts'
+import { seedProducts } from '../src/seed/products.js'
+import { seedCustomers } from '../src/seed/customers.js'
 // Import standard seeders for the rest
-import { seedUsers } from '../seed/users.ts'
-import { seedCategories } from '../seed/categories.ts'
-import { seedSuppliers } from '../seed/suppliers.ts'
+import { seedUsers } from '../seed/users.js'
+import { seedCategories } from '../seed/categories.js'
+import { seedSuppliers } from '../seed/suppliers.js'
 
 const seedAll = async () => {
   try {
@@ -78,7 +78,7 @@ const showTables = async () => {
   try {
     const [results] = await sequelize.query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
     console.log('Available tables:')
-    ;(results as any[]).forEach((row: any) => {
+    ;(results as Array<Record<string, unknown>>).forEach((row: Record<string, unknown>) => {
       console.log(`- ${row.table_name}`)
     })
     process.exit(0)

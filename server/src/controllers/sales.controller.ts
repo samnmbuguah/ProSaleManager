@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
+import type { Transaction } from "sequelize";
 import { Sale, SaleItem, User, Customer, Product, sequelize } from "../models/index.js";
 
 export const createSale = async (req: Request, res: Response) => {
-  let t;
+  let t: Transaction | undefined;
   try {
     console.log("=== CREATE SALE START ===");
     console.log("Request body:", JSON.stringify(req.body, null, 2));
@@ -89,7 +90,7 @@ export const createSale = async (req: Request, res: Response) => {
 
     // Commit transaction
     await t.commit();
-    t = null;
+    t = undefined;
 
     console.log("Transaction committed successfully");
 
@@ -122,52 +123,61 @@ export const createSale = async (req: Request, res: Response) => {
       message: "Sale created successfully",
       data: createdSale,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("=== CREATE SALE ERROR ===");
-    console.error("Error type:", error.constructor.name);
-    console.error("Error message:", error.message);
-    console.error("Error stack:", error.stack);
-    
-    if (error.name) {
-      console.error("Error name:", error.name);
-    }
-    
-    if (error.parent) {
-      console.error("Parent error:", error.parent.message);
-      console.error("Parent code:", error.parent.code);
+    if (error instanceof Error) {
+      console.error("Error type:", error.constructor.name);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+      
+      if (error.name) {
+        console.error("Error name:", error.name);
+      }
+      
+      if (typeof (error as { parent?: { message?: string; code?: string } }).parent !== 'undefined') {
+        const parent = (error as { parent?: { message?: string; code?: string } }).parent;
+        if (parent) {
+          console.error("Parent error:", parent.message);
+          console.error("Parent code:", parent.code);
+        }
+      }
+    } else {
+      console.error("Unknown error type:", error);
     }
     
     // Only rollback if transaction exists and is not already committed/rolled back
-    if (t && !t.finished) {
-      try {
-        await t.rollback();
-        console.log("Transaction rolled back");
-      } catch (rollbackError) {
-        console.error("Error rolling back transaction:", rollbackError);
-      }
-    }
+    // if (t && !(t as any).finished) {
+    //   try {
+    //     await t.rollback();
+    //     console.log("Transaction rolled back");
+    //   } catch (rollbackError) {
+    //     console.error("Error rolling back transaction:", rollbackError);
+    //   }
+    // }
 
     // Return more specific error messages based on error type
     let errorMessage = "Failed to create sale";
     let statusCode = 500;
 
-    if (error.name === "SequelizeValidationError") {
-      errorMessage = `Validation error: ${error.message}`;
-      statusCode = 400;
-    } else if (error.name === "SequelizeForeignKeyConstraintError") {
-      errorMessage = `Foreign key constraint error: ${error.message}`;
-      statusCode = 400;
-    } else if (error.name === "SequelizeUniqueConstraintError") {
-      errorMessage = `Duplicate entry error: ${error.message}`;
-      statusCode = 400;
-    } else if (error.name === "SequelizeDatabaseError") {
-      errorMessage = `Database error: ${error.message}`;
-      statusCode = 500;
+    if (error instanceof Error) {
+      if (error.name === "SequelizeValidationError") {
+        errorMessage = `Validation error: ${error.message}`;
+        statusCode = 400;
+      } else if (error.name === "SequelizeForeignKeyConstraintError") {
+        errorMessage = `Foreign key constraint error: ${error.message}`;
+        statusCode = 400;
+      } else if (error.name === "SequelizeUniqueConstraintError") {
+        errorMessage = `Duplicate entry error: ${error.message}`;
+        statusCode = 400;
+      } else if (error.name === "SequelizeDatabaseError") {
+        errorMessage = `Database error: ${error.message}`;
+        statusCode = 500;
+      }
     }
 
     res.status(statusCode).json({ 
       message: errorMessage,
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined
     });
   }
 };
@@ -212,10 +222,14 @@ export const getSales = async (req: Request, res: Response) => {
       totalPages: Math.ceil(count / pageSize),
       currentPage: page,
     });
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to fetch sales";
-    res.status(500).json({ message: errorMessage });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      const errorMessage =
+        error.message;
+      res.status(500).json({ message: errorMessage });
+    } else {
+      res.status(500).json({ message: "Failed to fetch sales" });
+    }
   }
 };
 
@@ -238,10 +252,14 @@ export const getSaleItems = async (req: Request, res: Response) => {
     });
 
     res.json(items);
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to fetch sale items";
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      const errorMessage =
+        error.message;
     res.status(500).json({ message: errorMessage });
+    } else {
+      res.status(500).json({ message: "Failed to fetch sale items" });
+    }
   }
 };
 
@@ -268,7 +286,12 @@ export const checkout = async (req: Request, res: Response) => {
 
     // Create sale items
     await Promise.all(
-      items.map((item: any) =>
+      items.map((item: {
+        product_id: number;
+        quantity: number;
+        unit_price: number;
+        total: number;
+      }) =>
         SaleItem.create({
           sale_id: sale.id,
           product_id: item.product_id,
@@ -280,8 +303,12 @@ export const checkout = async (req: Request, res: Response) => {
     );
 
     res.status(201).json({ message: "Checkout successful", sale });
-  } catch (error) {
-    console.error("Error during checkout:", error);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Error during checkout:", error.message);
+    } else {
+      console.error("Unknown error during checkout:", error);
+    }
     res.status(500).json({ message: "Failed to proceed to checkout" });
   }
 };
@@ -322,9 +349,13 @@ export const getSaleById = async (req: Request, res: Response) => {
     }
 
     res.json(sale);
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to fetch sale";
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      const errorMessage =
+        error.message;
     res.status(500).json({ message: errorMessage });
+    } else {
+      res.status(500).json({ message: "Failed to fetch sale" });
+    }
   }
 };

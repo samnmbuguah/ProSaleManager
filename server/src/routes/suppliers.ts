@@ -58,7 +58,7 @@ router.post("/", async (req, res) => {
     const supplier = await Supplier.create(req.body);
     res.status(201).json({ success: true, data: supplier });
   } catch (error) {
-    if (error.name === "SequelizeUniqueConstraintError") {
+    if (error instanceof Error && typeof error.name === 'string' && error.name === "SequelizeUniqueConstraintError") {
       return res.status(400).json({ success: false, error: "A supplier with this email already exists." });
     }
     console.error("Error creating supplier:", error);

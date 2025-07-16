@@ -32,8 +32,8 @@ export const searchProducts = async (req: Request, res: Response) => {
       where: {
         [Op.or]: [
           { name: { [Op.iLike]: `%${q}%` } },
-          { product_code: { [Op.iLike]: `%${q}%` } },
-          { category: { [Op.iLike]: `%${q}%` } }
+          { sku: { [Op.iLike]: `%${q}%` } },
+          { barcode: { [Op.iLike]: `%${q}%` } }
         ],
         quantity: {
           [Op.gt]: 0 // Only return products with quantity > 0

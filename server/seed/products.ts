@@ -8,16 +8,37 @@ export async function seedProducts() {
 
     // Fetch all categories and map by name
     const categories = await Category.findAll();
-    const categoryMap = {};
+    // Map category names to IDs for easy lookup
+    const categoryMap = new Map();
     categories.forEach(cat => {
-      categoryMap[cat.name] = cat.id;
+      categoryMap.set(String(cat.name), cat.id);
     });
+    // Helper to get category ID
+    const getCategoryId = (name: string) => {
+      const id = categoryMap.get(name);
+      if (typeof id !== 'number') throw new Error(`Category ${name} not found`);
+      return id;
+    };
 
-    const products = [
+    const products: Array<{
+      name: string;
+      sku: string;
+      category_id: number;
+      piece_buying_price: number;
+      piece_selling_price: number;
+      pack_buying_price: number;
+      pack_selling_price: number;
+      dozen_buying_price: number;
+      dozen_selling_price: number;
+      quantity: number;
+      min_quantity: number;
+      is_active: boolean;
+      image_url: string | null;
+    }> = [
       {
         name: "Nike Air Max",
         sku: "SHOE001",
-        category_id: categoryMap["Shoes"],
+        category_id: Number(getCategoryId("Shoes")),
         piece_buying_price: 4000,
         piece_selling_price: 6000,
         pack_buying_price: 22000,
@@ -32,7 +53,7 @@ export async function seedProducts() {
       {
         name: "Delivery Service",
         sku: "SRV001",
-        category_id: categoryMap["Services"],
+        category_id: Number(getCategoryId("Services")),
         piece_buying_price: 0,
         piece_selling_price: 200,
         pack_buying_price: 0,
