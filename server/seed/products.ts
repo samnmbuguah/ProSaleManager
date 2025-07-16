@@ -6,7 +6,7 @@ export async function seedProducts() {
     await Product.destroy({ where: {} });
     console.log("Cleared existing products");
 
-    // Fetch all categories and map by name
+    // Fetch all categories from the database
     const categories = await Category.findAll();
     // Map category names to IDs for easy lookup
     const categoryMap = new Map();
