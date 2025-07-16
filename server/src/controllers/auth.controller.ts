@@ -6,7 +6,7 @@ import { ApiError } from '../utils/api-error.js';
 import { catchAsync } from '../utils/catch-async.js';
 
 export const register = catchAsync(async (req: Request, res: Response) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password: plainPassword, role } = req.body;
 
   // Check if user already exists
   const existingUser = await User.findOne({ where: { email } });
@@ -16,7 +16,7 @@ export const register = catchAsync(async (req: Request, res: Response) => {
 
   // Hash password
   const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
+  const hashedPassword = await bcrypt.hash(plainPassword, salt);
 
   // Create user
   const user = await User.create({
@@ -30,8 +30,8 @@ export const register = catchAsync(async (req: Request, res: Response) => {
   // Generate token
   const token = jwt.sign(
     { id: user.id, email: user.email, role: user.role },
-    process.env.JWT_SECRET || 'your-secret-key',
-    { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+    process.env.JWT_SECRET as string,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '1d' } as jwt.SignOptions
   );
 
   // Set cookie
@@ -44,7 +44,9 @@ export const register = catchAsync(async (req: Request, res: Response) => {
 
   // Return user data (excluding password)
   const userData = user.toJSON();
-  delete userData.password;
+  if (Object.prototype.hasOwnProperty.call(userData, 'password')) {
+    (userData as { password?: string }).password = undefined;
+  }
 
   res.status(201).json({
     success: true,
@@ -53,10 +55,10 @@ export const register = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const login = catchAsync(async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { email, password: loginPassword } = req.body;
 
   // Validate required fields
-  if (!email || !password) {
+  if (!email || !loginPassword) {
     throw new ApiError(400, 'Email and password are required');
   }
 
@@ -73,7 +75,7 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   }
 
   // Check password
-  const isMatch = await bcrypt.compare(password, user.password);
+  const isMatch = await user.comparePassword(loginPassword);
   
   if (!isMatch) {
     throw new ApiError(401, 'Invalid credentials');
@@ -85,8 +87,8 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   // Generate token
   const token = jwt.sign(
     { id: user.id, email: user.email, role: user.role },
-    process.env.JWT_SECRET || 'your-secret-key',
-    { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+    process.env.JWT_SECRET as string,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '1d' } as jwt.SignOptions
   );
 
   // Set cookie
@@ -98,13 +100,15 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   });
 
   // Return user data (excluding password)
-  const userData = user.toJSON();
-  delete userData.password;
+  const userData2 = user.toJSON();
+  if (Object.prototype.hasOwnProperty.call(userData2, 'password')) {
+    (userData2 as { password?: string }).password = undefined;
+  }
 
   console.log('Login successful for:', email);
   res.json({
     success: true,
-    data: userData
+    data: userData2
   });
 });
 
@@ -114,33 +118,30 @@ export const logout = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getMe = catchAsync(async (req: Request, res: Response) => {
-  // If no user is attached to the request, return unauthenticated
   if (!req.user) {
-    return res.json({
+    res.json({
       success: true,
       data: null,
       authenticated: false
     });
+    return;
   }
-  
-  // Fetch the full user data from database
   const user = await User.findByPk(req.user.id);
-  
   if (!user) {
-    return res.json({
+    res.json({
       success: true,
       data: null,
       authenticated: false
     });
+    return;
   }
-  
-  // Return user data (excluding password)
-  const userData = user.toJSON();
-  delete userData.password;
-
+  const userData3 = user.toJSON();
+  if (Object.prototype.hasOwnProperty.call(userData3, 'password')) {
+    (userData3 as { password?: string }).password = undefined;
+  }
   res.json({
     success: true,
-    data: userData,
+    data: userData3,
     authenticated: true
   });
 });
