@@ -2,14 +2,16 @@ import { DataTypes, Model } from "sequelize";
 import { sequelize } from "../config/database.js";
 import bcrypt from 'bcryptjs';
 
-interface UserAttributes {
-  id: number;
+export interface UserAttributes {
+  id?: number;
   email: string;
   password: string;
   name: string;
-  role: 'admin' | 'sales' | 'manager';
-  is_active: boolean;
+  role?: 'admin' | 'sales' | 'manager';
+  is_active?: boolean;
   last_login?: Date;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 class User extends Model<UserAttributes> implements UserAttributes {
