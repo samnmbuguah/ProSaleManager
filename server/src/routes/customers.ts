@@ -15,9 +15,9 @@ router.get("/", async (req, res) => {
       order: [["name", "ASC"]],
     });
     res.json({ data: customers });
-  } catch (error) {
-    console.error("Error fetching customers:", error);
-    res.status(500).json({ message: "Failed to fetch customers" });
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ message: 'Error fetching customers', error: errorMsg });
   }
 });
 
@@ -71,9 +71,9 @@ router.post("/", async (req, res) => {
     });
 
     res.status(201).json(customer);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating customer:", error);
-    if (error.name === "SequelizeUniqueConstraintError") {
+    if (error instanceof Error && error.name === "SequelizeUniqueConstraintError") {
       return res.status(400).json({
         message: "A customer with this email or phone already exists",
       });
@@ -101,14 +101,9 @@ router.put("/:id", async (req, res) => {
     });
 
     res.json(customer);
-  } catch (error: any) {
-    console.error("Error updating customer:", error);
-    if (error.name === "SequelizeUniqueConstraintError") {
-      return res.status(400).json({
-        message: "A customer with this email or phone already exists",
-      });
-    }
-    res.status(500).json({ message: "Failed to update customer" });
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ message: 'Error updating customer', error: errorMsg });
   }
 });
 

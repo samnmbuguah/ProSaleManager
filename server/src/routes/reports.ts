@@ -1,7 +1,7 @@
 import { Router } from 'express'
-import Product from '../models/Product'
-import Sale from '../models/Sale'
-import SaleItem from '../models/SaleItem'
+import Product from '../models/Product.js'
+import Sale from '../models/Sale.js'
+import SaleItem from '../models/SaleItem.js'
 import { Op } from 'sequelize'
 
 const router = Router()
@@ -58,7 +58,7 @@ router.get('/product-performance', async (req, res) => {
     const { startDate, endDate } = req.query
 
     // Build date filter
-    const dateFilter: any = {}
+    const dateFilter: Record<string, unknown> = {}
     if (startDate && endDate) {
       dateFilter.createdAt = {
         [Op.between]: [new Date(startDate as string), new Date(endDate as string)]
@@ -83,15 +83,15 @@ router.get('/product-performance', async (req, res) => {
         }
       ],
       order: [['createdAt', 'DESC']]
-    })
+    }) as Array<Sale & { items?: Array<SaleItem & { Product?: { name?: string; sku?: string } }> }>;
 
     // Aggregate product performance data
-    const productPerformanceMap = new Map()
+    const productPerformanceMap = new Map<number, any>();
 
-    sales.forEach(sale => {
-      sale.items?.forEach(item => {
-        const productId = item.product_id
-        const product = item.Product
+    sales.forEach((sale) => {
+      sale.items?.forEach((item) => {
+        const productId = item.product_id;
+        const product = item.Product;
 
         if (!productPerformanceMap.has(productId)) {
           productPerformanceMap.set(productId, {
@@ -104,37 +104,47 @@ router.get('/product-performance', async (req, res) => {
             lastSold: null,
             averagePrice: 0,
             totalSales: 0
-          })
+          });
         }
 
-        const performance = productPerformanceMap.get(productId)
-        const quantity = parseFloat(item.quantity) || 0
-        const total = parseFloat(item.total) || 0
+        const performance = productPerformanceMap.get(productId);
+        const quantity = parseFloat(String(item.quantity)) || 0;
+        const total = parseFloat(String(item.total)) || 0;
 
-        performance.quantity += quantity
-        performance.revenue += total
-        performance.totalSales += 1
-        performance.averagePrice = performance.revenue / performance.quantity
+        performance.quantity += quantity;
+        performance.revenue += total;
+        performance.totalSales += 1;
+        performance.averagePrice = performance.revenue / performance.quantity;
 
         // Calculate profit (assuming 20% margin for demo)
-        const profit = total * 0.2
-        performance.profit += profit
+        const profit = total * 0.2;
+        performance.profit += profit;
 
         // Update last sold date
-        const saleDate = new Date(sale.createdAt)
+        const saleDate = new Date(sale.createdAt as Date);
         if (!performance.lastSold || saleDate > new Date(performance.lastSold)) {
-          performance.lastSold = saleDate
+          performance.lastSold = saleDate;
         }
-      })
-    })
+      });
+    });
 
-    const productPerformance = Array.from(productPerformanceMap.values())
-      .sort((a, b) => b.revenue - a.revenue)
+    const productPerformance = Array.from(productPerformanceMap.values()) as Array<{
+      productId: number;
+      productName: string;
+      productSku: string;
+      quantity: number;
+      revenue: number;
+      profit: number;
+      lastSold: Date | null;
+      averagePrice: number;
+      totalSales: number;
+    }>;
+    productPerformance.sort((a, b) => b.revenue - a.revenue);
 
     // Calculate totals
-    const totalRevenue = productPerformance.reduce((sum, p) => sum + p.revenue, 0)
-    const totalProfit = productPerformance.reduce((sum, p) => sum + p.profit, 0)
-    const totalQuantity = productPerformance.reduce((sum, p) => sum + p.quantity, 0)
+    const totalRevenue = productPerformance.reduce((sum, p) => sum + p.revenue, 0);
+    const totalProfit = productPerformance.reduce((sum, p) => sum + p.profit, 0);
+    const totalQuantity = productPerformance.reduce((sum, p) => sum + p.quantity, 0);
 
     res.json({
       success: true,
@@ -165,7 +175,7 @@ router.get('/sales-summary', async (req, res) => {
     const { startDate, endDate } = req.query
 
     // Build date filter
-    const dateFilter: any = {}
+    const dateFilter: Record<string, unknown> = {}
     if (startDate && endDate) {
       dateFilter.createdAt = {
         [Op.between]: [new Date(startDate as string), new Date(endDate as string)]
@@ -183,11 +193,11 @@ router.get('/sales-summary', async (req, res) => {
           as: 'items'
         }
       ]
-    })
+    }) as Array<Sale & { items?: SaleItem[] }>;
 
-    const totalSales = sales.length
-    const totalRevenue = sales.reduce((sum, sale) => sum + parseFloat(sale.total_amount || '0'), 0)
-    const totalItems = sales.reduce((sum, sale) => sum + (sale.items?.length || 0), 0)
+    const totalSales = sales.length;
+    const totalRevenue = sales.reduce((sum, sale) => sum + parseFloat(String(sale.total_amount || '0')), 0);
+    const totalItems = sales.reduce((sum, sale) => sum + ((sale.items?.length) || 0), 0);
 
     // Group by payment method
     const paymentMethods = sales.reduce((acc, sale) => {
@@ -225,9 +235,9 @@ router.get('/sales-summary', async (req, res) => {
           averageOrderValue: totalSales > 0 ? totalRevenue / totalSales : 0
         },
         paymentMethods,
-        dailySales: recentSales.map((sale: any) => ({
+        dailySales: recentSales.map((sale: { getDataValue: (field: string) => string | number | undefined }) => ({
           date: sale.getDataValue('date'),
-          total: parseFloat(sale.getDataValue('total') || '0')
+          total: parseFloat(String(sale.getDataValue('total') || '0'))
         }))
       }
     })

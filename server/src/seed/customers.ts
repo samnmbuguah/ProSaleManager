@@ -44,7 +44,7 @@ for (let i = 0; i < 100; i++) {
   customerData.push({
     name: faker.person.fullName(),
     email: faker.internet.email(),
-    phone: faker.phone.number('+2547########'),
+    phone: faker.phone.number(),
     address: faker.address.streetAddress() + ', ' + faker.address.city(),
     notes: faker.lorem.words(3)
   });

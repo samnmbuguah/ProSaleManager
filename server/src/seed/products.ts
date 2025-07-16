@@ -1,7 +1,11 @@
 import { Product, Category } from '../models/index.js';
+import type { ProductAttributes } from "../models/Product.js";
 
 const PACK_DISCOUNT = 0.95; // 5% discount for pack
 const DOZEN_DISCOUNT = 0.90; // 10% discount for dozen
+
+function randomFrom<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
+function randomPrice(min: number, max: number): number { return Math.round((Math.random() * (max - min) + min) * 100) / 100; }
 
 export const seedProducts = async (): Promise<void> => {
   try {
@@ -25,6 +29,13 @@ export const seedProducts = async (): Promise<void> => {
     ], { returning: true });
     console.log(`✅ Created ${categories.length} categories`);
 
+    // Map category names to IDs for easy lookup
+    const categoryMap = new Map<string, number>();
+    categories.forEach(cat => {
+      if (typeof cat.id === 'number') {
+        categoryMap.set(String(cat.name), cat.id);
+      }
+    });
     const now = new Date();
 
     // Define base products (now with explicit prices)
@@ -33,7 +44,7 @@ export const seedProducts = async (): Promise<void> => {
         name: 'Nike Air Max',
         description: 'Comfortable everyday sneakers',
         sku: 'SHOE001',
-        category_id: categories[0].id,
+        category_id: categoryMap.get('Shoes'),
         piece_buying_price: 1350.00,
         piece_selling_price: 1800.00,
         quantity: 20,
@@ -47,7 +58,7 @@ export const seedProducts = async (): Promise<void> => {
         name: 'Adidas Ultraboost',
         description: 'Premium running shoes',
         sku: 'SHOE002',
-        category_id: categories[0].id,
+        category_id: categoryMap.get('Shoes'),
         piece_buying_price: 1500.00,
         piece_selling_price: 2000.00,
         quantity: 15,
@@ -61,7 +72,7 @@ export const seedProducts = async (): Promise<void> => {
         name: 'Victoria Secret Pink Panty',
         description: 'Elegant lace panties',
         sku: 'PAN001',
-        category_id: categories[2].id,
+        category_id: categoryMap.get('Panties'),
         piece_buying_price: 180.00,
         piece_selling_price: 315.00,
         quantity: 10,
@@ -75,7 +86,7 @@ export const seedProducts = async (): Promise<void> => {
         name: 'Cotton Hipster Panty',
         description: 'Comfortable cotton panties',
         sku: 'PAN002',
-        category_id: categories[2].id,
+        category_id: categoryMap.get('Panties'),
         piece_buying_price: 150.00,
         piece_selling_price: 250.00,
         quantity: 12,
@@ -89,7 +100,7 @@ export const seedProducts = async (): Promise<void> => {
         name: 'Calvin Klein Boxer Brief',
         description: 'Premium cotton boxer briefs',
         sku: 'BOX001',
-        category_id: categories[1].id,
+        category_id: categoryMap.get('Boxers'),
         piece_buying_price: 280.00,
         piece_selling_price: 450.00,
         quantity: 8,
@@ -103,7 +114,7 @@ export const seedProducts = async (): Promise<void> => {
         name: 'Nike Dri-FIT Boxer',
         description: 'Sports performance boxers',
         sku: 'BOX002',
-        category_id: categories[1].id,
+        category_id: categoryMap.get('Boxers'),
         piece_buying_price: 250.00,
         piece_selling_price: 400.00,
         quantity: 10,
@@ -117,7 +128,7 @@ export const seedProducts = async (): Promise<void> => {
         name: 'Victoria Secret Push-Up Bra',
         description: 'Luxury push-up bra',
         sku: 'BRA001',
-        category_id: categories[3].id,
+        category_id: categoryMap.get('Bras'),
         piece_buying_price: 750.00,
         piece_selling_price: 1200.00,
         quantity: 6,
@@ -131,7 +142,7 @@ export const seedProducts = async (): Promise<void> => {
         name: 'Sports Bra',
         description: 'High-performance sports bra',
         sku: 'BRA002',
-        category_id: categories[3].id,
+        category_id: categoryMap.get('Bras'),
         piece_buying_price: 600.00,
         piece_selling_price: 900.00,
         quantity: 8,
@@ -145,7 +156,7 @@ export const seedProducts = async (): Promise<void> => {
         name: 'Coconut Oil',
         description: 'Pure organic coconut oil',
         sku: 'OIL001',
-        category_id: categories[4].id,
+        category_id: categoryMap.get('Oil'),
         piece_buying_price: 230.00,
         piece_selling_price: 350.00,
         quantity: 15,
@@ -159,7 +170,7 @@ export const seedProducts = async (): Promise<void> => {
         name: 'Olive Oil',
         description: 'Extra virgin olive oil',
         sku: 'OIL002',
-        category_id: categories[4].id,
+        category_id: categoryMap.get('Oil'),
         piece_buying_price: 280.00,
         piece_selling_price: 400.00,
         quantity: 12,
@@ -173,7 +184,7 @@ export const seedProducts = async (): Promise<void> => {
         name: 'Delivery Service',
         description: 'Product delivery service',
         sku: 'SRV001',
-        category_id: categories[5].id,
+        category_id: categoryMap.get('Service'),
         piece_buying_price: 100.00,
         piece_selling_price: 150.00,
         quantity: 999999,
@@ -189,8 +200,6 @@ export const seedProducts = async (): Promise<void> => {
     const PRODUCT_ADJECTIVES = ['Classic', 'Modern', 'Premium', 'Eco', 'Sport', 'Luxury', 'Basic', 'Smart', 'Pro', 'Ultra'];
     const PRODUCT_TYPES = ['Sneaker', 'Panty', 'Boxer', 'Bra', 'Oil', 'Service', 'Boot', 'Sandal', 'Shirt', 'Shorts'];
     const BRANDS = ['Nike', 'Adidas', 'Victoria', 'Calvin Klein', 'Puma', 'Reebok', 'Under Armour', 'Levi\'s', 'Hanes', 'Gucci'];
-    function randomFrom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-    function randomPrice(min, max) { return Math.round((Math.random() * (max - min) + min) * 100) / 100; }
     const randomProducts = Array.from({ length: 100 }).map((_, i) => {
       const brand = randomFrom(BRANDS);
       const type = randomFrom(PRODUCT_TYPES);
@@ -209,7 +218,7 @@ export const seedProducts = async (): Promise<void> => {
         name,
         description: `A ${adj.toLowerCase()} ${type.toLowerCase()} by ${brand}.`,
         sku,
-        category_id: category.id,
+        category_id: categoryMap.get(category.name),
         piece_buying_price,
         piece_selling_price,
         pack_buying_price,
@@ -225,7 +234,7 @@ export const seedProducts = async (): Promise<void> => {
       };
     });
     // Combine base and random products
-    const productsToCreate = [
+    let productsToCreate = [
       ...baseProducts.map(baseProduct => {
         const { piece_buying_price, piece_selling_price } = baseProduct;
         const pack_buying_price = piece_buying_price * 3 * PACK_DISCOUNT;
@@ -242,13 +251,22 @@ export const seedProducts = async (): Promise<void> => {
       }),
       ...randomProducts
     ];
+    // Final strict filter and map before bulkCreate
+    productsToCreate = productsToCreate.map(p => {
+      const { category_id, ...rest } = p;
+      return {
+        ...rest,
+        category_id: typeof category_id === 'number' ? category_id : 1
+      };
+    });
+    productsToCreate = productsToCreate.filter(p => typeof p.category_id === 'number');
 
     // Log the final product data being sent to create
     console.log('\nCreating products with data:', JSON.stringify(productsToCreate, null, 2));
 
     console.log('Seeding products: count =', productsToCreate.length, 'Sample:', productsToCreate[0]);
     // Create all products at once
-    await Product.bulkCreate(productsToCreate, { returning: true });
+    await Product.bulkCreate(productsToCreate as ProductAttributes[], { returning: true });
     
     // Log the created products to verify the saved data
     console.log('\nCreated products:', JSON.stringify(productsToCreate, null, 2));

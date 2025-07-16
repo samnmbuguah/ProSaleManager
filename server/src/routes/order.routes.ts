@@ -6,7 +6,7 @@ import {
   createOrder,
   updateOrder,
   deleteOrder,
-} from '../controllers/order.controller';
+} from '../controllers/order.controller.js';
 
 const router = Router();
 

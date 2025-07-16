@@ -13,15 +13,15 @@ export const errorHandler = (err: ApiError, req: Request, res: Response) => {
   error.message = err.message
 
   // Sequelize validation error
-  if (err.name === 'SequelizeValidationError') {
-    const message = Object.values((err as any).errors).map((val: any) => val.message)
+  if (err.name === 'SequelizeValidationError' && Array.isArray((err as any).errors)) {
+    const message = (err as any).errors.map((val: { message: string }) => val.message)
     error.message = message.join(', ')
     error.statusCode = 400
   }
 
   // Sequelize unique constraint error
-  if (err.name === 'SequelizeUniqueConstraintError') {
-    const message = Object.values((err as any).errors).map((val: any) => val.message)
+  if (err.name === 'SequelizeUniqueConstraintError' && Array.isArray((err as any).errors)) {
+    const message = (err as any).errors.map((val: { message: string }) => val.message)
     error.message = message.join(', ')
     error.statusCode = 400
   }
@@ -44,11 +44,6 @@ export const errorHandler = (err: ApiError, req: Request, res: Response) => {
   }
 
   // Duplicate key error
-  if (err.code === 11000) {
-    error.message = 'Duplicate field value entered'
-    error.statusCode = 400
-  }
-
   const statusCode = error.statusCode || 500
   const message = error.message || 'Server Error'
 

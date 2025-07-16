@@ -9,7 +9,6 @@ import ProductSupplier from "./ProductSupplier.js";
 import PurchaseOrder from "./PurchaseOrder.js";
 import PurchaseOrderItem from "./PurchaseOrderItem.js";
 import Category from './Category.js';
-import { sequelize } from '../config/database.js';
 
 export function setupAssociations() {
   // User - Sale association

@@ -22,6 +22,9 @@ module.exports = {
     'prettier'
   ],
   ignorePatterns: ['node_modules/', 'dist/'],
+  globals: {
+    __dirname: 'readonly',
+  },
   rules: {
     '@typescript-eslint/no-unused-vars': 'error',
     'prettier/prettier': 'error'

@@ -7,10 +7,10 @@ import {
   updateProduct,
   deleteProduct,
   bulkUploadProducts,
-} from '../controllers/product.controller';
+} from '../controllers/product.controller.js';
 import Product from '../models/Product.js';
 import { Op } from 'sequelize';
-import { uploadCsv } from '../middleware/upload';
+import { uploadCsv } from '../middleware/upload.js';
 
 const router = Router();
 

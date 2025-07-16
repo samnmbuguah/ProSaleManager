@@ -1,7 +1,5 @@
 import { Router } from "express";
 import Product from "../models/Product.js";
-import Supplier from "../models/Supplier.js";
-import ProductSupplier from "../models/ProductSupplier.js";
 import { Op } from "sequelize";
 import upload, { getImageUrl } from "../middleware/upload.js";
 import cloudinary from "../config/cloudinary.js";
@@ -72,12 +70,8 @@ router.get("/search", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findByPk(req.params.id, {
-      include: [
-        {
-          model: Supplier,
-          through: ProductSupplier,
-        },
-      ],
+      // Adjust include as needed for your associations, or remove if not needed
+      // include: [{ model: SomeModel, as: 'someAlias' }],
     });
     if (product) {
       res.json(product);
@@ -98,10 +92,10 @@ router.post("/", upload.single("image"), async (req, res) => {
     console.log('[ProductRoute] Received req.body:', req.body);
 
     // Coerce all fields to correct types and only keep model fields
-    const toNumber = (v) => v === undefined || v === null || v === '' ? null : Number(v);
-    const toBool = (v) => v === 'true' || v === true;
+    const toNumber = (v: string | number | null | undefined): number | null => v === undefined || v === null || v === '' ? null : Number(v);
+    const toBool = (v: string | boolean | undefined): boolean => v === 'true' || v === true;
 
-    const cleanProduct = {
+    const cleanProduct: Record<string, string | number | boolean | null | undefined> = {
       name: productData.name,
       description: productData.description || undefined,
       sku: productData.sku || undefined,
@@ -138,10 +132,25 @@ router.post("/", upload.single("image"), async (req, res) => {
         image_url = getImageUrl(req.file);
       }
     }
-    cleanProduct.image_url = image_url;
+    (cleanProduct as Record<string, string | number | boolean | null | undefined>).image_url = image_url;
 
     // Create the product
-    const product = await Product.create(cleanProduct);
+    const safeProduct = {
+      ...cleanProduct,
+      name: String(cleanProduct.name || ''),
+      sku: String(cleanProduct.sku || ''),
+      category_id: Number(cleanProduct.category_id || 1),
+      piece_buying_price: Number(cleanProduct.piece_buying_price || 0),
+      piece_selling_price: Number(cleanProduct.piece_selling_price || 0),
+      pack_buying_price: Number(cleanProduct.pack_buying_price || 0),
+      pack_selling_price: Number(cleanProduct.pack_selling_price || 0),
+      dozen_buying_price: Number(cleanProduct.dozen_buying_price || 0),
+      dozen_selling_price: Number(cleanProduct.dozen_selling_price || 0),
+      quantity: Number(cleanProduct.quantity || 0),
+      min_quantity: Number(cleanProduct.min_quantity || 0),
+      is_active: typeof cleanProduct.is_active === 'boolean' ? cleanProduct.is_active : true,
+    };
+    const product = await Product.create(safeProduct);
 
     // Return product with price_units
     const productWithUnits = await Product.findByPk(product.id);
