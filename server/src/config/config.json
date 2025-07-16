@@ -1,32 +1,14 @@
 {
   "development": {
-    "username": "prosalemanager",
-    "password": "prosalepassword",
-    "database": "prosaledatabase",
-    "host": "localhost",
-    "port": 5432,
-    "dialect": "postgres"
+    "dialect": "sqlite",
+    "storage": "database.sqlite"
   },
   "test": {
-    "username": "prosalemanager",
-    "password": "prosalepassword",
-    "database": "prosaledatabase",
-    "host": "localhost",
-    "port": 5432,
-    "dialect": "postgres"
+    "dialect": "sqlite",
+    "storage": "database.sqlite"
   },
   "production": {
-    "username": "prosalemanager",
-    "password": "prosalepassword",
-    "database": "prosaledatabase",
-    "host": "localhost",
-    "port": 5432,
-    "dialect": "postgres",
-    "dialectOptions": {
-      "ssl": {
-        "require": true,
-        "rejectUnauthorized": false
-      }
-    }
+    "dialect": "sqlite",
+    "storage": "database.sqlite"
   }
 } 
