@@ -45,7 +45,7 @@ for (let i = 0; i < 100; i++) {
     name: faker.person.fullName(),
     email: faker.internet.email(),
     phone: faker.phone.number(),
-    address: faker.address.streetAddress() + ', ' + faker.address.city(),
+    address: faker.location.streetAddress() + ', ' + faker.location.city(),
     notes: faker.lorem.words(3)
   });
 }

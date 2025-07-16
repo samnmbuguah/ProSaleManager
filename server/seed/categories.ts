@@ -26,9 +26,8 @@ export async function seedCategories() {
       { name: "Women" },
     ];
 
-    const createdCategories = await Category.bulkCreate(categories, { returning: true });
+    await Category.bulkCreate(categories);
     console.log("Categories seeded successfully");
-    return createdCategories;
   } catch (error) {
     console.error("Error seeding categories:", error);
     throw error;
