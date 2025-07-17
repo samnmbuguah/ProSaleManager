@@ -293,7 +293,7 @@ const PosPage: React.FC = () => {
                           'Stub response received - API not properly configured'
                         )
                       }
-                      setProducts(data)
+                      setProducts(data.data || [])
                     } catch (error) {
                       console.error('Error:', error)
                       toast({
