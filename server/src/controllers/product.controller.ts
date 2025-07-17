@@ -53,8 +53,8 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
   // If files are uploaded (e.g., via multipart), add their URLs
   if (req.files && Array.isArray(req.files)) {
     for (const file of req.files) {
-      if (file.path || file.url) {
-        images.push(file.path || file.url);
+      if (file.path) {
+        images.push(file.path);
       }
     }
   }
@@ -96,14 +96,6 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
   if (!categoryExists) {
     res.status(400).json({ success: false, message: `Category with id ${productData.category_id} does not exist.` });
     return;
-  }
-  // Optionally check for supplier_id if your model uses it
-  if (productData.supplier_id) {
-    const supplierExists = await Supplier.findByPk(productData.supplier_id);
-    if (!supplierExists) {
-      res.status(400).json({ success: false, message: `Supplier with id ${productData.supplier_id} does not exist.` });
-      return;
-    }
   }
   if (isNaN(productData.piece_buying_price)) {
     res.status(400).json({ success: false, message: 'Invalid or missing value for field: piece_buying_price' });
