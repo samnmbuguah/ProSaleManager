@@ -277,7 +277,7 @@ const PosPage: React.FC = () => {
                   searchProducts={async (query: string) => {
                     try {
                       const response = await fetch(
-                        `${import.meta.env.VITE_API_URL}/pos/products/search?q=${query}`,
+                        `${import.meta.env.VITE_API_URL}/products/search?q=${query}`,
                         {
                           credentials: 'include',
                           headers: {
