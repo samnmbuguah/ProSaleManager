@@ -83,6 +83,11 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() })
 })
 
+// 404 handler for API routes (must come before static and SPA fallback)
+app.use('/api', (req, res, next) => {
+  res.status(404).json({ success: false, error: 'API route not found' });
+});
+
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(process.cwd(), 'public')));
 
