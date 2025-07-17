@@ -80,10 +80,10 @@ export default function ProductPerformance({
         <div className="text-right">
           <p className="text-lg">
             Total Revenue:{' '}
-            <span className="font-bold">${(summary?.totalRevenue || 0).toFixed(2)}</span>
+            <span className="font-bold">KSh {(summary?.totalRevenue || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           </p>
           <p className="text-sm text-muted-foreground">
-            Total Profit: ${(summary?.totalProfit || 0).toFixed(2)}
+            Total Profit: KSh {(summary?.totalProfit || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
       </div>
@@ -153,13 +153,13 @@ export default function ProductPerformance({
                 <TableCell>{product.productSku}</TableCell>
                 <TableCell className="text-right">{product.quantity}</TableCell>
                 <TableCell className="text-right">
-                  ${product.revenue.toFixed(2)}
+                  KSh {product.revenue.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </TableCell>
                 <TableCell className="text-right">
-                  ${product.profit.toFixed(2)}
+                  KSh {product.profit.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </TableCell>
                 <TableCell className="text-right">
-                  ${product.averagePrice.toFixed(2)}
+                  KSh {product.averagePrice.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </TableCell>
                 <TableCell>
                   {product.lastSold
