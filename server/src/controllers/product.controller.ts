@@ -6,6 +6,9 @@ import { ApiError } from '../utils/api-error.js';
 import { parse } from 'csv-parse/sync';
 import Category from '../models/Category.js';
 import Supplier from '../models/Supplier.js';
+import SaleItem from '../models/SaleItem.js';
+import PurchaseOrderItem from '../models/PurchaseOrderItem.js';
+import ProductSupplier from '../models/ProductSupplier.js';
 
 export const getProducts = catchAsync(async (req: Request, res: Response) => {
   const products = await Product.findAll({
@@ -230,6 +233,20 @@ export const deleteProduct = catchAsync(async (req: Request, res: Response) => {
   
   if (!product) {
     throw new ApiError(404, 'Product not found');
+  }
+
+  // Directly count related records
+  const [saleItemCount, poItemCount, supplierCount] = await Promise.all([
+    SaleItem.count({ where: { product_id: product.id } }),
+    PurchaseOrderItem.count({ where: { product_id: product.id } }),
+    ProductSupplier.count({ where: { product_id: product.id } }),
+  ]);
+
+  if (saleItemCount > 0 || poItemCount > 0 || supplierCount > 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Cannot delete product: it is referenced in sales, purchase orders, or supplier records.'
+    });
   }
   
   await product.destroy();
