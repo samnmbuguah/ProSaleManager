@@ -13,7 +13,6 @@ import {
   setSelectedProduct,
   setSearchQuery,
   setActiveTab,
-  setImagePreview,
   setFormData,
   searchProducts
 } from '@/store/productsSlice'
@@ -48,9 +47,6 @@ const InventoryPage: React.FC = () => {
     (state: RootState) => state.products.searchQuery
   )
   const activeTab = useSelector((state: RootState) => state.products.activeTab)
-  const imagePreview = useSelector(
-    (state: RootState) => state.products.imagePreview
-  )
   const formData = useSelector((state: RootState) => state.products.formData)
   const { toast } = useToast()
 
@@ -94,7 +90,7 @@ const InventoryPage: React.FC = () => {
           if (typeof value === 'number' || typeof value === 'boolean') {
             formDataToSend.append(key, value.toString())
           } else {
-            formDataToSend.append(key, value ?? '')
+            formDataToSend.append(key, Array.isArray(value) ? value.join(',') : value ?? '')
           }
         })
         formDataToSend.append('images', localImageFile)
@@ -280,8 +276,6 @@ const InventoryPage: React.FC = () => {
         }}
         formData={formData}
         setFormData={(data) => dispatch(setFormData(data))}
-        imagePreview={imagePreview}
-        setImagePreview={(img) => dispatch(setImagePreview(img))}
         onSubmit={handleSubmit}
         selectedProduct={selectedProduct}
       />

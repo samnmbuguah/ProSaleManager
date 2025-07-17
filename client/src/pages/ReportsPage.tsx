@@ -44,10 +44,6 @@ export default function ReportsPage() {
     // This will be implemented to search products
   }
 
-  const handleFilter = async () => {
-    // This will be implemented to filter by category
-  }
-
   if (inventoryLoading || performanceLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -72,13 +68,12 @@ export default function ReportsPage() {
           <TabsContent value="inventory">
             <InventoryStatus
               products={
-                (inventoryData?.products || []).map(p => ({
+                (inventoryData?.products || []).map((p: any) => ({
                   ...p,
                   price: p.piece_selling_price
                 }))
               }
               onSearch={handleSearch}
-              onFilter={handleFilter}
             />
           </TabsContent>
 

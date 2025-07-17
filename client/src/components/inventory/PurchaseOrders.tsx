@@ -30,7 +30,6 @@ import type {
   PurchaseOrder,
   PurchaseOrderFormData
 } from '@/types/purchase-order'
-import { API_ENDPOINTS } from '@/lib/api-endpoints'
 import { api } from '@/lib/api'
 import { PurchaseOrderForm } from './PurchaseOrderForm'
 import ProductSearchBar from './ProductSearchBar'
@@ -67,9 +66,7 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
     purchaseOrders,
     isLoading: purchaseOrdersLoading,
     createPurchaseOrder,
-    isCreating,
     updatePurchaseOrderStatus,
-    isUpdating
   } = usePurchaseOrders();
 
   useEffect(() => {
@@ -222,6 +219,7 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
       }));
       await createPurchaseOrder({
         ...validated,
+        supplier_id: Number(validated.supplier_id),
         items: itemsWithUnitPrice,
         total: itemsWithUnitPrice.reduce((sum, item) => sum + (item.quantity * item.buying_price), 0).toString()
       });
@@ -294,16 +292,14 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
                         <TableRow key={order.id}>
                           <TableCell>{order.id}</TableCell>
                           <TableCell>
-                            {/* Fix: Show supplier name from either Supplier or supplier field */}
-                            {order.Supplier?.name || order.supplier?.name || 'Unknown Supplier'}
+                            {/* Show supplier name from supplier field only */}
+                            {order.supplier?.name || 'Unknown Supplier'}
                           </TableCell>
                           <TableCell>
-                            {/* Fix: Use order_date if present, else fallback to created_at */}
-                            {order.order_date
-                              ? format(new Date(order.order_date), 'PPP')
-                              : order.created_at
-                                ? format(new Date(order.created_at), 'PPP')
-                                : 'N/A'}
+                            {/* Use created_at for order date */}
+                            {order.created_at
+                              ? format(new Date(order.created_at), 'PPP')
+                              : 'N/A'}
                           </TableCell>
                           <TableCell>
                             {order.expected_delivery_date
