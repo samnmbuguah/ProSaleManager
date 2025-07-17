@@ -71,3 +71,5 @@ client/.env.production
 
 # Server public directory
 server/public
+server/src/db/seed.sqlite
+/production
