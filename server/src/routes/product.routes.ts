@@ -12,6 +12,7 @@ import Product from '../models/Product.js';
 import { Op } from 'sequelize';
 import { uploadCsv } from '../middleware/upload.js';
 import upload from '../middleware/upload.js';
+import { Sequelize } from 'sequelize';
 
 const router = Router();
 
@@ -23,13 +24,13 @@ router.get('/search', async (req, res) => {
     if (!query || typeof query !== "string" || query.trim() === "") {
       return res.json({ success: true, data: [] });
     }
-
+    const search = query.toLowerCase();
     const products = await Product.findAll({
       where: {
         [Op.or]: [
-          { name: { [Op.iLike]: `%${query}%` } },
-          { sku: { [Op.iLike]: `%${query}%` } },
-          { barcode: { [Op.iLike]: `%${query}%` } },
+          Sequelize.where(Sequelize.fn('lower', Sequelize.col('name')), 'LIKE', `%${search}%`),
+          Sequelize.where(Sequelize.fn('lower', Sequelize.col('sku')), 'LIKE', `%${search}%`),
+          Sequelize.where(Sequelize.fn('lower', Sequelize.col('barcode')), 'LIKE', `%${search}%`)
         ],
       },
       order: [["name", "ASC"]],
