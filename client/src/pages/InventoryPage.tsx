@@ -22,7 +22,8 @@ import ProductFormDialog from '@/components/inventory/ProductFormDialog'
 import ProductSearchBar from '@/components/inventory/ProductSearchBar'
 import TabsNav from '@/components/inventory/TabsNav'
 import { ProductFormData } from '@/types/product'
-import { fetchPurchaseOrdersApi } from '@/lib/api'
+import { api } from '@/lib/api'
+import { API_ENDPOINTS } from '@/lib/api-endpoints'
 
 const InventoryPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>()
@@ -61,7 +62,7 @@ const InventoryPage: React.FC = () => {
   React.useEffect(() => {
     if (activeTab === 'purchase-orders') {
       setPurchaseOrdersLoading(true)
-      fetchPurchaseOrdersApi()
+      api.get(API_ENDPOINTS.purchaseOrders.list)
         .then((data) => setPurchaseOrders(data))
         .catch(() => toast({ title: 'Error', description: 'Failed to fetch purchase orders', variant: 'destructive' }))
         .finally(() => setPurchaseOrdersLoading(false))
@@ -90,9 +91,6 @@ const InventoryPage: React.FC = () => {
       setUploading(true)
       setUploadProgress(null)
       let response
-      const url = selectedProduct
-        ? `${import.meta.env.VITE_API_URL}/products/${selectedProduct.id}`
-        : `${import.meta.env.VITE_API_URL}/products`
       if (localImageFile) {
         // Use FormData if uploading an image
         const formDataToSend = new FormData()
@@ -104,11 +102,19 @@ const InventoryPage: React.FC = () => {
           }
         })
         formDataToSend.append('images', localImageFile)
-        response = await fetch(url, {
-          method: selectedProduct ? 'PUT' : 'POST',
-          body: formDataToSend,
-          credentials: 'include'
-        })
+        if (selectedProduct) {
+          response = await api.put(
+            API_ENDPOINTS.products.update(selectedProduct.id),
+            formDataToSend,
+            { headers: { 'Content-Type': 'multipart/form-data' } }
+          )
+        } else {
+          response = await api.post(
+            API_ENDPOINTS.products.create,
+            formDataToSend,
+            { headers: { 'Content-Type': 'multipart/form-data' } }
+          )
+        }
       } else {
         // Only include the correct fields for the backend
         const allowedFields = [
@@ -134,14 +140,19 @@ const InventoryPage: React.FC = () => {
             payload[field as keyof ProductFormData] = formData[field as keyof ProductFormData] as any
           }
         })
-        response = await fetch(url, {
-          method: selectedProduct ? 'PUT' : 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-          credentials: 'include'
-        })
+        if (selectedProduct) {
+          response = await api.put(
+            API_ENDPOINTS.products.update(selectedProduct.id),
+            payload
+          )
+        } else {
+          response = await api.post(
+            API_ENDPOINTS.products.create,
+            payload
+          )
+        }
       }
-      if (!response.ok) throw new Error('Failed to save product')
+      if (!response || response.status < 200 || response.status >= 300) throw new Error('Failed to save product')
       toast({
         title: 'Success',
         description: `Product ${selectedProduct ? 'updated' : 'created'} successfully`
@@ -190,20 +201,7 @@ const InventoryPage: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this product?')) { return }
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/products/${id}`,
-        { method: 'DELETE' }
-      )
-      if (!response.ok) {
-        let errorMsg = 'Failed to delete product'
-        try {
-          const errorData = await response.json()
-          if (errorData && errorData.message) {
-            errorMsg = errorData.message
-          }
-        } catch { }
-        throw new Error(errorMsg)
-      }
+      await api.delete(API_ENDPOINTS.products.delete(id))
       toast({
         title: 'Success',
         description: 'Product deleted successfully'
