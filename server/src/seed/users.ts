@@ -1,7 +1,6 @@
 import { User } from '../models/index.js';
 import type { UserAttributes } from '../models/User.js';
 import { faker } from '@faker-js/faker';
-import bcrypt from 'bcryptjs';
 
 export async function seedUsers() {
   try {
@@ -9,21 +8,21 @@ export async function seedUsers() {
       {
         name: "System Admin",
         email: "admin@prosale.com",
-        password: await bcrypt.hash("prosale123", 10),
+        password: "prosale123",
         role: 'admin',
         is_active: true
       },
       {
         name: "Sales Person",
         email: "sales@prosale.com",
-        password: await bcrypt.hash("sales123", 10),
+        password: "sales123",
         role: 'sales',
         is_active: true
       },
       {
         name: "Test User",
         email: "test@prosale.com",
-        password: await bcrypt.hash("test123", 10),
+        password: "test123",
         role: 'admin',
         is_active: true
       }
@@ -36,7 +35,7 @@ export async function seedUsers() {
       baseUsers.push({
         name: faker.person.fullName(),
         email: faker.internet.email(),
-        password: await bcrypt.hash(faker.internet.password(), 10),
+        password: faker.internet.password(),
         role: role as 'admin' | 'sales' | 'manager',
         is_active: true
       });
@@ -70,4 +69,8 @@ export async function seedUsers() {
     console.error("Error seeding users:", error);
     throw error;
   }
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seedUsers();
 } 
