@@ -24,6 +24,8 @@ import TabsNav from '@/components/inventory/TabsNav'
 import { ProductFormData } from '@/types/product'
 import { api } from '@/lib/api'
 import { API_ENDPOINTS } from '@/lib/api-endpoints'
+import Swal from 'sweetalert2';
+import { usePurchaseOrders } from '@/hooks/use-purchase-orders'
 
 const InventoryPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>()
@@ -56,18 +58,12 @@ const InventoryPage: React.FC = () => {
   const [uploadProgress, setUploadProgress] = React.useState<number | null>(
     null
   )
-  const [purchaseOrders, setPurchaseOrders] = React.useState([])
-  const [purchaseOrdersLoading, setPurchaseOrdersLoading] = React.useState(false)
+  // Remove local state and manual fetching for purchase orders
+  // const [purchaseOrders, setPurchaseOrders] = React.useState([])
+  // const [purchaseOrdersLoading, setPurchaseOrdersLoading] = React.useState(false)
 
-  React.useEffect(() => {
-    if (activeTab === 'purchase-orders') {
-      setPurchaseOrdersLoading(true)
-      api.get(API_ENDPOINTS.purchaseOrders.list)
-        .then((data) => setPurchaseOrders(data))
-        .catch(() => toast({ title: 'Error', description: 'Failed to fetch purchase orders', variant: 'destructive' }))
-        .finally(() => setPurchaseOrdersLoading(false))
-    }
-  }, [activeTab])
+  // Use React Query hook for purchase orders
+  const { purchaseOrders, isLoading: purchaseOrdersLoading } = usePurchaseOrders();
 
   const initialFormData = {
     name: '',
@@ -199,23 +195,32 @@ const InventoryPage: React.FC = () => {
   }
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) { return }
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you really want to delete this product?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel',
+    });
+    if (!result.isConfirmed) return;
     try {
-      await api.delete(API_ENDPOINTS.products.delete(id))
+      await api.delete(API_ENDPOINTS.products.delete(id));
       toast({
         title: 'Success',
-        description: 'Product deleted successfully'
-      })
-      dispatch(fetchProducts())
-    } catch (error: unknown) {
-      toast({
+        description: 'Product deleted successfully',
+      });
+      dispatch(fetchProducts());
+    } catch (error: any) {
+      // Show SweetAlert2 error dialog for backend error
+      const message = error?.response?.data?.message || error.message || 'Failed to delete product';
+      Swal.fire({
         title: 'Error',
-        description:
-          error instanceof Error ? error.message : 'Failed to delete product',
-        variant: 'destructive'
-      })
+        text: message,
+        icon: 'error',
+      });
     }
-  }
+  };
 
   const handleSearch = async (query: string) => {
     try {
@@ -297,7 +302,12 @@ const InventoryPage: React.FC = () => {
         </div>
       )}
       {activeTab === 'suppliers' && <Suppliers />}
-      {activeTab === 'purchase-orders' && <PurchaseOrders purchaseOrders={purchaseOrders} loading={purchaseOrdersLoading} />}
+      {activeTab === 'purchase-orders' && (
+        <PurchaseOrders
+          purchaseOrders={purchaseOrders || []}
+          loading={purchaseOrdersLoading}
+        />
+      )}
     </div>
   )
 }
