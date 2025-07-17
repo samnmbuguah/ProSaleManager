@@ -72,6 +72,16 @@ const Suppliers = () => {
     try {
       if (selectedSupplier) {
         await dispatch(updateSupplier({ id: selectedSupplier.id, data: formData })).unwrap()
+        setIsEditDialogOpen(false) // Close dialog first
+        setSelectedSupplier(null)
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          address: '',
+          contact_person: '',
+          status: 'active' as const
+        })
         await Swal.fire({
           icon: 'success',
           title: 'Success',
@@ -79,24 +89,21 @@ const Suppliers = () => {
         })
       } else {
         await dispatch(createSupplier(formData)).unwrap()
+        setIsAddDialogOpen(false) // Close dialog first
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          address: '',
+          contact_person: '',
+          status: 'active' as const
+        })
         await Swal.fire({
           icon: 'success',
           title: 'Success',
           text: 'Supplier created successfully'
         })
       }
-
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        address: '',
-        contact_person: '',
-        status: 'active' as const
-      })
-      setIsAddDialogOpen(false)
-      setIsEditDialogOpen(false)
-      setSelectedSupplier(null)
     } catch (error) {
       console.error('Error:', error)
       toast({
