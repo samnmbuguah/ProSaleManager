@@ -30,16 +30,24 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   const totalPages = Math.ceil(products.length / PRODUCTS_PER_PAGE)
   const paginatedProducts = products.slice((page - 1) * PRODUCTS_PER_PAGE, page * PRODUCTS_PER_PAGE)
 
-  const handleSearch = async () => {
-    if (search.trim()) {
-      await searchProducts(search)
+  // Debounce search
+  const debounceRef = React.useRef<NodeJS.Timeout | null>(null)
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearch(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      searchProducts(value)
       setPage(1)
-    }
+    }, 300)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      handleSearch()
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      searchProducts(search)
+      setPage(1)
     }
   }
 
@@ -59,14 +67,12 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
           <Input
             placeholder="Search products by name, SKU, or barcode..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={handleChange}
             onKeyPress={handleKeyPress}
             className="pl-10"
           />
         </div>
-        <Button onClick={handleSearch} disabled={!search.trim()}>
-          Search
-        </Button>
+        {/* Removed Search button */}
       </div>
 
       {/* Products Grid */}
