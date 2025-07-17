@@ -22,7 +22,9 @@ router.get('/search', async (req, res) => {
     const query = req.query.q as string;
     console.log("Received search query:", query);
     if (!query || typeof query !== "string" || query.trim() === "") {
-      return res.json({ success: true, data: [] });
+      // Return all products if search is empty
+      const products = await Product.findAll({ order: [["name", "ASC"]] });
+      return res.json({ success: true, data: products });
     }
     const search = query.toLowerCase();
     const products = await Product.findAll({
