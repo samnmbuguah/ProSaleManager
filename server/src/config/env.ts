@@ -12,7 +12,7 @@ interface EnvConfig {
 }
 
 // Validate required environment variables
-const requiredEnvVars = ['JWT_SECRET', 'DATABASE_URL'] as const;
+const requiredEnvVars = ['JWT_SECRET', 'SQLITE_PATH'] as const;
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
     throw new Error(`${envVar} must be defined in environment variables`);
@@ -24,7 +24,7 @@ const env: EnvConfig = {
   JWT_SECRET: process.env.JWT_SECRET!,
   COOKIE_SECRET: process.env.COOKIE_SECRET || 'your-cookie-secret',
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
-  DATABASE_URL: process.env.DATABASE_URL!,
+  DATABASE_URL: process.env.SQLITE_PATH!,
   PORT: parseInt(process.env.PORT || '3000', 10),
 };
 
