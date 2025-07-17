@@ -1,60 +1,10 @@
-import Customer from '../models/Customer.js'
-import { faker } from '@faker-js/faker';
+import { Customer } from '../models/index.js';
 
-const customerData = [
-  {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1234567890',
-    address: '123 Main St, City, State 12345',
-    notes: 'Regular customer'
-  },
-  {
-    name: 'Jane Smith',
-    email: 'jane.smith@example.com',
-    phone: '+1234567891',
-    address: '456 Oak Ave, City, State 12345',
-    notes: 'VIP customer'
-  },
-  {
-    name: 'Bob Johnson',
-    email: 'bob.johnson@example.com',
-    phone: '+1234567892',
-    address: '789 Pine Rd, City, State 12345',
-    notes: 'Wholesale customer'
-  },
-  {
-    name: 'Alice Brown',
-    email: 'alice.brown@example.com',
-    phone: '+1234567893',
-    address: '321 Elm St, City, State 12345',
-    notes: 'New customer'
-  },
-  {
-    name: 'Charlie Wilson',
-    email: 'charlie.wilson@example.com',
-    phone: '+1234567894',
-    address: '654 Maple Dr, City, State 12345',
-    notes: 'Online customer'
-  }
-]
-
-// Generate additional random customers
-for (let i = 0; i < 100; i++) {
-  customerData.push({
-    name: faker.person.fullName(),
-    email: faker.internet.email(),
-    phone: faker.phone.number(),
-    address: faker.location.streetAddress() + ', ' + faker.location.city(),
-    notes: faker.lorem.words(3)
-  });
-}
-
-export const seedCustomers = async () => {
-  try {
-    await Customer.bulkCreate(customerData)
-    console.log('Customers seeded successfully')
-  } catch (error) {
-    console.error('Error seeding customers:', error)
-  }
+export async function seedCustomers() {
+  const customers = [
+    { name: 'Alice Johnson', email: 'alice@example.com', phone: '555-1234', address: '101 First St', notes: 'VIP customer', loyalty_points: 100, is_active: true },
+    { name: 'Bob Smith', email: 'bob@example.com', phone: '555-5678', address: '202 Second St', notes: '', loyalty_points: 50, is_active: true },
+  ];
+  await Customer.bulkCreate(customers, { ignoreDuplicates: true });
+  console.log('Customers seeded');
 } 
