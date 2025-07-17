@@ -7,7 +7,6 @@ import {
   DialogDescription
 } from '@/components/ui/dialog'
 import { ProductFormData, Product } from '@/types/product'
-import { PRODUCT_CATEGORIES } from '@/constants/categories'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -18,8 +17,6 @@ interface ProductFormDialogProps {
   onOpenChange: (open: boolean) => void;
   formData: ProductFormData;
   setFormData: React.Dispatch<React.SetStateAction<ProductFormData>>;
-  imagePreview: string | null;
-  setImagePreview: (url: string | null) => void;
   onSubmit: (e: React.FormEvent, localImageFile?: File) => void;
   selectedProduct: Product | null;
 }
@@ -29,8 +26,6 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   onOpenChange,
   formData,
   setFormData,
-  imagePreview,
-  setImagePreview,
   onSubmit,
   selectedProduct
 }) => {

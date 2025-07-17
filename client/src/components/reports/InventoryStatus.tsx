@@ -9,24 +9,15 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
 
 interface InventoryStatusProps {
   products: Product[]
   onSearch: (query: string) => void
-  onFilter: (category: string) => void
 }
 
 export default function InventoryStatus({
   products,
-  onSearch,
-  onFilter
+  onSearch
 }: InventoryStatusProps) {
   // Ensure products is always an array
   const safeProducts = Array.isArray(products) ? products : []
@@ -41,18 +32,10 @@ export default function InventoryStatus({
     return { label: 'In Stock', variant: 'success' }
   }
 
-  const categories = Array.from(
-    new Set(safeProducts.map((p) => p.category).filter(Boolean))
-  )
-
   const totalValue = safeProducts.reduce(
     (sum, product) => sum + (product.price || 0) * (product.quantity || 0),
     0
   )
-
-  const handleFilterChange = (value: string) => {
-    onFilter(value === 'all' ? '' : value)
-  }
 
   const formatCurrency = (amount: number | null | undefined) => {
     if (amount === null || amount === undefined) return 'KSh 0.00'

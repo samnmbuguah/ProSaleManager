@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { PRODUCT_CATEGORIES } from '@/constants/categories'
 import { type ProductFormData } from '@/types/product'
 import { Label } from '@/components/ui/label'
 import { useCategories } from '@/hooks/use-categories';
