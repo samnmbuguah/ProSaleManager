@@ -82,6 +82,7 @@ const Suppliers = () => {
           contact_person: '',
           status: 'active' as const
         })
+        dispatch(fetchSuppliers()); // Refresh supplier list
         await Swal.fire({
           icon: 'success',
           title: 'Success',
@@ -98,6 +99,7 @@ const Suppliers = () => {
           contact_person: '',
           status: 'active' as const
         })
+        dispatch(fetchSuppliers()); // Refresh supplier list
         await Swal.fire({
           icon: 'success',
           title: 'Success',
