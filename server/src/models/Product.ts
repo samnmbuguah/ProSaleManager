@@ -25,6 +25,8 @@ export interface ProductAttributes {
 
 interface ProductInstance extends Model<ProductAttributes>, ProductAttributes {
   updatePrices(unit: 'piece' | 'pack' | 'dozen', buyingPrice: number, sellingPrice: number): Promise<void>;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
 }
 
 const Product = sequelize.define<ProductInstance>('Product', {
