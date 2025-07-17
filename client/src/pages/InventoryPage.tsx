@@ -103,7 +103,7 @@ const InventoryPage: React.FC = () => {
             formDataToSend.append(key, value ?? '')
           }
         })
-        formDataToSend.append('image', localImageFile)
+        formDataToSend.append('images', localImageFile)
         response = await fetch(url, {
           method: selectedProduct ? 'PUT' : 'POST',
           body: formDataToSend,

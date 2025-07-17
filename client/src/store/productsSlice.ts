@@ -65,7 +65,8 @@ const initialFormData: ProductFormData = {
   quantity: 0,
   min_quantity: 0,
   image_url: '',
-  is_active: true
+  is_active: true,
+  images: []
 }
 
 interface ProductsState {

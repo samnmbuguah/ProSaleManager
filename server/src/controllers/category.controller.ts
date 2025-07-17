@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
+import Category from '../models/Category.js';
 
-export const getCategories = (req: Request, res: Response) => {
-  res.json({ message: 'getCategories stub' });
+export const getCategories = async (req, res) => {
+  const categories = await Category.findAll({ order: [['name', 'ASC']] });
+  res.json(categories);
 };
 
 export const getCategory = (req: Request, res: Response) => {

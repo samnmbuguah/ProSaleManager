@@ -17,6 +17,7 @@ import {
 import { PRODUCT_CATEGORIES } from '@/constants/categories'
 import { type ProductFormData } from '@/types/product'
 import { Label } from '@/components/ui/label'
+import { useCategories } from '@/hooks/use-categories';
 
 interface BasicInfoSectionProps {
   form: UseFormReturn<ProductFormData>;
@@ -24,6 +25,7 @@ interface BasicInfoSectionProps {
 
 export function BasicInfoSection({ form }: BasicInfoSectionProps) {
   const { control } = form
+  const { data: categories, isLoading } = useCategories();
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <FormField
@@ -60,16 +62,16 @@ export function BasicInfoSection({ form }: BasicInfoSectionProps) {
         render={({ field }) => (
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <Select onValueChange={(value) => field.onChange(Number(value))} value={String(field.value)}>
+            <Select onValueChange={(value) => field.onChange(Number(value))} value={String(field.value)} disabled={isLoading || !categories}>
               <FormControl>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
+                  <SelectValue placeholder={isLoading ? 'Loading...' : 'Select category'} />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                {PRODUCT_CATEGORIES.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
+                {categories && categories.map((category) => (
+                  <SelectItem key={category.id} value={String(category.id)}>
+                    {category.name}
                   </SelectItem>
                 ))}
               </SelectContent>
