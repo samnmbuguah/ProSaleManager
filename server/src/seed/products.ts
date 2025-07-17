@@ -51,7 +51,6 @@ export const seedProducts = async (): Promise<void> => {
         categoryMap.set(String(cat.name), cat.id);
       }
     });
-    const now = new Date();
 
     // Define base products (now with explicit prices)
     const baseProducts: ProductAttributes[] = [
@@ -69,7 +68,6 @@ export const seedProducts = async (): Promise<void> => {
         quantity: 20,
         min_quantity: 5,
         is_active: true,
-        image_url: '',
         images: [],
       },
       {
@@ -86,7 +84,6 @@ export const seedProducts = async (): Promise<void> => {
         quantity: 15,
         min_quantity: 5,
         is_active: true,
-        image_url: '',
         images: [],
       },
       {
@@ -103,7 +100,6 @@ export const seedProducts = async (): Promise<void> => {
         quantity: 10,
         min_quantity: 3,
         is_active: true,
-        image_url: '',
         images: [],
       },
       {
@@ -120,7 +116,6 @@ export const seedProducts = async (): Promise<void> => {
         quantity: 12,
         min_quantity: 3,
         is_active: true,
-        image_url: '',
         images: [],
       },
       {
@@ -137,7 +132,6 @@ export const seedProducts = async (): Promise<void> => {
         quantity: 8,
         min_quantity: 2,
         is_active: true,
-        image_url: '',
         images: [],
       },
       {
@@ -154,7 +148,6 @@ export const seedProducts = async (): Promise<void> => {
         quantity: 10,
         min_quantity: 2,
         is_active: true,
-        image_url: '',
         images: [],
       },
       {
@@ -171,7 +164,6 @@ export const seedProducts = async (): Promise<void> => {
         quantity: 6,
         min_quantity: 2,
         is_active: true,
-        image_url: '',
         images: [],
       },
       {
@@ -188,7 +180,6 @@ export const seedProducts = async (): Promise<void> => {
         quantity: 8,
         min_quantity: 2,
         is_active: true,
-        image_url: '',
         images: [],
       },
       {
@@ -205,7 +196,6 @@ export const seedProducts = async (): Promise<void> => {
         quantity: 15,
         min_quantity: 5,
         is_active: true,
-        image_url: '',
         images: [],
       },
       {
@@ -222,7 +212,6 @@ export const seedProducts = async (): Promise<void> => {
         quantity: 12,
         min_quantity: 5,
         is_active: true,
-        image_url: '',
         images: [],
       },
       {
@@ -239,7 +228,6 @@ export const seedProducts = async (): Promise<void> => {
         quantity: 999999,
         min_quantity: 0,
         is_active: true,
-        image_url: '',
         images: [],
       },
     ];
@@ -261,7 +249,6 @@ export const seedProducts = async (): Promise<void> => {
       const pack_selling_price = piece_selling_price * 3 * PACK_DISCOUNT;
       const dozen_buying_price = piece_buying_price * 12 * DOZEN_DISCOUNT;
       const dozen_selling_price = piece_selling_price * 12 * DOZEN_DISCOUNT;
-      const image_url = `https://source.unsplash.com/random/400x400?${encodeURIComponent(type)}`;
       return {
         name,
         description: `A ${adj.toLowerCase()} ${type.toLowerCase()} by ${brand}.`,
@@ -276,7 +263,6 @@ export const seedProducts = async (): Promise<void> => {
         quantity: Math.floor(Math.random() * 50) + 1,
         min_quantity: Math.floor(Math.random() * 5) + 1,
         is_active: true,
-        image_url,
         images: [],
       };
     });
@@ -313,26 +299,19 @@ export const seedProducts = async (): Promise<void> => {
     // Limit to 25 products to avoid rate limiting
     productsToCreate = productsToCreate.slice(0, 25);
 
-    // Log the final product data being sent to create
-    console.log('\nCreating products with data:', JSON.stringify(productsToCreate, null, 2));
-
-    console.log('Seeding products: count =', productsToCreate.length, 'Sample:', productsToCreate[0]);
-    // Create all products at once
-    await Product.bulkCreate(productsToCreate as ProductAttributes[], { returning: true });
-    
-    // For each product, fetch images from Pexels
+    // Fetch Pexels images for each product and update the images field
     for (const product of productsToCreate) {
       try {
         const query = product.name.split(' ')[0]; // Use first word as query (e.g., brand/type)
         product.images = await fetchPexelsImages(query, 3);
-        if (!product.image_url && product.images.length > 0) {
-          product.image_url = product.images[0];
-        }
       } catch (err) {
         console.warn(`Could not fetch images for product ${product.name}:`, err);
         product.images = [];
       }
     }
+
+    // Create all products with images
+    await Product.bulkCreate(productsToCreate as ProductAttributes[], { returning: true });
 
     // Log the created products to verify the saved data
     console.log('\nCreated products:', JSON.stringify(productsToCreate, null, 2));
@@ -419,3 +398,7 @@ export const seedProductSuppliers = [
     is_preferred: true,
   },
 ];
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seedProducts();
+}
