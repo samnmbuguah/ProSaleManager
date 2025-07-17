@@ -17,7 +17,23 @@ dotenv.config()
 const app = express()
 
 // Security middleware
-app.use(helmet())
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        imgSrc: [
+          "'self'",
+          "data:",
+          "https://images.unsplash.com",
+          "https://res.cloudinary.com",
+          "https://images.pexels.com"
+        ],
+        // ...other directives as needed
+      },
+    },
+  })
+);
 
 // CORS configuration
 const allowedOrigins = [
