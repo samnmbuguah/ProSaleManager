@@ -4,6 +4,8 @@ import type { ProductAttributes } from '../models/Product.js';
 import { catchAsync } from '../utils/catch-async.js';
 import { ApiError } from '../utils/api-error.js';
 import { parse } from 'csv-parse/sync';
+import Category from '../models/Category.js';
+import Supplier from '../models/Supplier.js';
 
 export const getProducts = catchAsync(async (req: Request, res: Response) => {
   const products = await Product.findAll({
@@ -30,11 +32,37 @@ export const getProduct = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const createProduct = catchAsync(async (req: Request, res: Response) => {
+  // Log the incoming payload for debugging
+  console.log('Incoming product payload:', JSON.stringify(req.body, null, 2));
+  if (req.files) {
+    console.log('Incoming files:', req.files);
+  }
+  // Guard: Ensure req.body is defined
+  if (!req.body) {
+    res.status(400).json({ success: false, message: 'Missing or invalid request body. Ensure you are sending data as JSON or multipart/form-data.' });
+    return;
+  }
   // Coerce and sanitize input
+  const sku = (req.body.sku || '').trim();
+  const images = Array.isArray(req.body.images)
+    ? req.body.images
+    : req.body.images
+      ? [req.body.images]
+      : [];
+
+  // If files are uploaded (e.g., via multipart), add their URLs
+  if (req.files && Array.isArray(req.files)) {
+    for (const file of req.files) {
+      if (file.path || file.url) {
+        images.push(file.path || file.url);
+      }
+    }
+  }
+
   const productData: ProductAttributes = {
     name: req.body.name,
     description: req.body.description || null,
-    sku: req.body.sku || '',
+    sku,
     barcode: req.body.barcode || '',
     category_id: Number(req.body.category_id),
     piece_buying_price: Number(req.body.piece_buying_price),
@@ -47,6 +75,7 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
     min_quantity: Number(req.body.min_quantity),
     image_url: req.body.image_url || null,
     is_active: req.body.is_active === 'true' || req.body.is_active === true,
+    images,
   };
 
   // Validate required fields explicitly
@@ -54,13 +83,27 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
     res.status(400).json({ success: false, message: 'Invalid or missing value for field: name' });
     return;
   }
-  if (!productData.sku) {
+  if (!productData.sku || productData.sku.trim() === '') {
     res.status(400).json({ success: false, message: 'Invalid or missing value for field: sku' });
     return;
   }
   if (!productData.category_id || isNaN(productData.category_id)) {
     res.status(400).json({ success: false, message: 'Invalid or missing value for field: category_id' });
     return;
+  }
+  // Check if category exists
+  const categoryExists = await Category.findByPk(productData.category_id);
+  if (!categoryExists) {
+    res.status(400).json({ success: false, message: `Category with id ${productData.category_id} does not exist.` });
+    return;
+  }
+  // Optionally check for supplier_id if your model uses it
+  if (productData.supplier_id) {
+    const supplierExists = await Supplier.findByPk(productData.supplier_id);
+    if (!supplierExists) {
+      res.status(400).json({ success: false, message: `Supplier with id ${productData.supplier_id} does not exist.` });
+      return;
+    }
   }
   if (isNaN(productData.piece_buying_price)) {
     res.status(400).json({ success: false, message: 'Invalid or missing value for field: piece_buying_price' });
@@ -94,11 +137,32 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
     res.status(400).json({ success: false, message: 'Invalid or missing value for field: min_quantity' });
     return;
   }
-  const product = await Product.create(productData);
-  res.status(201).json({
-    success: true,
-    data: product
-  });
+
+  // Check for SKU uniqueness before creating
+  const existing = await Product.findOne({ where: { sku: productData.sku } });
+  if (existing) {
+    res.status(400).json({ success: false, message: 'SKU already exists. Please use a unique SKU.' });
+    return;
+  }
+
+  try {
+    const product = await Product.create(productData);
+    res.status(201).json({
+      success: true,
+      data: product
+    });
+  } catch (err: any) {
+    // Handle Sequelize unique/foreign key constraint errors
+    if (err.name === 'SequelizeUniqueConstraintError' && err.errors?.[0]?.path === 'sku') {
+      res.status(400).json({ success: false, message: 'SKU already exists. Please use a unique SKU.' });
+      return;
+    }
+    if (err.name === 'SequelizeForeignKeyConstraintError') {
+      res.status(400).json({ success: false, message: 'Foreign key constraint error: ' + err.message });
+      return;
+    }
+    res.status(500).json({ success: false, message: err.message || 'Failed to create product.' });
+  }
 });
 
 export const updateProduct = catchAsync(async (req: Request, res: Response) => {

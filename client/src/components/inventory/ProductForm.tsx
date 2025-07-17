@@ -12,6 +12,8 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { useCategories } from '@/hooks/use-categories';
+import React from 'react';
 
 interface ProductFormProps {
   initialData?: Partial<ProductFormData>;
@@ -38,6 +40,14 @@ export function ProductForm ({
       ...initialData
     }
   })
+
+  const { data: categories, isLoading } = useCategories();
+
+  React.useEffect(() => {
+    if (categories && categories.length > 0 && !form.watch('category_id')) {
+      form.setValue('category_id', categories[0].id);
+    }
+  }, [categories, form]);
 
   const handleSubmit = async (data: ProductFormData) => {
     await onSubmit(data)
@@ -128,14 +138,17 @@ export function ProductForm ({
             onValueChange={(value) =>
               form.setValue('category_id', parseInt(value))
             }
+            disabled={isLoading || !categories}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select a category" />
+              <SelectValue placeholder={isLoading ? 'Loading...' : 'Select a category'} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">Category 1</SelectItem>
-              <SelectItem value="2">Category 2</SelectItem>
-              <SelectItem value="3">Category 3</SelectItem>
+              {categories && categories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.id.toString()}>
+                  {cat.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           {form.formState.errors.category_id && (

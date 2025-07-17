@@ -11,6 +11,7 @@ import { PRODUCT_CATEGORIES } from '@/constants/categories'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { useCategories } from '@/hooks/use-categories';
 
 interface ProductFormDialogProps {
   open: boolean;
@@ -36,18 +37,25 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   // Key for localStorage
   const FORM_DRAFT_KEY = 'productFormDraft'
 
-  // Load draft from localStorage on mount (only for add, not edit)
+  const { data: categories, isLoading } = useCategories();
+
+  // Load draft from localStorage on mount (only for add, not edit), and sanitize category_id
   React.useEffect(() => {
-    if (!selectedProduct) {
+    if (!selectedProduct && categories && categories.length > 0) {
       const draft = localStorage.getItem(FORM_DRAFT_KEY)
       if (draft) {
         try {
-          setFormData({ ...formData, ...JSON.parse(draft) })
-        } catch {}
+          const parsedDraft = JSON.parse(draft)
+          const validCategoryIds = categories.map(c => c.id)
+          if (!parsedDraft.category_id || !validCategoryIds.includes(parsedDraft.category_id)) {
+            parsedDraft.category_id = categories[0].id
+          }
+          setFormData({ ...formData, ...parsedDraft })
+        } catch { }
       }
     }
     // eslint-disable-next-line
-  }, [selectedProduct]);
+  }, [selectedProduct, categories])
 
   // Save formData to localStorage on change (only for add, not edit)
   React.useEffect(() => {
@@ -89,24 +97,6 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       ...formData,
       [name]: type === 'number' ? Number(value) : value
     })
-  }
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      // Validate type
-      if (!file.type.startsWith('image/')) {
-        alert('Only image files are allowed.')
-        return
-      }
-      // Validate size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image size must be less than 5MB.')
-        return
-      }
-      const previewUrl = URL.createObjectURL(file)
-      setImagePreview(previewUrl)
-    }
   }
 
   // Helper to update prices based on which field was edited
@@ -185,7 +175,8 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       'dozen_buying_price',
       'dozen_selling_price',
       'quantity',
-      'min_quantity'
+      'min_quantity',
+      'sku'
     ]
     for (const field of requiredFields) {
       const value = formData[field as keyof ProductFormData]
@@ -197,12 +188,26 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       ) {
         return field
       }
+      // Extra: For SKU, check for whitespace only
+      if (field === 'sku' && typeof value === 'string' && value.trim() === '') {
+        return field
+      }
     }
     return null
   }
 
-  // Clear draft on successful submit (add product)
-  const handleSubmit = async (e: React.FormEvent, localImageFile?: File) => {
+  // Multiple image upload state
+  const [imageFiles, setImageFiles] = React.useState<File[]>([])
+  const [imagePreviews, setImagePreviews] = React.useState<string[]>([])
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    setImageFiles(files)
+    setImagePreviews(files.map((file) => URL.createObjectURL(file)))
+  }
+
+  // Helper to build the payload for submission, converting numbers
+  const handleSubmit = async (e: React.FormEvent, _localImageFile?: File) => {
     e.preventDefault()
     const invalidField = validateForm()
     if (invalidField) {
@@ -212,24 +217,46 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       return
     }
     const payload = buildProductPayload()
-    try {
-      if (localImageFile) {
-        const formDataToSend = new FormData()
-        Object.entries(payload).forEach(([key, value]) => {
-          formDataToSend.append(key, String(value))
-        })
-        formDataToSend.append('image', localImageFile)
-        await onSubmit(e, localImageFile)
-      } else {
-        await onSubmit(e)
+    // Add images array if files selected
+    if (imageFiles.length > 0) {
+      const formDataToSend = new FormData()
+      Object.entries(payload).forEach(([key, value]) => {
+        formDataToSend.append(key, String(value))
+      })
+      imageFiles.forEach((file) => formDataToSend.append('images', file))
+      try {
+        await onSubmit(e, imageFiles[0]) // Pass first file for legacy support
+      } catch (err: any) {
+        if (err?.response?.data?.message?.includes('SKU')) {
+          alert('SKU already exists. Please use a unique SKU.')
+        } else {
+          alert('Failed to save product: ' + (err?.response?.data?.message || err.message))
+        }
       }
-    } catch (err) {
-      console.error('[ProductFormDialog] Submit error:', err)
+      return
+    }
+    try {
+      await onSubmit(e)
+    } catch (err: any) {
+      if (err?.response?.data?.message?.includes('SKU')) {
+        alert('SKU already exists. Please use a unique SKU.')
+      } else {
+        alert('Failed to save product: ' + (err?.response?.data?.message || err.message))
+      }
     }
     if (!selectedProduct) {
       localStorage.removeItem(FORM_DRAFT_KEY)
     }
   }
+
+  React.useEffect(() => {
+    if (categories && categories.length > 0 && !formData.category_id) {
+      setFormData((prev) => ({
+        ...prev,
+        category_id: categories[0].id
+      }));
+    }
+  }, [categories, formData.category_id, setFormData]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -244,22 +271,26 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="image">Product Image (Optional)</Label>
+            <Label htmlFor="images">Product Images (Optional, multiple allowed)</Label>
             <Input
-              id="image"
-              name="image"
+              id="images"
+              name="images"
               type="file"
               accept="image/*"
+              multiple
               onChange={handleImageChange}
               className="mt-1"
             />
-            {imagePreview && (
-              <div className="mt-2">
-                <img
-                  src={imagePreview}
-                  alt="Product Preview"
-                  className="w-32 h-32 object-cover rounded-md"
-                />
+            {imagePreviews.length > 0 && (
+              <div className="mt-2 flex gap-2 flex-wrap">
+                {imagePreviews.map((url, idx) => (
+                  <img
+                    key={idx}
+                    src={url}
+                    alt={`Product Preview ${idx + 1}`}
+                    className="w-24 h-24 object-cover rounded-md"
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -287,13 +318,14 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
               }
               required
               className="block w-full border rounded px-3 py-2"
+              disabled={isLoading || !categories}
             >
               <option value="" disabled>
-                Select category
+                {isLoading ? 'Loading...' : 'Select category'}
               </option>
-              {PRODUCT_CATEGORIES.map((cat, idx) => (
-                <option key={cat} value={idx + 1}>
-                  {cat}
+              {categories && categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
                 </option>
               ))}
             </select>

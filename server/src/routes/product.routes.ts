@@ -11,6 +11,7 @@ import {
 import Product from '../models/Product.js';
 import { Op } from 'sequelize';
 import { uploadCsv } from '../middleware/upload.js';
+import upload from '../middleware/upload.js';
 
 const router = Router();
 
@@ -55,7 +56,8 @@ router.use(requireRole(['admin', 'manager']));
 // Bulk upload products via CSV
 router.post('/bulk-upload', uploadCsv.single('file'), bulkUploadProducts);
 
-router.post('/', createProduct);
+// Use upload.array for multiple images, allow up to 5
+router.post('/', upload.array('images', 5), createProduct);
 router.put('/:id', updateProduct);
 router.delete('/:id', deleteProduct);
 

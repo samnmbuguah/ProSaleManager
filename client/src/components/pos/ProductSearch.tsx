@@ -91,14 +91,14 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                     {/* Product Image Carousel */}
                     <div className="w-full flex justify-center items-center pb-2">
                       {product.images && product.images.length > 0 ? (
-                        <Carousel className="w-24">
+                        <Carousel className="w-32">
                           <CarouselContent>
                             {product.images.map((img, idx) => (
                               <CarouselItem key={idx}>
                                 <img
                                   src={img}
                                   alt={product.name}
-                                  className="w-20 h-20 object-cover rounded-md border mx-auto"
+                                  className="w-28 h-28 object-cover rounded-md border mx-auto"
                                 />
                               </CarouselItem>
                             ))}
@@ -110,7 +110,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                         <img
                           src={'https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=80&q=80'}
                           alt={product.name}
-                          className="w-20 h-20 object-cover rounded-md border"
+                          className="w-28 h-28 object-cover rounded-md border"
                         />
                       )}
                     </div>
