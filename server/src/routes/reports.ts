@@ -25,8 +25,8 @@ router.get('/inventory', async (req, res) => {
       quantity: product.quantity,
       min_quantity: product.min_quantity,
       is_active: product.is_active,
-      created_at: product.created_at,
-      updated_at: product.updated_at
+      created_at: product.createdAt,
+      updated_at: product.updatedAt
     }))
 
     const totalValue = inventoryData.reduce((sum, product) => {
