@@ -124,15 +124,16 @@ router.put("/:id/status", async (req, res) => {
         include: [Product],
       });
 
-      await Promise.all(
-        items.map(async (item) => {
-          const product = (item as { product?: any }).product;
-          if (!product || typeof product !== 'object' || !('name' in product) || !('id' in product)) {
-            throw new Error(`Product with id ${item.product_id} not found for order item ${item.id}`);
-          }
-          console.log(`Product found: ${product.name}, ID: ${product.id}`);
-        }),
-      );
+      for (const item of items) {
+        const product = (item as { product?: any }).product;
+        if (!product || typeof product !== 'object' || !('name' in product) || !('id' in product)) {
+          // Return a 400 error with a clear message
+          return res.status(400).json({
+            error: `Product with id ${item.product_id} not found for order item ${item.id}`
+          });
+        }
+        // ... (rest of your logic, e.g., update inventory)
+      }
     }
 
     res.json(order);
