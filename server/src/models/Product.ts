@@ -21,6 +21,7 @@ export interface ProductAttributes {
   description?: string;
   image_url?: string | null;
   is_active?: boolean;
+  images?: string[]; // New field for multiple images
 }
 
 interface ProductInstance extends Model<ProductAttributes>, ProductAttributes {
@@ -94,6 +95,11 @@ const Product = sequelize.define<ProductInstance>('Product', {
   image_url: {
     type: DataTypes.STRING,
     allowNull: true,
+  },
+  images: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: [],
   },
   is_active: {
     type: DataTypes.BOOLEAN,

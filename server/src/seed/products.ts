@@ -1,8 +1,23 @@
 import { Product, Category } from '../models/index.js';
 import type { ProductAttributes } from "../models/Product.js";
+import fetch from 'node-fetch';
 
 const PACK_DISCOUNT = 0.95; // 5% discount for pack
 const DOZEN_DISCOUNT = 0.90; // 10% discount for dozen
+
+const PEXELS_API_KEY = process.env.PEXELS_API_KEY;
+const PEXELS_API_URL = 'https://api.pexels.com/v1/search';
+
+async function fetchPexelsImages(query: string, perPage = 3): Promise<string[]> {
+  const res = await fetch(`${PEXELS_API_URL}?query=${encodeURIComponent(query)}&per_page=${perPage}`, {
+    headers: {
+      Authorization: PEXELS_API_KEY!,
+    },
+  });
+  if (!res.ok) throw new Error(`Pexels API error: ${res.statusText}`);
+  const data = await res.json();
+  return data.photos.map((photo: any) => photo.src.large);
+}
 
 function randomFrom<T>(arr: T[]): T { return arr[Math.floor(Math.random() * arr.length)]; }
 function randomPrice(min: number, max: number): number { return Math.round((Math.random() * (max - min) + min) * 100) / 100; }
@@ -39,160 +54,193 @@ export const seedProducts = async (): Promise<void> => {
     const now = new Date();
 
     // Define base products (now with explicit prices)
-    const baseProducts = [
+    const baseProducts: ProductAttributes[] = [
       {
         name: 'Nike Air Max',
         description: 'Comfortable everyday sneakers',
         sku: 'SHOE001',
-        category_id: categoryMap.get('Shoes'),
+        category_id: categoryMap.get('Shoes') ?? 1,
         piece_buying_price: 1350.00,
         piece_selling_price: 1800.00,
+        pack_buying_price: 1350.00 * 3 * PACK_DISCOUNT,
+        pack_selling_price: 1800.00 * 3 * PACK_DISCOUNT,
+        dozen_buying_price: 1350.00 * 12 * DOZEN_DISCOUNT,
+        dozen_selling_price: 1800.00 * 12 * DOZEN_DISCOUNT,
         quantity: 20,
         min_quantity: 5,
         is_active: true,
         image_url: '',
-        created_at: now,
-        updated_at: now,
+        images: [],
       },
       {
         name: 'Adidas Ultraboost',
         description: 'Premium running shoes',
         sku: 'SHOE002',
-        category_id: categoryMap.get('Shoes'),
+        category_id: categoryMap.get('Shoes') ?? 1,
         piece_buying_price: 1500.00,
         piece_selling_price: 2000.00,
+        pack_buying_price: 1500.00 * 3 * PACK_DISCOUNT,
+        pack_selling_price: 2000.00 * 3 * PACK_DISCOUNT,
+        dozen_buying_price: 1500.00 * 12 * DOZEN_DISCOUNT,
+        dozen_selling_price: 2000.00 * 12 * DOZEN_DISCOUNT,
         quantity: 15,
         min_quantity: 5,
         is_active: true,
         image_url: '',
-        created_at: now,
-        updated_at: now,
+        images: [],
       },
       {
         name: 'Victoria Secret Pink Panty',
         description: 'Elegant lace panties',
         sku: 'PAN001',
-        category_id: categoryMap.get('Panties'),
+        category_id: categoryMap.get('Panties') ?? 1,
         piece_buying_price: 180.00,
         piece_selling_price: 315.00,
+        pack_buying_price: 180.00 * 3 * PACK_DISCOUNT,
+        pack_selling_price: 315.00 * 3 * PACK_DISCOUNT,
+        dozen_buying_price: 180.00 * 12 * DOZEN_DISCOUNT,
+        dozen_selling_price: 315.00 * 12 * DOZEN_DISCOUNT,
         quantity: 10,
         min_quantity: 3,
         is_active: true,
         image_url: '',
-        created_at: now,
-        updated_at: now,
+        images: [],
       },
       {
         name: 'Cotton Hipster Panty',
         description: 'Comfortable cotton panties',
         sku: 'PAN002',
-        category_id: categoryMap.get('Panties'),
+        category_id: categoryMap.get('Panties') ?? 1,
         piece_buying_price: 150.00,
         piece_selling_price: 250.00,
+        pack_buying_price: 150.00 * 3 * PACK_DISCOUNT,
+        pack_selling_price: 250.00 * 3 * PACK_DISCOUNT,
+        dozen_buying_price: 150.00 * 12 * DOZEN_DISCOUNT,
+        dozen_selling_price: 250.00 * 12 * DOZEN_DISCOUNT,
         quantity: 12,
         min_quantity: 3,
         is_active: true,
         image_url: '',
-        created_at: now,
-        updated_at: now,
+        images: [],
       },
       {
         name: 'Calvin Klein Boxer Brief',
         description: 'Premium cotton boxer briefs',
         sku: 'BOX001',
-        category_id: categoryMap.get('Boxers'),
+        category_id: categoryMap.get('Boxers') ?? 1,
         piece_buying_price: 280.00,
         piece_selling_price: 450.00,
+        pack_buying_price: 280.00 * 3 * PACK_DISCOUNT,
+        pack_selling_price: 450.00 * 3 * PACK_DISCOUNT,
+        dozen_buying_price: 280.00 * 12 * DOZEN_DISCOUNT,
+        dozen_selling_price: 450.00 * 12 * DOZEN_DISCOUNT,
         quantity: 8,
         min_quantity: 2,
         is_active: true,
         image_url: '',
-        created_at: now,
-        updated_at: now,
+        images: [],
       },
       {
         name: 'Nike Dri-FIT Boxer',
         description: 'Sports performance boxers',
         sku: 'BOX002',
-        category_id: categoryMap.get('Boxers'),
+        category_id: categoryMap.get('Boxers') ?? 1,
         piece_buying_price: 250.00,
         piece_selling_price: 400.00,
+        pack_buying_price: 250.00 * 3 * PACK_DISCOUNT,
+        pack_selling_price: 400.00 * 3 * PACK_DISCOUNT,
+        dozen_buying_price: 250.00 * 12 * DOZEN_DISCOUNT,
+        dozen_selling_price: 400.00 * 12 * DOZEN_DISCOUNT,
         quantity: 10,
         min_quantity: 2,
         is_active: true,
         image_url: '',
-        created_at: now,
-        updated_at: now,
+        images: [],
       },
       {
         name: 'Victoria Secret Push-Up Bra',
         description: 'Luxury push-up bra',
         sku: 'BRA001',
-        category_id: categoryMap.get('Bras'),
+        category_id: categoryMap.get('Bras') ?? 1,
         piece_buying_price: 750.00,
         piece_selling_price: 1200.00,
+        pack_buying_price: 750.00 * 3 * PACK_DISCOUNT,
+        pack_selling_price: 1200.00 * 3 * PACK_DISCOUNT,
+        dozen_buying_price: 750.00 * 12 * DOZEN_DISCOUNT,
+        dozen_selling_price: 1200.00 * 12 * DOZEN_DISCOUNT,
         quantity: 6,
         min_quantity: 2,
         is_active: true,
         image_url: '',
-        created_at: now,
-        updated_at: now,
+        images: [],
       },
       {
         name: 'Sports Bra',
         description: 'High-performance sports bra',
         sku: 'BRA002',
-        category_id: categoryMap.get('Bras'),
+        category_id: categoryMap.get('Bras') ?? 1,
         piece_buying_price: 600.00,
         piece_selling_price: 900.00,
+        pack_buying_price: 600.00 * 3 * PACK_DISCOUNT,
+        pack_selling_price: 900.00 * 3 * PACK_DISCOUNT,
+        dozen_buying_price: 600.00 * 12 * DOZEN_DISCOUNT,
+        dozen_selling_price: 900.00 * 12 * DOZEN_DISCOUNT,
         quantity: 8,
         min_quantity: 2,
         is_active: true,
         image_url: '',
-        created_at: now,
-        updated_at: now,
+        images: [],
       },
       {
         name: 'Coconut Oil',
         description: 'Pure organic coconut oil',
         sku: 'OIL001',
-        category_id: categoryMap.get('Oil'),
+        category_id: categoryMap.get('Oil') ?? 1,
         piece_buying_price: 230.00,
         piece_selling_price: 350.00,
+        pack_buying_price: 230.00 * 3 * PACK_DISCOUNT,
+        pack_selling_price: 350.00 * 3 * PACK_DISCOUNT,
+        dozen_buying_price: 230.00 * 12 * DOZEN_DISCOUNT,
+        dozen_selling_price: 350.00 * 12 * DOZEN_DISCOUNT,
         quantity: 15,
         min_quantity: 5,
         is_active: true,
         image_url: '',
-        created_at: now,
-        updated_at: now,
+        images: [],
       },
       {
         name: 'Olive Oil',
         description: 'Extra virgin olive oil',
         sku: 'OIL002',
-        category_id: categoryMap.get('Oil'),
+        category_id: categoryMap.get('Oil') ?? 1,
         piece_buying_price: 280.00,
         piece_selling_price: 400.00,
+        pack_buying_price: 280.00 * 3 * PACK_DISCOUNT,
+        pack_selling_price: 400.00 * 3 * PACK_DISCOUNT,
+        dozen_buying_price: 280.00 * 12 * DOZEN_DISCOUNT,
+        dozen_selling_price: 400.00 * 12 * DOZEN_DISCOUNT,
         quantity: 12,
         min_quantity: 5,
         is_active: true,
         image_url: '',
-        created_at: now,
-        updated_at: now,
+        images: [],
       },
       {
         name: 'Delivery Service',
         description: 'Product delivery service',
         sku: 'SRV001',
-        category_id: categoryMap.get('Service'),
+        category_id: categoryMap.get('Service') ?? 1,
         piece_buying_price: 100.00,
         piece_selling_price: 150.00,
+        pack_buying_price: 100.00 * 3 * PACK_DISCOUNT,
+        pack_selling_price: 150.00 * 3 * PACK_DISCOUNT,
+        dozen_buying_price: 100.00 * 12 * DOZEN_DISCOUNT,
+        dozen_selling_price: 150.00 * 12 * DOZEN_DISCOUNT,
         quantity: 999999,
         min_quantity: 0,
         is_active: true,
         image_url: '',
-        created_at: now,
-        updated_at: now,
+        images: [],
       },
     ];
 
@@ -200,7 +248,7 @@ export const seedProducts = async (): Promise<void> => {
     const PRODUCT_ADJECTIVES = ['Classic', 'Modern', 'Premium', 'Eco', 'Sport', 'Luxury', 'Basic', 'Smart', 'Pro', 'Ultra'];
     const PRODUCT_TYPES = ['Sneaker', 'Panty', 'Boxer', 'Bra', 'Oil', 'Service', 'Boot', 'Sandal', 'Shirt', 'Shorts'];
     const BRANDS = ['Nike', 'Adidas', 'Victoria', 'Calvin Klein', 'Puma', 'Reebok', 'Under Armour', 'Levi\'s', 'Hanes', 'Gucci'];
-    const randomProducts = Array.from({ length: 100 }).map((_, i) => {
+    const randomProducts: ProductAttributes[] = Array.from({ length: 100 }).map((_, i) => {
       const brand = randomFrom(BRANDS);
       const type = randomFrom(PRODUCT_TYPES);
       const adj = randomFrom(PRODUCT_ADJECTIVES);
@@ -218,7 +266,7 @@ export const seedProducts = async (): Promise<void> => {
         name,
         description: `A ${adj.toLowerCase()} ${type.toLowerCase()} by ${brand}.`,
         sku,
-        category_id: categoryMap.get(category.name),
+        category_id: categoryMap.get(category.name) ?? 1,
         piece_buying_price,
         piece_selling_price,
         pack_buying_price,
@@ -229,12 +277,11 @@ export const seedProducts = async (): Promise<void> => {
         min_quantity: Math.floor(Math.random() * 5) + 1,
         is_active: true,
         image_url,
-        created_at: now,
-        updated_at: now,
+        images: [],
       };
     });
     // Combine base and random products
-    let productsToCreate = [
+    let productsToCreate: ProductAttributes[] = [
       ...baseProducts.map(baseProduct => {
         const { piece_buying_price, piece_selling_price } = baseProduct;
         const pack_buying_price = piece_buying_price * 3 * PACK_DISCOUNT;
@@ -247,6 +294,7 @@ export const seedProducts = async (): Promise<void> => {
           pack_selling_price,
           dozen_buying_price,
           dozen_selling_price,
+          images: baseProduct.images ?? [],
         };
       }),
       ...randomProducts
@@ -256,10 +304,14 @@ export const seedProducts = async (): Promise<void> => {
       const { category_id, ...rest } = p;
       return {
         ...rest,
-        category_id: typeof category_id === 'number' ? category_id : 1
+        category_id: typeof category_id === 'number' ? category_id : 1,
+        images: p.images ?? []
       };
     });
     productsToCreate = productsToCreate.filter(p => typeof p.category_id === 'number');
+
+    // Limit to 25 products to avoid rate limiting
+    productsToCreate = productsToCreate.slice(0, 25);
 
     // Log the final product data being sent to create
     console.log('\nCreating products with data:', JSON.stringify(productsToCreate, null, 2));
@@ -268,6 +320,20 @@ export const seedProducts = async (): Promise<void> => {
     // Create all products at once
     await Product.bulkCreate(productsToCreate as ProductAttributes[], { returning: true });
     
+    // For each product, fetch images from Pexels
+    for (const product of productsToCreate) {
+      try {
+        const query = product.name.split(' ')[0]; // Use first word as query (e.g., brand/type)
+        product.images = await fetchPexelsImages(query, 3);
+        if (!product.image_url && product.images.length > 0) {
+          product.image_url = product.images[0];
+        }
+      } catch (err) {
+        console.warn(`Could not fetch images for product ${product.name}:`, err);
+        product.images = [];
+      }
+    }
+
     // Log the created products to verify the saved data
     console.log('\nCreated products:', JSON.stringify(productsToCreate, null, 2));
 
