@@ -220,7 +220,11 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
         ...item,
         unit_price: item.buying_price ?? 0,
       }));
-      await createPurchaseOrder({ ...validated, items: itemsWithUnitPrice });
+      await createPurchaseOrder({
+        ...validated,
+        items: itemsWithUnitPrice,
+        total: itemsWithUnitPrice.reduce((sum, item) => sum + (item.quantity * item.buying_price), 0).toString()
+      });
       setIsAddDialogOpen(false);
       setFormData({ items: [], supplier_id: '', expected_delivery_date: '', notes: '' });
       // No manual refetch needed
@@ -290,13 +294,16 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
                         <TableRow key={order.id}>
                           <TableCell>{order.id}</TableCell>
                           <TableCell>
-                            {/* Show supplier name regardless of field casing */}
-                            {order.supplier?.name || 'Unknown Supplier'}
+                            {/* Fix: Show supplier name from either Supplier or supplier field */}
+                            {order.Supplier?.name || order.supplier?.name || 'Unknown Supplier'}
                           </TableCell>
                           <TableCell>
-                            {order.created_at
-                              ? format(new Date(order.created_at), 'PPP')
-                              : 'N/A'}
+                            {/* Fix: Use order_date if present, else fallback to created_at */}
+                            {order.order_date
+                              ? format(new Date(order.order_date), 'PPP')
+                              : order.created_at
+                                ? format(new Date(order.created_at), 'PPP')
+                                : 'N/A'}
                           </TableCell>
                           <TableCell>
                             {order.expected_delivery_date
