@@ -22,7 +22,8 @@ export const productSchema = z.object({
   quantity: z.number().min(0, 'Quantity cannot be negative'),
   min_quantity: z.number().min(0, 'Minimum quantity cannot be negative'),
   image_url: z.string(),
-  is_active: z.boolean()
+  is_active: z.boolean(),
+  images: z.array(z.string()) // Add this line
 })
 
 // Define ProductFormData explicitly to ensure consistent type for react-hook-form
