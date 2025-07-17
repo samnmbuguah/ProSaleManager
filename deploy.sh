@@ -48,8 +48,12 @@ cp -r client/dist/* production/server/public/
 
 # 8. Upload to cPanel server
 echo "Uploading to server using rsync..."
-rsync -avz -e "ssh -p 21098" production/server/ elteijae@198.54.114.246:/home/elteijae/eltee_store/server/
+rsync -avz -e "ssh -p 21098" production/server/ elteijae@198.54.114.246:/home/elteijae/eltee_store/
 
-# 9. Do NOT delete production folder after deployment
+# 9. Copy SQLite database directly to eltee_store
+echo "Copying SQLite database to remote eltee_store..."
+rsync -avz -e "ssh -p 21098" server/database.sqlite elteijae@198.54.114.246:/home/elteijae/eltee_store/database.sqlite
+
+# 10. Do NOT delete production folder after deployment
 
 echo "Deployment complete!" 
