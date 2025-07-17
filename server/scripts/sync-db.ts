@@ -1,4 +1,5 @@
 import { sequelize } from '../src/config/database.js'
+import '../src/models/index.js'
 
 const syncDatabase = async () => {
   try {
