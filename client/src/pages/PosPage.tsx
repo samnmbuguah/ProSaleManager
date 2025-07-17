@@ -179,7 +179,7 @@ const PosPage: React.FC = () => {
   const selectedCustomerData = customers.find((c) => c.id === selectedCustomer)
 
   return (
-    <div className="container mx-auto p-4 mt-16">
+    <div className="container mx-auto p-2 sm:p-4 mt-16">
       {/* Header with Customer Selection */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
@@ -239,17 +239,17 @@ const PosPage: React.FC = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-12 gap-6 h-[calc(100vh-280px)]">
+      <div className="flex flex-col lg:flex-row gap-6 h-auto min-h-[60vh]">
         {/* Products Section */}
-        <div className="col-span-8 h-full overflow-hidden flex flex-col">
-          <Card className="h-full">
+        <div className="w-full lg:w-2/3 flex flex-col h-[60vh] lg:h-[calc(100vh-280px)]">
+          <Card className="flex-1 flex flex-col min-h-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ShoppingCart className="h-5 w-5" />
                 Products
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden">
+            <CardContent className="flex-1 flex flex-col min-h-0 overflow-hidden">
               {productsError && (
                 <Alert variant="destructive" className="mb-4">
                   <AlertCircle className="h-4 w-4" />
@@ -268,7 +268,7 @@ const PosPage: React.FC = () => {
                 </Alert>
               )}
 
-              <div className="h-full overflow-y-auto">
+              <div className="flex-1 min-h-0 overflow-y-auto">
                 <ProductSearch
                   products={(products || []).filter(
                     (product) => product?.sku !== 'SRV001'
@@ -310,7 +310,7 @@ const PosPage: React.FC = () => {
         </div>
 
         {/* Cart Section */}
-        <div className="col-span-4 h-full overflow-hidden">
+        <div className="w-full lg:w-1/3 flex flex-col h-[40vh] lg:h-[calc(100vh-280px)]">
           <Cart
             items={cartItems as unknown as CartItem[]}
             onUpdateQuantity={(
