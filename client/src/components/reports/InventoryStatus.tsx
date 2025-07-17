@@ -23,7 +23,7 @@ interface InventoryStatusProps {
   onFilter: (category: string) => void
 }
 
-export default function InventoryStatus ({
+export default function InventoryStatus({
   products,
   onSearch,
   onFilter
@@ -83,19 +83,6 @@ export default function InventoryStatus ({
             onChange={(e) => onSearch(e.target.value)}
           />
         </div>
-        <Select onValueChange={handleFilterChange} defaultValue="all">
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filter by category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            {categories.map((category) => (
-              <SelectItem key={category} value={category!}>
-                {category}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       <Table>
@@ -103,7 +90,6 @@ export default function InventoryStatus ({
           <TableRow>
             <TableHead>Product</TableHead>
             <TableHead>Product Code</TableHead>
-            <TableHead>Category</TableHead>
             <TableHead className="text-right">Price</TableHead>
             <TableHead className="text-right">Quantity</TableHead>
             <TableHead>Status</TableHead>
@@ -114,20 +100,19 @@ export default function InventoryStatus ({
           {safeProducts.length === 0
             ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
                   No products found. Add products to see inventory status.
                 </TableCell>
               </TableRow>
-              )
+            )
             : (
-                safeProducts.map((product) => {
-                  const status = getStockStatus(product.quantity || 0)
-                  const value = (product.price || 0) * (product.quantity || 0)
-                  return (
+              safeProducts.map((product) => {
+                const status = getStockStatus(product.quantity || 0)
+                const value = (product.price || 0) * (product.quantity || 0)
+                return (
                   <TableRow key={product.id}>
                     <TableCell>{product.name}</TableCell>
                     <TableCell>{product.sku}</TableCell>
-                    <TableCell>{product.category || 'Uncategorized'}</TableCell>
                     <TableCell className="text-right">
                       {formatCurrency(product.price)}
                     </TableCell>
@@ -141,9 +126,9 @@ export default function InventoryStatus ({
                       {formatCurrency(value)}
                     </TableCell>
                   </TableRow>
-                  )
-                })
-              )}
+                )
+              })
+            )}
         </TableBody>
       </Table>
     </div>
