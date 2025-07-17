@@ -38,8 +38,10 @@ import { useSuppliers } from '@/hooks/use-suppliers'
 import { purchaseOrderSchema } from '@/types/purchase-order'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { Loader2 } from 'lucide-react'
+import Swal from 'sweetalert2';
+import { usePurchaseOrders } from '@/hooks/use-purchase-orders';
 
-export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: any[]; loading: boolean }) {
+export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: { purchaseOrders: any[]; loading: boolean }) {
   const { products } = useInventory()
   const { suppliers, isLoading: suppliersLoading } = useSuppliers()
   const { user } = useAuthContext();
@@ -59,6 +61,16 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
   const [markingReceivedId, setMarkingReceivedId] = useState<number | null>(null);
   const [productsList, setProductsList] = useState(products)
   const [productDropdownOpen, setProductDropdownOpen] = useState<boolean[]>([])
+
+  // Use React Query for purchase orders
+  const {
+    purchaseOrders,
+    isLoading: purchaseOrdersLoading,
+    createPurchaseOrder,
+    isCreating,
+    updatePurchaseOrderStatus,
+    isUpdating
+  } = usePurchaseOrders();
 
   useEffect(() => {
     if (Array.isArray(products)) {
@@ -116,47 +128,47 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
     setProductDropdownOpen((prev) => [...prev, false])
   }
 
+  // Replace handleStatusChange to use updatePurchaseOrderStatus
   const handleStatusChange = async (
     orderId: number,
     newStatus: PurchaseOrder['status']
   ) => {
     try {
-      await api.put(`${API_ENDPOINTS.purchaseOrders.update(orderId)}/status`, {
-        status: newStatus
-      })
+      await updatePurchaseOrderStatus({ id: orderId, status: newStatus });
       toast({
         title: 'Success',
         description: 'Status updated successfully'
-      })
-      // Refresh the purchase orders list to show updated status
-      if (typeof window !== 'undefined') {
-        window.location.reload()
-      }
-      // dispatch(fetchPurchaseOrders()) // This line is removed
+      });
+      // No reload needed, React Query will refetch
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error:', error);
       toast({
         title: 'Error',
         description: 'Failed to update status',
         variant: 'destructive'
-      })
+      });
     }
-  }
+  };
 
+  // Replace handleMarkReceived to use updatePurchaseOrderStatus
   const handleMarkReceived = async (orderId: number) => {
     if (!window.confirm('Are you sure you want to mark this order as received? This will update inventory quantities.')) return;
     setMarkingReceivedId(orderId);
     try {
-      await api.put(`/purchase-orders/${orderId}/status`, { status: 'received' });
+      await updatePurchaseOrderStatus({ id: orderId, status: 'received' });
       toast({ title: 'Order marked as received', description: 'Inventory has been updated.' });
-      // Refresh the purchase orders list to show updated status
-      if (typeof window !== 'undefined') {
-        window.location.reload()
+      // No reload needed, React Query will refetch
+    } catch (err: any) {
+      const message = err?.response?.data?.error || err?.message || 'Failed to mark as received';
+      if (err?.response?.status === 400 && message.includes('Product with id')) {
+        Swal.fire({
+          title: 'Error',
+          text: message,
+          icon: 'error',
+        });
+      } else {
+        toast({ title: 'Error', description: message, variant: 'destructive' });
       }
-      // dispatch(fetchPurchaseOrders()); // This line is removed
-      // refetchInventory && refetchInventory(); // This line is removed
-    } catch (err) {
-      toast({ title: 'Error', description: 'Failed to mark as received', variant: 'destructive' });
     } finally {
       setMarkingReceivedId(null);
     }
@@ -198,26 +210,22 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
     return getAvailableStatuses(currentStatus).length > 0
   }
 
+  // Replace handleFormSubmit to use createPurchaseOrder
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormErrors({});
     try {
-      // Validate form data
       const validated = purchaseOrderSchema.parse(formData);
-      // Ensure each item has unit_price set to buying_price
       const itemsWithUnitPrice = validated.items.map(item => ({
         ...item,
         unit_price: item.buying_price ?? 0,
       }));
-      // Submit to backend
-      await api.post('/purchase-orders', { ...validated, items: itemsWithUnitPrice });
-      toast({ title: 'Success', description: 'Purchase order created successfully.' });
+      await createPurchaseOrder({ ...validated, items: itemsWithUnitPrice });
       setIsAddDialogOpen(false);
       setFormData({ items: [], supplier_id: '', expected_delivery_date: '', notes: '' });
-      // dispatch(fetchPurchaseOrders()); // This line is removed
+      // No manual refetch needed
     } catch (err: any) {
       if (err.errors) {
-        // Zod validation errors
         const errors: { [key: string]: string } = {};
         err.errors.forEach((e: any) => { errors[e.path[0]] = e.message; });
         setFormErrors(errors);
@@ -226,6 +234,10 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
       }
     }
   };
+
+  // Use purchaseOrders from React Query, fallback to prop for SSR
+  const orders = purchaseOrders || propPurchaseOrders || [];
+  const isLoading = purchaseOrdersLoading || loading;
 
   return (
     <div className="space-y-4">
@@ -238,10 +250,10 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
           </Button>
         )}
       </div>
-      {!Array.isArray(purchaseOrders) || purchaseOrders.length === 0
+      {!Array.isArray(orders) || orders.length === 0
         ? (
           <div className="p-4 text-center text-muted-foreground">
-            {loading
+            {isLoading
               ? 'Loading purchase orders...'
               : 'No purchase orders found or failed to load.'}
           </div>
@@ -262,7 +274,7 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {purchaseOrders.length === 0
+                {orders.length === 0
                   ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center text-muted-foreground">
@@ -271,7 +283,7 @@ export function PurchaseOrders({ purchaseOrders, loading }: { purchaseOrders: an
                     </TableRow>
                   )
                   : (
-                    purchaseOrders.map(
+                    orders.map(
                       (
                         order: PurchaseOrder & { supplier?: { name: string } }
                       ) => (
