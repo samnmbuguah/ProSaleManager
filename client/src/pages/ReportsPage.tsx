@@ -35,15 +35,15 @@ export default function ReportsPage() {
   const handleDateRangeChange = () => {
     // This will be implemented to refetch data with date filters
   }
-  
+
   const handleSortChange = () => {
     // This will be implemented to sort the data
   }
-  
+
   const handleSearch = async () => {
     // This will be implemented to search products
   }
-  
+
   const handleFilter = async () => {
     // This will be implemented to filter by category
   }
@@ -71,7 +71,12 @@ export default function ReportsPage() {
 
           <TabsContent value="inventory">
             <InventoryStatus
-              products={inventoryData?.products || []}
+              products={
+                (inventoryData?.products || []).map(p => ({
+                  ...p,
+                  price: p.piece_selling_price
+                }))
+              }
               onSearch={handleSearch}
               onFilter={handleFilter}
             />
