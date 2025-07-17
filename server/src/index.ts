@@ -7,8 +7,9 @@ import { errorHandler } from './middleware/error.middleware.js';
 import { ApiError } from './utils/api-error.js';
 import path from "path";
 import app from './app.js'
+import env from './config/env.js';
 
-const PORT = process.env.PORT || 5000;
+const PORT = env.PORT || 5000;
 
 // CORS configuration
 app.use(cors({
