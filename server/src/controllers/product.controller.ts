@@ -172,8 +172,60 @@ export const updateProduct = catchAsync(async (req: Request, res: Response) => {
   if (!product) {
     throw new ApiError(404, 'Product not found');
   }
-  
-  await product.update(req.body);
+
+  // Only allow fields that are in the model
+  const allowedFields = [
+    'name',
+    'description',
+    'sku',
+    'barcode',
+    'category_id',
+    'piece_buying_price',
+    'piece_selling_price',
+    'pack_buying_price',
+    'pack_selling_price',
+    'dozen_buying_price',
+    'dozen_selling_price',
+    'quantity',
+    'min_quantity',
+    'image_url',
+    'is_active',
+    'images'
+  ];
+  const updateData: Record<string, any> = {};
+  for (const field of allowedFields) {
+    if (req.body[field] !== undefined) {
+      let value = req.body[field];
+      // Coerce types and handle nullables
+      if ([
+        'piece_buying_price',
+        'piece_selling_price',
+        'pack_buying_price',
+        'pack_selling_price',
+        'dozen_buying_price',
+        'dozen_selling_price',
+        'quantity',
+        'min_quantity',
+        'category_id'
+      ].includes(field)) {
+        value = Number(value);
+      }
+      if (['is_active'].includes(field)) {
+        value = value === 'true' || value === true;
+      }
+      if (['image_url', 'description', 'barcode'].includes(field)) {
+        value = value === '' ? null : value;
+      }
+      if (field === 'images' && typeof value === 'string') {
+        try {
+          value = JSON.parse(value);
+        } catch { /* ignore */ }
+      }
+      updateData[field] = value;
+    }
+  }
+
+  await product.update(updateData);
   res.json({
     success: true,
     data: product
