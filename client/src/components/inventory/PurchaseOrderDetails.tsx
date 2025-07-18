@@ -68,16 +68,24 @@ export function PurchaseOrderDetails ({
               <TableBody>
                 {items.map((item: any) => (
                   <TableRow key={item.id}>
-                    <TableCell>{item.product?.name || item.name || 'N/A'}</TableCell>
-                    <TableCell>{item.product?.stock_unit || item.unit_type || 'N/A'}</TableCell>
+                    <TableCell>{item.Product?.name || item.product_name || 'N/A'}</TableCell>
+                    <TableCell>{item.unit_type || 'N/A'}</TableCell>
                     <TableCell>{item.quantity}</TableCell>
-                    <TableCell>{formatCurrency(item.buying_price)}</TableCell>
-                    <TableCell>{formatCurrency(item.selling_price)}</TableCell>
-                    <TableCell>
-                      {formatCurrency(
-                        (Number(item.buying_price) * item.quantity).toString()
-                      )}
-                    </TableCell>
+                    <TableCell>{
+                      item.unit_price != null && !isNaN(Number(item.unit_price))
+                        ? formatCurrency(item.unit_price)
+                        : 'KSh N/A'
+                    }</TableCell>
+                    <TableCell>{
+                      item.Product?.piece_selling_price != null && !isNaN(Number(item.Product?.piece_selling_price))
+                        ? formatCurrency(item.Product.piece_selling_price)
+                        : 'KSh N/A'
+                    }</TableCell>
+                    <TableCell>{
+                      item.unit_price != null && !isNaN(Number(item.unit_price)) && item.quantity != null && !isNaN(Number(item.quantity))
+                        ? formatCurrency(Number(item.unit_price) * Number(item.quantity))
+                        : 'KSh N/A'
+                    }</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
