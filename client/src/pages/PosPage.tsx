@@ -26,7 +26,8 @@ import { Badge } from '@/components/ui/badge'
 const PosPage: React.FC = () => {
   const {
     products,
-    refetch
+    refetch,
+    error
   } = useProducts()
   const {
     cart,
@@ -192,7 +193,7 @@ const PosPage: React.FC = () => {
                 setSelectedCustomer(value ? parseInt(value) : null)
               }
             >
-              <SelectTrigger className="w-64">
+              <SelectTrigger className="w-full sm:w-64">
                 <SelectValue placeholder="Select a customer" />
               </SelectTrigger>
               <SelectContent>
@@ -247,7 +248,7 @@ const PosPage: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col min-h-0 overflow-hidden">
-              {products && (
+              {error && (
                 <Alert variant="destructive" className="mb-4">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Connection Error</AlertTitle>
@@ -300,6 +301,8 @@ const PosPage: React.FC = () => {
                       })
                     }
                   }}
+                  isLoading={isLoading.checkout}
+                  error={error}
                 />
               </div>
             </CardContent>
