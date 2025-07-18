@@ -19,7 +19,7 @@ interface PurchaseOrderListProps {
   onCreateOrder: () => void;
 }
 
-export function PurchaseOrderList ({ onCreateOrder }: PurchaseOrderListProps) {
+export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
   const { purchaseOrders, updatePurchaseOrderStatus, isUpdating } =
     usePurchaseOrders()
   const { suppliers } = useSuppliers()
@@ -137,16 +137,16 @@ export function PurchaseOrderList ({ onCreateOrder }: PurchaseOrderListProps) {
         supplier={
           selectedOrder
             ? {
-                id: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.id,
-                name: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.name,
-                email: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.email,
-                phone: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.phone,
-                address: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.address,
-                contact_person: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.contact_person,
-                status: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.status,
-                created_at: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.created_at,
-                updated_at: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.updated_at
-              }
+              id: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.id,
+              name: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.name,
+              email: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.email,
+              phone: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.phone,
+              address: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.address,
+              contact_person: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.contact_person,
+              status: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.status,
+              created_at: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.created_at,
+              updated_at: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.updated_at
+            }
             : null
         }
       />
