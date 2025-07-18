@@ -48,33 +48,17 @@ export function PurchaseOrderItemsList({
                 <Select
                   value={unit}
                   onValueChange={(value) => {
-                    // Update unit_type and set prices from product if available
-                    let buying_price = item.buying_price
-                    let selling_price = item.selling_price
-                    if (product) {
-                      if (value === 'piece') {
-                        buying_price = product.piece_buying_price
-                        selling_price = product.piece_selling_price
-                      } else if (value === 'pack') {
-                        buying_price = product.pack_buying_price
-                        selling_price = product.pack_selling_price
-                      } else if (value === 'dozen') {
-                        buying_price = product.dozen_buying_price
-                        selling_price = product.dozen_selling_price
-                      }
+                    if (!product) return;
+                    let buying_price = product.piece_buying_price;
+                    let selling_price = product.piece_selling_price;
+                    if (value === 'pack') {
+                      buying_price = product.pack_buying_price;
+                      selling_price = product.pack_selling_price;
+                    } else if (value === 'dozen') {
+                      buying_price = product.dozen_buying_price;
+                      selling_price = product.dozen_selling_price;
                     }
-                    console.log('Unit change:', {
-                      unit: value,
-                      product: product?.name,
-                      buying_price,
-                      selling_price,
-                      product_piece_buying: product?.piece_buying_price,
-                      product_pack_buying: product?.pack_buying_price,
-                      product_dozen_buying: product?.dozen_buying_price
-                    })
-                    onItemChange(index, 'unit_type', value)
-                    onItemChange(index, 'buying_price', buying_price)
-                    onItemChange(index, 'selling_price', selling_price)
+                    onItemChange(index, 'unit_type', value, { buying_price, selling_price });
                   }}
                 >
                   <SelectTrigger className="w-full">
