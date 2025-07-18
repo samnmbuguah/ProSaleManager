@@ -292,14 +292,16 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
                         <TableRow key={order.id}>
                           <TableCell>{order.id}</TableCell>
                           <TableCell>
-                            {/* Show supplier name from supplier field only */}
-                            {order.supplier?.name || 'Unknown Supplier'}
+                            {/* Show supplier name from either Supplier or supplier field */}
+                            {order.Supplier?.name || order.supplier?.name || 'Unknown Supplier'}
                           </TableCell>
                           <TableCell>
-                            {/* Use created_at for order date */}
-                            {order.created_at
-                              ? format(new Date(order.created_at), 'PPP')
-                              : 'N/A'}
+                            {/* Use order_date or created_at for order date */}
+                            {order.order_date
+                              ? format(new Date(order.order_date), 'PPP')
+                              : order.created_at
+                                ? format(new Date(order.created_at), 'PPP')
+                                : 'N/A'}
                           </TableCell>
                           <TableCell>
                             {order.expected_delivery_date
@@ -316,60 +318,48 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
                               ? Number(order.total_amount).toLocaleString()
                               : '0'}
                           </TableCell>
-                          <TableCell>{order.notes || 'No notes'}</TableCell>
                           <TableCell>
-                            {/* Only admins can approve/reject orders */}
-                            {user?.role === 'admin' ? (
-                              <>
-                                {canChangeStatus(order.status) ? (
-                                  <Select
-                                    value={order.status}
-                                    onValueChange={(value) =>
-                                      handleStatusChange(
-                                        order.id,
-                                        value as PurchaseOrder['status']
-                                      )
-                                    }
-                                  >
-                                    <SelectTrigger className="w-[130px]">
-                                      <SelectValue placeholder="Select status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {getAvailableStatuses(order.status).map((status) => (
-                                        <SelectItem key={status} value={status}>
-                                          {status.charAt(0).toUpperCase() + status.slice(1)}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                            {order.notes}
+                          </TableCell>
+                          <TableCell>
+                            {canChangeStatus(order.status) && order.status === 'pending' ? (
+                                <Select
+                                  value={order.status}
+                                  onValueChange={(value) =>
+                                    handleStatusChange(
+                                      order.id,
+                                      value as PurchaseOrder['status']
+                                    )
+                                  }
+                                >
+                                  <SelectTrigger className="w-[130px]">
+                                    <SelectValue placeholder="Select status" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {getAvailableStatuses(order.status).map((status) => (
+                                      <SelectItem key={status} value={status}>
+                                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              ) : null}
+                            {/* Mark as Received button for approved orders */}
+                            {order.status === 'approved' && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="ml-2"
+                                disabled={markingReceivedId === order.id}
+                                onClick={() => handleMarkReceived(order.id)}
+                              >
+                                {markingReceivedId === order.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
-                                  <Badge variant={getStatusBadgeVariant(order.status)}>
-                                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                                  </Badge>
+                                  'Mark as Received'
                                 )}
-                                {/* Mark as Received button for approved orders */}
-                                {order.status === 'approved' && (
-                                  <Button
-                                    variant="default"
-                                    size="sm"
-                                    className="ml-2"
-                                    disabled={markingReceivedId === order.id}
-                                    onClick={() => handleMarkReceived(order.id)}
-                                  >
-                                    {markingReceivedId === order.id ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      'Mark as Received'
-                                    )}
-                                  </Button>
-                                )}
-                              </>
-                            ) : (
-                              <Badge variant={getStatusBadgeVariant(order.status)}>
-                                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                              </Badge>
+                              </Button>
                             )}
-                            {/* TODO: After admin approval and order confirmation, update inventory */}
                           </TableCell>
                         </TableRow>
                       )
@@ -443,10 +433,10 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
             <PurchaseOrderForm
               formData={formData}
               onInputChange={handleInputChange}
-              onItemChange={(index: number, field: string, value: any) => {
-                const newItems = [...formData.items]
-                newItems[index] = { ...newItems[index], [field]: value }
-                setFormData((prev) => ({ ...prev, items: newItems }))
+              onItemChange={(index: number, field: string, value: any, extra = {}) => {
+                const newItems = [...formData.items];
+                newItems[index] = { ...newItems[index], [field]: value, ...extra };
+                setFormData((prev) => ({ ...prev, items: newItems }));
               }}
               onRemoveItem={removeItem}
               products={productsList}
