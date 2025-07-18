@@ -46,7 +46,6 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
   const { suppliers, isLoading: suppliersLoading } = useSuppliers()
   const { user } = useAuthContext();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [formData, setFormData] = useState<PurchaseOrderFormData>({
     items: [],
     supplier_id: '',
@@ -295,15 +294,13 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
                           <TableCell>{order.id}</TableCell>
                           <TableCell>
                             {/* Show supplier name from either Supplier or supplier field */}
-                            {order.Supplier?.name || order.supplier?.name || 'Unknown Supplier'}
+                            {order.supplier?.name || 'Unknown Supplier'}
                           </TableCell>
                           <TableCell>
                             {/* Use order_date or created_at for order date */}
-                            {order.order_date
-                              ? format(new Date(order.order_date), 'PPP')
-                              : order.created_at
-                                ? format(new Date(order.created_at), 'PPP')
-                                : 'N/A'}
+                            {order.created_at
+                              ? format(new Date(order.created_at), 'PPP')
+                              : 'N/A'}
                           </TableCell>
                           <TableCell>
                             {order.expected_delivery_date
@@ -435,7 +432,7 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
             <PurchaseOrderForm
               formData={formData}
               onInputChange={handleInputChange}
-              onItemChange={(index: number, field: string, value: any, extra = {}) => {
+              onItemChange={(index: number, field: string, value: any, extra?: Record<string, any>) => {
                 const newItems = [...formData.items];
                 newItems[index] = { ...newItems[index], [field]: value, ...extra };
                 setFormData((prev) => ({ ...prev, items: newItems }));
@@ -459,7 +456,8 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
         orderId={selectedOrder?.id ?? null}
         isOpen={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
-        supplier={selectedOrder?.Supplier || selectedOrder?.supplier || null}
+        supplier={selectedOrder?.supplier || null}
+        items={Array.isArray(selectedOrder?.items) ? selectedOrder.items : undefined}
       />
     </div>
   )
