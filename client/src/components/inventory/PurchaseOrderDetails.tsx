@@ -12,11 +12,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
-import { useQuery } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
 import type { Supplier } from '@/types/supplier'
-import { API_ENDPOINTS } from '@/lib/api-endpoints'
-import { api } from '@/lib/api'
 
 interface PurchaseOrderDetailsProps {
   orderId: number | null;
@@ -26,23 +22,13 @@ interface PurchaseOrderDetailsProps {
   items?: any[];
 }
 
-export function PurchaseOrderDetails({
+export function PurchaseOrderDetails ({
   orderId,
   isOpen,
   onClose,
   supplier,
-  items: propItems
+  items
 }: PurchaseOrderDetailsProps) {
-  const { data: fetchedItems, isLoading } = useQuery({
-    queryKey: ['purchase-order-items', orderId],
-    queryFn: async () => {
-      const response = await api.get(API_ENDPOINTS.purchaseOrders.items(orderId || 0))
-      return response.data
-    },
-    enabled: !!orderId && !propItems
-  })
-  const items = propItems || fetchedItems;
-
   const formatCurrency = (amount: string) => {
     return `KSh ${Number(amount).toLocaleString('en-KE', {
       minimumFractionDigits: 2,
@@ -66,44 +52,42 @@ export function PurchaseOrderDetails({
           </div>
         )}
 
-        {isLoading
-          ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          )
-          : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Stock Unit</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Buying Price</TableHead>
-                    <TableHead>Selling Price</TableHead>
-                    <TableHead>Total</TableHead>
+        {Array.isArray(items) && items.length > 0 ? (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Stock Unit</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Buying Price</TableHead>
+                  <TableHead>Selling Price</TableHead>
+                  <TableHead>Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((item: any) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.product?.name || item.name || 'N/A'}</TableCell>
+                    <TableCell>{item.product?.stock_unit || item.unit_type || 'N/A'}</TableCell>
+                    <TableCell>{item.quantity}</TableCell>
+                    <TableCell>{formatCurrency(item.buying_price)}</TableCell>
+                    <TableCell>{formatCurrency(item.selling_price)}</TableCell>
+                    <TableCell>
+                      {formatCurrency(
+                        (Number(item.buying_price) * item.quantity).toString()
+                      )}
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items?.map((item: any) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.product.name}</TableCell>
-                      <TableCell>{item.product.stock_unit}</TableCell>
-                      <TableCell>{item.quantity}</TableCell>
-                      <TableCell>{formatCurrency(item.buying_price)}</TableCell>
-                      <TableCell>{formatCurrency(item.selling_price)}</TableCell>
-                      <TableCell>
-                        {formatCurrency(
-                          (Number(item.buying_price) * item.quantity).toString()
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <div className="text-center text-muted-foreground py-8">
+            No items found for this order.
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )
