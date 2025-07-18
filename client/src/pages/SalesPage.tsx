@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/pagination'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Sale, SaleItem } from '@/types/sale'
+import { Sale } from '@/types/sale'
 import { api } from '@/lib/api'
 import { API_ENDPOINTS } from '@/lib/api-endpoints'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
