@@ -79,15 +79,15 @@ export default function AuthPage() {
         })
         setShouldNavigate(true)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Auth error:', error)
       const form = isLogin ? loginForm : registerForm
 
       // Show error toast
       let errorMessage =
         error instanceof Error ? error.message : 'Please check your credentials and try again'
-      if (error?.response?.status === 429) {
-        const retryAfter = error?.response?.headers?.['retry-after']
+      if (error && error.response && error.response.status === 429) {
+        const retryAfter = error.response.headers?.['retry-after']
         if (retryAfter) {
           errorMessage = `Too many login attempts. Please wait ${retryAfter} seconds and try again.`
         } else {
