@@ -1,15 +1,86 @@
 import { Request, Response } from 'express';
+import { Sale, SaleItem, Product, User, Customer } from '../models/index.js';
+import { sequelize } from '../config/database.js';
 
-export const getOrders = (req: Request, res: Response) => {
-  res.json({ message: 'getOrders stub' });
+export const getOrders = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+    // Only return orders for this user (client)
+    const orders = await Sale.findAll({
+      where: { user_id: userId },
+      include: [
+        { model: SaleItem, as: 'items', include: [Product] },
+        { model: Customer, attributes: ['id', 'name', 'email', 'phone'] },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+    res.json({ orders });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch orders' });
+  }
 };
 
-export const getOrder = (req: Request, res: Response) => {
-  res.json({ message: 'getOrder stub' });
+export const getOrder = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const order = await Sale.findOne({
+      where: { id: req.params.id, user_id: userId },
+      include: [
+        { model: SaleItem, as: 'items', include: [Product] },
+        { model: Customer, attributes: ['id', 'name', 'email', 'phone'] },
+      ],
+    });
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch order' });
+  }
 };
 
-export const createOrder = (req: Request, res: Response) => {
-  res.json({ message: 'createOrder stub' });
+export const createOrder = async (req: Request, res: Response) => {
+  const t = await sequelize.transaction();
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      await t.rollback();
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    const { items } = req.body;
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      await t.rollback();
+      return res.status(400).json({ message: 'No items provided' });
+    }
+    // Calculate total
+    const total = items.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+    // Create Sale (order)
+    const sale = await Sale.create({
+      user_id: userId,
+      customer_id: null,
+      total_amount: total,
+      payment_method: 'pending',
+      amount_paid: 0,
+      status: 'pending',
+      payment_status: 'pending',
+      delivery_fee: 0,
+    }, { transaction: t });
+    // Create SaleItems
+    await Promise.all(items.map((item: any) =>
+      SaleItem.create({
+        sale_id: sale.id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        total: item.unit_price * item.quantity,
+        unit_type: item.unit_type,
+      }, { transaction: t })
+    ));
+    await t.commit();
+    res.status(201).json({ message: 'Order created', orderId: sale.id });
+  } catch (error) {
+    await t.rollback();
+    res.status(500).json({ message: 'Failed to create order' });
+  }
 };
 
 export const updateOrder = (req: Request, res: Response) => {
