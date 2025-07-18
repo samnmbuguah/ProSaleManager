@@ -298,13 +298,11 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
                           </TableCell>
                           <TableCell>
                             {/* Use order_date, createdAt, or created_at for order date */}
-                            {order.order_date
-                              ? format(new Date(order.order_date), 'PPP')
-                              : order.createdAt
-                                ? format(new Date(order.createdAt), 'PPP')
-                                : order.created_at
-                                  ? format(new Date(order.created_at), 'PPP')
-                                  : 'N/A'}
+                            {order.created_at
+                              ? format(new Date(order.created_at), 'PPP')
+                              : order.created_at
+                                ? format(new Date(order.created_at), 'PPP')
+                                : ''}
                           </TableCell>
                           <TableCell>
                             {order.expected_delivery_date
