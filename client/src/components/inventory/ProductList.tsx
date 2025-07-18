@@ -24,16 +24,16 @@ const ProductList: React.FC<ProductListProps> = ({
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Name
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
               SKU
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Piece Price
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
               Pack Price
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
               Dozen Price
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -48,14 +48,14 @@ const ProductList: React.FC<ProductListProps> = ({
           {products.map((product) => (
             <tr key={product.id}>
               <td className="px-6 py-4 whitespace-nowrap">{product.name}</td>
-              <td className="px-6 py-4 whitespace-nowrap">{product.sku}</td>
+              <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">{product.sku}</td>
               <td className="px-6 py-4 whitespace-nowrap">
                 {formatCurrency(product.piece_selling_price)}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
                 {formatCurrency(product.pack_selling_price)}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
                 {formatCurrency(product.dozen_selling_price)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
