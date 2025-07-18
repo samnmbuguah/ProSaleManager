@@ -66,6 +66,7 @@ export default function MainNav () {
 
   const NavLinks = () => (
     <>
+      <Link href="/shop" className="nav-link">Shop</Link>
       {routes.map(({ path, label, icon: Icon }: { path: string; label: string; icon: React.ComponentType<{ className?: string }> }) => (
         <Link key={path} href={path}>
           <Button

@@ -14,8 +14,9 @@ import CustomersPage from '@/pages/CustomersPage'
 import POSPage from '@/pages/PosPage'
 import ProfilePage from '@/pages/ProfilePage'
 import ReportsPage from '@/pages/ReportsPage'
+import ShopPage from '@/pages/ShopPage'
 
-function ProtectedRoute ({
+function ProtectedRoute({
   component: Component,
   roles
 }: {
@@ -34,7 +35,7 @@ function ProtectedRoute ({
   )
 }
 
-function App () {
+function App() {
   const { checkSession } = useAuth()
 
   useEffect(() => {
@@ -45,6 +46,8 @@ function App () {
     <>
       <Switch>
         <Route path="/auth" component={AuthPage} />
+
+        <Route path="/shop" component={ShopPage} />
 
         <Route path="/">
           <ProtectedRoute component={POSPage} roles={['admin', 'user']} />
