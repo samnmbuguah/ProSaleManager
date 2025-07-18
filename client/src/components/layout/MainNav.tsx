@@ -10,7 +10,8 @@ import {
   Receipt,
   Menu,
   Wallet,
-  ShoppingCart
+  ShoppingCart,
+  ShoppingBag
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
@@ -29,7 +30,8 @@ const ROLE_ROUTES = {
   user: [
     { path: '/pos', label: 'POS', icon: Store },
     { path: '/inventory', label: 'Inventory', icon: PackageSearch },
-    { path: '/expenses', label: 'Expenses', icon: Wallet }
+    { path: '/expenses', label: 'Expenses', icon: Wallet },
+    { path: '/shop', label: 'Shop', icon: ShoppingBag }
   ],
   admin: [
     { path: '/pos', label: 'POS', icon: Store },
@@ -37,7 +39,8 @@ const ROLE_ROUTES = {
     { path: '/customers', label: 'Customers', icon: Users },
     { path: '/sales', label: 'Sales', icon: Receipt },
     { path: '/reports', label: 'Reports', icon: BarChart3 },
-    { path: '/expenses', label: 'Expenses', icon: Wallet }
+    { path: '/expenses', label: 'Expenses', icon: Wallet },
+    { path: '/shop', label: 'Shop', icon: ShoppingBag }
   ]
 }
 
@@ -71,7 +74,6 @@ export default function MainNav() {
 
   const NavLinks = () => (
     <>
-      <Link href="/shop" className="nav-link">Shop</Link>
       {routes.map(({ path, label, icon: Icon }: { path: string; label: string; icon: React.ComponentType<{ className?: string }> }) => (
         <Link key={path} href={path}>
           <Button
