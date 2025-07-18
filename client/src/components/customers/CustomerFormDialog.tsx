@@ -53,6 +53,7 @@ const CustomerFormDialog: React.FC<CustomerFormDialogProps> = ({
               value={formData.name || ''}
               onChange={handleInputChange}
               required
+              className="w-full"
             />
           </div>
           <div>
@@ -64,6 +65,7 @@ const CustomerFormDialog: React.FC<CustomerFormDialogProps> = ({
               value={formData.email || ''}
               onChange={handleInputChange}
               required
+              className="w-full"
             />
           </div>
           <div>
@@ -74,6 +76,7 @@ const CustomerFormDialog: React.FC<CustomerFormDialogProps> = ({
               value={formData.phone || ''}
               onChange={handleInputChange}
               required
+              className="w-full"
             />
           </div>
           <div>
@@ -84,6 +87,7 @@ const CustomerFormDialog: React.FC<CustomerFormDialogProps> = ({
               value={formData.address || ''}
               onChange={handleInputChange}
               required
+              className="w-full"
             />
           </div>
           <Button type="submit" className="w-full">
