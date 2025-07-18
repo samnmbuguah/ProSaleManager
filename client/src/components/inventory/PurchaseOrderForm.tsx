@@ -10,7 +10,7 @@ import { SupplierSelect } from './SupplierSelect'
 interface PurchaseOrderFormProps {
   formData: PurchaseOrderFormData
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-  onItemChange: (index: number, field: string, value: any) => void
+  onItemChange: (index: number, field: string, value: any, extra?: Record<string, any>) => void
   onRemoveItem: (index: number) => void
   onAddItem: () => void
   products: Product[]

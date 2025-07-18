@@ -5,7 +5,7 @@ import { STOCK_UNITS } from '@/types/product'
 interface PurchaseOrderItemsListProps {
   items: any[]
   products: Product[]
-  onItemChange: (index: number, field: string, value: any) => void
+  onItemChange: (index: number, field: string, value: any, extra?: Record<string, any>) => void
   onRemoveItem: (index: number) => void
 }
 
