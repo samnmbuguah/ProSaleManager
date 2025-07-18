@@ -23,22 +23,25 @@ interface PurchaseOrderDetailsProps {
   isOpen: boolean;
   onClose: () => void;
   supplier?: Supplier | null;
+  items?: any[];
 }
 
-export function PurchaseOrderDetails ({
+export function PurchaseOrderDetails({
   orderId,
   isOpen,
   onClose,
-  supplier
+  supplier,
+  items: propItems
 }: PurchaseOrderDetailsProps) {
-  const { data: items, isLoading } = useQuery({
+  const { data: fetchedItems, isLoading } = useQuery({
     queryKey: ['purchase-order-items', orderId],
     queryFn: async () => {
       const response = await api.get(API_ENDPOINTS.purchaseOrders.items(orderId || 0))
       return response.data
     },
-    enabled: !!orderId
+    enabled: !!orderId && !propItems
   })
+  const items = propItems || fetchedItems;
 
   const formatCurrency = (amount: string) => {
     return `KSh ${Number(amount).toLocaleString('en-KE', {
@@ -65,42 +68,42 @@ export function PurchaseOrderDetails ({
 
         {isLoading
           ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-            )
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          )
           : (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Stock Unit</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Buying Price</TableHead>
-                  <TableHead>Selling Price</TableHead>
-                  <TableHead>Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {items?.map((item: any) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.product.name}</TableCell>
-                    <TableCell>{item.product.stock_unit}</TableCell>
-                    <TableCell>{item.quantity}</TableCell>
-                    <TableCell>{formatCurrency(item.buying_price)}</TableCell>
-                    <TableCell>{formatCurrency(item.selling_price)}</TableCell>
-                    <TableCell>
-                      {formatCurrency(
-                        (Number(item.buying_price) * item.quantity).toString()
-                      )}
-                    </TableCell>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Stock Unit</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Buying Price</TableHead>
+                    <TableHead>Selling Price</TableHead>
+                    <TableHead>Total</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-            )}
+                </TableHeader>
+                <TableBody>
+                  {items?.map((item: any) => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.product.name}</TableCell>
+                      <TableCell>{item.product.stock_unit}</TableCell>
+                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell>{formatCurrency(item.buying_price)}</TableCell>
+                      <TableCell>{formatCurrency(item.selling_price)}</TableCell>
+                      <TableCell>
+                        {formatCurrency(
+                          (Number(item.buying_price) * item.quantity).toString()
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
       </DialogContent>
     </Dialog>
   )
