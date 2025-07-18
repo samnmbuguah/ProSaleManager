@@ -57,12 +57,12 @@ export const Cart: React.FC<CartProps> = ({
     }
   }
 
-  const handleUnitTypeChange = (productId: number, unitType: string) => {
-    const item = items.find((item) => item.product.id === productId)
+  const handleUnitTypeChange = (itemId: number, unitType: string) => {
+    const item = items.find((item) => item.id === itemId)
     if (item) {
       const newPrice = getUnitPrice(item.product, unitType)
-      onUpdateUnitType(productId, unitType)
-      onUpdateUnitPrice(productId, newPrice)
+      onUpdateUnitType(itemId, unitType)
+      onUpdateUnitPrice(itemId, newPrice)
     }
   }
 
@@ -106,7 +106,7 @@ export const Cart: React.FC<CartProps> = ({
             <div className="space-y-3">
               {items.map((item) => (
                 <div
-                  key={`${item.product.id}-${item.unit_type}`}
+                  key={item.id}
                   className="border rounded-lg p-3 bg-white"
                 >
                   <div className="flex items-start justify-between mb-2">
@@ -122,7 +122,7 @@ export const Cart: React.FC<CartProps> = ({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onRemoveItem(item.product.id)}
+                        onClick={() => onRemoveItem(item.id)}
                         className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
                       >
                         <Trash2 className="h-3 w-3" />
@@ -133,7 +133,7 @@ export const Cart: React.FC<CartProps> = ({
                   <div className="grid grid-cols-2 gap-2 mb-2">
                     <div>
                       <label
-                        htmlFor={`unit-type-${item.product.id}`}
+                        htmlFor={`unit-type-${item.id}`}
                         className="text-xs text-gray-600"
                       >
                         Unit Type
@@ -141,11 +141,11 @@ export const Cart: React.FC<CartProps> = ({
                       <Select
                         value={item.unit_type}
                         onValueChange={(value) =>
-                          handleUnitTypeChange(item.product.id, value)
+                          handleUnitTypeChange(item.id, value)
                         }
                       >
                         <SelectTrigger
-                          id={`unit-type-${item.product.id}`}
+                          id={`unit-type-${item.id}`}
                           className="h-8 text-xs"
                         >
                           <SelectValue />
@@ -159,19 +159,19 @@ export const Cart: React.FC<CartProps> = ({
                     </div>
                     <div>
                       <label
-                        htmlFor={`quantity-${item.product.id}`}
+                        htmlFor={`quantity-${item.id}`}
                         className="text-xs text-gray-600"
                       >
                         Quantity
                       </label>
                       <input
-                        id={`quantity-${item.product.id}`}
+                        id={`quantity-${item.id}`}
                         type="number"
                         min={1}
                         value={item.quantity}
                         onChange={(e) =>
                           onUpdateQuantity(
-                            item.product.id,
+                            item.id,
                             item.unit_type,
                             Number(e.target.value)
                           )
@@ -184,9 +184,15 @@ export const Cart: React.FC<CartProps> = ({
                   <div className="flex justify-between items-center text-sm">
                     <div>
                       <span className="text-gray-600">Unit Price:</span>
-                      <span className="font-medium ml-1">
-                        {formatPrice(item.unit_price)}
-                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.01}
+                        value={item.unit_price}
+                        onChange={e => onUpdateUnitPrice(item.id, Number(e.target.value))}
+                        className="ml-1 w-20 border rounded px-1 text-xs font-medium"
+                        style={{ width: 80 }}
+                      />
                     </div>
                     <div className="font-semibold">
                       {formatPrice(item.total)}
