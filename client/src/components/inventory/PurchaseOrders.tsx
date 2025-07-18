@@ -39,6 +39,7 @@ import { useAuthContext } from '@/contexts/AuthContext'
 import { Loader2 } from 'lucide-react'
 import Swal from 'sweetalert2';
 import { usePurchaseOrders } from '@/hooks/use-purchase-orders';
+import { PurchaseOrderDetails } from './PurchaseOrderDetails';
 
 export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: { purchaseOrders: any[]; loading: boolean }) {
   const { products } = useInventory()
@@ -60,6 +61,7 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
   const [markingReceivedId, setMarkingReceivedId] = useState<number | null>(null);
   const [productsList, setProductsList] = useState(products)
   const [productDropdownOpen, setProductDropdownOpen] = useState<boolean[]>([])
+  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
 
   // Use React Query for purchase orders
   const {
@@ -289,7 +291,7 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
                       (
                         order: PurchaseOrder & { supplier?: { name: string } }
                       ) => (
-                        <TableRow key={order.id}>
+                        <TableRow key={order.id} onClick={() => setSelectedOrder(order)} className="cursor-pointer hover:bg-muted/50">
                           <TableCell>{order.id}</TableCell>
                           <TableCell>
                             {/* Show supplier name from either Supplier or supplier field */}
@@ -453,16 +455,12 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
           </form>
         </DialogContent>
       </Dialog>
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>View Purchase Order</DialogTitle>
-            <DialogDescription>
-              Purchase order details and status.
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
+      <PurchaseOrderDetails
+        orderId={selectedOrder?.id ?? null}
+        isOpen={!!selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+        supplier={selectedOrder?.Supplier || selectedOrder?.supplier || null}
+      />
     </div>
   )
 }
