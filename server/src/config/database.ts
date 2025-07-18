@@ -1,11 +1,12 @@
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
+import path from "path";
 
 dotenv.config();
 
 const sequelize = new Sequelize({
   dialect: 'sqlite',
-  storage: process.env.SQLITE_PATH || 'database.sqlite',
+  storage: process.env.SQLITE_PATH || path.resolve(__dirname, '../../database.sqlite'),
   logging: false,
 });
 
