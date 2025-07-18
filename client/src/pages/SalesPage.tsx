@@ -28,7 +28,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Sale, SaleItem } from '@/types/sale'
 import { api } from '@/lib/api'
-import { useEffect } from 'react'
 import { API_ENDPOINTS } from '@/lib/api-endpoints'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 
@@ -39,7 +38,7 @@ export function SalesPage() {
   const [ordersError, setOrdersError] = useState<string | null>(null)
   const pageSize = 10
 
-  const { data: salesData, isLoading } = useQuery<{
+  const { data: salesData } = useQuery<{
     sales: Sale[];
     total: number;
   }>({

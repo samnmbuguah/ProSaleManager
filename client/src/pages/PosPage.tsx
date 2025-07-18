@@ -26,9 +26,7 @@ import { Badge } from '@/components/ui/badge'
 const PosPage: React.FC = () => {
   const {
     products,
-    isLoading: productsLoading,
-    error: productsError,
-    refetch: refetchProducts
+    refetch
   } = useProducts()
   const {
     cart,
@@ -55,9 +53,9 @@ const PosPage: React.FC = () => {
   // Note: In development mode with React.StrictMode, this may run twice
   // which is expected behavior and helps catch certain types of bugs
   useEffect(() => {
-    refetchProducts()
+    refetch()
     fetchCustomers()
-  }, [refetchProducts, fetchCustomers])
+  }, [refetch, fetchCustomers])
 
   // Set Walk-in Customer as default when customers are loaded
   useEffect(() => {
@@ -249,16 +247,16 @@ const PosPage: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col min-h-0 overflow-hidden">
-              {productsError && (
+              {products && (
                 <Alert variant="destructive" className="mb-4">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Connection Error</AlertTitle>
                   <AlertDescription>
-                    {productsError}
+                    Failed to load products. Please try again later.
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={refetchProducts}
+                      onClick={() => refetch()}
                       className="ml-2"
                     >
                       <RefreshCcw className="h-4 w-4 mr-1" /> Retry
@@ -311,7 +309,7 @@ const PosPage: React.FC = () => {
         {/* Cart Section */}
         <div className="w-full lg:w-1/3 flex flex-col h-[40vh] lg:h-[calc(100vh-280px)]">
           <Cart
-            items={cart.items as unknown as CartItem[]}
+            items={cart.items as CartItem[]}
             onUpdateQuantity={(
               productId: number,
               _unitType: string,

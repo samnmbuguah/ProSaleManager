@@ -1,22 +1,30 @@
 import MainNav from '@/components/layout/MainNav'
 import { useProducts } from '@/hooks/use-products'
 import { useCart } from '@/contexts/CartContext'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api, API_ENDPOINTS } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { useToast } from '@/hooks/use-toast'
 import Swal from 'sweetalert2'
 
 export default function ShopPage() {
     const { products, isLoading } = useProducts()
     const { cart, addToCart, removeFromCart, clearCart } = useCart()
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const { toast } = useToast()
     // Track which product images failed to load
     const [imageErrorIds, setImageErrorIds] = useState<{ [id: number]: boolean }>({})
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1)
+    const pageSize = 12
+    const totalPages = Math.ceil(products.length / pageSize)
+    const paginatedProducts = products.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
-    const handleAddToCart = (product) => {
+    useEffect(() => {
+        // Reset to first page if products change
+        setCurrentPage(1)
+    }, [products])
+
+    const handleAddToCart = (product: any) => {
         if (!product || !product.id || !product.piece_selling_price) {
             Swal.fire({
                 icon: 'error',
@@ -28,7 +36,7 @@ export default function ShopPage() {
         addToCart(product, 'piece', product.piece_selling_price)
     }
 
-    const handleRemove = (itemId) => {
+    const handleRemove = (itemId: any) => {
         removeFromCart(itemId)
     }
 
@@ -62,11 +70,11 @@ export default function ShopPage() {
                 text: 'Your order has been submitted successfully.'
             })
             clearCart()
-        } catch (e) {
+        } catch (e: any) {
             Swal.fire({
                 icon: 'error',
                 title: 'Order failed',
-                text: e?.response?.data?.message || e.message || 'Failed to place order. Please try again.'
+                text: (e && e.response && e.response.data && e.response.data.message) || e.message || 'Failed to place order. Please try again.'
             })
         } finally {
             setIsSubmitting(false)
@@ -91,7 +99,7 @@ export default function ShopPage() {
             <div className="container mx-auto p-4 mt-16">
                 <h1 className="text-3xl font-bold mb-4">Shop</h1>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-                    {products.map(product => {
+                    {paginatedProducts.map(product => {
                         const mainImage = Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : null
                         return (
                             <Card key={product.id} className="flex flex-col p-4">
@@ -109,7 +117,25 @@ export default function ShopPage() {
                         )
                     })}
                 </div>
-                <div className="bg-white rounded shadow p-4 max-w-md mx-auto">
+                {/* Pagination controls */}
+                {totalPages > 1 && (
+                    <div className="flex justify-center items-center gap-2 mb-8">
+                        <Button size="sm" variant="outline" onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}>Previous</Button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                            <Button
+                                key={page}
+                                size="sm"
+                                variant={page === currentPage ? 'default' : 'outline'}
+                                onClick={() => setCurrentPage(page)}
+                            >
+                                {page}
+                            </Button>
+                        ))}
+                        <Button size="sm" variant="outline" onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages}>Next</Button>
+                    </div>
+                )}
+                {/* Cart summary stays visible for easy access */}
+                <div className="bg-white rounded shadow p-4 max-w-md mx-auto sticky bottom-4 z-40">
                     <h2 className="text-xl font-bold mb-2">Cart</h2>
                     {cart.items.length === 0 && <div>Your cart is empty.</div>}
                     {cart.items.map(item => (
