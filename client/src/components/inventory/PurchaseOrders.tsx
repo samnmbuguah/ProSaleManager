@@ -456,8 +456,8 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
         orderId={selectedOrder?.id ?? null}
         isOpen={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
-        supplier={selectedOrder?.supplier || null}
-        items={Array.isArray(selectedOrder?.items) ? selectedOrder.items : undefined}
+        {...(selectedOrder && 'supplier' in selectedOrder ? { supplier: (selectedOrder as any).supplier } : {})}
+        {...(selectedOrder && 'items' in selectedOrder && Array.isArray((selectedOrder as any).items) ? { items: (selectedOrder as any).items } : {})}
       />
     </div>
   )
