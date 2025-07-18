@@ -46,9 +46,11 @@ export function setupAssociations() {
   // Purchase Order associations
   PurchaseOrder.belongsTo(Supplier, {
     foreignKey: "supplier_id",
+    as: "supplier",
   });
   Supplier.hasMany(PurchaseOrder, {
     foreignKey: "supplier_id",
+    as: "purchaseOrders",
   });
 
   PurchaseOrder.hasMany(PurchaseOrderItem, {
