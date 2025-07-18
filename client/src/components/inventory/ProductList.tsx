@@ -1,6 +1,7 @@
 import React from 'react'
 import { Product } from '../../types/product'
 import { formatCurrency } from '../../utils/format'
+import { Button } from '@/components/ui/button'
 
 interface ProductListProps {
   products: Product[];
@@ -62,18 +63,22 @@ const ProductList: React.FC<ProductListProps> = ({
                 {product.quantity}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <button
-                  onClick={() => onEdit(product)}
-                  className="text-indigo-600 hover:text-indigo-900 mr-4"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => onDelete(product.id)}
-                  className="text-red-600 hover:text-red-900"
-                >
-                  Delete
-                </button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(product)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => onDelete(product.id)}
+                  >
+                    Delete
+                  </Button>
+                </div>
               </td>
             </tr>
           ))}
@@ -85,4 +90,4 @@ const ProductList: React.FC<ProductListProps> = ({
 
 export default ProductList
 
-export {}
+export { }
