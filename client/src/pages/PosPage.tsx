@@ -301,8 +301,6 @@ const PosPage: React.FC = () => {
                       })
                     }
                   }}
-                  isLoading={isLoading.checkout}
-                  error={error}
                 />
               </div>
             </CardContent>
