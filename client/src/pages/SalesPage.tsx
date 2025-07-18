@@ -128,10 +128,10 @@ export function SalesPage() {
                         {format(new Date(sale.createdAt), 'PPp')}
                       </TableCell>
                       <TableCell>
-                        {sale.customer?.name || 'Walk-in Customer'}
+                        {sale.Customer?.name || 'Walk-in Customer'}
                       </TableCell>
                       <TableCell>
-                        {sale.user?.name || sale.user?.email || 'Unknown User'}
+                        {sale.User?.name || sale.User?.email || 'Unknown User'}
                       </TableCell>
                       <TableCell className="capitalize">
                         {sale.payment_method}
@@ -244,15 +244,15 @@ export function SalesPage() {
               <div className="flex flex-col md:grid md:grid-cols-3 gap-6 md:gap-4 border-b pb-6">
                 <div>
                   <h3 className="font-semibold mb-2">Customer Information</h3>
-                  <p>{selectedSale.customer?.name || 'Walk-in Customer'}</p>
-                  {selectedSale.customer?.email && (
+                  <p>{selectedSale.Customer?.name || 'Walk-in Customer'}</p>
+                  {selectedSale.Customer?.email && (
                     <p className="text-sm text-muted-foreground">
-                      {selectedSale.customer.email}
+                      {selectedSale.Customer.email}
                     </p>
                   )}
-                  {selectedSale.customer?.phone && (
+                  {selectedSale.Customer?.phone && (
                     <p className="text-sm text-muted-foreground">
-                      {selectedSale.customer.phone}
+                      {selectedSale.Customer.phone}
                     </p>
                   )}
                 </div>
@@ -297,8 +297,8 @@ export function SalesPage() {
                   <p>Date: {format(new Date(selectedSale.createdAt), 'PPp')}</p>
                   <p>
                     Cashier:{' '}
-                    {selectedSale.user?.name ||
-                      selectedSale.user?.email ||
+                    {selectedSale.User?.name ||
+                      selectedSale.User?.email ||
                       'Unknown User'}
                   </p>
                   {selectedSale.status && <p>Status: {selectedSale.status}</p>}
@@ -321,7 +321,6 @@ export function SalesPage() {
                         <TableHeader>
                           <TableRow>
                             <TableHead>Product</TableHead>
-                            <TableHead>Product Number</TableHead>
                             <TableHead className="text-right">
                               Unit Price
                             </TableHead>
@@ -333,9 +332,11 @@ export function SalesPage() {
                           {selectedSale.items?.map((item) => (
                             <TableRow key={item.id}>
                               <TableCell>
-                                {item.product?.name || 'Unknown Product'}
+                                {item.Product?.name || 'Unknown Product'}
+                                {item.Product?.sku ? (
+                                  <span className="block text-xs text-muted-foreground">SKU: {item.Product.sku}</span>
+                                ) : null}
                               </TableCell>
-                              <TableCell>{item.product?.sku || 'N/A'}</TableCell>
                               <TableCell className="text-right">
                                 {formatCurrency(item.unit_price)}
                               </TableCell>

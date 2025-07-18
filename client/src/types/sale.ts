@@ -8,7 +8,7 @@ export interface SaleItem {
   unit_type: string;
   createdAt: string;
   updatedAt: string;
-  product: {
+  Product: {
     id: number;
     name: string;
     sku?: string;
@@ -32,13 +32,13 @@ export interface Sale {
   };
   createdAt: string;
   updatedAt: string;
-  customer?: {
+  Customer?: {
     id: number;
     name: string;
     email: string | null;
     phone: string | null;
   };
-  user: {
+  User: {
     id: number;
     name: string;
     email: string;
