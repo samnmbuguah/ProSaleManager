@@ -9,7 +9,8 @@ import {
   User,
   Receipt,
   Menu,
-  Wallet
+  Wallet,
+  ShoppingCart
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
@@ -21,6 +22,8 @@ import {
   SheetTitle,
   SheetTrigger
 } from '@/components/ui/sheet'
+import { useCart } from '@/contexts/CartContext'
+import CartModal from '@/components/pos/CartModal'
 
 const ROLE_ROUTES = {
   user: [
@@ -38,11 +41,13 @@ const ROLE_ROUTES = {
   ]
 }
 
-export default function MainNav () {
+export default function MainNav() {
   const [location] = useLocation()
   const { user, logout } = useAuthContext()
   const { toast } = useToast()
   const [isOpen, setIsOpen] = useState(false)
+  const { cart } = useCart()
+  const [cartOpen, setCartOpen] = useState(false)
 
   if (!user) return null
 
@@ -114,6 +119,16 @@ export default function MainNav () {
           </div>
 
           <div className="flex items-center gap-x-2">
+            {/* Floating Cart Button */}
+            <Button variant="ghost" size="icon" onClick={() => setCartOpen(true)} className="relative">
+              <ShoppingCart className="h-5 w-5" />
+              {cart.items.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs px-1">
+                  {cart.items.length}
+                </span>
+              )}
+            </Button>
+            <CartModal open={cartOpen} onOpenChange={setCartOpen} />
             <div className="hidden md:flex items-center gap-x-2">
               <Link href="/profile">
                 <Button
