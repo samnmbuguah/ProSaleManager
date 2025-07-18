@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import Swal from 'sweetalert2'
+import MainNav from '@/components/layout/MainNav'
 
 export default function ShopPage() {
     const { products, isLoading } = useProducts()
@@ -85,38 +86,41 @@ export default function ShopPage() {
     }
 
     return (
-        <div className="container mx-auto p-4 mt-16">
-            <h1 className="text-3xl font-bold mb-4">Shop</h1>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-                {products.map(product => (
-                    <Card key={product.id} className="flex flex-col p-4">
-                        <img
-                            src={imageErrorIds[product.id] || !product.image_url ? '/placeholder.png' : product.image_url}
-                            alt={product.name || 'Product'}
-                            className="h-32 object-cover mb-2"
-                            onError={() => setImageErrorIds(prev => ({ ...prev, [product.id]: true }))}
-                        />
-                        <div className="font-semibold">{product.name || 'Unnamed Product'}</div>
-                        <div className="text-sm text-muted-foreground mb-2">{product.description || 'No description'}</div>
-                        <div className="mb-2">KSh {product.piece_selling_price ?? 'N/A'}</div>
-                        <Button onClick={() => handleAddToCart(product)}>Add to Cart</Button>
-                    </Card>
-                ))}
+        <>
+            <MainNav />
+            <div className="container mx-auto p-4 mt-16">
+                <h1 className="text-3xl font-bold mb-4">Shop</h1>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                    {products.map(product => (
+                        <Card key={product.id} className="flex flex-col p-4">
+                            <img
+                                src={imageErrorIds[product.id] || !product.image_url ? '/placeholder.png' : product.image_url}
+                                alt={product.name || 'Product'}
+                                className="h-32 object-cover mb-2"
+                                onError={() => setImageErrorIds(prev => ({ ...prev, [product.id]: true }))}
+                            />
+                            <div className="font-semibold">{product.name || 'Unnamed Product'}</div>
+                            <div className="text-sm text-muted-foreground mb-2">{product.description || 'No description'}</div>
+                            <div className="mb-2">KSh {product.piece_selling_price ?? 'N/A'}</div>
+                            <Button onClick={() => handleAddToCart(product)}>Add to Cart</Button>
+                        </Card>
+                    ))}
+                </div>
+                <div className="bg-white rounded shadow p-4 max-w-md mx-auto">
+                    <h2 className="text-xl font-bold mb-2">Cart</h2>
+                    {items.length === 0 && <div>Your cart is empty.</div>}
+                    {items.map(item => (
+                        <div key={item.product?.id || Math.random()} className="flex justify-between items-center mb-2">
+                            <span>{item.product?.name || 'Unknown'} x{item.quantity}</span>
+                            <Button size="sm" variant="ghost" onClick={() => handleRemove(item.product?.id)}>Remove</Button>
+                        </div>
+                    ))}
+                    <div className="font-bold mt-2">Total: KSh {total}</div>
+                    <Button className="mt-2 w-full" onClick={handleOrder} disabled={isSubmitting || items.length === 0}>
+                        {isSubmitting ? 'Placing Order...' : 'Place Order'}
+                    </Button>
+                </div>
             </div>
-            <div className="bg-white rounded shadow p-4 max-w-md mx-auto">
-                <h2 className="text-xl font-bold mb-2">Cart</h2>
-                {items.length === 0 && <div>Your cart is empty.</div>}
-                {items.map(item => (
-                    <div key={item.product?.id || Math.random()} className="flex justify-between items-center mb-2">
-                        <span>{item.product?.name || 'Unknown'} x{item.quantity}</span>
-                        <Button size="sm" variant="ghost" onClick={() => handleRemove(item.product?.id)}>Remove</Button>
-                    </div>
-                ))}
-                <div className="font-bold mt-2">Total: KSh {total}</div>
-                <Button className="mt-2 w-full" onClick={handleOrder} disabled={isSubmitting || items.length === 0}>
-                    {isSubmitting ? 'Placing Order...' : 'Place Order'}
-                </Button>
-            </div>
-        </div>
+        </>
     )
 } 
