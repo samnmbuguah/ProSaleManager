@@ -10,7 +10,7 @@ import { Cart } from '@/components/pos/Cart'
 import { CheckoutDialog } from '@/components/pos/CheckoutDialog'
 import type { CartItem } from '@/types/pos'
 import { ReceiptDialog } from '@/components/pos/ReceiptDialog'
-import { useProducts } from '@/hooks/useProducts'
+import { useProducts } from '@/hooks/use-products'
 import { useCustomers } from '@/hooks/useCustomers'
 import { api } from '@/lib/api'
 import {
@@ -26,9 +26,9 @@ import { Badge } from '@/components/ui/badge'
 const PosPage: React.FC = () => {
   const {
     products,
+    isLoading: productsLoading,
     error: productsError,
-    fetchProducts,
-    setProducts
+    refetch: refetchProducts
   } = useProducts()
   const {
     items: cartItems,
@@ -56,9 +56,9 @@ const PosPage: React.FC = () => {
   // Note: In development mode with React.StrictMode, this may run twice
   // which is expected behavior and helps catch certain types of bugs
   useEffect(() => {
-    fetchProducts()
+    refetchProducts()
     fetchCustomers()
-  }, [fetchProducts, fetchCustomers])
+  }, [refetchProducts, fetchCustomers])
 
   // Set Walk-in Customer as default when customers are loaded
   useEffect(() => {
@@ -259,7 +259,7 @@ const PosPage: React.FC = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={fetchProducts}
+                      onClick={refetchProducts}
                       className="ml-2"
                     >
                       <RefreshCcw className="h-4 w-4 mr-1" /> Retry
@@ -293,7 +293,7 @@ const PosPage: React.FC = () => {
                           'Stub response received - API not properly configured'
                         )
                       }
-                      setProducts(data.data || [])
+                      // setProducts(data.data || []) // This line is removed as per the edit hint
                     } catch (error) {
                       console.error('Error:', error)
                       toast({
