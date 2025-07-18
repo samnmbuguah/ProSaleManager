@@ -30,7 +30,7 @@ const registerSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 type RegisterFormData = z.infer<typeof registerSchema>;
 
-export default function AuthPage () {
+export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -84,21 +84,25 @@ export default function AuthPage () {
       const form = isLogin ? loginForm : registerForm
 
       // Show error toast
+      let errorMessage =
+        error instanceof Error ? error.message : 'Please check your credentials and try again'
+      if (error?.response?.status === 429) {
+        const retryAfter = error?.response?.headers?.['retry-after']
+        if (retryAfter) {
+          errorMessage = `Too many login attempts. Please wait ${retryAfter} seconds and try again.`
+        } else {
+          errorMessage = 'Too many login attempts. Please wait and try again.'
+        }
+      }
       toast({
         variant: 'destructive',
         title: 'Authentication Failed',
-        description:
-          error instanceof Error
-            ? error.message
-            : 'Please check your credentials and try again'
+        description: errorMessage
       })
 
       // Set form error
       form.setError('root', {
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Authentication failed. Please check your credentials.'
+        message: errorMessage
       })
     } finally {
       setIsLoading(false)
@@ -145,12 +149,12 @@ export default function AuthPage () {
               {(isLogin
                 ? loginForm.formState.errors.email
                 : registerForm.formState.errors.email) && (
-                <p className="text-sm font-medium text-destructive">
-                  {isLogin
-                    ? loginForm.formState.errors.email?.message
-                    : registerForm.formState.errors.email?.message}
-                </p>
-              )}
+                  <p className="text-sm font-medium text-destructive">
+                    {isLogin
+                      ? loginForm.formState.errors.email?.message
+                      : registerForm.formState.errors.email?.message}
+                  </p>
+                )}
             </div>
 
             {!isLogin && (
@@ -195,39 +199,39 @@ export default function AuthPage () {
                 >
                   {showPassword
                     ? (
-                    <EyeOff className="h-4 w-4" />
-                      )
+                      <EyeOff className="h-4 w-4" />
+                    )
                     : (
-                    <Eye className="h-4 w-4" />
-                      )}
+                      <Eye className="h-4 w-4" />
+                    )}
                 </Button>
               </div>
               {(isLogin
                 ? loginForm.formState.errors.password
                 : registerForm.formState.errors.password) && (
-                <p className="text-sm font-medium text-destructive">
-                  {isLogin
-                    ? loginForm.formState.errors.password?.message
-                    : registerForm.formState.errors.password?.message}
-                </p>
-              )}
+                  <p className="text-sm font-medium text-destructive">
+                    {isLogin
+                      ? loginForm.formState.errors.password?.message
+                      : registerForm.formState.errors.password?.message}
+                  </p>
+                )}
             </div>
 
             {(isLogin
               ? loginForm.formState.errors.root
               : registerForm.formState.errors.root) && (
-              <p className="text-sm font-medium text-destructive">
-                {isLogin
-                  ? loginForm.formState.errors.root?.message
-                  : registerForm.formState.errors.root?.message}
-              </p>
-            )}
+                <p className="text-sm font-medium text-destructive">
+                  {isLogin
+                    ? loginForm.formState.errors.root?.message
+                    : registerForm.formState.errors.root?.message}
+                </p>
+              )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading
                 ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )
                 : null}
               {isLogin ? 'Login' : 'Register'}
             </Button>

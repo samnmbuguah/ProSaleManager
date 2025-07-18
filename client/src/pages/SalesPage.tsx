@@ -30,11 +30,13 @@ import { Sale, SaleItem } from '@/types/sale'
 import { api } from '@/lib/api'
 import { useEffect } from 'react'
 import { API_ENDPOINTS } from '@/lib/api-endpoints'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 
 export function SalesPage() {
-  const [tab, setTab] = useState<'sales' | 'orders'>('sales')
+  const [tab, setTab] = useState('sales')
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
+  const [ordersError, setOrdersError] = useState<string | null>(null)
   const pageSize = 10
 
   const { data: salesData, isLoading } = useQuery<{
@@ -48,12 +50,22 @@ export function SalesPage() {
     }
   })
 
-  // Orders for client
+  // Only run orders query if user is authenticated (TODO: add real auth check if needed)
   const { data: ordersData, isLoading: isLoadingOrders } = useQuery({
     queryKey: ['orders', currentPage],
     queryFn: async () => {
-      const response = await api.get(API_ENDPOINTS.orders.list + `?page=${currentPage}&pageSize=${pageSize}`)
-      return response.data
+      try {
+        const response = await api.get(API_ENDPOINTS.orders.list + `?page=${currentPage}&pageSize=${pageSize}`)
+        setOrdersError(null)
+        return response.data
+      } catch (error: any) {
+        if (error?.response?.status === 401 || error?.response?.status === 403) {
+          setOrdersError('You are not authorized to view orders. Please log in.');
+        } else {
+          setOrdersError(error?.response?.data?.message || error.message || 'Failed to load orders.')
+        }
+        throw error
+      }
     },
     enabled: tab === 'orders'
   })
@@ -111,12 +123,12 @@ export function SalesPage() {
           </DialogContent>
         </Dialog>
       </div>
-      <div className="mb-4 flex gap-2">
-        <Button variant={tab === 'sales' ? 'default' : 'outline'} onClick={() => setTab('sales')}>Sales</Button>
-        <Button variant={tab === 'orders' ? 'default' : 'outline'} onClick={() => setTab('orders')}>Orders</Button>
-      </div>
-      {tab === 'sales' && (
-        <>
+      <Tabs value={tab} onValueChange={setTab} className="w-full mb-4">
+        <TabsList>
+          <TabsTrigger value="sales">Sales</TabsTrigger>
+          <TabsTrigger value="orders">Orders</TabsTrigger>
+        </TabsList>
+        <TabsContent value="sales">
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -236,38 +248,40 @@ export function SalesPage() {
               </PaginationItem>
             </PaginationContent>
           </Pagination>
-        </>
-      )}
-      {tab === 'orders' && (
-        <div className="rounded-md border">
-          {isLoadingOrders ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {ordersData?.orders?.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell>{format(new Date(order.createdAt), 'PPp')}</TableCell>
-                    <TableCell>{order.status}</TableCell>
-                    <TableCell>{order.items?.length}</TableCell>
-                    <TableCell className="text-right">KSh {order.total_amount}</TableCell>
+        </TabsContent>
+        <TabsContent value="orders">
+          <div className="rounded-md border">
+            {ordersError ? (
+              <div className="text-center text-destructive py-8 font-semibold">{ordersError}</div>
+            ) : isLoadingOrders ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Items</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </div>
-      )}
+                </TableHeader>
+                <TableBody>
+                  {ordersData?.orders?.map((order: any) => (
+                    <TableRow key={order.id}>
+                      <TableCell>{format(new Date(order.createdAt), 'PPp')}</TableCell>
+                      <TableCell>{order.status}</TableCell>
+                      <TableCell>{order.items?.length}</TableCell>
+                      <TableCell className="text-right">KSh {order.total_amount}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <Dialog
         open={!!selectedSale}
