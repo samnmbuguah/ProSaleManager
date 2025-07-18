@@ -28,8 +28,11 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Sale, SaleItem } from '@/types/sale'
 import { api } from '@/lib/api'
+import { useEffect } from 'react'
+import { API_ENDPOINTS } from '@/lib/api-endpoints'
 
 export function SalesPage() {
+  const [tab, setTab] = useState<'sales' | 'orders'>('sales')
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const pageSize = 10
@@ -43,6 +46,16 @@ export function SalesPage() {
       const response = await api.get(`/sales?page=${currentPage}&pageSize=${pageSize}`)
       return response.data
     }
+  })
+
+  // Orders for client
+  const { data: ordersData, isLoading: isLoadingOrders } = useQuery({
+    queryKey: ['orders', currentPage],
+    queryFn: async () => {
+      const response = await api.get(API_ENDPOINTS.orders.list + `?page=${currentPage}&pageSize=${pageSize}`)
+      return response.data
+    },
+    enabled: tab === 'orders'
   })
 
   const { isLoading: isLoadingSaleItems } = useQuery<SaleItem[]>({
@@ -82,7 +95,7 @@ export function SalesPage() {
   return (
     <div className="container mx-auto p-4 mt-16">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Sales History</h1>
+        <h1 className="text-3xl font-bold">Sales & Orders</h1>
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="outline">
@@ -98,136 +111,163 @@ export function SalesPage() {
           </DialogContent>
         </Dialog>
       </div>
-
-      {isLoading
-        ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        )
-        : (
-          <>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Cashier</TableHead>
-                    <TableHead>Payment Method</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Receipt Status</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {salesData?.sales.map((sale) => (
-                    <TableRow key={sale.id}>
-                      <TableCell>
-                        {format(new Date(sale.createdAt), 'PPp')}
-                      </TableCell>
-                      <TableCell>
-                        {sale.Customer?.name || 'Walk-in Customer'}
-                      </TableCell>
-                      <TableCell>
-                        {sale.User?.name || sale.User?.email || 'Unknown User'}
-                      </TableCell>
-                      <TableCell className="capitalize">
-                        {sale.payment_method}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getPaymentStatusColor(sale.status)}>
-                          {sale.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {sale.receipt_status
-                          ? (
-                            <div className="flex gap-2">
-                              <Badge
-                                variant={
-                                  sale.receipt_status?.sms ? 'default' : 'outline'
-                                }
-                              >
-                                SMS
-                              </Badge>
-                              <Badge
-                                variant={
-                                  sale.receipt_status?.whatsapp
-                                    ? 'default'
-                                    : 'outline'
-                                }
-                              >
-                                WhatsApp
-                              </Badge>
-                            </div>
-                          )
-                          : (
-                            <span className="text-muted-foreground text-sm">
-                              Not sent
-                            </span>
-                          )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(sale.total_amount)}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          onClick={() => setSelectedSale(sale)}
-                        >
-                          View Details
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-
-            <Pagination className="mt-4">
-              <PaginationContent>
-                <PaginationItem>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </Button>
-                </PaginationItem>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        onClick={() => setCurrentPage(page)}
-                        isActive={currentPage === page}
+      <div className="mb-4 flex gap-2">
+        <Button variant={tab === 'sales' ? 'default' : 'outline'} onClick={() => setTab('sales')}>Sales</Button>
+        <Button variant={tab === 'orders' ? 'default' : 'outline'} onClick={() => setTab('orders')}>Orders</Button>
+      </div>
+      {tab === 'sales' && (
+        <>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Cashier</TableHead>
+                  <TableHead>Payment Method</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Receipt Status</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {salesData?.sales.map((sale) => (
+                  <TableRow key={sale.id}>
+                    <TableCell>
+                      {format(new Date(sale.createdAt), 'PPp')}
+                    </TableCell>
+                    <TableCell>
+                      {sale.Customer?.name || 'Walk-in Customer'}
+                    </TableCell>
+                    <TableCell>
+                      {sale.User?.name || sale.User?.email || 'Unknown User'}
+                    </TableCell>
+                    <TableCell className="capitalize">
+                      {sale.payment_method}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getPaymentStatusColor(sale.status)}>
+                        {sale.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {sale.receipt_status
+                        ? (
+                          <div className="flex gap-2">
+                            <Badge
+                              variant={
+                                sale.receipt_status?.sms ? 'default' : 'outline'
+                              }
+                            >
+                              SMS
+                            </Badge>
+                            <Badge
+                              variant={
+                                sale.receipt_status?.whatsapp
+                                  ? 'default'
+                                  : 'outline'
+                              }
+                            >
+                              WhatsApp
+                            </Badge>
+                          </div>
+                        )
+                        : (
+                          <span className="text-muted-foreground text-sm">
+                            Not sent
+                          </span>
+                        )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(sale.total_amount)}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        onClick={() => setSelectedSale(sale)}
                       >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  )
-                )}
-                <PaginationItem>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                  >
-                    Next
-                  </Button>
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          </>
-        )}
+                        View Details
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <Pagination className="mt-4">
+            <PaginationContent>
+              <PaginationItem>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(page)}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </>
+      )}
+      {tab === 'orders' && (
+        <div className="rounded-md border">
+          {isLoadingOrders ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Items</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {ordersData?.orders?.map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell>{format(new Date(order.createdAt), 'PPp')}</TableCell>
+                    <TableCell>{order.status}</TableCell>
+                    <TableCell>{order.items?.length}</TableCell>
+                    <TableCell className="text-right">KSh {order.total_amount}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      )}
 
       <Dialog
         open={!!selectedSale}
