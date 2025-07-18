@@ -4,7 +4,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle, RefreshCcw, User, ShoppingCart } from 'lucide-react'
-import { useCart } from '@/hooks/useCart'
+import { useCart } from '@/contexts/CartContext'
 import { ProductSearch } from '@/components/pos/ProductSearch'
 import { Cart } from '@/components/pos/Cart'
 import { CheckoutDialog } from '@/components/pos/CheckoutDialog'
@@ -31,14 +31,13 @@ const PosPage: React.FC = () => {
     refetch: refetchProducts
   } = useProducts()
   const {
-    items: cartItems,
+    cart,
     addToCart,
     updateQuantity,
     updateUnitType,
     updateUnitPrice,
-    removeItem,
-    clearCart,
-    total: cartTotal
+    removeFromCart,
+    clearCart
   } = useCart()
   const { toast } = useToast()
   const [selectedCustomer, setSelectedCustomer] = useState<number | null>(null)
@@ -91,7 +90,7 @@ const PosPage: React.FC = () => {
     try {
       setIsLoading((prev) => ({ ...prev, checkout: true }))
 
-      if (cartItems.length === 0) {
+      if (cart.items.length === 0) {
         toast({
           title: 'Error',
           description: 'Cart is empty',
@@ -111,7 +110,7 @@ const PosPage: React.FC = () => {
 
       // Format sale data for API
       const saleData = {
-        items: (cartItems || [])
+        items: (cart.items || [])
           .filter((item) => item?.product && item.product.id > 0)
           .map((item) => ({
             product_id: item.product.id,
@@ -120,13 +119,13 @@ const PosPage: React.FC = () => {
             total: item.total,
             unit_type: item.unit_type || 'piece'
           })),
-        total: cartTotal + deliveryFee,
+        total: cart.total + deliveryFee,
         delivery_fee: deliveryFee,
         customer_id: selectedCustomer,
         payment_method: paymentMethod,
         status: 'completed',
         payment_status: 'paid',
-        amount_paid: cartTotal + deliveryFee,
+        amount_paid: cart.total + deliveryFee,
         change_amount: 0
       }
 
@@ -312,7 +311,7 @@ const PosPage: React.FC = () => {
         {/* Cart Section */}
         <div className="w-full lg:w-1/3 flex flex-col h-[40vh] lg:h-[calc(100vh-280px)]">
           <Cart
-            items={cartItems as unknown as CartItem[]}
+            items={cart.items as unknown as CartItem[]}
             onUpdateQuantity={(
               productId: number,
               _unitType: string,
@@ -320,9 +319,9 @@ const PosPage: React.FC = () => {
             ) => updateQuantity(productId, quantity)}
             onUpdateUnitType={updateUnitType}
             onUpdateUnitPrice={updateUnitPrice}
-            onRemoveItem={removeItem}
+            onRemoveItem={removeFromCart}
             onCheckout={() => setIsCheckoutDialogOpen(true)}
-            total={cartTotal}
+            total={cart.total}
             selectedCustomer={selectedCustomerData}
           />
         </div>
@@ -332,7 +331,7 @@ const PosPage: React.FC = () => {
       <CheckoutDialog
         open={isCheckoutDialogOpen}
         onOpenChange={setIsCheckoutDialogOpen}
-        cartTotal={cartTotal}
+        cartTotal={cart.total}
         deliveryFee={deliveryFee}
         setDeliveryFee={setDeliveryFee}
         paymentMethod={paymentMethod}
