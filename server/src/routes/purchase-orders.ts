@@ -16,6 +16,11 @@ router.get("/", async (req, res) => {
           model: Supplier,
           attributes: ["name"],
         },
+        {
+          model: PurchaseOrderItem,
+          include: [Product],
+          as: 'items'
+        }
       ],
       order: [["createdAt", "DESC"]],
     });
