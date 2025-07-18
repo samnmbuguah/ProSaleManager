@@ -125,12 +125,11 @@ router.put("/:id/status", async (req, res) => {
       });
 
       for (const item of items) {
-        const product = (item as { product?: any }).product;
+        const product = (item as any).Product;
         if (!product || typeof product !== 'object' || !('name' in product) || !('id' in product)) {
-          // Return a 400 error with a clear message
-          return res.status(400).json({
-            error: `Product with id ${item.product_id} not found for order item ${item.id}`
-          });
+          // Log a warning and skip this item
+          console.warn(`Product with id ${item.product_id} not found for order item ${item.id}. Skipping inventory update for this item.`);
+          continue;
         }
         // ... (rest of your logic, e.g., update inventory)
       }
