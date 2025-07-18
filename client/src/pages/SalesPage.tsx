@@ -30,6 +30,56 @@ import { Sale, SaleItem } from '@/types/sale'
 import { api } from '@/lib/api'
 import { API_ENDPOINTS } from '@/lib/api-endpoints'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { useCallback } from 'react'
+
+// OrderDetailsDialog: Separate component for order details in Orders tab
+function OrderDetailsDialog({ order, open, onClose, onMarkShipped, onMarkFulfilled }: {
+  order: any;
+  open: boolean;
+  onClose: () => void;
+  onMarkShipped: () => void;
+  onMarkFulfilled: () => void;
+}) {
+  if (!order) return null;
+  return (
+    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-3xl" aria-describedby={undefined}>
+        <DialogHeader>
+          <DialogTitle>Order Details</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-6">
+          <div className="flex flex-col md:grid md:grid-cols-2 gap-6 border-b pb-6">
+            <div>
+              <h3 className="font-semibold mb-2">Order Info</h3>
+              <p>Date: {format(new Date(order.createdAt), 'PPp')}</p>
+              <p>Status: {order.status}</p>
+              <p>Order ID: {order.id}</p>
+              <p>Total: KSh {order.total_amount}</p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">Items</h3>
+              <ul className="list-disc pl-4">
+                {order.items?.map((item: any) => (
+                  <li key={item.id}>
+                    {item.Product?.name || 'Unknown Product'} x {item.quantity} @ KSh {item.unit_price}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <div className="flex gap-4 justify-end">
+            <Button variant="outline" onClick={onMarkShipped} disabled={order.status === 'shipped' || order.status === 'fulfilled'}>
+              Mark as Shipped
+            </Button>
+            <Button variant="default" onClick={onMarkFulfilled} disabled={order.status === 'fulfilled'}>
+              Mark as Fulfilled
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function SalesPage() {
   const [tab, setTab] = useState('sales')
@@ -37,6 +87,7 @@ export function SalesPage() {
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [ordersError, setOrdersError] = useState<string | null>(null)
   const pageSize = 10
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
 
   const { data: salesData } = useQuery<{
     sales: Sale[];
@@ -69,16 +120,6 @@ export function SalesPage() {
     enabled: tab === 'orders'
   })
 
-  const { isLoading: isLoadingSaleItems } = useQuery<SaleItem[]>({
-    queryKey: ['sale-items', selectedSale?.id],
-    queryFn: async () => {
-      if (!selectedSale) return []
-      const response = await api.get(`/sales/${selectedSale.id}/items`)
-      return response.data
-    },
-    enabled: !!selectedSale
-  })
-
   const totalPages = salesData ? Math.ceil(salesData.total / pageSize) : 1
 
   const formatCurrency = (amount: string | number) => {
@@ -102,6 +143,21 @@ export function SalesPage() {
         return 'bg-gray-500'
     }
   }
+
+  // Handlers for order actions
+  const handleMarkShipped = useCallback(() => {
+    if (!selectedOrder) return;
+    // TODO: Implement API call to mark as shipped
+    alert('Order marked as shipped (implement API call)');
+    setSelectedOrder({ ...selectedOrder, status: 'shipped' });
+  }, [selectedOrder]);
+
+  const handleMarkFulfilled = useCallback(() => {
+    if (!selectedOrder) return;
+    // TODO: Implement API call to mark as fulfilled
+    alert('Order marked as fulfilled (implement API call)');
+    setSelectedOrder({ ...selectedOrder, status: 'fulfilled' });
+  }, [selectedOrder]);
 
   return (
     <div className="container mx-auto p-4 mt-16">
@@ -264,6 +320,7 @@ export function SalesPage() {
                     <TableHead>Status</TableHead>
                     <TableHead>Items</TableHead>
                     <TableHead className="text-right">Total</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -273,12 +330,27 @@ export function SalesPage() {
                       <TableCell>{order.status}</TableCell>
                       <TableCell>{order.items?.length}</TableCell>
                       <TableCell className="text-right">KSh {order.total_amount}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          onClick={() => setSelectedOrder(order)}
+                        >
+                          View Details
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             )}
           </div>
+          <OrderDetailsDialog
+            order={selectedOrder}
+            open={!!selectedOrder}
+            onClose={() => setSelectedOrder(null)}
+            onMarkShipped={handleMarkShipped}
+            onMarkFulfilled={handleMarkFulfilled}
+          />
         </TabsContent>
       </Tabs>
 
@@ -362,49 +434,39 @@ export function SalesPage() {
               {/* Items Section */}
               <div>
                 <h3 className="font-semibold mb-2">Items</h3>
-                {isLoadingSaleItems
-                  ? (
-                    <div className="flex items-center justify-center py-4">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    </div>
-                  )
-                  : (
-                    <div className="rounded-md border overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Product</TableHead>
-                            <TableHead className="text-right">
-                              Unit Price
-                            </TableHead>
-                            <TableHead className="text-right">Quantity</TableHead>
-                            <TableHead className="text-right">Total</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {selectedSale.items?.map((item) => (
-                            <TableRow key={item.id}>
-                              <TableCell>
-                                {item.Product?.name || 'Unknown Product'}
-                                {item.Product?.sku ? (
-                                  <span className="block text-xs text-muted-foreground">SKU: {item.Product.sku}</span>
-                                ) : null}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatCurrency(item.unit_price)}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {item.quantity}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {formatCurrency(item.total)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Product</TableHead>
+                        <TableHead className="text-right">Unit Price</TableHead>
+                        <TableHead className="text-right">Quantity</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {selectedSale.items?.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>
+                            {item.Product?.name || 'Unknown Product'}
+                            {item.Product?.sku ? (
+                              <span className="block text-xs text-muted-foreground">SKU: {item.Product.sku}</span>
+                            ) : null}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(item.unit_price)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {item.quantity}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(item.total)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </div>
           )}
