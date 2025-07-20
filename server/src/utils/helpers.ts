@@ -6,3 +6,13 @@ export function generateOrderNumber(): string {
     .padStart(3, "0");
   return `${prefix}${timestamp}${random}`;
 }
+
+/**
+ * Returns a store-aware where clause for queries.
+ * If user is super_admin, returns the original where.
+ * Otherwise, adds store_id to the where clause.
+ */
+export function storeScope(user: { role: string; store_id?: number | null }, where: any = {}) {
+  if (user?.role === 'super_admin') return where;
+  return { ...where, store_id: user?.store_id };
+}

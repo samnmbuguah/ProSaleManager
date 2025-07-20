@@ -16,6 +16,7 @@ class Sale extends Model {
     sms?: boolean;
     last_sent_at?: Date;
   };
+  declare store_id: number;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -79,6 +80,14 @@ Sale.init(
       defaultValue: {
         whatsapp: false,
         sms: false,
+      },
+    },
+    store_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'stores',
+        key: 'id',
       },
     },
   },

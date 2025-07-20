@@ -3,14 +3,16 @@ import Product from '../models/Product.js'
 import Sale from '../models/Sale.js'
 import SaleItem from '../models/SaleItem.js'
 import { Op } from 'sequelize'
+import { storeScope } from '../utils/helpers.js'
 
 const router = Router()
 
 // Get inventory status report
 router.get('/inventory', async (req, res) => {
   try {
+    const where = storeScope(req.user!, { is_active: true });
     const products = await Product.findAll({
-      where: { is_active: true },
+      where,
       order: [['name', 'ASC']]
     })
 
@@ -67,10 +69,10 @@ router.get('/product-performance', async (req, res) => {
 
     // Get sales with items and products
     const sales = await Sale.findAll({
-      where: {
+      where: storeScope(req.user!, {
         status: 'completed',
         ...dateFilter
-      },
+      }),
       include: [
         {
           model: SaleItem,
@@ -183,10 +185,10 @@ router.get('/sales-summary', async (req, res) => {
     }
 
     const sales = await Sale.findAll({
-      where: {
+      where: storeScope(req.user!, {
         status: 'completed',
         ...dateFilter
-      },
+      }),
       include: [
         {
           model: SaleItem,

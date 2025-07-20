@@ -8,6 +8,7 @@ class Supplier extends Model {
   declare phone: string | null;
   declare address: string | null;
   declare contact_person: string | null;
+  declare store_id: number;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -42,6 +43,14 @@ Supplier.init(
     contact_person: {
       type: DataTypes.STRING,
       allowNull: true,
+    },
+    store_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'stores',
+        key: 'id',
+      },
     },
   },
   {

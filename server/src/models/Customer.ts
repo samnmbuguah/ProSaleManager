@@ -10,6 +10,7 @@ interface CustomerAttributes {
   notes?: string;
   loyalty_points?: number;
   is_active?: boolean;
+  store_id?: number;
 }
 
 class Customer extends Model<CustomerAttributes> implements CustomerAttributes {
@@ -58,6 +59,14 @@ Customer.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
+    },
+    store_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'stores',
+        key: 'id',
+      },
     },
   },
   {

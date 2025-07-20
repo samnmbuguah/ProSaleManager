@@ -1,4 +1,4 @@
-import { Product, Category } from '../models/index.js';
+import { Product, Category, Store } from '../models/index.js';
 import type { ProductAttributes } from "../models/Product.js";
 import fetch from 'node-fetch';
 
@@ -26,6 +26,10 @@ export const seedProducts = async (): Promise<void> => {
   try {
     console.log('🚀 Starting advanced product seeder...');
     
+    const store = await Store.findOne({ where: { name: 'Demo Store' } });
+    if (!store) throw new Error('Demo Store not found');
+    const storeId = store.id;
+
     // Clear existing data
     console.log('🗑️  Clearing existing products and categories...');
     await Product.destroy({ where: {} });
@@ -69,6 +73,7 @@ export const seedProducts = async (): Promise<void> => {
         min_quantity: 5,
         is_active: true,
         images: [],
+        store_id: storeId,
       },
       {
         name: 'Adidas Ultraboost',
@@ -85,6 +90,7 @@ export const seedProducts = async (): Promise<void> => {
         min_quantity: 5,
         is_active: true,
         images: [],
+        store_id: storeId,
       },
       {
         name: 'Victoria Secret Pink Panty',
@@ -101,6 +107,7 @@ export const seedProducts = async (): Promise<void> => {
         min_quantity: 3,
         is_active: true,
         images: [],
+        store_id: storeId,
       },
       {
         name: 'Cotton Hipster Panty',
@@ -117,6 +124,7 @@ export const seedProducts = async (): Promise<void> => {
         min_quantity: 3,
         is_active: true,
         images: [],
+        store_id: storeId,
       },
       {
         name: 'Calvin Klein Boxer Brief',
@@ -133,6 +141,7 @@ export const seedProducts = async (): Promise<void> => {
         min_quantity: 2,
         is_active: true,
         images: [],
+        store_id: storeId,
       },
       {
         name: 'Nike Dri-FIT Boxer',
@@ -149,6 +158,7 @@ export const seedProducts = async (): Promise<void> => {
         min_quantity: 2,
         is_active: true,
         images: [],
+        store_id: storeId,
       },
       {
         name: 'Victoria Secret Push-Up Bra',
@@ -165,6 +175,7 @@ export const seedProducts = async (): Promise<void> => {
         min_quantity: 2,
         is_active: true,
         images: [],
+        store_id: storeId,
       },
       {
         name: 'Sports Bra',
@@ -181,6 +192,7 @@ export const seedProducts = async (): Promise<void> => {
         min_quantity: 2,
         is_active: true,
         images: [],
+        store_id: storeId,
       },
       {
         name: 'Coconut Oil',
@@ -197,6 +209,7 @@ export const seedProducts = async (): Promise<void> => {
         min_quantity: 5,
         is_active: true,
         images: [],
+        store_id: storeId,
       },
       {
         name: 'Olive Oil',
@@ -213,6 +226,7 @@ export const seedProducts = async (): Promise<void> => {
         min_quantity: 5,
         is_active: true,
         images: [],
+        store_id: storeId,
       },
       {
         name: 'Delivery Service',
@@ -229,6 +243,7 @@ export const seedProducts = async (): Promise<void> => {
         min_quantity: 0,
         is_active: true,
         images: [],
+        store_id: storeId,
       },
     ];
 
@@ -264,6 +279,7 @@ export const seedProducts = async (): Promise<void> => {
         min_quantity: Math.floor(Math.random() * 5) + 1,
         is_active: true,
         images: [],
+        store_id: storeId,
       };
     });
     // Combine base and random products

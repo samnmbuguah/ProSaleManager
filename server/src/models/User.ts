@@ -7,9 +7,10 @@ export interface UserAttributes {
   email: string;
   password: string;
   name: string;
-  role?: 'admin' | 'sales' | 'manager';
+  role?: 'super_admin' | 'admin' | 'sales' | 'manager';
   is_active?: boolean;
   last_login?: Date;
+  store_id?: number | null;
 }
 
 class User extends Model<UserAttributes> implements UserAttributes {
@@ -17,9 +18,10 @@ class User extends Model<UserAttributes> implements UserAttributes {
   declare email: string;
   declare password: string;
   declare name: string;
-  declare role: 'admin' | 'sales' | 'manager';
+  declare role: 'super_admin' | 'admin' | 'sales' | 'manager';
   declare is_active: boolean;
   declare last_login?: Date;
+  declare store_id?: number | null;
 
   // Add method to compare passwords
   async comparePassword(candidatePassword: string): Promise<boolean> {
@@ -50,8 +52,16 @@ User.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    store_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'stores',
+        key: 'id',
+      },
+    },
     role: {
-      type: DataTypes.ENUM('admin', 'sales', 'manager'),
+      type: DataTypes.ENUM('super_admin', 'admin', 'sales', 'manager'),
       defaultValue: 'sales',
     },
     is_active: {

@@ -1,13 +1,16 @@
 import { Router } from "express";
 import Supplier from "../models/Supplier.js";
 import { Op } from "sequelize";
+import { storeScope } from "../utils/helpers.js";
 
 const router = Router();
 
 // Get all suppliers
 router.get("/", async (req, res) => {
   try {
+    const where = storeScope(req.user!, {});
     const suppliers = await Supplier.findAll({
+      where,
       order: [["name", "ASC"]],
     });
     res.json({ success: true, data: suppliers });
@@ -21,14 +24,19 @@ router.get("/", async (req, res) => {
 router.get("/search", async (req, res) => {
   try {
     const { q } = req.query;
-    const suppliers = await Supplier.findAll({
-      where: {
+    let where: any = {};
+    if (q) {
+      where = {
         [Op.or]: [
           { name: { [Op.iLike]: `%${q}%` } },
           { email: { [Op.iLike]: `%${q}%` } },
           { phone: { [Op.iLike]: `%${q}%` } },
         ],
-      },
+      };
+    }
+    where = storeScope(req.user!, where);
+    const suppliers = await Supplier.findAll({
+      where,
       order: [["name", "ASC"]],
     });
     res.json({ success: true, data: suppliers });
@@ -41,7 +49,8 @@ router.get("/search", async (req, res) => {
 // Get a single supplier
 router.get("/:id", async (req, res) => {
   try {
-    const supplier = await Supplier.findByPk(req.params.id);
+    const where = storeScope(req.user!, { id: req.params.id });
+    const supplier = await Supplier.findOne({ where });
     if (!supplier) {
       return res.status(404).json({ success: false, error: "Supplier not found" });
     }
@@ -55,7 +64,10 @@ router.get("/:id", async (req, res) => {
 // Create a new supplier
 router.post("/", async (req, res) => {
   try {
-    const supplier = await Supplier.create(req.body);
+    const supplier = await Supplier.create({
+      ...req.body,
+      store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
+    });
     res.status(201).json({ success: true, data: supplier });
   } catch (error) {
     if (error instanceof Error && typeof error.name === 'string' && error.name === "SequelizeUniqueConstraintError") {
@@ -69,7 +81,8 @@ router.post("/", async (req, res) => {
 // Update a supplier
 router.put("/:id", async (req, res) => {
   try {
-    const supplier = await Supplier.findByPk(req.params.id);
+    const where = storeScope(req.user!, { id: req.params.id });
+    const supplier = await Supplier.findOne({ where });
     if (!supplier) {
       return res.status(404).json({ success: false, error: "Supplier not found" });
     }
@@ -84,7 +97,8 @@ router.put("/:id", async (req, res) => {
 // Delete a supplier
 router.delete("/:id", async (req, res) => {
   try {
-    const supplier = await Supplier.findByPk(req.params.id);
+    const where = storeScope(req.user!, { id: req.params.id });
+    const supplier = await Supplier.findOne({ where });
     if (!supplier) {
       return res.status(404).json({ success: false, error: "Supplier not found" });
     }

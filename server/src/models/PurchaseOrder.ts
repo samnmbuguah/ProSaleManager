@@ -10,6 +10,7 @@ class PurchaseOrder extends Model {
   declare status: "pending" | "approved" | "ordered" | "received" | "cancelled";
   declare total_amount: number;
   declare notes: string | null;
+  declare store_id: number;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -62,6 +63,14 @@ PurchaseOrder.init(
     notes: {
       type: DataTypes.TEXT,
       allowNull: true,
+    },
+    store_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'stores',
+        key: 'id',
+      },
     },
   },
   {
