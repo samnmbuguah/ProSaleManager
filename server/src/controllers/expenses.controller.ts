@@ -1,14 +1,16 @@
 import { Request, Response } from "express";
 import { Expense } from "../models/index.js";
 import { sequelize } from "../config/database.js";
+import { storeScope } from "../utils/helpers.js";
 
 export const getExpenses = async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const offset = (page - 1) * limit;
-
+    const where = storeScope(req.user!, {});
     const { count, rows: expenses } = await Expense.findAndCountAll({
+      where,
       limit,
       offset,
       order: [["date", "DESC"]],
@@ -19,7 +21,6 @@ export const getExpenses = async (req: Request, res: Response) => {
         },
       ],
     });
-
     res.json({
       expenses,
       total: count,
@@ -34,16 +35,13 @@ export const getExpenses = async (req: Request, res: Response) => {
 
 export const createExpense = async (req: Request, res: Response) => {
   const t = await sequelize.transaction();
-
   try {
     const { description, amount, date, category, payment_method } = req.body;
     const user_id = req.user?.id;
-
     if (!user_id) {
       await t.rollback();
       return res.status(401).json({ message: "User not authenticated" });
     }
-
     const expense = await Expense.create(
       {
         description,
@@ -52,12 +50,11 @@ export const createExpense = async (req: Request, res: Response) => {
         category,
         payment_method,
         user_id,
+        store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
       },
       { transaction: t },
     );
-
     await t.commit();
-
     res.status(201).json({
       message: "Expense created successfully",
       data: expense,
@@ -114,25 +111,21 @@ export const updateExpense = async (req: Request, res: Response) => {
 
 export const deleteExpense = async (req: Request, res: Response) => {
   const t = await sequelize.transaction();
-
   try {
     const { id } = req.params;
     const user_id = req.user?.id;
-
     if (!user_id) {
       await t.rollback();
       return res.status(401).json({ message: "User not authenticated" });
     }
-
-    const expense = await Expense.findByPk(id);
+    const where = storeScope(req.user!, { id });
+    const expense = await Expense.findOne({ where });
     if (!expense) {
       await t.rollback();
       return res.status(404).json({ message: "Expense not found" });
     }
-
     await expense.destroy({ transaction: t });
     await t.commit();
-
     res.json({ message: "Expense deleted successfully" });
   } catch (error) {
     await t.rollback();

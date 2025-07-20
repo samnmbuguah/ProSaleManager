@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import type { Transaction } from "sequelize";
 import { Sale, SaleItem, User, Customer, Product, sequelize } from "../models/index.js";
+import { storeScope } from "../utils/helpers.js";
 
 export const createSale = async (req: Request, res: Response) => {
   let t: Transaction | undefined;
@@ -53,6 +54,7 @@ export const createSale = async (req: Request, res: Response) => {
         status: status || "completed", // Default to completed instead of pending
         payment_status: payment_status || "paid", // Explicitly track payment status
         delivery_fee: delivery_fee || 0,
+        store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
       },
       { transaction: t },
     );
@@ -80,6 +82,7 @@ export const createSale = async (req: Request, res: Response) => {
             unit_price: item.unit_price,
             total: item.total,
             unit_type: item.unit_type,
+            store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
           },
           { transaction: t },
         ),
@@ -187,8 +190,9 @@ export const getSales = async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1;
     const pageSize = parseInt(req.query.pageSize as string) || 10;
     const offset = (page - 1) * pageSize;
-
+    const where = storeScope(req.user!, {});
     const { count, rows: sales } = await Sale.findAndCountAll({
+      where,
       include: [
         {
           model: User,
@@ -282,6 +286,7 @@ export const checkout = async (req: Request, res: Response) => {
       total_amount: total,
       payment_method: "Cash", // or whatever method you want to set
       status: "paid", // or whatever status you want to set
+      store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
     });
 
     // Create sale items
@@ -298,6 +303,7 @@ export const checkout = async (req: Request, res: Response) => {
           quantity: item.quantity,
           unit_price: item.unit_price,
           total: item.total,
+          store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
         }),
       ),
     );
@@ -319,8 +325,9 @@ export const getSaleById = async (req: Request, res: Response) => {
     if (isNaN(saleId)) {
       return res.status(400).json({ message: "Invalid sale ID" });
     }
-
-    const sale = await Sale.findByPk(saleId, {
+    const where = storeScope(req.user!, { id: saleId });
+    const sale = await Sale.findOne({
+      where,
       include: [
         {
           model: User,

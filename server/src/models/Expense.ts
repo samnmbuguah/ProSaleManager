@@ -9,6 +9,7 @@ class Expense extends Model {
   declare category: string;
   declare payment_method: string;
   declare user_id: number;
+  declare store_id: number;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -48,6 +49,14 @@ Expense.init(
       references: {
         model: "users",
         key: "id",
+      },
+    },
+    store_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'stores',
+        key: 'id',
       },
     },
   },

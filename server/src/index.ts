@@ -8,6 +8,7 @@ import { ApiError } from './utils/api-error.js';
 import path from "path";
 import app from './app.js'
 import env from './config/env.js';
+import { resolveStore } from './middleware/auth.middleware.js';
 
 const PORT = env.PORT || 5000;
 
@@ -24,6 +25,9 @@ app.use(cors({
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
+
+// Add store context middleware before routes
+app.use(resolveStore);
 
 // Routes
 app.use('/api', routes);

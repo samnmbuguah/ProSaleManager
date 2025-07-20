@@ -1,14 +1,15 @@
 import { Request, Response } from 'express';
 import { Sale, SaleItem, Product, User, Customer } from '../models/index.js';
 import { sequelize } from '../config/database.js';
+import { storeScope } from "../utils/helpers.js";
 
 export const getOrders = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-    // Only return orders for this user (client)
+    const where = storeScope(req.user!, { user_id: userId });
     const orders = await Sale.findAll({
-      where: { user_id: userId },
+      where,
       include: [
         { model: SaleItem, as: 'items', include: [Product] },
         { model: Customer, attributes: ['id', 'name', 'email', 'phone'] },
@@ -24,8 +25,9 @@ export const getOrders = async (req: Request, res: Response) => {
 export const getOrder = async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
+    const where = storeScope(req.user!, { id: req.params.id, user_id: userId });
     const order = await Sale.findOne({
-      where: { id: req.params.id, user_id: userId },
+      where,
       include: [
         { model: SaleItem, as: 'items', include: [Product] },
         { model: Customer, attributes: ['id', 'name', 'email', 'phone'] },
@@ -51,9 +53,7 @@ export const createOrder = async (req: Request, res: Response) => {
       await t.rollback();
       return res.status(400).json({ message: 'No items provided' });
     }
-    // Calculate total
     const total = items.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
-    // Create Sale (order)
     const sale = await Sale.create({
       user_id: userId,
       customer_id: null,
@@ -63,8 +63,8 @@ export const createOrder = async (req: Request, res: Response) => {
       status: 'pending',
       payment_status: 'pending',
       delivery_fee: 0,
+      store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
     }, { transaction: t });
-    // Create SaleItems
     await Promise.all(items.map((item: any) =>
       SaleItem.create({
         sale_id: sale.id,

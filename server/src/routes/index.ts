@@ -12,6 +12,7 @@ import categoryRoutes from './category.routes.js'
 import productSupplierRoutes from './product-suppliers.js'
 import seedRoutes from './seed.js'
 import orderRoutes from './order.routes.js'
+import storesRoutes from './stores.js';
 
 const router = express.Router()
 
@@ -28,5 +29,6 @@ router.use('/categories', categoryRoutes)
 router.use('/product-suppliers', productSupplierRoutes)
 router.use('/seed', seedRoutes)
 router.use('/orders', orderRoutes)
+router.use('/stores', storesRoutes);
 
 export default router 

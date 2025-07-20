@@ -1,30 +1,37 @@
-import { User } from '../models/index.js';
+import { User, Store } from '../models/index.js';
 import type { UserAttributes } from '../models/User.js';
 import { faker } from '@faker-js/faker';
 
 export async function seedUsers() {
   try {
+    const store = await Store.findOne({ where: { name: 'Demo Store' } });
+    if (!store) throw new Error('Demo Store not found');
+    const storeId = store.id;
+
     const baseUsers: UserAttributes[] = [
       {
         name: "System Admin",
         email: "admin@prosale.com",
         password: "prosale123",
         role: 'admin',
-        is_active: true
+        is_active: true,
+        store_id: storeId,
       },
       {
         name: "Sales Person",
         email: "sales@prosale.com",
         password: "sales123",
         role: 'sales',
-        is_active: true
+        is_active: true,
+        store_id: storeId,
       },
       {
         name: "Test User",
         email: "test@prosale.com",
         password: "test123",
         role: 'admin',
-        is_active: true
+        is_active: true,
+        store_id: storeId,
       }
     ];
 
@@ -37,18 +44,19 @@ export async function seedUsers() {
         email: faker.internet.email(),
         password: faker.internet.password(),
         role: role as 'admin' | 'sales' | 'manager',
-        is_active: true
+        is_active: true,
+        store_id: storeId,
       });
     }
 
     for (const user of baseUsers) {
       const existing = await User.findOne({ where: { email: user.email } });
       if (existing) {
-        // Update password and other fields if user exists
         existing.password = user.password;
         existing.name = user.name;
         existing.role = user.role ?? 'sales';
         existing.is_active = user.is_active ?? true;
+        existing.store_id = user.store_id;
         existing.changed('password', true);
         await existing.save();
       } else {

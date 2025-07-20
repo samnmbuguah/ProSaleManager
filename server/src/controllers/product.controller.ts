@@ -11,7 +11,12 @@ import PurchaseOrderItem from '../models/PurchaseOrderItem.js';
 import ProductSupplier from '../models/ProductSupplier.js';
 
 export const getProducts = catchAsync(async (req: Request, res: Response) => {
+  let where: any = {};
+  if (req.user?.role !== 'super_admin') {
+    where.store_id = req.user?.store_id;
+  }
   const products = await Product.findAll({
+    where,
     order: [['name', 'ASC']],
   });
   res.json({
@@ -22,7 +27,11 @@ export const getProducts = catchAsync(async (req: Request, res: Response) => {
 
 export const getProduct = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const product = await Product.findByPk(id);
+  let where: any = { id };
+  if (req.user?.role !== 'super_admin') {
+    where.store_id = req.user?.store_id;
+  }
+  const product = await Product.findOne({ where });
   
   if (!product) {
     throw new ApiError(404, 'Product not found');
@@ -79,6 +88,7 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
     image_url: req.body.image_url || null,
     is_active: req.body.is_active === 'true' || req.body.is_active === true,
     images,
+    store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
   };
 
   // Validate required fields explicitly
@@ -134,9 +144,9 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
   }
 
   // Check for SKU uniqueness before creating
-  const existing = await Product.findOne({ where: { sku: productData.sku } });
+  const existing = await Product.findOne({ where: { sku: productData.sku, store_id: productData.store_id } });
   if (existing) {
-    res.status(400).json({ success: false, message: 'SKU already exists. Please use a unique SKU.' });
+    res.status(400).json({ success: false, message: 'SKU already exists in this store. Please use a unique SKU.' });
     return;
   }
 

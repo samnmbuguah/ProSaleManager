@@ -8,6 +8,7 @@ class ProductSupplier extends Model {
   declare cost_price: string;
   declare is_preferred: boolean;
   declare last_supply_date: Date | null;
+  declare store_id: number;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -47,6 +48,14 @@ ProductSupplier.init(
     last_supply_date: {
       type: DataTypes.DATE,
       allowNull: true,
+    },
+    store_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'stores',
+        key: 'id',
+      },
     },
   },
   {
