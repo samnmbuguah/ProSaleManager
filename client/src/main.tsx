@@ -8,6 +8,7 @@ import { Provider } from 'react-redux'
 import { store } from './store'
 import { AuthProvider } from '@/contexts/AuthContext'
 import App from './App'
+import { StoreProvider } from '@/contexts/StoreContext';
 
 // Force light mode by removing the 'dark' class from html and body
 if (typeof document !== 'undefined') {
@@ -21,9 +22,11 @@ createRoot(root).render(
     <Provider store={store}>
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
-          <CartProvider>
-            <App />
-          </CartProvider>
+          <StoreProvider>
+            <CartProvider>
+              <App />
+            </CartProvider>
+          </StoreProvider>
         </QueryClientProvider>
       </AuthProvider>
     </Provider>
