@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { API_ENDPOINTS } from './api-endpoints'
+import { useStoreContext } from '@/contexts/StoreContext';
 
 const isDevelopment = process.env.NODE_ENV === 'development'
 
@@ -32,7 +33,7 @@ export const fetchCsrfToken = async () => {
   }
 }
 
-// Add request interceptor for CSRF token and auth
+// Add request interceptor for CSRF token, auth, and store_id for super admin
 api.interceptors.request.use(async (config) => {
   // Remove noisy debug logs
   // Skip CSRF token for:
@@ -55,8 +56,28 @@ api.interceptors.request.use(async (config) => {
     config.headers['X-CSRF-Token'] = csrfToken
   }
 
-  return config
-})
+  // Add store_id for super admin if present
+  try {
+    const store = localStorage.getItem('currentStore');
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (user && user.role === 'super_admin' && store) {
+      const storeObj = JSON.parse(store);
+      if (storeObj && storeObj.id) {
+        // Add as query param for GET, or in data/body for POST/PUT
+        if (config.method === 'get' || config.method === 'delete') {
+          const url = new URL(config.url!, window.location.origin);
+          url.searchParams.set('store_id', storeObj.id);
+          config.url = url.pathname + url.search;
+        } else if (config.data && typeof config.data === 'object') {
+          config.data = { ...config.data, store_id: storeObj.id };
+        } else {
+          config.data = { store_id: storeObj.id };
+        }
+      }
+    }
+  } catch {}
+  return config;
+});
 
 // Add response interceptor for error handling
 api.interceptors.response.use(

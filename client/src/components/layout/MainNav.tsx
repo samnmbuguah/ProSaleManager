@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/sheet'
 import { useCart } from '@/contexts/CartContext'
 import CartModal from '@/components/pos/CartModal'
+import { useStoreContext } from '@/contexts/StoreContext';
 
 const ROLE_ROUTES = {
   user: [
@@ -51,6 +52,7 @@ export default function MainNav() {
   const [isOpen, setIsOpen] = useState(false)
   const { cart } = useCart()
   const [cartOpen, setCartOpen] = useState(false)
+  const { currentStore, setCurrentStore, stores } = useStoreContext();
 
   if (!user) return null
 
@@ -152,6 +154,23 @@ export default function MainNav() {
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
+          {user?.role === 'super_admin' && stores.length > 0 && (
+            <div className="ml-4 flex items-center gap-2">
+              <span className="text-sm text-gray-600">Store:</span>
+              <select
+                className="border rounded px-2 py-1"
+                value={currentStore?.id || ''}
+                onChange={e => {
+                  const store = stores.find(s => s.id === Number(e.target.value));
+                  if (store) setCurrentStore(store);
+                }}
+              >
+                {stores.map(store => (
+                  <option key={store.id} value={store.id}>{store.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </div>
     </nav>

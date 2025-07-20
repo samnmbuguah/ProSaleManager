@@ -1,5 +1,5 @@
 // API endpoints configuration
-const API_BASE_URL = ''
+const API_BASE_URL = typeof window !== 'undefined' ? `${window.location.origin}/api` : '/api';
 
 export const API_ENDPOINTS = {
   auth: {
