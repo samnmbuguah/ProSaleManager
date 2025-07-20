@@ -85,7 +85,7 @@ const PosPage: React.FC = () => {
     })
   }
 
-  const handleCheckout = async () => {
+  const handleCheckout = async (amountTendered: number, change: number) => {
     try {
       setIsLoading((prev) => ({ ...prev, checkout: true }))
 
@@ -124,8 +124,8 @@ const PosPage: React.FC = () => {
         payment_method: paymentMethod,
         status: 'completed',
         payment_status: 'paid',
-        amount_paid: cart.total + deliveryFee,
-        change_amount: 0
+        amount_paid: amountTendered,
+        change_amount: change
       }
 
       // Use the configured API instance

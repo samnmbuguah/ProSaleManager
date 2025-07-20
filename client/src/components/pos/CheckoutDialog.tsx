@@ -30,7 +30,7 @@ interface CheckoutDialogProps {
   customers: Customer[];
   selectedCustomer: number | null;
   setSelectedCustomer: (id: number | null) => void;
-  onCheckout: () => void;
+  onCheckout: (amountTendered: number, change: number) => void;
   isLoadingCheckout: boolean;
 }
 
@@ -147,7 +147,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={onCheckout} disabled={isLoadingCheckout || !canCheckout}>
+          <Button onClick={() => onCheckout(tendered, balance)} disabled={isLoadingCheckout || !canCheckout}>
             {isLoadingCheckout ? 'Processing...' : 'Complete Sale'}
           </Button>
         </DialogFooter>
