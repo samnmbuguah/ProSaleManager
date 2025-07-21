@@ -73,3 +73,5 @@ client/.env.production
 server/public
 server/src/db/seed.sqlite
 /production
+server/.env.test
+.env.test
