@@ -5,8 +5,12 @@ export interface ApiError extends Error {
   isOperational?: boolean
 }
 
-export const errorHandler = (err: ApiError, req: Request, res: Response) => {
-  console.error('Error:', err)
+export const errorHandler = (err: ApiError, req: Request, res: Response, next: Function) => {
+  console.error('Error:', err);
+  if (res.headersSent) {
+    console.error('Error handler called after headers sent!');
+    return;
+  }
 
   // Default error
   const error = { ...err }
@@ -43,13 +47,14 @@ export const errorHandler = (err: ApiError, req: Request, res: Response) => {
     error.statusCode = 404
   }
 
-  // Duplicate key error
-  const statusCode = error.statusCode || 500
-  const message = error.message || 'Server Error'
+  // Use statusCode from ApiError if present, otherwise default to 500
+  const statusCode = (typeof error.statusCode === 'number' && !isNaN(error.statusCode)) ? error.statusCode : 500;
+  const message = error.message || 'Server Error';
 
   res.status(statusCode).json({
     success: false,
     error: message,
+    message,
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-  })
+  });
 } 
