@@ -21,11 +21,11 @@ export async function login(driver: WebDriver): Promise<void> {
   
   // Wait for and fill in email
   const emailInput = await driver.wait(until.elementLocated(By.id('email')), 10000);
-  await emailInput.sendKeys('admin@example.com');
+  await emailInput.sendKeys('superadmin@prosale.com');
   
   // Wait for and fill in password
   const passwordInput = await driver.wait(until.elementLocated(By.id('password')), 10000);
-  await passwordInput.sendKeys('admin123');
+  await passwordInput.sendKeys('superadmin123');
   
   // Find and click the login button
   const loginButton = await driver.findElement(By.xpath("//button[contains(text(), 'Login')]"));
