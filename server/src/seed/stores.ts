@@ -1,22 +1,23 @@
 import { Store, User } from '../models/index.js';
+import bcrypt from 'bcryptjs';
 
 export async function seedStoresAndSuperAdmin() {
-  // Create initial store
-  const store = await Store.create({
+  // Clear all stores before seeding to avoid unique constraint errors
+  await Store.destroy({ where: {} });
+
+  // Create initial stores
+  await Store.upsert({
+    name: 'eltee',
+    domain: 'eltee.prosale.com',
+    subdomain: 'eltee',
+  });
+  await Store.upsert({
     name: 'Demo Store',
     domain: 'demo.prosale.com',
     subdomain: 'demo',
   });
 
-  // Create super admin user (store_id: null)
-  await User.create({
-    name: 'Super Admin',
-    email: 'superadmin@prosale.com',
-    password: 'superadmin123',
-    role: 'super_admin',
-    is_active: true,
-    store_id: null,
-  });
+  // Do not seed super admin user here; let the test register it
 
   console.log('Seeded initial store and super admin user.');
 }

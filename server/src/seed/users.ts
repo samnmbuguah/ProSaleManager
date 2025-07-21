@@ -1,37 +1,44 @@
 import { User, Store } from '../models/index.js';
 import type { UserAttributes } from '../models/User.js';
 import { faker } from '@faker-js/faker';
+import bcrypt from 'bcryptjs';
 
 export async function seedUsers() {
   try {
-    const store = await Store.findOne({ where: { name: 'Demo Store' } });
-    if (!store) throw new Error('Demo Store not found');
-    const storeId = store.id;
+    // Clear all users before seeding to avoid double hashing
+    await User.destroy({ where: {} });
+    
+    // Get store references
+    const elteeStore = await Store.findOne({ where: { name: 'eltee' } });
+    const demoStore = await Store.findOne({ where: { name: 'Demo Store' } });
+    
+    if (!elteeStore) throw new Error('eltee store not found');
+    if (!demoStore) throw new Error('Demo Store not found');
 
     const baseUsers: UserAttributes[] = [
       {
         name: "System Admin",
         email: "admin@prosale.com",
-        password: "prosale123",
+        password: "prosale123", // plain text
         role: 'admin',
         is_active: true,
-        store_id: storeId,
+        store_id: elteeStore.id,
       },
       {
         name: "Sales Person",
         email: "sales@prosale.com",
-        password: "sales123",
+        password: "sales123", // plain text
         role: 'sales',
         is_active: true,
-        store_id: storeId,
+        store_id: elteeStore.id,
       },
       {
         name: "Test User",
         email: "test@prosale.com",
-        password: "test123",
+        password: "test123", // plain text
         role: 'admin',
         is_active: true,
-        store_id: storeId,
+        store_id: elteeStore.id,
       }
     ];
 
@@ -45,14 +52,14 @@ export async function seedUsers() {
         password: faker.internet.password(),
         role: role as 'admin' | 'sales' | 'manager',
         is_active: true,
-        store_id: storeId,
+        store_id: elteeStore.id,
       });
     }
 
     for (const user of baseUsers) {
       const existing = await User.findOne({ where: { email: user.email } });
       if (existing) {
-        existing.password = user.password;
+        existing.password = user.password; // plain text, let model hook hash
         existing.name = user.name;
         existing.role = user.role ?? 'sales';
         existing.is_active = user.is_active ?? true;
@@ -60,7 +67,7 @@ export async function seedUsers() {
         existing.changed('password', true);
         await existing.save();
       } else {
-        await User.create(user);
+        await User.create(user); // plain text, let model hook hash
       }
     }
 
