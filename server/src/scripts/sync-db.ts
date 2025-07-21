@@ -1,4 +1,5 @@
 import { sequelize } from '../config/database.js';
+import '../models/index.js'; // Ensure all models are registered
 
 async function syncDatabase() {
   try {
