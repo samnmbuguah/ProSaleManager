@@ -13,8 +13,13 @@ import productSupplierRoutes from './product-suppliers.js'
 import seedRoutes from './seed.js'
 import orderRoutes from './order.routes.js'
 import storesRoutes from './stores.js';
+import { ApiError } from '../utils/api-error.js';
 
 const router = express.Router()
+
+router.get('/test-error', (req, res) => {
+  throw new ApiError(418, 'Test error handler');
+});
 
 router.use('/auth', authRoutes)
 router.use('/products', productRoutes)
