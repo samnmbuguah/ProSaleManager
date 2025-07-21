@@ -1,6 +1,6 @@
 import request from "supertest";
 import express from "express";
-import { app } from '../../server/src/index';
+import app from '../../server/src/index.js';
 import Product from '../../server/src/models/Product';
 
 // This is a simplified version - in a real project you'd import your actual app
