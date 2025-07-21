@@ -4,6 +4,9 @@ type AsyncFunction = (req: Request, res: Response, next: NextFunction) => Promis
 
 export const catchAsync = (fn: AsyncFunction) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
+    Promise.resolve(fn(req, res, next)).catch((err) => {
+      console.error('catchAsync caught error:', err);
+      next(err);
+    });
   };
 }; 
