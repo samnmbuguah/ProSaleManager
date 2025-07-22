@@ -13,6 +13,7 @@ import { Op } from 'sequelize';
 import { uploadCsv } from '../middleware/upload.js';
 import upload from '../middleware/upload.js';
 import { Sequelize } from 'sequelize';
+import { requireStoreContext } from '../middleware/store-context.middleware.js';
 
 const router = Router();
 
@@ -49,12 +50,13 @@ router.get('/search', async (req, res) => {
 });
 
 // All authenticated users can view products
-router.get('/', getProducts);
-router.get('/:id', getProduct);
+router.get('/', requireAuth, requireStoreContext, getProducts);
+router.get('/:id', requireAuth, requireStoreContext, getProduct);
 
 // Only admin and manager can modify products
 router.use(requireAuth);
 router.use(requireRole(['admin', 'manager']));
+router.use(requireStoreContext);
 
 // Bulk upload products via CSV
 router.post('/bulk-upload', uploadCsv.single('file'), bulkUploadProducts);

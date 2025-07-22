@@ -1,5 +1,6 @@
 import express from "express";
 import { requireAuth } from "../middleware/auth.middleware.js";
+import { requireStoreContext } from '../middleware/store-context.middleware.js';
 import {
   getExpenses,
   createExpense,
@@ -11,6 +12,7 @@ const router = express.Router();
 
 // Authenticate all expense routes
 router.use(requireAuth);
+router.use(requireStoreContext);
 
 // Get all expenses with pagination
 router.get("/", getExpenses);

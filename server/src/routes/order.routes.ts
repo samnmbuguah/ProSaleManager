@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth, requireRole } from '../middleware/auth.middleware.js';
+import { requireStoreContext } from '../middleware/store-context.middleware.js';
 import {
   getOrders,
   getOrder,
@@ -12,6 +13,7 @@ const router = Router();
 
 // Require authentication for all order routes (fixes req.user issue)
 router.use(requireAuth);
+router.use(requireStoreContext);
 
 // All authenticated users can view their own orders
 router.get('/', getOrders);

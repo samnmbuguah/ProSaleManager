@@ -2,16 +2,21 @@ import express from "express";
 import { Op } from "sequelize";
 import Customer from "../models/Customer.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
+import { requireStoreContext } from '../middleware/store-context.middleware.js';
+import { storeScope } from '../utils/helpers.js';
 
 const router = express.Router();
 
 // Apply authentication middleware to all customer routes
 router.use(requireAuth);
+router.use(requireStoreContext);
 
 // Get all customers
 router.get("/", async (req, res) => {
   try {
+    const where = storeScope(req.user, {});
     const customers = await Customer.findAll({
+      where,
       order: [["name", "ASC"]],
     });
     res.json({ data: customers });
@@ -25,28 +30,23 @@ router.get("/", async (req, res) => {
 router.get("/search", async (req, res) => {
   try {
     const { q } = req.query;
-
-    if (!q) {
-      const customers = await Customer.findAll({
-        limit: 10,
-        order: [["name", "ASC"]],
-      });
-      return res.json(customers);
-    }
-
-    const searchQuery = q.toString().toLowerCase();
-    const customers = await Customer.findAll({
-      where: {
+    let where: any = {};
+    if (q) {
+      const searchQuery = q.toString().toLowerCase();
+      where = {
         [Op.or]: [
           { name: { [Op.iLike]: `%${searchQuery}%` } },
           { email: { [Op.iLike]: `%${searchQuery}%` } },
           { phone: { [Op.iLike]: `%${searchQuery}%` } },
         ],
-      },
+      };
+    }
+    where = storeScope(req.user, where);
+    const customers = await Customer.findAll({
+      where,
       limit: 10,
       order: [["name", "ASC"]],
     });
-
     res.json(customers);
   } catch (error) {
     console.error("Error searching customers:", error);
@@ -58,18 +58,16 @@ router.get("/search", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const { name, email, phone, address } = req.body;
-
     if (!name || !phone) {
       return res.status(400).json({ message: "Name and phone are required" });
     }
-
     const customer = await Customer.create({
       name,
       email,
       phone,
       address,
+      store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
     });
-
     res.status(201).json(customer);
   } catch (error: unknown) {
     console.error("Error creating customer:", error);
@@ -87,19 +85,17 @@ router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, phone, address } = req.body;
-
-    const customer = await Customer.findByPk(id);
+    const where = storeScope(req.user, { id });
+    const customer = await Customer.findOne({ where });
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
     }
-
     await customer.update({
       name,
       email,
       phone,
       address,
     });
-
     res.json(customer);
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : String(error);
@@ -111,12 +107,11 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const customer = await Customer.findByPk(id);
-
+    const where = storeScope(req.user, { id });
+    const customer = await Customer.findOne({ where });
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
     }
-
     await customer.destroy();
     res.json({ message: "Customer deleted successfully" });
   } catch (error) {
