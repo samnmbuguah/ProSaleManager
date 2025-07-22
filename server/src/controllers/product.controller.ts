@@ -13,7 +13,10 @@ import ProductSupplier from '../models/ProductSupplier.js';
 export const getProducts = catchAsync(async (req: Request, res: Response) => {
   let where: any = {};
   if (req.user?.role !== 'super_admin') {
-    where.store_id = req.user?.store_id;
+    if (!req.user?.store_id) {
+      return res.status(400).json({ success: false, message: 'Store context missing' });
+    }
+    where.store_id = req.user.store_id;
   }
   const products = await Product.findAll({
     where,
@@ -29,7 +32,10 @@ export const getProduct = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   let where: any = { id };
   if (req.user?.role !== 'super_admin') {
-    where.store_id = req.user?.store_id;
+    if (!req.user?.store_id) {
+      return res.status(400).json({ success: false, message: 'Store context missing' });
+    }
+    where.store_id = req.user.store_id;
   }
   const product = await Product.findOne({ where });
   
@@ -90,6 +96,9 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
     images,
     store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
   };
+  if (req.user?.role !== 'super_admin' && !productData.store_id) {
+    return res.status(400).json({ success: false, message: 'Store context missing' });
+  }
 
   // Validate required fields explicitly
   if (!productData.name) {
