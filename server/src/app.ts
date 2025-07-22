@@ -46,11 +46,32 @@ const allowedOrigins = [
   'https://eltee.store'
 ];
 
+// Helper to allow *.local:5173 in dev
+function isAllowedOrigin(origin) {
+  if (!origin) return false;
+  if (allowedOrigins.includes(origin)) return true;
+  // Allow any subdomain of .local:5173 (e.g., http://demo.local:5173)
+  if (/^http:\/\/[a-z0-9-]+\.local:5173$/.test(origin)) return true;
+  return false;
+}
+
 app.use(
   cors({
     origin: function (origin, callback) {
-      console.log('CORS origin:', origin);
-      return callback(null, true); // Allow all origins for debugging
+      if (process.env.NODE_ENV === 'development') {
+        if (!origin || isAllowedOrigin(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      } else {
+        // In production, only allow trusted domains
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      }
     },
     credentials: true
   })
