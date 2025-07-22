@@ -187,6 +187,9 @@ export const createSale = async (req: Request, res: Response) => {
 
 export const getSales = async (req: Request, res: Response) => {
   try {
+    if (req.user?.role !== 'super_admin' && !req.user?.store_id) {
+      return res.status(400).json({ message: 'Store context missing' });
+    }
     const page = parseInt(req.query.page as string) || 1;
     const pageSize = parseInt(req.query.pageSize as string) || 10;
     const offset = (page - 1) * pageSize;
@@ -280,13 +283,18 @@ export const checkout = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "User not authenticated" });
     }
 
+    const store_id = req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id;
+    if (req.user?.role !== 'super_admin' && !store_id) {
+      return res.status(400).json({ message: 'Store context missing' });
+    }
+
     const sale = await Sale.create({
       user_id,
       customer_id: customer_id || null,
       total_amount: total,
       payment_method: "Cash", // or whatever method you want to set
       status: "paid", // or whatever status you want to set
-      store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
+      store_id,
     });
 
     // Create sale items
@@ -303,7 +311,7 @@ export const checkout = async (req: Request, res: Response) => {
           quantity: item.quantity,
           unit_price: item.unit_price,
           total: item.total,
-          store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
+          store_id,
         }),
       ),
     );
@@ -324,6 +332,9 @@ export const getSaleById = async (req: Request, res: Response) => {
     const saleId = parseInt(req.params.id);
     if (isNaN(saleId)) {
       return res.status(400).json({ message: "Invalid sale ID" });
+    }
+    if (req.user?.role !== 'super_admin' && !req.user?.store_id) {
+      return res.status(400).json({ message: 'Store context missing' });
     }
     const where = storeScope(req.user!, { id: saleId });
     const sale = await Sale.findOne({

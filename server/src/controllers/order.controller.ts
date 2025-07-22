@@ -5,6 +5,9 @@ import { storeScope } from "../utils/helpers.js";
 
 export const getOrders = async (req: Request, res: Response) => {
   try {
+    if (req.user?.role !== 'super_admin' && !req.user?.store_id) {
+      return res.status(400).json({ message: 'Store context missing' });
+    }
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
     const where = storeScope(req.user!, { user_id: userId });
@@ -24,6 +27,9 @@ export const getOrders = async (req: Request, res: Response) => {
 
 export const getOrder = async (req: Request, res: Response) => {
   try {
+    if (req.user?.role !== 'super_admin' && !req.user?.store_id) {
+      return res.status(400).json({ message: 'Store context missing' });
+    }
     const userId = req.user?.id;
     const where = storeScope(req.user!, { id: req.params.id, user_id: userId });
     const order = await Sale.findOne({
@@ -54,6 +60,11 @@ export const createOrder = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'No items provided' });
     }
     const total = items.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+    const store_id = req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id;
+    if (req.user?.role !== 'super_admin' && !store_id) {
+      await t.rollback();
+      return res.status(400).json({ message: 'Store context missing' });
+    }
     const sale = await Sale.create({
       user_id: userId,
       customer_id: null,
@@ -63,7 +74,7 @@ export const createOrder = async (req: Request, res: Response) => {
       status: 'pending',
       payment_status: 'pending',
       delivery_fee: 0,
-      store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
+      store_id,
     }, { transaction: t });
     await Promise.all(items.map((item: any) =>
       SaleItem.create({

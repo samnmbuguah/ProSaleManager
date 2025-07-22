@@ -5,6 +5,9 @@ import { storeScope } from "../utils/helpers.js";
 
 export const searchCustomers = async (req: Request, res: Response) => {
   try {
+    if (req.user?.role !== 'super_admin' && !req.user?.store_id) {
+      return res.status(400).json({ message: 'Store context missing' });
+    }
     const { q } = req.query;
     let where: any = {};
     if (q) {
@@ -32,6 +35,9 @@ export const searchCustomers = async (req: Request, res: Response) => {
 
 export const createCustomer = async (req: Request, res: Response) => {
   try {
+    if (req.user?.role !== 'super_admin' && !req.user?.store_id) {
+      return res.status(400).json({ message: 'Store context missing' });
+    }
     const { name, email, phone, address } = req.body;
     if (!name || !phone) {
       return res.status(400).json({ message: "Name and phone are required" });
