@@ -1,7 +1,6 @@
 import { User, Store } from '../models/index.js';
 import type { UserAttributes } from '../models/User.js';
 import { faker } from '@faker-js/faker';
-import bcrypt from 'bcryptjs';
 
 export async function seedUsers() {
   try {

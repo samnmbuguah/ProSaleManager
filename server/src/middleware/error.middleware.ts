@@ -5,7 +5,7 @@ export interface ApiError extends Error {
   isOperational?: boolean
 }
 
-export const errorHandler = (err: ApiError, req: Request, res: Response, next: Function) => {
+export const errorHandler = (err: ApiError, req: Request, res: Response) => {
   console.error('Error:', err);
   if (err && err.stack) {
     console.error('Stack:', err.stack);

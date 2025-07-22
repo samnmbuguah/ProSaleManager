@@ -17,7 +17,7 @@ import { ApiError } from '../utils/api-error.js';
 
 const router = express.Router()
 
-router.get('/test-error', (req, res) => {
+router.get('/test-error', () => {
   throw new ApiError(418, 'Test error handler');
 });
 
