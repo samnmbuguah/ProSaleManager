@@ -1,32 +1,39 @@
 import { sequelize } from '../src/config/database.js'
 
 // Import advanced seed functions for all entities from src/seed
-import { seedProducts } from '../src/seed/products.js'
-import { seedCustomers } from '../src/seed/customers.js'
-import { seedUsers } from '../src/seed/users.js'
-import { seedCategories } from '../src/seed/categories.js'
-import { seedSuppliers } from '../src/seed/suppliers.js'
+import { seedStoresAndSuperAdmin } from '../src/seed/stores.js';
+import { seedUsers } from '../src/seed/users.js';
+import { seedCustomers } from '../src/seed/customers.js';
+import { seedCategories } from '../src/seed/categories.js';
+import { seedProducts } from '../src/seed/products.js';
+import { seedSuppliers } from '../src/seed/suppliers.js';
 
 const seedAll = async () => {
   try {
-    console.log('Starting database seeding...')
+    console.log('Starting database seeding...');
 
-    // Sync database
-    await sequelize.sync({ force: true })
-    console.log('Database synced successfully')
+    // 1. Sync database
+    await sequelize.sync({ force: true });
+    console.log('Database synced successfully');
 
-    // Seed data in order
-    await seedUsers()
-    await seedCategories()
-    await seedProducts()
-    await seedCustomers()
-    await seedSuppliers()
+    // 2. Seed stores and super admin
+    await seedStoresAndSuperAdmin();
+    // 3. Seed users (admins, cashiers, managers for each store)
+    await seedUsers();
+    // 4. Seed categories
+    await seedCategories();
+    // 5. Seed products
+    await seedProducts();
+    // 6. Seed suppliers
+    await seedSuppliers();
+    // 7. Seed customers
+    await seedCustomers();
 
-    console.log('All data seeded successfully!')
-    process.exit(0)
+    console.log('All data seeded successfully!');
+    process.exit(0);
   } catch (error) {
-    console.error('Error seeding database:', error)
-    process.exit(1)
+    console.error('Error seeding database:', error);
+    process.exit(1);
   }
 }
 

@@ -17,6 +17,15 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 5173,
+      host: true, // Allow connections from subdomains like demo.local
+      allowedHosts: [
+        'localhost',
+        '127.0.0.1',
+        '.local', // allow all *.local subdomains for local dev
+        'demo.local',
+        'branch.local',
+        'eltee.local'
+      ],
       proxy: {
         '/api': {
           target: 'http://localhost:5000',
