@@ -48,7 +48,7 @@ const Product = sequelize.define<ProductInstance>('Product', {
   sku: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
+    // unique removed; now handled by composite index below
   },
   barcode: {
     type: DataTypes.STRING,
@@ -119,6 +119,13 @@ const Product = sequelize.define<ProductInstance>('Product', {
   tableName: "products",
   timestamps: true,
   underscored: true,
+  indexes: [
+    {
+      unique: true,
+      fields: ['sku', 'store_id'],
+      name: 'products_sku_store_id_unique'
+    }
+  ]
 });
 
 // Add instance method to update prices
