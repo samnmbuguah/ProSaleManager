@@ -15,7 +15,6 @@ declare global {
       store?: {
         id: number;
         name: string;
-        domain: string | null;
         subdomain: string | null;
       };
     }
@@ -57,7 +56,6 @@ export const resolveStore = async (req: Request, res: Response, next: NextFuncti
   req.store = {
     id: store.id,
     name: store.name,
-    domain: store.domain,
     subdomain: store.subdomain,
   };
   next();

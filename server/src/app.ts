@@ -4,12 +4,8 @@ import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import rateLimit from 'express-rate-limit'
 import dotenv from 'dotenv'
-import { fileURLToPath } from 'url';
 import path from 'path';
 import process from 'process';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Load environment variables
 dotenv.config()
@@ -47,7 +43,7 @@ const allowedOrigins = [
 ];
 
 // Helper to allow *.local:5173 in dev
-function isAllowedOrigin(origin) {
+function isAllowedOrigin(origin: string) {
   if (!origin) return false;
   if (allowedOrigins.includes(origin)) return true;
   // Allow any subdomain of .local:5173 (e.g., http://demo.local:5173)
@@ -66,7 +62,7 @@ app.use(
         }
       } else {
         // In production, only allow trusted domains
-        if (allowedOrigins.includes(origin)) {
+        if (allowedOrigins.includes(origin || '')) {
           callback(null, true);
         } else {
           callback(new Error('Not allowed by CORS'));
