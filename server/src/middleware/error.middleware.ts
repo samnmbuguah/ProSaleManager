@@ -7,6 +7,9 @@ export interface ApiError extends Error {
 
 export const errorHandler = (err: ApiError, req: Request, res: Response, next: Function) => {
   console.error('Error:', err);
+  if (err && err.stack) {
+    console.error('Stack:', err.stack);
+  }
   if (res.headersSent) {
     console.error('Error handler called after headers sent!');
     return;

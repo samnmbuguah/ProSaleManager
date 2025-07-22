@@ -55,6 +55,7 @@ export const register = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const login = catchAsync(async (req: Request, res: Response) => {
+  console.log('Login attempt:', req.body);
   const { email, password: loginPassword } = req.body;
 
   // Validate required fields

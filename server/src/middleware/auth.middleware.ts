@@ -25,25 +25,41 @@ declare global {
 // Middleware to resolve store from domain or subdomain
 export const resolveStore = async (req: Request, res: Response, next: NextFunction) => {
   const host = req.headers.host || '';
+  let subdomain = '';
+
+  if (host.endsWith('.local')) {
+    subdomain = host.replace('.local', '');
+  } else if (host.endsWith('.eltee.store')) {
+    subdomain = host.replace('.eltee.store', '');
+  } else {
+    // fallback: take first part
+    subdomain = host.split('.')[0];
+  }
+
   let store: Store | null = null;
-
-  // Try to match by domain
-  store = await Store.findOne({ where: { domain: host } });
-
-  // If not found, try subdomain (e.g., sub.domain.com)
-  if (!store) {
-    const subdomain = host.split('.')[0];
+  if (subdomain) {
     store = await Store.findOne({ where: { subdomain } });
   }
 
-  if (store) {
-    req.store = {
-      id: store.id,
-      name: store.name,
-      domain: store.domain,
-      subdomain: store.subdomain,
-    };
+  if (!store) {
+    // Only allow super admin login on the main domain (no store subdomain)
+    if (
+      req.path.startsWith('/api/auth/login') &&
+      req.method === 'POST' &&
+      req.body && req.body.email &&
+      req.body.email.endsWith('@prosale.com') // adjust as needed for super admin
+    ) {
+      return next();
+    }
+    return res.status(400).json({ success: false, error: 'Store subdomain required', message: 'You must access this route from a valid store subdomain.' });
   }
+
+  req.store = {
+    id: store.id,
+    name: store.name,
+    domain: store.domain,
+    subdomain: store.subdomain,
+  };
   next();
 };
 

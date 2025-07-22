@@ -5,55 +5,111 @@ import bcrypt from 'bcryptjs';
 
 export async function seedUsers() {
   try {
-    // Clear all users before seeding to avoid double hashing
-    await User.destroy({ where: {} });
+    // Clear all users except super_admin before seeding to avoid double hashing
+    await User.destroy({ where: { role: ['admin', 'sales', 'manager'] } });
     
     // Get store references
     const elteeStore = await Store.findOne({ where: { name: 'eltee' } });
     const demoStore = await Store.findOne({ where: { name: 'Demo Store' } });
+    const branchStore = await Store.findOne({ where: { name: 'Branch Store' } });
     
     if (!elteeStore) throw new Error('eltee store not found');
     if (!demoStore) throw new Error('Demo Store not found');
+    if (!branchStore) throw new Error('Branch Store not found');
 
     const baseUsers: UserAttributes[] = [
+      // Admins for each store
       {
-        name: "System Admin",
-        email: "admin@prosale.com",
-        password: "prosale123", // plain text
+        name: "Eltee Admin",
+        email: "eltee.admin@prosale.com",
+        password: "elteeadmin123",
         role: 'admin',
         is_active: true,
         store_id: elteeStore.id,
       },
       {
-        name: "Sales Person",
-        email: "sales@prosale.com",
-        password: "sales123", // plain text
+        name: "Demo Admin",
+        email: "demo.admin@prosale.com",
+        password: "demoadmin123",
+        role: 'admin',
+        is_active: true,
+        store_id: demoStore.id,
+      },
+      {
+        name: "Branch Admin",
+        email: "branch.admin@prosale.com",
+        password: "branchadmin123",
+        role: 'admin',
+        is_active: true,
+        store_id: branchStore.id,
+      },
+      // Cashiers (sales) for each store
+      {
+        name: "Eltee Cashier",
+        email: "eltee.cashier@prosale.com",
+        password: "eltee123",
         role: 'sales',
         is_active: true,
         store_id: elteeStore.id,
       },
       {
-        name: "Test User",
-        email: "test@prosale.com",
-        password: "test123", // plain text
-        role: 'admin',
+        name: "Demo Cashier",
+        email: "demo.cashier@prosale.com",
+        password: "demo123",
+        role: 'sales',
+        is_active: true,
+        store_id: demoStore.id,
+      },
+      {
+        name: "Branch Cashier",
+        email: "branch.cashier@prosale.com",
+        password: "branch123",
+        role: 'sales',
+        is_active: true,
+        store_id: branchStore.id,
+      },
+      // Managers for each store
+      {
+        name: "Eltee Manager",
+        email: "eltee.manager@prosale.com",
+        password: "elteemgr123",
+        role: 'manager',
         is_active: true,
         store_id: elteeStore.id,
-      }
+      },
+      {
+        name: "Demo Manager",
+        email: "demo.manager@prosale.com",
+        password: "demomgr123",
+        role: 'manager',
+        is_active: true,
+        store_id: demoStore.id,
+      },
+      {
+        name: "Branch Manager",
+        email: "branch.manager@prosale.com",
+        password: "branchmgr123",
+        role: 'manager',
+        is_active: true,
+        store_id: branchStore.id,
+      },
     ];
 
-    // Generate additional random users
-    for (let i = 0; i < 20; i++) {
-      const roles = ['admin', 'sales', 'manager'] as const;
-      const role = roles[Math.floor(Math.random() * roles.length)];
-      baseUsers.push({
-        name: faker.person.fullName(),
-        email: faker.internet.email(),
-        password: faker.internet.password(),
-        role: role as 'admin' | 'sales' | 'manager',
-        is_active: true,
-        store_id: elteeStore.id,
-      });
+    // Generate additional random users for each store
+    const stores = [elteeStore, demoStore, branchStore];
+    for (const store of stores) {
+      for (let i = 0; i < 5; i++) {
+        const roles = ['admin', 'sales', 'manager'] as const;
+        const role = roles[Math.floor(Math.random() * roles.length)];
+        baseUsers.push({
+          name: faker.person.fullName(),
+          email: faker.internet.email(),
+          password: faker.internet.password(),
+          role: role as 'admin' | 'sales' | 'manager',
+          is_active: true,
+          store_id: store.id,
+        });
+      }
     }
 
     for (const user of baseUsers) {
@@ -69,14 +125,6 @@ export async function seedUsers() {
       } else {
         await User.create(user); // plain text, let model hook hash
       }
-    }
-
-    // Log the stored hash for the admin user
-    const admin = await User.findOne({ where: { email: "admin@prosale.com" } });
-    if (admin) {
-      console.log("SEEDED ADMIN HASH:", admin.password);
-    } else {
-      console.log("Admin user not found after seeding.");
     }
 
     console.log("Users seeded successfully");
