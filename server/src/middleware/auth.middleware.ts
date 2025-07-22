@@ -131,3 +131,11 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     next();
   });
 };
+
+// Middleware to sync req.user.store_id with req.store.id for non-super_admins
+export function attachStoreIdToUser(req: Request, res: Response, next: NextFunction) {
+  if (req.user && req.store && req.user.role !== 'super_admin') {
+    req.user.store_id = req.store.id;
+  }
+  next();
+}
