@@ -1,5 +1,6 @@
 import express from "express";
 import { requireAuth } from "../middleware/auth.middleware.js";
+import { requireStoreContext } from '../middleware/store-context.middleware.js';
 import {
   createSale,
   getSales,
@@ -12,6 +13,7 @@ const router = express.Router();
 
 // Authenticate all other sales routes
 router.use(requireAuth);
+router.use(requireStoreContext);
 
 // Create a new sale
 router.post("/", createSale);

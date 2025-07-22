@@ -4,11 +4,13 @@ import Sale from '../models/Sale.js'
 import SaleItem from '../models/SaleItem.js'
 import { Op } from 'sequelize'
 import { storeScope } from '../utils/helpers.js'
+import { requireStoreContext } from '../middleware/store-context.middleware.js';
+import { requireAuth, attachStoreIdToUser } from '../middleware/auth.middleware.js';
 
 const router = Router()
 
 // Get inventory status report
-router.get('/inventory', async (req, res) => {
+router.get('/inventory', requireAuth, attachStoreIdToUser, requireStoreContext, async (req, res) => {
   try {
     const where = storeScope(req.user!, { is_active: true });
     const products = await Product.findAll({
@@ -55,7 +57,7 @@ router.get('/inventory', async (req, res) => {
 })
 
 // Get product performance report
-router.get('/product-performance', async (req, res) => {
+router.get('/product-performance', requireAuth, attachStoreIdToUser, requireStoreContext, async (req, res) => {
   try {
     const { startDate, endDate } = req.query
 
@@ -172,7 +174,7 @@ router.get('/product-performance', async (req, res) => {
 })
 
 // Get sales summary report
-router.get('/sales-summary', async (req, res) => {
+router.get('/sales-summary', requireAuth, attachStoreIdToUser, requireStoreContext, async (req, res) => {
   try {
     const { startDate, endDate } = req.query
 
