@@ -1,5 +1,4 @@
 import express from 'express';
-import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { sequelize } from './config/database.js';
 import routes from './routes/index.js';
@@ -41,17 +40,6 @@ async function testConnection() {
     console.log('Database connection has been established successfully.')
   } catch (error) {
     console.error('Unable to connect to the database:', error)
-    process.exit(1)
-  }
-}
-
-// Sync database models
-async function syncDatabase() {
-  try {
-    await sequelize.sync({ alter: true })
-    console.log('All models synchronized successfully.')
-  } catch (error) {
-    console.error('Error synchronizing database:', error)
     process.exit(1)
   }
 }

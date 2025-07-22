@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { Store, User } from '../models/index.js';
+import { Store } from '../models/index.js';
 import { requireAuth } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -16,7 +16,7 @@ router.get('/', requireAuth, async (req, res) => {
     } else {
       res.json({ success: true, data: [] });
     }
-  } catch (error) {
+  } catch {
     res.status(500).json({ success: false, message: 'Failed to fetch stores' });
   }
 });

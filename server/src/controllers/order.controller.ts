@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Sale, SaleItem, Product, User, Customer } from '../models/index.js';
+import { Sale, SaleItem, Product, Customer } from '../models/index.js';
 import { sequelize } from '../config/database.js';
 import { storeScope } from "../utils/helpers.js";
 
@@ -20,7 +20,7 @@ export const getOrders = async (req: Request, res: Response) => {
       order: [['createdAt', 'DESC']],
     });
     res.json({ orders });
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: 'Failed to fetch orders' });
   }
 };
@@ -41,7 +41,7 @@ export const getOrder = async (req: Request, res: Response) => {
     });
     if (!order) return res.status(404).json({ message: 'Order not found' });
     res.json(order);
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: 'Failed to fetch order' });
   }
 };
@@ -88,7 +88,7 @@ export const createOrder = async (req: Request, res: Response) => {
     ));
     await t.commit();
     res.status(201).json({ message: 'Order created', orderId: sale.id });
-  } catch (error) {
+  } catch {
     await t.rollback();
     res.status(500).json({ message: 'Failed to create order' });
   }

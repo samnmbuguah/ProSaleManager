@@ -5,13 +5,12 @@ import { catchAsync } from '../utils/catch-async.js';
 import { ApiError } from '../utils/api-error.js';
 import { parse } from 'csv-parse/sync';
 import Category from '../models/Category.js';
-import Supplier from '../models/Supplier.js';
 import SaleItem from '../models/SaleItem.js';
 import PurchaseOrderItem from '../models/PurchaseOrderItem.js';
 import ProductSupplier from '../models/ProductSupplier.js';
 
 export const getProducts = catchAsync(async (req: Request, res: Response) => {
-  let where: any = {};
+  const where: any = {};
   if (req.user?.role !== 'super_admin') {
     if (!req.user?.store_id) {
       return res.status(400).json({ success: false, message: 'Store context missing' });
@@ -30,7 +29,7 @@ export const getProducts = catchAsync(async (req: Request, res: Response) => {
 
 export const getProduct = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  let where: any = { id };
+  const where: any = { id };
   if (req.user?.role !== 'super_admin') {
     if (!req.user?.store_id) {
       return res.status(400).json({ success: false, message: 'Store context missing' });
