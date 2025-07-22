@@ -1,6 +1,5 @@
 import axios from 'axios'
 import { API_ENDPOINTS } from './api-endpoints'
-import { useStoreContext } from '@/contexts/StoreContext';
 
 const isDevelopment = process.env.NODE_ENV === 'development'
 
