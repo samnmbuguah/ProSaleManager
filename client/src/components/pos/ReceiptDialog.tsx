@@ -61,6 +61,7 @@ export const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
   const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
   const [receiptText, setReceiptText] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
+  const [showPdf, setShowPdf] = useState(false)
 
   const fetchReceiptData = useCallback(async () => {
     if (!currentSaleId) return
@@ -147,10 +148,10 @@ export const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
               <strong>Total: ${formatCurrency(receiptData?.total_amount || 0)}</strong><br>
               Payment Method: ${receiptData?.payment_method}<br>
               ${receiptData?.payment_method === 'cash' && receiptData?.amount_paid
-                ? `Amount Paid: ${formatCurrency(receiptData.amount_paid)}<br>
+          ? `Amount Paid: ${formatCurrency(receiptData.amount_paid)}<br>
                    Change: ${formatCurrency(receiptData.amount_paid - receiptData.total_amount)}`
-                : ''
-              }
+          : ''
+        }
             </div>
             <div class="footer">
               Thank you for your business!
@@ -199,120 +200,13 @@ export const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        {receiptData && (
-          <div className="space-y-6">
-            {/* Receipt Header */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center mb-4">
-                  <h2 className="text-2xl font-bold text-primary">🧾 PROSALE MANAGER</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Receipt #{receiptData.id} • {formatDate(receiptData.createdAt)}
-                  </p>
-                </div>
-
-                <Separator className="my-4" />
-
-                {/* Customer Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <h3 className="font-semibold text-sm text-muted-foreground">CUSTOMER</h3>
-                    <p className="font-medium">
-                      {receiptData.Customer?.name || 'Walk-in Customer'}
-                    </p>
-                    {receiptData.Customer?.phone && (
-                      <p className="text-sm text-muted-foreground">
-                        {receiptData.Customer.phone}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-sm text-muted-foreground">SERVED BY</h3>
-                    <p className="font-medium">{receiptData.User?.name || 'Unknown User'}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {receiptData.User?.email || 'No email'}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Items */}
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="font-semibold mb-4">ITEMS</h3>
-                <div className="space-y-3">
-                  {receiptData.items?.map((item) => (
-                    <div key={item.id} className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <p className="font-medium">{item.Product?.name || 'Unknown Product'}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {item.quantity} {item.unit_type} × {formatCurrency(item.unit_price)}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">{formatCurrency(item.total)}</p>
-                      </div>
-                    </div>
-                  )) || (
-                    <div className="text-center text-muted-foreground py-4">
-                      No items found
-                    </div>
-                  )}
-                </div>
-
-                <Separator className="my-4" />
-
-                {/* Totals */}
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>{formatCurrency((receiptData.total_amount || 0) - (receiptData.delivery_fee || 0))}</span>
-                  </div>
-                  {(receiptData.delivery_fee || 0) > 0 && (
-                    <div className="flex justify-between">
-                      <span>Delivery Fee</span>
-                      <span>{formatCurrency(receiptData.delivery_fee || 0)}</span>
-                    </div>
-                  )}
-                  <Separator />
-                  <div className="flex justify-between font-bold text-lg">
-                    <span>Total</span>
-                    <span>{formatCurrency(receiptData.total_amount || 0)}</span>
-                  </div>
-
-                  {/* Payment Details */}
-                  <div className="mt-4 p-3 bg-muted rounded-lg">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-muted-foreground">Payment Method</span>
-                      <Badge variant="outline" className="capitalize">
-                        {receiptData.payment_method || 'Unknown'}
-                      </Badge>
-                    </div>
-                    {receiptData.payment_method === 'cash' && receiptData.amount_paid && (
-                      <>
-                        <div className="flex justify-between text-sm">
-                          <span>Amount Paid</span>
-                          <span>{formatCurrency(receiptData.amount_paid)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm font-medium">
-                          <span>Change</span>
-                          <span>{formatCurrency(receiptData.amount_paid - (receiptData.total_amount || 0))}</span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Footer */}
-            <div className="text-center text-sm text-muted-foreground">
-              <p>Thank you for your business!</p>
-              <p className="mt-1">Please come again</p>
-            </div>
-          </div>
-        )}
+        <Card>
+          <CardContent className="pt-6">
+            <pre className="whitespace-pre-wrap text-sm font-mono bg-white p-4 rounded border overflow-x-auto">
+              {receiptText}
+            </pre>
+          </CardContent>
+        </Card>
 
         {/* Action Buttons */}
         <CardFooter className="flex gap-2 justify-end pt-6">
