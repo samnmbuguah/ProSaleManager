@@ -5,6 +5,8 @@ import { requireAuth } from "../middleware/auth.middleware.js";
 import { requireStoreContext } from '../middleware/store-context.middleware.js';
 import { storeScope } from '../utils/helpers.js';
 
+console.log('CUSTOMERS ROUTE FILE LOADED');
+
 const router = express.Router();
 
 // Apply authentication middleware to all customer routes
@@ -13,12 +15,45 @@ router.use(requireStoreContext);
 
 // Get all customers
 router.get("/", async (req, res) => {
+  if (!req.user || !req.user.id) {
+    return res.status(401).json({ message: 'Unauthorized: user not found in request.' });
+  }
+  let storeId = req.user?.store_id;
+  if (req.user?.role === 'super_admin' && req.query.store_id) {
+    storeId = parseInt(req.query.store_id as string);
+  }
   try {
-    const where = storeScope(req.user, {});
-    const customers = await Customer.findAll({
+    const where = storeScope({ ...req.user, store_id: storeId }, {});
+    let customers = await Customer.findAll({
       where,
       order: [["name", "ASC"]],
     });
+    // If no customers, create or fetch Walk-in Customer for this store
+    if (customers.length === 0 && storeId) {
+      let walkIn = await Customer.findOne({
+        where: { store_id: storeId, name: 'Walk-in Customer' }
+      });
+      if (!walkIn) {
+        try {
+          walkIn = await Customer.create({
+            name: 'Walk-in Customer',
+            email: `walkin.${storeId}@example.com`,
+            phone: 'N/A',
+            address: 'N/A',
+            notes: 'Default walk-in customer',
+            loyalty_points: 0,
+            is_active: true,
+            store_id: storeId,
+          });
+        } catch (err: any) {
+          // If unique constraint error, try to fetch again
+          walkIn = await Customer.findOne({
+            where: { store_id: storeId, name: 'Walk-in Customer' }
+          });
+        }
+      }
+      customers = walkIn ? [walkIn] : [];
+    }
     res.json({ data: customers });
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : String(error);

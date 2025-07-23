@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { Store } from '../models/index.js';
 import { requireAuth } from '../middleware/auth.middleware.js';
+import { getReceiptSettings, createReceiptSettings, updateReceiptSettings } from '../controllers/store.controller.js';
 
 const router = Router();
 
@@ -20,5 +21,10 @@ router.get('/', requireAuth, async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to fetch stores' });
   }
 });
+
+// Receipt settings endpoints
+router.get('/:storeId/receipt-settings', requireAuth, getReceiptSettings);
+router.post('/:storeId/receipt-settings', requireAuth, createReceiptSettings);
+router.put('/:storeId/receipt-settings', requireAuth, updateReceiptSettings);
 
 export default router; 
