@@ -1,5 +1,6 @@
 import { sequelize } from '../config/database.js';
 import '../models/index.js'; // Ensure all models are registered
+import '../models/ReceiptSettings.js';
 
 async function syncDatabase() {
   try {
