@@ -67,7 +67,7 @@ export const Cart: React.FC<CartProps> = ({
   }
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="flex flex-col">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ShoppingCart className="h-5 w-5" />
@@ -94,114 +94,114 @@ export const Cart: React.FC<CartProps> = ({
         <div className="flex-1 overflow-auto space-y-3">
           {items.length === 0
             ? (
-            <div className="text-gray-400 text-center py-8">
-              <ShoppingCart className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Cart is empty</p>
-              <p className="text-xs">
-                Search and select products to add to cart
-              </p>
-            </div>
-              )
+              <div className="text-gray-400 text-center py-8">
+                <ShoppingCart className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>Cart is empty</p>
+                <p className="text-xs">
+                  Search and select products to add to cart
+                </p>
+              </div>
+            )
             : (
-            <div className="space-y-3">
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="border rounded-lg p-3 bg-white"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <div className="font-semibold text-sm">
-                        {item.product.name}
+              <div className="space-y-3">
+                {items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="border rounded-lg p-3 bg-white"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <div className="font-semibold text-sm">
+                          {item.product.name}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {item.product.sku}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {item.product.sku}
-                      </div>
-                    </div>
-                    {onRemoveItem && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onRemoveItem(item.id)}
-                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 mb-2">
-                    <div>
-                      <label
-                        htmlFor={`unit-type-${item.id}`}
-                        className="text-xs text-gray-600"
-                      >
-                        Unit Type
-                      </label>
-                      <Select
-                        value={item.unit_type}
-                        onValueChange={(value) =>
-                          handleUnitTypeChange(item.id, value)
-                        }
-                      >
-                        <SelectTrigger
-                          id={`unit-type-${item.id}`}
-                          className="h-8 text-xs"
+                      {onRemoveItem && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onRemoveItem(item.id)}
+                          className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
                         >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="piece">Piece</SelectItem>
-                          <SelectItem value="pack">Pack</SelectItem>
-                          <SelectItem value="dozen">Dozen</SelectItem>
-                        </SelectContent>
-                      </Select>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
-                    <div>
-                      <label
-                        htmlFor={`quantity-${item.id}`}
-                        className="text-xs text-gray-600"
-                      >
-                        Quantity
-                      </label>
-                      <input
-                        id={`quantity-${item.id}`}
-                        type="number"
-                        min={1}
-                        value={item.quantity}
-                        onChange={(e) =>
-                          onUpdateQuantity(
-                            item.id,
-                            item.unit_type,
-                            Number(e.target.value)
-                          )
-                        }
-                        className="w-full h-8 border rounded px-2 text-xs"
-                      />
-                    </div>
-                  </div>
 
-                  <div className="flex justify-between items-center text-sm">
-                    <div>
-                      <span className="text-gray-600">Unit Price:</span>
-                      <input
-                        type="number"
-                        min={0}
-                        step={0.01}
-                        value={item.unit_price}
-                        onChange={e => onUpdateUnitPrice(item.id, Number(e.target.value))}
-                        className="ml-1 w-20 border rounded px-1 text-xs font-medium"
-                        style={{ width: 80 }}
-                      />
+                    <div className="grid grid-cols-2 gap-2 mb-2">
+                      <div>
+                        <label
+                          htmlFor={`unit-type-${item.id}`}
+                          className="text-xs text-gray-600"
+                        >
+                          Unit Type
+                        </label>
+                        <Select
+                          value={item.unit_type}
+                          onValueChange={(value) =>
+                            handleUnitTypeChange(item.id, value)
+                          }
+                        >
+                          <SelectTrigger
+                            id={`unit-type-${item.id}`}
+                            className="h-8 text-xs"
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="piece">Piece</SelectItem>
+                            <SelectItem value="pack">Pack</SelectItem>
+                            <SelectItem value="dozen">Dozen</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label
+                          htmlFor={`quantity-${item.id}`}
+                          className="text-xs text-gray-600"
+                        >
+                          Quantity
+                        </label>
+                        <input
+                          id={`quantity-${item.id}`}
+                          type="number"
+                          min={1}
+                          value={item.quantity}
+                          onChange={(e) =>
+                            onUpdateQuantity(
+                              item.id,
+                              item.unit_type,
+                              Number(e.target.value)
+                            )
+                          }
+                          className="w-full h-8 border rounded px-2 text-xs"
+                        />
+                      </div>
                     </div>
-                    <div className="font-semibold">
-                      {formatPrice(item.total)}
+
+                    <div className="flex justify-between items-center text-sm">
+                      <div>
+                        <span className="text-gray-600">Unit Price:</span>
+                        <input
+                          type="number"
+                          min={0}
+                          step={0.01}
+                          value={item.unit_price}
+                          onChange={e => onUpdateUnitPrice(item.id, Number(e.target.value))}
+                          className="ml-1 w-20 border rounded px-1 text-xs font-medium"
+                          style={{ width: 80 }}
+                        />
+                      </div>
+                      <div className="font-semibold">
+                        {formatPrice(item.total)}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-              )}
+                ))}
+              </div>
+            )}
         </div>
 
         {/* Cart Summary */}
