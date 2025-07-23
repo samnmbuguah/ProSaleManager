@@ -82,7 +82,7 @@ const Suppliers = () => {
           contact_person: '',
           status: 'active' as const
         })
-        dispatch(fetchSuppliers()); // Refresh supplier list
+        dispatch(fetchSuppliers()) // Refresh supplier list
         await Swal.fire({
           icon: 'success',
           title: 'Success',
@@ -99,7 +99,7 @@ const Suppliers = () => {
           contact_person: '',
           status: 'active' as const
         })
-        dispatch(fetchSuppliers()); // Refresh supplier list
+        dispatch(fetchSuppliers()) // Refresh supplier list
         await Swal.fire({
           icon: 'success',
           title: 'Success',
@@ -228,7 +228,7 @@ const Suppliers = () => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
               <p className="mt-2 text-sm text-gray-600">Loading suppliers...</p>
             </div>
-          )
+            )
           : suppliersStatus === 'failed'
             ? (
               <div className="p-8 text-center">
@@ -242,14 +242,14 @@ const Suppliers = () => {
                   Retry
                 </Button>
               </div>
-            )
+              )
             : suppliers.length === 0
               ? (
                 <div className="p-8 text-center">
                   <p className="text-gray-600">No suppliers found</p>
                   <p className="text-sm text-gray-500 mt-1">Add your first supplier to get started</p>
                 </div>
-              )
+                )
               : (
                 <Table>
                   <TableHeader>
@@ -292,7 +292,7 @@ const Suppliers = () => {
                     ))}
                   </TableBody>
                 </Table>
-              )}
+                )}
       </div>
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

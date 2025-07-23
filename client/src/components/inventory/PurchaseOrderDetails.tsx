@@ -13,22 +13,23 @@ import {
   TableRow
 } from '@/components/ui/table'
 import type { Supplier } from '@/types/supplier'
+import type { PurchaseOrderItem } from '@/types/purchase-order'
 
 interface PurchaseOrderDetailsProps {
   orderId: number | null;
   isOpen: boolean;
   onClose: () => void;
   supplier?: Supplier | null;
-  items?: any[];
+  items?: PurchaseOrderItem[];
 }
 
-export function PurchaseOrderDetails({
+export function PurchaseOrderDetails ({
   isOpen,
   onClose,
   supplier,
   items
 }: PurchaseOrderDetailsProps) {
-  const formatCurrency = (amount: string) => {
+  const formatCurrency = (amount: string | number) => {
     return `KSh ${Number(amount).toLocaleString('en-KE', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
@@ -51,7 +52,8 @@ export function PurchaseOrderDetails({
           </div>
         )}
 
-        {Array.isArray(items) && items.length > 0 ? (
+        {Array.isArray(items) && items.length > 0
+          ? (
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -65,7 +67,7 @@ export function PurchaseOrderDetails({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item: any) => (
+                {items.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{item.Product?.name || item.product_name || 'N/A'}</TableCell>
                     <TableCell>{item.unit_type || 'N/A'}</TableCell>
@@ -90,11 +92,12 @@ export function PurchaseOrderDetails({
               </TableBody>
             </Table>
           </div>
-        ) : (
+            )
+          : (
           <div className="text-center text-muted-foreground py-8">
             No items found for this order.
           </div>
-        )}
+            )}
       </DialogContent>
     </Dialog>
   )

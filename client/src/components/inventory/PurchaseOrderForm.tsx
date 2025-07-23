@@ -10,7 +10,7 @@ import { SupplierSelect } from './SupplierSelect'
 interface PurchaseOrderFormProps {
   formData: PurchaseOrderFormData
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-  onItemChange: (index: number, field: string, value: any, extra?: Record<string, any>) => void
+  onItemChange: (index: number, field: string, value: string | number, extra?: Record<string, unknown>) => void
   onRemoveItem: (index: number) => void
   onAddItem: () => void
   products: Product[]
@@ -20,7 +20,7 @@ interface PurchaseOrderFormProps {
   setProductDropdownOpen: (index: number, open: boolean) => void
 }
 
-export function PurchaseOrderForm({
+export function PurchaseOrderForm ({
   formData,
   onInputChange,
   onItemChange,
@@ -34,7 +34,7 @@ export function PurchaseOrderForm({
       <SupplierSelect
         suppliers={suppliers}
         value={formData.supplier_id}
-        onChange={(value) => onInputChange({ target: { name: 'supplier_id', value } } as any)}
+        onChange={(value) => onInputChange({ target: { name: 'supplier_id', value } } as React.ChangeEvent<HTMLInputElement>)}
         loading={suppliersLoading}
       />
       <div>

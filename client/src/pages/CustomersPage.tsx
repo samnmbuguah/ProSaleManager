@@ -144,7 +144,7 @@ const CustomersPage = () => {
       await updateCustomerMutation.mutateAsync({ id: selectedCustomer.id, data: formData })
     } else {
       // Add
-      await createCustomerMutation.mutateAsync(formData as any)
+      await createCustomerMutation.mutateAsync(formData as Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>)
     }
     setIsDialogOpen(false)
     setFormData({})

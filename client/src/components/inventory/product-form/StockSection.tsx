@@ -9,7 +9,7 @@ interface StockSectionProps {
   form: UseFormReturn<ProductFormData>
 }
 
-export function StockSection({ form }: StockSectionProps) {
+export function StockSection ({ form }: StockSectionProps) {
   return (
     <Card>
       <CardHeader>

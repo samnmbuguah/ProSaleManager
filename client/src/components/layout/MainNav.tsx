@@ -25,15 +25,15 @@ import {
 } from '@/components/ui/sheet'
 import { useCart } from '@/contexts/CartContext'
 import CartModal from '@/components/pos/CartModal'
-import { useStoreContext } from '@/contexts/StoreContext';
+import { useStoreContext } from '@/contexts/StoreContext'
 
-const ROLE_ROUTES = {
-  user: [
-    { path: '/pos', label: 'POS', icon: Store },
-    { path: '/inventory', label: 'Inventory', icon: PackageSearch },
-    { path: '/expenses', label: 'Expenses', icon: Wallet },
-    { path: '/shop', label: 'Shop', icon: ShoppingBag }
-  ],
+type AppRole = 'admin' | 'manager' | 'user' | 'super_admin' | 'cashier';
+interface Route {
+  path: string;
+  label: string;
+  icon: React.ElementType;
+}
+const ROLE_ROUTES: Record<AppRole, Route[]> = {
   admin: [
     { path: '/pos', label: 'POS', icon: Store },
     { path: '/inventory', label: 'Inventory', icon: PackageSearch },
@@ -42,21 +42,51 @@ const ROLE_ROUTES = {
     { path: '/reports', label: 'Reports', icon: BarChart3 },
     { path: '/expenses', label: 'Expenses', icon: Wallet },
     { path: '/shop', label: 'Shop', icon: ShoppingBag }
+  ],
+  manager: [
+    { path: '/pos', label: 'POS', icon: Store },
+    { path: '/inventory', label: 'Inventory', icon: PackageSearch },
+    { path: '/customers', label: 'Customers', icon: Users },
+    { path: '/sales', label: 'Sales', icon: Receipt },
+    { path: '/reports', label: 'Reports', icon: BarChart3 },
+    { path: '/expenses', label: 'Expenses', icon: Wallet },
+    { path: '/shop', label: 'Shop', icon: ShoppingBag }
+  ],
+  user: [
+    { path: '/pos', label: 'POS', icon: Store },
+    { path: '/inventory', label: 'Inventory', icon: PackageSearch },
+    { path: '/expenses', label: 'Expenses', icon: Wallet },
+    { path: '/shop', label: 'Shop', icon: ShoppingBag }
+  ],
+  super_admin: [
+    { path: '/pos', label: 'POS', icon: Store },
+    { path: '/inventory', label: 'Inventory', icon: PackageSearch },
+    { path: '/customers', label: 'Customers', icon: Users },
+    { path: '/sales', label: 'Sales', icon: Receipt },
+    { path: '/reports', label: 'Reports', icon: BarChart3 },
+    { path: '/expenses', label: 'Expenses', icon: Wallet },
+    { path: '/shop', label: 'Shop', icon: ShoppingBag }
+  ],
+  cashier: [
+    { path: '/pos', label: 'POS', icon: Store },
+    { path: '/inventory', label: 'Inventory', icon: PackageSearch },
+    { path: '/expenses', label: 'Expenses', icon: Wallet },
+    { path: '/shop', label: 'Shop', icon: ShoppingBag }
   ]
 }
 
-export default function MainNav() {
+export default function MainNav () {
   const [location] = useLocation()
   const { user, logout } = useAuthContext()
   const { toast } = useToast()
   const [isOpen, setIsOpen] = useState(false)
   const { cart } = useCart()
   const [cartOpen, setCartOpen] = useState(false)
-  const { currentStore, setCurrentStore, stores } = useStoreContext();
+  const { currentStore, setCurrentStore, stores } = useStoreContext()
 
   if (!user) return null
 
-  const routes = ROLE_ROUTES[user.role as keyof typeof ROLE_ROUTES] || ROLE_ROUTES.user
+  const routes = ROLE_ROUTES[user.role as AppRole] || ROLE_ROUTES.user
 
   const handleLogout = async () => {
     try {
@@ -76,7 +106,7 @@ export default function MainNav() {
 
   const NavLinks = () => (
     <>
-      {routes.map(({ path, label, icon: Icon }: { path: string; label: string; icon: React.ComponentType<{ className?: string }> }) => (
+      {routes.map(({ path, label, icon: Icon }: Route) => (
         <Link key={path} href={path}>
           <Button
             variant={location === path ? 'default' : 'ghost'}
@@ -154,15 +184,15 @@ export default function MainNav() {
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
-          {user?.role === 'super_admin' && stores.length > 0 && (
+          {(user?.role as AppRole) === 'super_admin' && stores.length > 0 && (
             <div className="ml-4 flex items-center gap-2">
               <span className="text-sm text-gray-600">Store:</span>
               <select
                 className="border rounded px-2 py-1"
                 value={currentStore?.id || ''}
                 onChange={e => {
-                  const store = stores.find(s => s.id === Number(e.target.value));
-                  if (store) setCurrentStore(store);
+                  const store = stores.find(s => s.id === Number(e.target.value))
+                  if (store) setCurrentStore(store)
                 }}
               >
                 {stores.map(store => (

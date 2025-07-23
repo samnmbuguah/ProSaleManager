@@ -15,9 +15,9 @@ export interface Customer {
   phone: string | null
   address: string | null
   notes?: string
-  created_at: string
-  updated_at: string
+  createdAt?: string
+  updatedAt?: string
 }
 
-export type CustomerInsert = Omit<Customer, 'id' | 'created_at' | 'updated_at'>
+export type CustomerInsert = Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>
 export type CustomerUpdate = Partial<CustomerInsert>

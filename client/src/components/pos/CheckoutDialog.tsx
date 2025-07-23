@@ -128,7 +128,6 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
                   value={amountTendered}
                   onChange={e => setAmountTendered(e.target.value)}
                   placeholder="Enter amount tendered"
-                  autoFocus
                 />
                 <div className="flex justify-between text-base mt-2">
                   <span>Balance:</span>

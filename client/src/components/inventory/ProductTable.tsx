@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Product } from '@/types/product'
+import { Product, ProductFormData } from '@/types/product'
 import { formatCurrency } from '@/utils/formatters'
 import {
   Table,
@@ -25,11 +25,11 @@ interface ProductTableProps {
   isLoading: boolean;
   onUpdateProduct?: (
     id: number,
-    data: any,
+    data: ProductFormData,
   ) => Promise<void>;
 }
 
-export function ProductTable({
+export function ProductTable ({
   products = [],
   isLoading,
   onUpdateProduct
@@ -152,7 +152,7 @@ export function ProductTable({
                 image_url: editingProduct.image_url || '',
                 is_active: editingProduct.is_active
               }}
-              onSubmit={async (data: any) => {
+              onSubmit={async (data: ProductFormData) => {
                 if (onUpdateProduct && editingProduct.id) {
                   await onUpdateProduct(editingProduct.id, data)
                   setEditingProduct(null)

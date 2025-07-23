@@ -26,10 +26,7 @@ import {
 import { useToast } from '@/components/ui/use-toast'
 import { format } from 'date-fns'
 import { useInventory } from '@/hooks/use-inventory'
-import type {
-  PurchaseOrder,
-  PurchaseOrderFormData
-} from '@/types/purchase-order'
+import type { PurchaseOrder, PurchaseOrderFormData, PurchaseOrderItem } from '@/types/purchase-order'
 import { api } from '@/lib/api'
 import { PurchaseOrderForm } from './PurchaseOrderForm'
 import ProductSearchBar from './ProductSearchBar'
@@ -37,14 +34,16 @@ import { useSuppliers } from '@/hooks/use-suppliers'
 import { purchaseOrderSchema } from '@/types/purchase-order'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { Loader2 } from 'lucide-react'
-import Swal from 'sweetalert2';
-import { usePurchaseOrders } from '@/hooks/use-purchase-orders';
-import { PurchaseOrderDetails } from './PurchaseOrderDetails';
+import Swal from 'sweetalert2'
+import { usePurchaseOrders } from '@/hooks/use-purchase-orders'
+import { PurchaseOrderDetails } from './PurchaseOrderDetails'
+import type { Supplier } from '@/types/supplier'
+import { AppRole } from '@/types/user'
 
-export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: { purchaseOrders: any[]; loading: boolean }) {
+export function PurchaseOrders ({ purchaseOrders: propPurchaseOrders, loading }: { purchaseOrders: PurchaseOrder[]; loading: boolean }) {
   const { products } = useInventory()
   const { suppliers, isLoading: suppliersLoading } = useSuppliers()
-  const { user } = useAuthContext();
+  const { user } = useAuthContext()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [formData, setFormData] = useState<PurchaseOrderFormData>({
     items: [],
@@ -53,22 +52,22 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
     notes: ''
   })
   const { toast } = useToast()
-  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({})
 
   // Product search state for purchase order dialog
   const [searchQuery, setSearchQuery] = useState('')
-  const [markingReceivedId, setMarkingReceivedId] = useState<number | null>(null);
+  const [markingReceivedId, setMarkingReceivedId] = useState<number | null>(null)
   const [productsList, setProductsList] = useState(products)
   const [productDropdownOpen, setProductDropdownOpen] = useState<boolean[]>([])
-  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null)
 
   // Use React Query for purchase orders
   const {
     purchaseOrders,
     isLoading: purchaseOrdersLoading,
     createPurchaseOrder,
-    updatePurchaseOrderStatus,
-  } = usePurchaseOrders();
+    updatePurchaseOrderStatus
+  } = usePurchaseOrders()
 
   useEffect(() => {
     if (Array.isArray(products)) {
@@ -97,8 +96,10 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
         if (formData.items.length > 0) arr[formData.items.length - 1] = true
         return arr
       })
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to search products', variant: 'destructive' })
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast({ title: 'Error', description: 'Failed to search products', variant: 'destructive' })
+      }
     } finally {
       // setProductsLoading(false) // This line is removed
     }
@@ -132,45 +133,47 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
     newStatus: PurchaseOrder['status']
   ) => {
     try {
-      await updatePurchaseOrderStatus({ id: orderId, status: newStatus });
+      await updatePurchaseOrderStatus({ id: orderId, status: newStatus })
       toast({
         title: 'Success',
         description: 'Status updated successfully'
-      });
+      })
       // No reload needed, React Query will refetch
-    } catch (error) {
-      console.error('Error:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update status',
-        variant: 'destructive'
-      });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error:', error)
+        toast({
+          title: 'Error',
+          description: 'Failed to update status',
+          variant: 'destructive'
+        })
+      }
     }
-  };
+  }
 
   // Replace handleMarkReceived to use updatePurchaseOrderStatus
   const handleMarkReceived = async (orderId: number) => {
-    if (!window.confirm('Are you sure you want to mark this order as received? This will update inventory quantities.')) return;
-    setMarkingReceivedId(orderId);
+    if (!window.confirm('Are you sure you want to mark this order as received? This will update inventory quantities.')) return
+    setMarkingReceivedId(orderId)
     try {
-      await updatePurchaseOrderStatus({ id: orderId, status: 'received' });
-      toast({ title: 'Order marked as received', description: 'Inventory has been updated.' });
+      await updatePurchaseOrderStatus({ id: orderId, status: 'received' })
+      toast({ title: 'Order marked as received', description: 'Inventory has been updated.' })
       // No reload needed, React Query will refetch
-    } catch (err: any) {
-      const message = err?.response?.data?.error || err?.message || 'Failed to mark as received';
-      if (err?.response?.status === 400 && message.includes('Product with id')) {
+    } catch (err: unknown) {
+      const message = (err as Error)?.message || 'Failed to mark as received'
+      if ((err as { response?: { status?: number } })?.response?.status === 400 && message.includes('Product with id')) {
         Swal.fire({
           title: 'Error',
           text: message,
-          icon: 'error',
-        });
+          icon: 'error'
+        })
       } else {
-        toast({ title: 'Error', description: message, variant: 'destructive' });
+        toast({ title: 'Error', description: message, variant: 'destructive' })
       }
     } finally {
-      setMarkingReceivedId(null);
+      setMarkingReceivedId(null)
     }
-  };
+  }
 
   const getStatusBadgeVariant = (status: PurchaseOrder['status']) => {
     switch (status) {
@@ -210,44 +213,49 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
 
   // Replace handleFormSubmit to use createPurchaseOrder
   const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormErrors({});
+    e.preventDefault()
+    setFormErrors({})
     try {
-      const validated = purchaseOrderSchema.parse(formData);
+      const validated = purchaseOrderSchema.parse(formData)
       const itemsWithUnitPrice = validated.items.map(item => ({
         ...item,
-        unit_price: item.buying_price ?? 0,
-      }));
+        unit_price: item.buying_price ?? 0
+      }))
       await createPurchaseOrder({
         ...validated,
         supplier_id: Number(validated.supplier_id),
         items: itemsWithUnitPrice,
         total: itemsWithUnitPrice.reduce((sum, item) => sum + (item.quantity * item.buying_price), 0).toString()
-      });
-      setIsAddDialogOpen(false);
-      setFormData({ items: [], supplier_id: '', expected_delivery_date: '', notes: '' });
+      })
+      setIsAddDialogOpen(false)
+      setFormData({ items: [], supplier_id: '', expected_delivery_date: '', notes: '' })
       // No manual refetch needed
-    } catch (err: any) {
-      if (err.errors) {
+    } catch (err: unknown) {
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'errors' in err &&
+        Array.isArray((err as { errors?: Array<{ path: string[]; message: string }> }).errors)
+      ) {
         const errors: { [key: string]: string } = {};
-        err.errors.forEach((e: any) => { errors[e.path[0]] = e.message; });
-        setFormErrors(errors);
+        (err as { errors: Array<{ path: string[]; message: string }> }).errors.forEach((e: { path: string[]; message: string }) => { errors[e.path[0]] = e.message })
+        setFormErrors(errors)
       } else {
-        toast({ title: 'Error', description: 'Failed to create purchase order', variant: 'destructive' });
+        toast({ title: 'Error', description: 'Failed to create purchase order', variant: 'destructive' })
       }
     }
-  };
+  }
 
   // Use purchaseOrders from React Query, fallback to prop for SSR
-  const orders = purchaseOrders || propPurchaseOrders || [];
-  const isLoading = purchaseOrdersLoading || loading;
+  const orders = purchaseOrders || propPurchaseOrders || []
+  const isLoading = purchaseOrdersLoading || loading
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Purchase Orders</h2>
         {/* Allow both admin and cashier to create purchase orders */}
-        {(user?.role === 'admin' || user?.role === 'cashier') && (
+        {(user && ((user.role as AppRole) === 'admin' || (user.role as AppRole) === 'cashier')) && (
           <Button onClick={() => setIsAddDialogOpen(true)}>
             Create Purchase Order
           </Button>
@@ -260,7 +268,7 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
               ? 'Loading purchase orders...'
               : 'No purchase orders found or failed to load.'}
           </div>
-        )
+          )
         : (
           <div className="rounded-md border">
             <Table>
@@ -284,12 +292,12 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
                         No purchase orders found or failed to load.
                       </TableCell>
                     </TableRow>
-                  )
+                    )
                   : (
-                    orders.map(
-                      (
-                        order: PurchaseOrder & { supplier?: { name: string } }
-                      ) => (
+                      orders.map(
+                        (
+                          order: PurchaseOrder & { supplier?: { name: string } }
+                        ) => (
                         <TableRow key={order.id} onClick={() => setSelectedOrder(order)} className="cursor-pointer hover:bg-muted/50">
                           <TableCell>{order.id}</TableCell>
                           <TableCell>
@@ -316,14 +324,15 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
                           </TableCell>
                           <TableCell>
                             KSh {order.total_amount != null && !isNaN(Number(order.total_amount))
-                              ? Number(order.total_amount).toLocaleString()
-                              : '0'}
+                            ? Number(order.total_amount).toLocaleString()
+                            : '0'}
                           </TableCell>
                           <TableCell>
                             {order.notes}
                           </TableCell>
                           <TableCell>
-                            {canChangeStatus(order.status) && order.status === 'pending' ? (
+                            {canChangeStatus(order.status) && order.status === 'pending'
+                              ? (
                                 <Select
                                   value={order.status}
                                   onValueChange={(value) =>
@@ -344,7 +353,8 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
                                     ))}
                                   </SelectContent>
                                 </Select>
-                              ) : null}
+                                )
+                              : null}
                             {/* Mark as Received button for approved orders */}
                             {order.status === 'approved' && (
                               <Button
@@ -354,22 +364,24 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
                                 disabled={markingReceivedId === order.id}
                                 onClick={() => handleMarkReceived(order.id)}
                               >
-                                {markingReceivedId === order.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  'Mark as Received'
-                                )}
+                                {markingReceivedId === order.id
+                                  ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    )
+                                  : (
+                                      'Mark as Received'
+                                    )}
                               </Button>
                             )}
                           </TableCell>
                         </TableRow>
+                        )
                       )
-                    )
-                  )}
+                    )}
               </TableBody>
             </Table>
           </div>
-        )}
+          )}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -434,10 +446,10 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
             <PurchaseOrderForm
               formData={formData}
               onInputChange={handleInputChange}
-              onItemChange={(index: number, field: string, value: any, extra?: Record<string, any>) => {
-                const newItems = [...formData.items];
-                newItems[index] = { ...newItems[index], [field]: value, ...extra };
-                setFormData((prev) => ({ ...prev, items: newItems }));
+              onItemChange={(index: number, field: string, value: string | number, extra?: Record<string, unknown>) => {
+                const newItems: PurchaseOrderItem[] = [...formData.items]
+                newItems[index] = { ...newItems[index], [field]: value, ...extra }
+                setFormData((prev) => ({ ...prev, items: newItems }))
               }}
               onRemoveItem={removeItem}
               products={productsList}
@@ -458,8 +470,8 @@ export function PurchaseOrders({ purchaseOrders: propPurchaseOrders, loading }: 
         orderId={selectedOrder?.id ?? null}
         isOpen={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
-        {...(selectedOrder && 'supplier' in selectedOrder ? { supplier: (selectedOrder as any).supplier } : {})}
-        {...(selectedOrder && 'items' in selectedOrder && Array.isArray((selectedOrder as any).items) ? { items: (selectedOrder as any).items } : {})}
+        supplier={selectedOrder?.supplier as Supplier}
+        items={selectedOrder?.items}
       />
     </div>
   )

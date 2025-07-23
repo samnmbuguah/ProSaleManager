@@ -15,7 +15,7 @@ interface InventoryStatusProps {
   onSearch: (query: string) => void
 }
 
-export default function InventoryStatus({
+export default function InventoryStatus ({
   products,
   onSearch
 }: InventoryStatusProps) {
@@ -87,12 +87,12 @@ export default function InventoryStatus({
                   No products found. Add products to see inventory status.
                 </TableCell>
               </TableRow>
-            )
+              )
             : (
-              safeProducts.map((product) => {
-                const status = getStockStatus(product.quantity || 0)
-                const value = (product.price || 0) * (product.quantity || 0)
-                return (
+                safeProducts.map((product) => {
+                  const status = getStockStatus(product.quantity || 0)
+                  const value = (product.price || 0) * (product.quantity || 0)
+                  return (
                   <TableRow key={product.id}>
                     <TableCell>{product.name}</TableCell>
                     <TableCell>{product.sku}</TableCell>
@@ -101,7 +101,7 @@ export default function InventoryStatus({
                     </TableCell>
                     <TableCell className="text-right">{product.quantity || 0}</TableCell>
                     <TableCell>
-                      <Badge variant={status.variant as "default" | "destructive" | "outline" | "secondary"}>
+                      <Badge variant={status.variant as 'default' | 'destructive' | 'outline' | 'secondary'}>
                         {status.label}
                       </Badge>
                     </TableCell>
@@ -109,9 +109,9 @@ export default function InventoryStatus({
                       {formatCurrency(value)}
                     </TableCell>
                   </TableRow>
-                )
-              })
-            )}
+                  )
+                })
+              )}
         </TableBody>
       </Table>
     </div>

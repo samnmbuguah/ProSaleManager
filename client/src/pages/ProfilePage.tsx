@@ -201,7 +201,7 @@ export default function ProfilePage () {
     }))
   }
 
-  const handlePreferenceChange = (key: string, value: any) => {
+  const handlePreferenceChange = (key: string, value: string | boolean) => {
     setPreferences((prev) => ({
       ...prev,
       [key]: value
@@ -292,7 +292,7 @@ export default function ProfilePage () {
                       value={
                         user.role
                           ? user.role.charAt(0).toUpperCase() +
-                            user.role.slice(1)
+                          user.role.slice(1)
                           : ''
                       }
                       disabled
@@ -313,16 +313,16 @@ export default function ProfilePage () {
                 <Button type="submit" disabled={isLoading.profile}>
                   {isLoading.profile
                     ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Updating...
-                    </>
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Updating...
+                      </>
                       )
                     : (
-                    <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Save Changes
-                    </>
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Changes
+                      </>
                       )}
                 </Button>
               </CardFooter>
@@ -369,10 +369,10 @@ export default function ProfilePage () {
                       >
                         {showPassword.current
                           ? (
-                          <EyeOff className="h-4 w-4" />
+                            <EyeOff className="h-4 w-4" />
                             )
                           : (
-                          <Eye className="h-4 w-4" />
+                            <Eye className="h-4 w-4" />
                             )}
                       </Button>
                     </div>
@@ -404,10 +404,10 @@ export default function ProfilePage () {
                       >
                         {showPassword.new
                           ? (
-                          <EyeOff className="h-4 w-4" />
+                            <EyeOff className="h-4 w-4" />
                             )
                           : (
-                          <Eye className="h-4 w-4" />
+                            <Eye className="h-4 w-4" />
                             )}
                       </Button>
                     </div>
@@ -442,10 +442,10 @@ export default function ProfilePage () {
                       >
                         {showPassword.confirm
                           ? (
-                          <EyeOff className="h-4 w-4" />
+                            <EyeOff className="h-4 w-4" />
                             )
                           : (
-                          <Eye className="h-4 w-4" />
+                            <Eye className="h-4 w-4" />
                             )}
                       </Button>
                     </div>
@@ -456,10 +456,10 @@ export default function ProfilePage () {
                 <Button type="submit" disabled={isLoading.password}>
                   {isLoading.password
                     ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Updating...
-                    </>
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Updating...
+                      </>
                       )
                     : (
                         'Change Password'

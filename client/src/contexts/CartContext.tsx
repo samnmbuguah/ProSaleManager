@@ -54,7 +54,7 @@ interface PotentialCartItemData {
 }
 
 // Reducer function to handle cart state updates
-function cartReducer(state: Cart, action: CartAction): Cart {
+function cartReducer (state: Cart, action: CartAction): Cart {
   switch (action.type) {
     case 'ADD_ITEM': {
       const { product, unitType, unitPrice } = action.payload

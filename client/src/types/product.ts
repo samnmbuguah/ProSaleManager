@@ -43,7 +43,8 @@ export type ProductFormData = {
   min_quantity: number;
   image_url: string;
   is_active: boolean;
-  images: string[]; // New field for multiple images
+  images: string[];
+  [key: string]: string | number | boolean | string[];
 };
 
 export interface Product {

@@ -12,8 +12,8 @@ export function useProducts () {
     queryKey: ['products'],
     queryFn: async () => {
       const response = await api.get(API_ENDPOINTS.products.list)
-      // Always return the array of products
-      return response.data.data
+      // Defensive: Only return array if present, else []
+      return Array.isArray(response.data.data) ? response.data.data : []
     }
   })
 

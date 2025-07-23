@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { useToast } from '@/components/ui/use-toast'
 import { Button } from '@/components/ui/button'
-import { Product } from '@/types/product'
+import { Product, ProductFormData } from '@/types/product'
 import Suppliers from '@/components/inventory/Suppliers'
 import { PurchaseOrders } from '@/components/inventory/PurchaseOrders'
 import { useSelector, useDispatch } from 'react-redux'
@@ -20,10 +20,9 @@ import ProductList from '@/components/inventory/ProductList'
 import ProductFormDialog from '@/components/inventory/ProductFormDialog'
 import ProductSearchBar from '@/components/inventory/ProductSearchBar'
 import TabsNav from '@/components/inventory/TabsNav'
-import { ProductFormData } from '@/types/product'
 import { api } from '@/lib/api'
 import { API_ENDPOINTS } from '@/lib/api-endpoints'
-import Swal from 'sweetalert2';
+import Swal from 'sweetalert2'
 import { usePurchaseOrders } from '@/hooks/use-purchase-orders'
 
 const InventoryPage: React.FC = () => {
@@ -59,7 +58,7 @@ const InventoryPage: React.FC = () => {
   // const [purchaseOrdersLoading, setPurchaseOrdersLoading] = React.useState(false)
 
   // Use React Query hook for purchase orders
-  const { purchaseOrders, isLoading: purchaseOrdersLoading } = usePurchaseOrders();
+  const { purchaseOrders, isLoading: purchaseOrdersLoading } = usePurchaseOrders()
 
   const initialFormData = {
     name: '',
@@ -129,7 +128,7 @@ const InventoryPage: React.FC = () => {
         const payload: Partial<ProductFormData> = {}
         allowedFields.forEach((field) => {
           if (formData[field as keyof ProductFormData] !== undefined) {
-            payload[field as keyof ProductFormData] = formData[field as keyof ProductFormData] as any
+            payload[field as keyof ProductFormData] = formData[field as keyof ProductFormData] as ProductFormData[typeof field]
           }
         })
         if (selectedProduct) {
@@ -197,26 +196,36 @@ const InventoryPage: React.FC = () => {
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Yes, delete it!',
-      cancelButtonText: 'Cancel',
-    });
-    if (!result.isConfirmed) return;
+      cancelButtonText: 'Cancel'
+    })
+    if (!result.isConfirmed) return
     try {
-      await api.delete(API_ENDPOINTS.products.delete(id));
+      await api.delete(API_ENDPOINTS.products.delete(id))
       toast({
         title: 'Success',
-        description: 'Product deleted successfully',
-      });
-      dispatch(fetchProducts());
-    } catch (error: any) {
+        description: 'Product deleted successfully'
+      })
+      dispatch(fetchProducts())
+    } catch (error: unknown) {
       // Show SweetAlert2 error dialog for backend error
-      const message = error?.response?.data?.message || error.message || 'Failed to delete product';
+      let message = 'Failed to delete product'
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        (error as { response?: { data?: { message?: string } } }).response
+      ) {
+        message = (error as { response?: { data?: { message?: string } }, message?: string }).response?.data?.message || (error as { message?: string }).message || message
+      } else if (error instanceof Error) {
+        message = error.message
+      }
       Swal.fire({
         title: 'Error',
         text: message,
-        icon: 'error',
-      });
+        icon: 'error'
+      })
     }
-  };
+  }
 
   const handleSearch = async (query: string) => {
     try {
