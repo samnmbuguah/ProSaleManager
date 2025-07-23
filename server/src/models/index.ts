@@ -11,6 +11,7 @@ import Sale from './Sale.js';
 import SaleItem from './SaleItem.js';
 import Expense from './Expense.js';
 import Store from './Store.js';
+import ReceiptSettings from './ReceiptSettings.js';
 import { setupAssociations } from './associations.js';
 
 // Set up all model associations
@@ -31,4 +32,5 @@ export {
   SaleItem,
   Expense,
   Store,
+  ReceiptSettings,
 }; 

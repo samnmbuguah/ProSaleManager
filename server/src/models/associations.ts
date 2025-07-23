@@ -10,6 +10,7 @@ import PurchaseOrder from "./PurchaseOrder.js";
 import PurchaseOrderItem from "./PurchaseOrderItem.js";
 import Category from './Category.js';
 import Store from "./Store.js";
+import ReceiptSettings from "./ReceiptSettings.js";
 
 export function setupAssociations() {
   // User - Sale association
@@ -84,7 +85,7 @@ export function setupAssociations() {
   Customer.belongsTo(Store, { foreignKey: "store_id" });
 
   Store.hasMany(Sale, { foreignKey: "store_id" });
-  Sale.belongsTo(Store, { foreignKey: "store_id" });
+  Sale.belongsTo(Store, { foreignKey: "store_id", as: "store" });
 
   Store.hasMany(Expense, { foreignKey: "store_id" });
   Expense.belongsTo(Store, { foreignKey: "store_id" });
@@ -100,4 +101,8 @@ export function setupAssociations() {
 
   Store.hasMany(PurchaseOrderItem, { foreignKey: "store_id" });
   PurchaseOrderItem.belongsTo(Store, { foreignKey: "store_id" });
+
+  // ReceiptSettings association
+  Store.hasOne(ReceiptSettings, { foreignKey: "store_id", as: "receiptSettings" });
+  ReceiptSettings.belongsTo(Store, { foreignKey: "store_id", as: "store" });
 }
