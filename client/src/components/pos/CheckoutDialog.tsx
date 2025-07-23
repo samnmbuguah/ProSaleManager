@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -54,9 +55,17 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   const balance = paymentMethod === 'cash' && !isNaN(tendered) ? tendered - total : 0
   const canCheckout = paymentMethod === 'cash' ? tendered >= total : true
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (paymentMethod !== 'cash') setAmountTendered('')
   }, [paymentMethod])
+
+  // Auto-select Walk-in Customer if none is selected when dialog opens
+  useEffect(() => {
+    if (open && (!selectedCustomer || !customers.some(c => c.id === selectedCustomer))) {
+      const walkIn = customers.find(c => c.name === 'Walk-in Customer')
+      if (walkIn) setSelectedCustomer(walkIn.id)
+    }
+  }, [open, customers, selectedCustomer, setSelectedCustomer])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -83,17 +92,27 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
           <div className="space-y-2">
             <Label>Customer (Optional)</Label>
             <Select
-              value={selectedCustomer ? selectedCustomer.toString() : 'walk_in'}
-              onValueChange={(value) =>
-                setSelectedCustomer(value !== 'walk_in' ? parseInt(value) : null)
-              }
+              value={selectedCustomer ? selectedCustomer.toString() : ''}
+              onValueChange={(value) => {
+                if (value === '' || value === 'walk_in') {
+                  const walkIn = customers.find(c => c.name === 'Walk-in Customer')
+                  if (walkIn) setSelectedCustomer(walkIn.id)
+                  else setSelectedCustomer(null)
+                } else {
+                  setSelectedCustomer(parseInt(value))
+                }
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select customer" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="walk_in">Walk-in Customer</SelectItem>
-                {(customers || []).map((customer) => (
+                {customers.find(c => c.name === 'Walk-in Customer') && (
+                  <SelectItem value={customers.find(c => c.name === 'Walk-in Customer')!.id.toString()}>
+                    Walk-in Customer
+                  </SelectItem>
+                )}
+                {(customers || []).filter(c => c.name !== 'Walk-in Customer').map((customer) => (
                   <SelectItem key={customer.id} value={customer.id.toString()}>
                     {customer.name}
                   </SelectItem>
