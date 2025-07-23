@@ -8,7 +8,7 @@ interface PriceUnitsSectionProps {
   form: UseFormReturn<ProductFormData>
 }
 
-export function PriceUnitsSection({ form }: PriceUnitsSectionProps) {
+export function PriceUnitsSection ({ form }: PriceUnitsSectionProps) {
   return (
     <Card>
       <CardHeader>

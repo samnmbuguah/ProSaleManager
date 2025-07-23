@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 import { usePurchaseOrders } from '@/hooks/use-purchase-orders'
 import { useSuppliers } from '@/hooks/use-suppliers'
+import type { Supplier } from '@/types/supplier'
 import { useState } from 'react'
 import { PurchaseOrderDetails } from './PurchaseOrderDetails'
 
@@ -19,7 +20,7 @@ interface PurchaseOrderListProps {
   onCreateOrder: () => void;
 }
 
-export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
+export function PurchaseOrderList ({ onCreateOrder }: PurchaseOrderListProps) {
   const { purchaseOrders, updatePurchaseOrderStatus, isUpdating } =
     usePurchaseOrders()
   const { suppliers } = useSuppliers()
@@ -54,7 +55,7 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
   }
 
   const getSupplier = (supplierId: number) => {
-    return suppliers?.find((s: any) => s.id === supplierId)
+    return suppliers?.find((s: Supplier) => s.id === supplierId)
   }
 
   return (
@@ -136,17 +137,7 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
         onClose={() => setSelectedOrder(null)}
         supplier={
           selectedOrder
-            ? {
-              id: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.id,
-              name: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.name,
-              email: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.email,
-              phone: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.phone,
-              address: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.address,
-              contact_person: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.contact_person,
-              status: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.status,
-              created_at: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.created_at,
-              updated_at: suppliers?.find((s: any) => s.id === selectedOrder.supplier_id)?.updated_at
-            }
+            ? getSupplier(selectedOrder.supplier_id)
             : null
         }
       />

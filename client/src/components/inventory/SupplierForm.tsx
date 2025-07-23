@@ -11,7 +11,7 @@ interface SupplierFormProps {
   isSubmitting?: boolean
 }
 
-export function SupplierForm({ onSubmit, defaultValues, isSubmitting = false }: SupplierFormProps) {
+export function SupplierForm ({ onSubmit, defaultValues, isSubmitting = false }: SupplierFormProps) {
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {

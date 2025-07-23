@@ -2,14 +2,15 @@ import { useEffect } from 'react'
 import { useLocation } from 'wouter'
 import { useAuthContext } from '@/contexts/AuthContext'
 
+type AppRole = 'admin' | 'manager' | 'user' | 'super_admin' | 'cashier';
 interface RoleBasedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: ('admin' | 'user')[];
+  allowedRoles?: AppRole[];
 }
 
 export const RoleBasedRoute = ({
   children,
-  allowedRoles = ['admin', 'user']
+  allowedRoles = ['admin', 'manager', 'user', 'super_admin', 'cashier']
 }: RoleBasedRouteProps) => {
   const { isAuthenticated, user, isLoading } = useAuthContext()
   const [, setLocation] = useLocation()

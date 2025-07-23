@@ -12,7 +12,7 @@ interface CustomerFormProps {
   isSubmitting?: boolean
 }
 
-export function CustomerForm({ onSubmit, defaultValues, isSubmitting = false }: CustomerFormProps) {
+export function CustomerForm ({ onSubmit, defaultValues, isSubmitting = false }: CustomerFormProps) {
   const form = useForm<CustomerInsert>({
     resolver: zodResolver(customerSchema),
     defaultValues: {

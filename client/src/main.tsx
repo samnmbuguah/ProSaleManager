@@ -8,7 +8,7 @@ import { Provider } from 'react-redux'
 import { store } from './store'
 import { AuthProvider } from '@/contexts/AuthContext'
 import App from './App'
-import { StoreProvider } from '@/contexts/StoreContext';
+import { StoreProvider } from '@/contexts/StoreContext'
 
 // Force light mode by removing the 'dark' class from html and body
 if (typeof document !== 'undefined') {

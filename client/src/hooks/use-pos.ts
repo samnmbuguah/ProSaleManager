@@ -3,8 +3,13 @@ import type { Product } from '@/types/product'
 import { API_ENDPOINTS } from '@/lib/api-endpoints'
 import { api } from '@/lib/api'
 
+interface PriceUnit {
+  unit_type: string;
+  price: number;
+  is_default: boolean;
+}
 interface ProductWithPriceUnits extends Product {
-  price_units: any[];
+  price_units: PriceUnit[];
 }
 
 export interface ReceiptData {

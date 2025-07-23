@@ -84,9 +84,9 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
               <p>No products found</p>
               <p className="text-sm">Try searching for a product</p>
             </div>
-          )
+            )
           : (
-            paginatedProducts.map((product) => (
+              paginatedProducts.map((product) => (
               <Card
                 key={product.id}
                 className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-blue-300"
@@ -96,7 +96,8 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                   <div className="space-y-2">
                     {/* Product Image Carousel */}
                     <div className="w-full flex justify-center items-center pb-2">
-                      {product.images && product.images.length > 0 ? (
+                      {product.images && product.images.length > 0
+                        ? (
                         <Carousel className="w-32">
                           <CarouselContent>
                             {product.images.map((img, idx) => (
@@ -112,13 +113,14 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                           <CarouselPrevious className="left-0 top-1/2 -translate-y-1/2" />
                           <CarouselNext className="right-0 top-1/2 -translate-y-1/2" />
                         </Carousel>
-                      ) : (
+                          )
+                        : (
                         <img
                           src={'https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=80&q=80'}
                           alt={product.name}
                           className="w-28 h-28 object-cover rounded-md border"
                         />
-                      )}
+                          )}
                     </div>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -164,8 +166,8 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                   </div>
                 </CardContent>
               </Card>
-            ))
-          )}
+              ))
+            )}
       </div>
 
       {/* Pagination Controls */}

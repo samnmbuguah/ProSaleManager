@@ -2,10 +2,13 @@ import { Router } from "express";
 import Supplier from "../models/Supplier.js";
 import { Op } from "sequelize";
 import { storeScope } from "../utils/helpers.js";
+import { requireAuth, attachStoreIdToUser } from '../middleware/auth.middleware.js';
 import { requireStoreContext } from '../middleware/store-context.middleware.js';
 
 const router = Router();
 
+router.use(requireAuth);
+router.use(attachStoreIdToUser);
 router.use(requireStoreContext);
 // Get all suppliers
 router.get("/", async (req, res) => {

@@ -3,23 +3,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import ProductPerformance from '../components/reports/ProductPerformance'
 import InventoryStatus from '../components/reports/InventoryStatus'
 import { useInventoryReport, useProductPerformanceReport } from '@/hooks/use-reports'
+import { Product } from '@/types/product'
 
 // ErrorBoundary component
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
-  constructor(props: { children: React.ReactNode }) {
+  constructor (props: { children: React.ReactNode }) {
     super(props)
     this.state = { hasError: false }
   }
 
-  static getDerivedStateFromError() {
+  static getDerivedStateFromError () {
     return { hasError: true }
   }
 
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
+  componentDidCatch (error: Error, info: React.ErrorInfo) {
     console.error('ErrorBoundary caught:', error, info)
   }
 
-  render() {
+  render () {
     if (this.state.hasError) {
       return <div className="text-center text-red-500 py-12">Something went wrong in the reports page.</div>
     }
@@ -27,7 +28,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-export default function ReportsPage() {
+export default function ReportsPage () {
   const { data: inventoryData, isLoading: inventoryLoading, error: inventoryError } = useInventoryReport()
   const { data: performanceData, isLoading: performanceLoading, error: performanceError } = useProductPerformanceReport()
   const [tab, setTab] = useState('inventory')
@@ -68,7 +69,7 @@ export default function ReportsPage() {
           <TabsContent value="inventory">
             <InventoryStatus
               products={
-                (inventoryData?.products || []).map((p: any) => ({
+                (inventoryData?.products || []).map((p: Product) => ({
                   ...p,
                   price: p.piece_selling_price
                 }))

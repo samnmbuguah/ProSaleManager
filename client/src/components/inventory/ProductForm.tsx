@@ -12,8 +12,8 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { useCategories } from '@/hooks/use-categories';
-import React from 'react';
+import { useCategories } from '@/hooks/use-categories'
+import React from 'react'
 
 interface ProductFormProps {
   initialData?: Partial<ProductFormData>;
@@ -41,13 +41,13 @@ export function ProductForm ({
     }
   })
 
-  const { data: categories, isLoading } = useCategories();
+  const { data: categories, isLoading } = useCategories()
 
   React.useEffect(() => {
     if (categories && categories.length > 0 && !form.watch('category_id')) {
-      form.setValue('category_id', categories[0].id);
+      form.setValue('category_id', categories[0].id)
     }
-  }, [categories, form]);
+  }, [categories, form])
 
   const handleSubmit = async (data: ProductFormData) => {
     await onSubmit(data)

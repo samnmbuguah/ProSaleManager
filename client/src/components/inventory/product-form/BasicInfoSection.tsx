@@ -16,15 +16,15 @@ import {
 } from '@/components/ui/select'
 import { type ProductFormData } from '@/types/product'
 import { Label } from '@/components/ui/label'
-import { useCategories } from '@/hooks/use-categories';
+import { useCategories } from '@/hooks/use-categories'
 
 interface BasicInfoSectionProps {
   form: UseFormReturn<ProductFormData>;
 }
 
-export function BasicInfoSection({ form }: BasicInfoSectionProps) {
+export function BasicInfoSection ({ form }: BasicInfoSectionProps) {
   const { control } = form
-  const { data: categories, isLoading } = useCategories();
+  const { data: categories, isLoading } = useCategories()
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <FormField

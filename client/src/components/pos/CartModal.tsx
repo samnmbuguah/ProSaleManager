@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { useCart } from '@/contexts/CartContext'
 import Swal from 'sweetalert2'
 
-export default function CartModal({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
+export default function CartModal ({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
   const { cart, removeFromCart, clearCart } = useCart()
 
   const handleRemove = (itemId: number) => {
@@ -30,9 +30,11 @@ export default function CartModal({ open, onOpenChange }: { open: boolean, onOpe
         <DialogHeader>
           <DialogTitle>Your Cart</DialogTitle>
         </DialogHeader>
-        {cart.items.length === 0 ? (
+        {cart.items.length === 0
+          ? (
           <div className="text-center text-muted-foreground py-8">Your cart is empty.</div>
-        ) : (
+            )
+          : (
           <div className="space-y-2">
             {cart.items.map(item => (
               <div key={item.id} className="flex justify-between items-center border-b py-2">
@@ -46,8 +48,8 @@ export default function CartModal({ open, onOpenChange }: { open: boolean, onOpe
               <Button onClick={() => onOpenChange(false)}>Close</Button>
             </div>
           </div>
-        )}
+            )}
       </DialogContent>
     </Dialog>
   )
-} 
+}

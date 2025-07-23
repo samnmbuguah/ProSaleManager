@@ -1,30 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { authService } from '../services/authService'
-import { User } from '../types/user'
-
-interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-interface RegisterData extends LoginCredentials {
-  name: string;
-}
-
-interface AuthState {
-  user: User | null;
-  isLoading: boolean;
-  error: string | null;
-  isAuthenticated: boolean;
-  setUser: (user: User | null) => void;
-  setError: (error: string | null) => void;
-  setLoading: (isLoading: boolean) => void;
-  login: (credentials: LoginCredentials) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
-  logout: () => Promise<void>;
-  checkSession: () => Promise<void>;
-}
+import { AuthState } from '../types/user'
 
 export const useAuth = create<AuthState>()(
   persist(
@@ -137,7 +114,7 @@ export const useAuth = create<AuthState>()(
       migrate: (persistedState: unknown, version: number) => {
         if (version === 0) {
           return {
-            ...(persistedState as any),
+            ...(persistedState as AuthState),
             version: 1
           }
         }

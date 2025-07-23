@@ -30,12 +30,11 @@ const registerSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 type RegisterFormData = z.infer<typeof registerSchema>;
 
-export default function AuthPage() {
+export default function AuthPage () {
   const [isLogin, setIsLogin] = useState(true)
-  const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [shouldNavigate, setShouldNavigate] = useState(false)
-  const { login, register } = useAuth()
+  const { login, register, isLoading } = useAuth()
   const { toast } = useToast()
   const [, setLocation] = useLocation()
 
@@ -66,7 +65,7 @@ export default function AuthPage() {
 
   const onSubmit = async (data: LoginFormData | RegisterFormData) => {
     try {
-      setIsLoading(true)
+      // setIsLoading(true) // This line is removed as per the edit hint.
 
       if (isLogin) {
         await login({ email: data.email, password: data.password })
@@ -79,15 +78,21 @@ export default function AuthPage() {
         })
         setShouldNavigate(true)
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Auth error:', error)
       const form = isLogin ? loginForm : registerForm
 
       // Show error toast
       let errorMessage =
         error instanceof Error ? error.message : 'Please check your credentials and try again'
-      if (error && error.response && error.response.status === 429) {
-        const retryAfter = error.response.headers?.['retry-after']
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        (error as { response?: { status?: number; headers?: { [key: string]: string } } }).response &&
+        (error as { response: { status: number } }).response.status === 429
+      ) {
+        const retryAfter = (error as { response: { headers?: { [key: string]: string } } }).response.headers?.['retry-after']
         if (retryAfter) {
           errorMessage = `Too many login attempts. Please wait ${retryAfter} seconds and try again.`
         } else {
@@ -105,7 +110,7 @@ export default function AuthPage() {
         message: errorMessage
       })
     } finally {
-      setIsLoading(false)
+      // setIsLoading(false) // This line is removed as per the edit hint.
     }
   }
 
@@ -154,7 +159,7 @@ export default function AuthPage() {
                       ? loginForm.formState.errors.email?.message
                       : registerForm.formState.errors.email?.message}
                   </p>
-                )}
+              )}
             </div>
 
             {!isLogin && (
@@ -200,10 +205,10 @@ export default function AuthPage() {
                   {showPassword
                     ? (
                       <EyeOff className="h-4 w-4" />
-                    )
+                      )
                     : (
                       <Eye className="h-4 w-4" />
-                    )}
+                      )}
                 </Button>
               </div>
               {(isLogin
@@ -214,7 +219,7 @@ export default function AuthPage() {
                       ? loginForm.formState.errors.password?.message
                       : registerForm.formState.errors.password?.message}
                   </p>
-                )}
+              )}
             </div>
 
             {(isLogin
@@ -225,13 +230,13 @@ export default function AuthPage() {
                     ? loginForm.formState.errors.root?.message
                     : registerForm.formState.errors.root?.message}
                 </p>
-              )}
+            )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading
                 ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )
+                  )
                 : null}
               {isLogin ? 'Login' : 'Register'}
             </Button>

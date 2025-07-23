@@ -16,7 +16,7 @@ import ProfilePage from '@/pages/ProfilePage'
 import ReportsPage from '@/pages/ReportsPage'
 import ShopPage from '@/pages/ShopPage'
 
-function ProtectedRoute({
+function ProtectedRoute ({
   component: Component,
   roles
 }: {
@@ -35,7 +35,7 @@ function ProtectedRoute({
   )
 }
 
-function App() {
+function App () {
   const { checkSession } = useAuth()
 
   useEffect(() => {

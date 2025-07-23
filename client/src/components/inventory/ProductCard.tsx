@@ -10,7 +10,7 @@ interface ProductCardProps {
   onDelete: (id: number) => void
 }
 
-export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
+export function ProductCard ({ product, onEdit, onDelete }: ProductCardProps) {
   const getStockStatus = () => {
     if (product.quantity <= 0) {
       return { label: 'Out of Stock', variant: 'destructive' as const }

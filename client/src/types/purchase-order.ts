@@ -1,12 +1,22 @@
 import { z } from 'zod'
 
 export interface PurchaseOrderItem {
+  id?: number;
   product_id: number;
   purchase_order_id?: number;
   quantity: number;
   buying_price: number;
   selling_price: number;
   name?: string;
+  product_name?: string;
+  unit_type?: string;
+  unit_price?: number;
+  Product?: {
+    id: number;
+    name: string;
+    sku?: string;
+    piece_selling_price?: number;
+  };
 }
 
 // Define schema for PurchaseOrderItem used within the form
@@ -48,6 +58,18 @@ export interface PurchaseOrder {
   expected_delivery_date?: string | null;
   created_at: Date | null;
   updated_at: Date | null;
+  supplier?: {
+    id: number;
+    name: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    contact_person?: string;
+    status?: string;
+    created_at?: string;
+    updated_at?: string;
+  };
+  items?: PurchaseOrderItem[];
 }
 
 export interface PurchaseOrderWithItems extends PurchaseOrder {

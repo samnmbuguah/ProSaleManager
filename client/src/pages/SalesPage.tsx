@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { ReceiptSettings } from '@/components/pos/ReceiptSettings'
 import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
@@ -30,17 +30,31 @@ import { Sale } from '@/types/sale'
 import { api } from '@/lib/api'
 import { API_ENDPOINTS } from '@/lib/api-endpoints'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { useCallback } from 'react'
 
+interface OrderItem {
+  id: number;
+  Product?: {
+    name?: string;
+  };
+  quantity: number;
+  unit_price: number;
+}
+interface Order {
+  id: number;
+  createdAt: string;
+  status: string;
+  total_amount: number;
+  items: OrderItem[];
+}
 // OrderDetailsDialog: Separate component for order details in Orders tab
-function OrderDetailsDialog({ order, open, onClose, onMarkShipped, onMarkFulfilled }: {
-  order: any;
+function OrderDetailsDialog ({ order, open, onClose, onMarkShipped, onMarkFulfilled }: {
+  order: Order;
   open: boolean;
   onClose: () => void;
   onMarkShipped: () => void;
   onMarkFulfilled: () => void;
 }) {
-  if (!order) return null;
+  if (!order) return null
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-3xl" aria-describedby={undefined}>
@@ -59,7 +73,7 @@ function OrderDetailsDialog({ order, open, onClose, onMarkShipped, onMarkFulfill
             <div>
               <h3 className="font-semibold mb-2">Items</h3>
               <ul className="list-disc pl-4">
-                {order.items?.map((item: any) => (
+                {order.items?.map((item: OrderItem) => (
                   <li key={item.id}>
                     {item.Product?.name || 'Unknown Product'} x {item.quantity} @ KSh {item.unit_price}
                   </li>
@@ -78,16 +92,16 @@ function OrderDetailsDialog({ order, open, onClose, onMarkShipped, onMarkFulfill
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
 
-export function SalesPage() {
+export function SalesPage () {
   const [tab, setTab] = useState('sales')
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [ordersError, setOrdersError] = useState<string | null>(null)
   const pageSize = 10
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
 
   const { data: salesData } = useQuery<{
     sales: Sale[];
@@ -108,11 +122,26 @@ export function SalesPage() {
         const response = await api.get(API_ENDPOINTS.orders.list + `?page=${currentPage}&pageSize=${pageSize}`)
         setOrdersError(null)
         return response.data
-      } catch (error: any) {
-        if (error?.response?.status === 401 || error?.response?.status === 403) {
-          setOrdersError('You are not authorized to view orders. Please log in.');
+      } catch (error: unknown) {
+        if (
+          typeof error === 'object' &&
+          error !== null &&
+          'response' in error &&
+          (error as { response?: { status?: number; headers?: { [key: string]: string } } }).response &&
+          (error as { response: { status: number } }).response.status === 429
+        ) {
+          setOrdersError('You are not authorized to view orders. Please log in.')
+        } else if (
+          typeof error === 'object' &&
+          error !== null &&
+          'response' in error &&
+          (error as { response?: { data?: { message?: string } } }).response
+        ) {
+          setOrdersError((error as { response?: { data?: { message?: string } } }).response?.data?.message || (error as { message?: string }).message || 'Failed to load orders.')
+        } else if (error instanceof Error) {
+          setOrdersError(error.message)
         } else {
-          setOrdersError(error?.response?.data?.message || error.message || 'Failed to load orders.')
+          setOrdersError('Failed to load orders.')
         }
         throw error
       }
@@ -146,18 +175,18 @@ export function SalesPage() {
 
   // Handlers for order actions
   const handleMarkShipped = useCallback(() => {
-    if (!selectedOrder) return;
+    if (!selectedOrder) return
     // TODO: Implement API call to mark as shipped
-    alert('Order marked as shipped (implement API call)');
-    setSelectedOrder({ ...selectedOrder, status: 'shipped' });
-  }, [selectedOrder]);
+    alert('Order marked as shipped (implement API call)')
+    setSelectedOrder({ ...selectedOrder, status: 'shipped' })
+  }, [selectedOrder])
 
   const handleMarkFulfilled = useCallback(() => {
-    if (!selectedOrder) return;
+    if (!selectedOrder) return
     // TODO: Implement API call to mark as fulfilled
-    alert('Order marked as fulfilled (implement API call)');
-    setSelectedOrder({ ...selectedOrder, status: 'fulfilled' });
-  }, [selectedOrder]);
+    alert('Order marked as fulfilled (implement API call)')
+    setSelectedOrder({ ...selectedOrder, status: 'fulfilled' })
+  }, [selectedOrder])
 
   return (
     <div className="container mx-auto p-4 mt-16">
@@ -239,12 +268,12 @@ export function SalesPage() {
                               WhatsApp
                             </Badge>
                           </div>
-                        )
+                          )
                         : (
                           <span className="text-muted-foreground text-sm">
                             Not sent
                           </span>
-                        )}
+                          )}
                     </TableCell>
                     <TableCell className="text-right">
                       {formatCurrency(sale.total_amount)}
@@ -306,46 +335,50 @@ export function SalesPage() {
         </TabsContent>
         <TabsContent value="orders">
           <div className="rounded-md border">
-            {ordersError ? (
-              <div className="text-center text-destructive py-8 font-semibold">{ordersError}</div>
-            ) : isLoadingOrders ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Items</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {ordersData?.orders?.map((order: any) => (
-                    <TableRow key={order.id}>
-                      <TableCell>{format(new Date(order.createdAt), 'PPp')}</TableCell>
-                      <TableCell>{order.status}</TableCell>
-                      <TableCell>{order.items?.length}</TableCell>
-                      <TableCell className="text-right">KSh {order.total_amount}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          onClick={() => setSelectedOrder(order)}
-                        >
-                          View Details
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+            {ordersError
+              ? (
+                <div className="text-center text-destructive py-8 font-semibold">{ordersError}</div>
+                )
+              : isLoadingOrders
+                ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                  )
+                : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Items</TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                        <TableHead></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {ordersData?.orders?.map((order: Order) => (
+                        <TableRow key={order.id}>
+                          <TableCell>{format(new Date(order.createdAt), 'PPp')}</TableCell>
+                          <TableCell>{order.status}</TableCell>
+                          <TableCell>{Array.isArray(order.items) ? order.items.length : 0}</TableCell>
+                          <TableCell className="text-right">KSh {order.total_amount}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              onClick={() => setSelectedOrder(order)}
+                            >
+                              View Details
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  )}
           </div>
           <OrderDetailsDialog
-            order={selectedOrder}
+            order={selectedOrder!}
             open={!!selectedOrder}
             onClose={() => setSelectedOrder(null)}
             onMarkShipped={handleMarkShipped}
@@ -449,9 +482,11 @@ export function SalesPage() {
                         <TableRow key={item.id}>
                           <TableCell>
                             {item.Product?.name || 'Unknown Product'}
-                            {item.Product?.sku ? (
-                              <span className="block text-xs text-muted-foreground">SKU: {item.Product.sku}</span>
-                            ) : null}
+                            {item.Product?.sku
+                              ? (
+                                <span className="block text-xs text-muted-foreground">SKU: {item.Product.sku}</span>
+                                )
+                              : null}
                           </TableCell>
                           <TableCell className="text-right">
                             {formatCurrency(item.unit_price)}

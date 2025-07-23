@@ -1,15 +1,15 @@
-import { Product } from '@/types/product'
+import { Product, STOCK_UNITS } from '@/types/product'
+import type { PurchaseOrderItem } from '@/types/purchase-order'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { STOCK_UNITS } from '@/types/product'
 
 interface PurchaseOrderItemsListProps {
-  items: any[]
+  items: PurchaseOrderItem[]
   products: Product[]
-  onItemChange: (index: number, field: string, value: any, extra?: Record<string, any>) => void
+  onItemChange: (index: number, field: keyof PurchaseOrderItem, value: string | number, extra?: Record<string, unknown>) => void
   onRemoveItem: (index: number) => void
 }
 
-export function PurchaseOrderItemsList({
+export function PurchaseOrderItemsList ({
   items,
   products, // not used anymore
   onItemChange,
@@ -38,27 +38,29 @@ export function PurchaseOrderItemsList({
           return (
             <div key={index} className="flex gap-2 p-2 border rounded items-center">
               <div className="w-60">
-                {item.product_name ? (
+                {item.product_name
+                  ? (
                   <span>{item.product_name}</span>
-                ) : (
+                    )
+                  : (
                   <span className="text-gray-400 italic">No product selected</span>
-                )}
+                    )}
               </div>
               <div className="w-24">
                 <Select
                   value={unit}
                   onValueChange={(value) => {
-                    if (!product) return;
-                    let buying_price = product.piece_buying_price;
-                    let selling_price = product.piece_selling_price;
+                    if (!product) return
+                    let buyingPrice = product.piece_buying_price
+                    let sellingPrice = product.piece_selling_price
                     if (value === 'pack') {
-                      buying_price = product.pack_buying_price;
-                      selling_price = product.pack_selling_price;
+                      buyingPrice = product.pack_buying_price
+                      sellingPrice = product.pack_selling_price
                     } else if (value === 'dozen') {
-                      buying_price = product.dozen_buying_price;
-                      selling_price = product.dozen_selling_price;
+                      buyingPrice = product.dozen_buying_price
+                      sellingPrice = product.dozen_selling_price
                     }
-                    onItemChange(index, 'unit_type', value, { buying_price, selling_price });
+                    onItemChange(index, 'unit_type', value, { buying_price: buyingPrice, selling_price: sellingPrice })
                   }}
                 >
                   <SelectTrigger className="w-full">

@@ -10,7 +10,7 @@ import { ProductFormData, Product } from '@/types/product'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { useCategories } from '@/hooks/use-categories';
+import { useCategories } from '@/hooks/use-categories'
 
 interface ProductFormDialogProps {
   open: boolean;
@@ -32,7 +32,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   // Key for localStorage
   const FORM_DRAFT_KEY = 'productFormDraft'
 
-  const { data: categories, isLoading } = useCategories();
+  const { data: categories, isLoading } = useCategories()
 
   // Load draft from localStorage on mount (only for add, not edit), and sanitize category_id
   React.useEffect(() => {
@@ -151,7 +151,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       if (formData[field as keyof ProductFormData] !== undefined) {
         const value = formData[field as keyof ProductFormData]
         if (typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean') {
-          (payload as any)[field] = value
+          (payload as Partial<ProductFormData>)[field as keyof ProductFormData] = value
         }
       }
     })
@@ -202,7 +202,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   }
 
   // Helper to build the payload for submission, converting numbers
-  const handleSubmit = async (e: React.FormEvent, _localImageFile?: File) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const invalidField = validateForm()
     if (invalidField) {
@@ -221,22 +221,22 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       imageFiles.forEach((file) => formDataToSend.append('images', file))
       try {
         await onSubmit(e, imageFiles[0]) // Pass first file for legacy support
-      } catch (err: any) {
-        if (err?.response?.data?.message?.includes('SKU')) {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.message.includes('SKU')) {
           alert('SKU already exists. Please use a unique SKU.')
         } else {
-          alert('Failed to save product: ' + (err?.response?.data?.message || err.message))
+          alert('Failed to save product: ' + (err instanceof Error ? err.message : String(err)))
         }
       }
       return
     }
     try {
       await onSubmit(e)
-    } catch (err: any) {
-      if (err?.response?.data?.message?.includes('SKU')) {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes('SKU')) {
         alert('SKU already exists. Please use a unique SKU.')
       } else {
-        alert('Failed to save product: ' + (err?.response?.data?.message || err.message))
+        alert('Failed to save product: ' + (err instanceof Error ? err.message : String(err)))
       }
     }
     if (!selectedProduct) {
@@ -249,9 +249,9 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       setFormData((prev) => ({
         ...prev,
         category_id: categories[0].id
-      }));
+      }))
     }
-  }, [categories, formData.category_id, setFormData]);
+  }, [categories, formData.category_id, setFormData])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -45,7 +45,7 @@ interface ProductPerformanceProps {
   onSortChange: (sortBy: string) => void
 }
 
-export default function ProductPerformance({
+export default function ProductPerformance ({
   products,
   summary,
   onDateRangeChange,
@@ -140,14 +140,16 @@ export default function ProductPerformance({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {safeProducts.length === 0 ? (
+          {safeProducts.length === 0
+            ? (
             <TableRow>
               <TableCell colSpan={7} className="text-center text-muted-foreground">
                 No products found. Add products and sales to see performance.
               </TableCell>
             </TableRow>
-          ) : (
-            safeProducts.map((product) => (
+              )
+            : (
+                safeProducts.map((product) => (
               <TableRow key={product.productId}>
                 <TableCell>{product.productName}</TableCell>
                 <TableCell>{product.productSku}</TableCell>
@@ -167,8 +169,8 @@ export default function ProductPerformance({
                     : 'Never'}
                 </TableCell>
               </TableRow>
-            ))
-          )}
+                ))
+              )}
         </TableBody>
       </Table>
     </div>

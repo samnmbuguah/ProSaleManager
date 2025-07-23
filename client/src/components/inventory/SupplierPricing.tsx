@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Product } from '@/types/product'
-import type { SupplierFormData } from '@/types/supplier'
-import type { ProductSupplierFormData } from '@/types/product-supplier'
+import type { SupplierFormData, Supplier } from '@/types/supplier'
+import type { ProductSupplierFormData, ProductSupplier } from '@/types/product-supplier'
 import { useSuppliers } from '../../hooks/use-suppliers'
 import { Button } from '@/components/ui/button'
 import {
@@ -38,7 +38,7 @@ interface SupplierPricingProps {
   product: Product;
 }
 
-export function SupplierPricing({ product }: SupplierPricingProps) {
+export function SupplierPricing ({ product }: SupplierPricingProps) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [isLinkFormOpen, setIsLinkFormOpen] = useState(false)
   const {
@@ -96,7 +96,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
 
   const productSuppliersList =
     productSuppliers?.filter(
-      (ps: any) => Number(ps.product_id) === Number(product.id)
+      (ps: ProductSupplier) => Number(ps.product_id) === Number(product.id)
     ) || []
 
   return (
@@ -124,10 +124,10 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {productSuppliersList.map((ps: any) => (
+          {productSuppliersList.map((ps: ProductSupplier) => (
             <TableRow key={ps.id}>
               <TableCell>
-                {suppliers?.find((s: any) => s.id === Number(ps.supplier_id))
+                {suppliers?.find((s: Supplier) => s.id === Number(ps.supplier_id))
                   ?.name || 'Unknown Supplier'}
               </TableCell>
               <TableCell>KSh {Number(ps.cost_price).toFixed(2)}</TableCell>
@@ -240,7 +240,7 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
                         }
                       >
                         <option value="">Select a supplier</option>
-                        {suppliers?.map((supplier: any) => (
+                        {suppliers?.map((supplier: Supplier) => (
                           <option key={supplier.id} value={supplier.id}>
                             {supplier.name}
                           </option>
