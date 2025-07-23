@@ -1,5 +1,5 @@
 import twilio from "twilio";
-import { Sale, Customer, Product, SaleItem } from "../models/index.js";
+import { Sale, Customer, Product, SaleItem, ReceiptSettings, Store } from "../models/index.js";
 
 // Initialize Twilio client
 const twilioClient = twilio(
@@ -23,6 +23,7 @@ export class ReceiptService {
             as: "items",
             include: [{ model: Product }],
           },
+          { model: Store, as: 'store', required: false, include: [{ model: ReceiptSettings, as: 'receiptSettings', required: false }] },
         ],
       });
 
@@ -30,6 +31,25 @@ export class ReceiptService {
         console.log(`Sale not found for ID: ${saleId}`);
         throw new Error("Sale not found");
       }
+
+      // Fetch receipt settings for the store
+      let settings: ReceiptSettings | null = null;
+      if ((sale as any).store && (sale as any).store.receiptSettings) {
+        settings = (sale as any).store.receiptSettings;
+      } else if (sale.store_id) {
+        settings = await ReceiptSettings.findOne({ where: { store_id: sale.store_id } });
+      }
+
+      // Debug: Log the settings used
+      console.log('Receipt settings used:', settings);
+
+      // Fallback/defaults
+      const businessName = settings?.business_name || 'PROSALE MANAGER';
+      const address = settings?.address || '';
+      const phone = settings?.phone || '+254 XXX XXX XXX';
+      const email = settings?.email || 'info@prosalemanager.com';
+      const website = settings?.website || '';
+      const thankYouMessage = settings?.thank_you_message || 'Thank you for your business!';
 
       const saleWithAssociations = sale as Sale & {
         Customer?: Customer;
@@ -47,8 +67,13 @@ export class ReceiptService {
 
       // Format receipt text with improved formatting
       let receiptText = `╔══════════════════════════════════════╗\n`;
-      receiptText += `║           🧾 PROSALE MANAGER           ║\n`;
+      receiptText += `║           🧾 ${businessName.padEnd(26)}║\n`;
       receiptText += `╚══════════════════════════════════════╝\n\n`;
+      if (address) receiptText += `${address}\n`;
+      if (phone) receiptText += `Phone: ${phone}\n`;
+      if (email) receiptText += `Email: ${email}\n`;
+      if (website) receiptText += `Website: ${website}\n`;
+      receiptText += `\n`;
       
       receiptText += `Receipt #${sale.id.toString().padStart(6, '0')}\n`;
       receiptText += `Date: ${new Date(sale.createdAt).toLocaleString('en-KE', {
@@ -150,10 +175,7 @@ export class ReceiptService {
 
       receiptText += `\n`;
       receiptText += `╔══════════════════════════════════════╗\n`;
-      receiptText += `║         THANK YOU FOR YOUR           ║\n`;
-      receiptText += `║            BUSINESS!                 ║\n`;
-      receiptText += `║                                      ║\n`;
-      receiptText += `║        Please come again!            ║\n`;
+      receiptText += `║         ${thankYouMessage.padEnd(30)}║\n`;
       receiptText += `╚══════════════════════════════════════╝\n\n`;
       
       receiptText += `For inquiries: +254 XXX XXX XXX\n`;
