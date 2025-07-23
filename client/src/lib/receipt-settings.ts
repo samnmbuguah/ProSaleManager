@@ -1,5 +1,6 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useStoreContext } from '@/contexts/StoreContext'
+import { api } from './api'
 
 export interface ReceiptSettings {
   businessName: string;
@@ -9,24 +10,6 @@ export interface ReceiptSettings {
   website: string;
   thankYouMessage: string;
   showLogo: boolean;
-  fontSize: 'small' | 'medium' | 'large';
-  paperSize: 'standard' | 'thermal';
-}
-
-export interface ReceiptTemplate {
-  id: string;
-  name: string;
-  settings: ReceiptSettings;
-}
-
-interface ReceiptSettingsStore {
-  settings: ReceiptSettings;
-  templates: ReceiptTemplate[];
-  activeTemplateId: string | null;
-  updateSettings: (settings: Partial<ReceiptSettings>) => void;
-  saveTemplate: (name: string) => void;
-  deleteTemplate: (id: string) => void;
-  loadTemplate: (id: string) => void;
 }
 
 const defaultSettings: ReceiptSettings = {
@@ -37,51 +20,82 @@ const defaultSettings: ReceiptSettings = {
   website: '',
   thankYouMessage: 'Thank you for your business!',
   showLogo: true,
-  fontSize: 'medium',
-  paperSize: 'thermal'
 }
 
-export const useReceiptSettings = create<ReceiptSettingsStore>()(
-  persist(
-    (set) => ({
-      settings: defaultSettings,
-      templates: [],
-      activeTemplateId: null,
-      updateSettings: (newSettings) =>
-        set((state) => ({
-          settings: { ...state.settings, ...newSettings }
-        })),
-      saveTemplate: (name) =>
-        set((state) => {
-          const id = crypto.randomUUID()
-          const newTemplate = {
-            id,
-            name,
-            settings: { ...state.settings }
-          }
-          return {
-            templates: [...state.templates, newTemplate],
-            activeTemplateId: id
-          }
-        }),
-      deleteTemplate: (id) =>
-        set((state) => ({
-          templates: state.templates.filter((t) => t.id !== id),
-          activeTemplateId:
-            state.activeTemplateId === id ? null : state.activeTemplateId
-        })),
-      loadTemplate: (id) =>
-        set((state) => {
-          const template = state.templates.find((t) => t.id === id)
-          if (!template) return state
-          return {
-            settings: { ...template.settings },
-            activeTemplateId: id
-          }
-        })
-    }),
-    {
-      name: 'receipt-settings'
+export function useReceiptSettingsApi() {
+  const { currentStore } = useStoreContext()
+  const queryClient = useQueryClient()
+  const storeId = currentStore?.id
+
+  // Fetch receipt settings for the current store
+  const {
+    data: settings,
+    isLoading,
+    isError,
+    error,
+    refetch
+  } = useQuery<ReceiptSettings>({
+    queryKey: ['receipt-settings', storeId],
+    queryFn: async () => {
+      if (!storeId) return defaultSettings
+      try {
+        const res = await api.get(`/stores/${storeId}/receipt-settings`)
+        // Map backend keys to frontend keys if needed
+        return {
+          businessName: res.data.business_name,
+          address: res.data.address,
+          phone: res.data.phone,
+          email: res.data.email,
+          website: res.data.website,
+          thankYouMessage: res.data.thank_you_message,
+          showLogo: res.data.show_logo,
+        }
+      } catch (err: any) {
+        // If 404, return default settings
+        if (err?.status === 404 || err?.response?.status === 404) {
+          return defaultSettings
+        }
+        throw err
+      }
+    },
+    enabled: !!storeId,
+  })
+
+  // Update receipt settings
+  const mutation = useMutation({
+    mutationFn: async (newSettings: Partial<ReceiptSettings>) => {
+      if (!storeId) throw new Error('No store selected')
+      const payload = {
+        business_name: newSettings.businessName,
+        address: newSettings.address,
+        phone: newSettings.phone,
+        email: newSettings.email,
+        website: newSettings.website,
+        thank_you_message: newSettings.thankYouMessage,
+        show_logo: newSettings.showLogo,
+      }
+      try {
+        return await api.put(`/stores/${storeId}/receipt-settings`, payload)
+      } catch (err: any) {
+        // If 404, try to create
+        if (err?.status === 404 || err?.response?.status === 404) {
+          return api.post(`/stores/${storeId}/receipt-settings`, payload)
+        }
+        throw err
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['receipt-settings', storeId] })
     }
-  )
-)
+  })
+
+  return {
+    settings: settings || defaultSettings,
+    isLoading,
+    isError,
+    error,
+    updateSettings: mutation.mutate,
+    updateStatus: mutation.status,
+    refetch,
+  }
+}
