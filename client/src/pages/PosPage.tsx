@@ -206,40 +206,12 @@ const PosPage: React.FC = () => {
             </Select>
           </div>
         </div>
-
-        {selectedCustomerData && (
-          <Card className="mb-4">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Selected Customer
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold">{selectedCustomerData.name}</p>
-                  <p className="text-sm text-gray-600">
-                    {selectedCustomerData.phone}
-                  </p>
-                  {selectedCustomerData.email && (
-                    <p className="text-sm text-gray-600">
-                      {selectedCustomerData.email}
-                    </p>
-                  )}
-                </div>
-                <Badge variant="secondary">
-                  Customer ID: {selectedCustomerData.id}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Remove the Selected Customer card/band here */}
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 h-auto min-h-[60vh]">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Products Section */}
-        <div className="w-full lg:w-2/3 flex flex-col h-[60vh] lg:h-[calc(100vh-280px)]">
+        <div className="w-full lg:w-2/3 flex flex-col">
           <Card className="flex-1 flex flex-col min-h-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -308,7 +280,7 @@ const PosPage: React.FC = () => {
         </div>
 
         {/* Cart Section */}
-        <div className="w-full lg:w-1/3 flex flex-col h-[40vh] lg:h-[calc(100vh-280px)]">
+        <div className="w-full lg:w-1/3 flex flex-col">
           <Cart
             items={cart.items as CartItem[]}
             onUpdateQuantity={(
