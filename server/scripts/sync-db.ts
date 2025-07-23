@@ -1,5 +1,6 @@
 import { sequelize } from '../src/config/database.js'
 import '../src/models/index.js'
+import '../src/models/ReceiptSettings.js';
 
 const syncDatabase = async () => {
   try {
