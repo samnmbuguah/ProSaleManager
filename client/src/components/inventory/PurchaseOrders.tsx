@@ -28,6 +28,7 @@ import { api } from "@/lib/api";
 import { PurchaseOrderForm } from "./PurchaseOrderForm";
 import ProductSearchBar from "./ProductSearchBar";
 import { useSuppliers } from "@/hooks/use-suppliers";
+import { useQueryClient } from "@tanstack/react-query";
 import { purchaseOrderSchema } from "@/types/purchase-order";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
@@ -46,6 +47,7 @@ export function PurchaseOrders({
 }) {
   const { products } = useInventory();
   const { suppliers, isLoading: suppliersLoading } = useSuppliers();
+  const queryClient = useQueryClient();
   const { user } = useAuthContext();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [formData, setFormData] = useState<PurchaseOrderFormData>({
@@ -77,6 +79,12 @@ export function PurchaseOrders({
       // setFilteredProducts(products) // This line is removed
     }
   }, [products]);
+
+  useEffect(() => {
+    if (isAddDialogOpen) {
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+    }
+  }, [isAddDialogOpen, queryClient]);
 
   const handleProductSearch = async (query: string) => {
     setSearchQuery(query);
@@ -570,7 +578,6 @@ export function PurchaseOrders({
                   ...newItems[index],
                   [field]: value,
                   ...extra,
-                  unit_type: newItems[index].unit_type || "piece",
                 };
                 setFormData((prev) => ({ ...prev, items: newItems }));
               }}
