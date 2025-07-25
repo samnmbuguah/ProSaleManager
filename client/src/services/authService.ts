@@ -1,5 +1,6 @@
 import { api, API_ENDPOINTS } from "../lib/api";
 import { User } from "../types/user";
+import { toast } from "@/components/ui/use-toast";
 
 interface LoginCredentials {
   email: string;
@@ -41,7 +42,19 @@ export const authService = {
   },
 
   getCurrentUser: async () => {
-    const response = await api.get<AuthResponse>(API_ENDPOINTS.auth.me);
-    return response.data.authenticated ? response.data.data : null;
+    try {
+      const response = await api.get<AuthResponse>(API_ENDPOINTS.auth.me);
+      return response.data.authenticated ? response.data.data : null;
+    } catch (error: any) {
+      if (error.response && error.response.status === 401) {
+        toast({
+          title: "Session expired",
+          description: "Please log in again.",
+          variant: "destructive",
+        });
+        return null;
+      }
+      throw error;
+    }
   },
 };
