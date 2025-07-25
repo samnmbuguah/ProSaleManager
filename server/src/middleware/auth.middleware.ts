@@ -35,6 +35,11 @@ export const resolveStore = async (req: Request, res: Response, next: NextFuncti
     subdomain = host.split(".")[0];
   }
 
+  // If on the main domain (eltee.store or www.eltee.store), allow all users
+  if (host === "eltee.store" || host === "www.eltee.store") {
+    return next();
+  }
+
   let store: Store | null = null;
   if (subdomain) {
     store = await Store.findOne({ where: { subdomain } });
