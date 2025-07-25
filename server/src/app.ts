@@ -40,13 +40,16 @@ const allowedOrigins = [
   "http://localhost:5000",
   "http://127.0.0.1:5000",
   "https://eltee.store",
+  "https://www.eltee.store", // Allow both root and www subdomain
 ];
 
 // Helper to allow *.local:5173 in dev
 function isAllowedOrigin(origin: string) {
   if (!origin) return false;
   if (allowedOrigins.includes(origin)) return true;
-  // Allow any subdomain of .local:5173 (e.g., http://demo.local:5173)
+  // Allow any subdomain of eltee.store (http or https)
+  if (/^https?:\/\/([a-z0-9-]+\.)*eltee\.store$/.test(origin)) return true;
+  // Allow any subdomain of .local:5173 in dev
   if (/^http:\/\/[a-z0-9-]+\.local:5173$/.test(origin)) return true;
   return false;
 }
@@ -54,19 +57,10 @@ function isAllowedOrigin(origin: string) {
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (process.env.NODE_ENV === "development") {
-        if (!origin || isAllowedOrigin(origin)) {
-          callback(null, true);
-        } else {
-          callback(new Error("Not allowed by CORS"));
-        }
+      if (!origin || isAllowedOrigin(origin)) {
+        callback(null, true);
       } else {
-        // In production, only allow trusted domains
-        if (allowedOrigins.includes(origin || "")) {
-          callback(null, true);
-        } else {
-          callback(new Error("Not allowed by CORS"));
-        }
+        callback(new Error("Not allowed by CORS"));
       }
     },
     credentials: true,
@@ -81,7 +75,7 @@ app.use(cookieParser());
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 5000, // limit each IP to 5000 requests per windowMs
   message: "Too many requests from this IP, please try again later.",
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers and `Retry-After`
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
