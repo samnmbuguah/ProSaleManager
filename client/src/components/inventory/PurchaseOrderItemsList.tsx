@@ -68,7 +68,7 @@ export function PurchaseOrderItemsList({
               </div>
               <div className="w-24">
                 <Select
-                  value={unit}
+                  value={item.unit_type || "piece"}
                   onValueChange={(value) => {
                     if (!product) return;
                     let buyingPrice = product.piece_buying_price;
@@ -80,6 +80,7 @@ export function PurchaseOrderItemsList({
                       buyingPrice = product.dozen_buying_price;
                       sellingPrice = product.dozen_selling_price;
                     }
+                    // Always update both unit_type and prices
                     onItemChange(index, "unit_type", value, {
                       buying_price: buyingPrice,
                       selling_price: sellingPrice,
