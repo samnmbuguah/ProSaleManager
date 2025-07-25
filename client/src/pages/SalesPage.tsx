@@ -117,6 +117,7 @@ export function SalesPage() {
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const pageSize = 10;
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
 
   const { data: salesData } = useQuery<{
     sales: Sale[];
@@ -220,7 +221,7 @@ export function SalesPage() {
     <div className="container mx-auto p-4 mt-16">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Sales & Orders</h1>
-        <Dialog>
+        <Dialog open={receiptDialogOpen} onOpenChange={setReceiptDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="outline">
               <Receipt className="w-4 h-4 mr-2" />
@@ -231,7 +232,7 @@ export function SalesPage() {
             <DialogHeader>
               <DialogTitle>Customize Receipt</DialogTitle>
             </DialogHeader>
-            <ReceiptSettings />
+            <ReceiptSettings onClose={() => setReceiptDialogOpen(false)} />
           </DialogContent>
         </Dialog>
       </div>
