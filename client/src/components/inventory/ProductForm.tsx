@@ -211,7 +211,7 @@ export function ProductForm({ initialData, onSubmit, isSubmitting }: ProductForm
               </div>
               <Button
                 type="button"
-                disabled={createCategory.isLoading || !newCategoryName.trim()}
+                disabled={createCategory.isPending || !newCategoryName.trim()}
                 onClick={async () => {
                   try {
                     const res = await createCategory.mutateAsync({ name: newCategoryName.trim(), description: newCategoryDesc });
@@ -226,7 +226,7 @@ export function ProductForm({ initialData, onSubmit, isSubmitting }: ProductForm
                   }
                 }}
               >
-                {createCategory.isLoading ? "Adding..." : "Add"}
+                {createCategory.isPending ? "Adding..." : "Add"}
               </Button>
             </div>
           )}

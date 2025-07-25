@@ -47,8 +47,6 @@ export function PurchaseOrderItemsList({
           // Find the product for this item (by product_id)
           const product =
             item.product_id && products ? products.find((p) => p.id === item.product_id) : null;
-          // Default unit is 'piece' if not set
-          const unit = item.unit_type || "piece";
           return (
             <div
               key={index}
