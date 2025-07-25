@@ -21,15 +21,23 @@ const router = Router();
 router.get("/search", async (req, res) => {
   try {
     const query = req.query.q as string;
-    console.log("Received search query:", query);
+    // Determine store filter
+    let storeFilter = {};
+    if (req.user?.role !== "super_admin" && req.user?.store_id) {
+      storeFilter = { store_id: req.user.store_id };
+    }
     if (!query || typeof query !== "string" || query.trim() === "") {
-      // Return all products if search is empty
-      const products = await Product.findAll({ order: [["name", "ASC"]] });
+      // Return all products for the store if search is empty
+      const products = await Product.findAll({
+        where: storeFilter,
+        order: [["name", "ASC"]],
+      });
       return res.json({ success: true, data: products });
     }
     const search = query.toLowerCase();
     const products = await Product.findAll({
       where: {
+        ...storeFilter,
         [Op.or]: [
           Sequelize.where(Sequelize.fn("lower", Sequelize.col("name")), "LIKE", `%${search}%`),
           Sequelize.where(Sequelize.fn("lower", Sequelize.col("sku")), "LIKE", `%${search}%`),
@@ -38,10 +46,8 @@ router.get("/search", async (req, res) => {
       },
       order: [["name", "ASC"]],
     });
-    console.log("Products found:", products.length);
     return res.json({ success: true, data: products });
   } catch (error) {
-    console.error("Error searching products:", error);
     return res.status(500).json({
       message: "Error searching products",
       error: error instanceof Error ? error.message : "Unknown error",
