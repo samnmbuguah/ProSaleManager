@@ -21,7 +21,7 @@ import { useCart } from "@/contexts/CartContext";
 import CartModal from "@/components/pos/CartModal";
 import { useStoreContext } from "@/contexts/StoreContext";
 
-type AppRole = "admin" | "manager" | "user" | "super_admin" | "cashier";
+type AppRole = "admin" | "manager" | "user" | "super_admin" | "sales";
 interface Route {
   path: string;
   label: string;
@@ -61,7 +61,7 @@ const ROLE_ROUTES: Record<AppRole, Route[]> = {
     { path: "/expenses", label: "Expenses", icon: Wallet },
     { path: "/shop", label: "Shop", icon: ShoppingBag },
   ],
-  cashier: [
+  sales: [
     { path: "/pos", label: "POS", icon: Store },
     { path: "/inventory", label: "Inventory", icon: PackageSearch },
     { path: "/expenses", label: "Expenses", icon: Wallet },
