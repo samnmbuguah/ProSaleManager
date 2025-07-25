@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_ENDPOINTS } from "./api-endpoints";
+import { toast } from "@/components/ui/use-toast";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 
@@ -106,9 +107,15 @@ api.interceptors.response.use(
 
     // Handle 401 errors (unauthorized)
     if (error.response?.status === 401) {
+      toast({
+        title: "Session expired",
+        description: "Please log in again.",
+        variant: "destructive",
+      });
       if (window.location.pathname !== "/auth") {
         window.location.href = "/auth";
       }
+      // If already on /auth, do not redirect again (prevents infinite loop)
     }
 
     return Promise.reject(error);
