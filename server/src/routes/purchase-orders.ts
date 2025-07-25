@@ -152,6 +152,20 @@ router.put(
         });
       }
 
+      // If marking as received, increment product quantities
+      if (status === "received") {
+        const items = await PurchaseOrderItem.findAll({
+          where: { purchase_order_id: order.id },
+        });
+        for (const item of items) {
+          const product = await Product.findByPk(item.product_id);
+          if (product) {
+            product.quantity += item.quantity;
+            await product.save();
+          }
+        }
+      }
+
       order.status = status;
       await order.save();
 
