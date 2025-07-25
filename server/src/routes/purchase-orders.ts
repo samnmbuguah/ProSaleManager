@@ -127,7 +127,7 @@ router.get("/:id", async (req, res) => {
 router.put(
   "/:id/status",
   requireAuth,
-  requireRole(["admin", "manager", "cashier", "super_admin"]),
+  requireRole(["admin", "manager", "sales", "super_admin"]),
   async (req, res) => {
     try {
       const { status } = req.body;
