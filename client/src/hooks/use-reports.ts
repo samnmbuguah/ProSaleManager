@@ -1,42 +1,42 @@
 import { useQuery } from "@tanstack/react-query";
-import { api, API_ENDPOINTS } from "@/lib/api";
+import { api } from "@/lib/api";
 
 export function useInventoryReport() {
   return useQuery({
-    queryKey: ["reports", "inventory"],
+    queryKey: ["inventory-report"],
     queryFn: async () => {
-      const response = await api.get(API_ENDPOINTS.reports.inventory);
-      return response.data.data;
+      const res = await api.get("/reports/inventory");
+      return res.data.data;
     },
   });
 }
 
-export function useProductPerformanceReport(startDate?: string, endDate?: string) {
+export function useProductPerformanceReport() {
   return useQuery({
-    queryKey: ["reports", "product-performance", startDate, endDate],
+    queryKey: ["product-performance-report"],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (startDate) params.append("startDate", startDate);
-      if (endDate) params.append("endDate", endDate);
-
-      const response = await api.get(
-        `${API_ENDPOINTS.reports.productPerformance}?${params.toString()}`
-      );
-      return response.data.data;
+      const res = await api.get("/reports/product-performance");
+      return res.data.data;
     },
   });
 }
 
-export function useSalesSummaryReport(startDate?: string, endDate?: string) {
+export function useSalesSummary() {
   return useQuery({
-    queryKey: ["reports", "sales-summary", startDate, endDate],
+    queryKey: ["sales-summary"],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (startDate) params.append("startDate", startDate);
-      if (endDate) params.append("endDate", endDate);
+      const res = await api.get("/reports/sales-summary");
+      return res.data.data;
+    },
+  });
+}
 
-      const response = await api.get(`${API_ENDPOINTS.reports.salesSummary}?${params.toString()}`);
-      return response.data.data;
+export function useExpensesSummary() {
+  return useQuery({
+    queryKey: ["expenses-summary"],
+    queryFn: async () => {
+      const res = await api.get("/reports/expenses-summary");
+      return res.data.data;
     },
   });
 }
