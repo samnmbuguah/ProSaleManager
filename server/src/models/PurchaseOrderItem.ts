@@ -7,6 +7,7 @@ class PurchaseOrderItem extends Model {
   declare product_id: number;
   declare quantity: number;
   declare unit_price: number;
+  declare selling_price: number | null;
   declare total_price: number;
   declare store_id: number;
   declare unit_type: string;
@@ -46,6 +47,11 @@ PurchaseOrderItem.init(
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 0,
+    },
+    selling_price: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+      defaultValue: null,
     },
     total_price: {
       type: DataTypes.DECIMAL(10, 2),

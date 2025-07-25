@@ -63,12 +63,13 @@ router.post("/", async (req, res) => {
     });
 
     await Promise.all(
-      items.map((item: { product_id: string; quantity: number; unit_price?: number; unit_type?: string }) =>
+      items.map((item: { product_id: string; quantity: number; unit_price?: number; unit_type?: string; selling_price?: number }) =>
         PurchaseOrderItem.create({
           purchase_order_id: order.id,
           product_id: item.product_id,
           quantity: item.quantity,
           unit_price: item.unit_price,
+          selling_price: item.selling_price, // <-- Save selling_price
           total_price: item.quantity * (item.unit_price ?? 0),
           unit_type: item.unit_type, // <-- FIX: include unit_type
           store_id: req.user!.store_id,
@@ -161,6 +162,14 @@ router.put(
           const product = await Product.findByPk(item.product_id);
           if (product) {
             product.quantity += item.quantity;
+            // Only update the relevant unit's buying price
+            if (item.unit_type && item.unit_price !== undefined) {
+              product[`${item.unit_type}_buying_price`] = Number(item.unit_price);
+            }
+            // Only update selling price if present on the item
+            if (item.unit_type && item.selling_price !== undefined) {
+              product[`${item.unit_type}_selling_price`] = Number(item.selling_price);
+            }
             await product.save();
           }
         }

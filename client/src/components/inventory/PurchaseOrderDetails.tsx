@@ -72,9 +72,8 @@ export function PurchaseOrderDetails({
                         : "KSh N/A"}
                     </TableCell>
                     <TableCell>
-                      {item.Product?.piece_selling_price != null &&
-                      !isNaN(Number(item.Product?.piece_selling_price))
-                        ? formatCurrency(item.Product.piece_selling_price)
+                      {item.selling_price != null && !isNaN(Number(item.selling_price))
+                        ? formatCurrency(item.selling_price)
                         : "KSh N/A"}
                     </TableCell>
                     <TableCell>
