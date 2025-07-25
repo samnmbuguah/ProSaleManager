@@ -40,7 +40,14 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   // Key for localStorage
   const FORM_DRAFT_KEY = "productFormDraft";
 
-  const { data: categories, isLoading } = useCategories();
+  const { data: categories, isLoading, refetch } = useCategories();
+
+  // Refetch categories every time the dialog is opened
+  React.useEffect(() => {
+    if (open) {
+      refetch();
+    }
+  }, [open, refetch]);
 
   // Load draft from localStorage on mount (only for add, not edit), and sanitize category_id
   React.useEffect(() => {
@@ -199,12 +206,26 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
 
   React.useEffect(() => {
     if (categories && categories.length > 0 && !formData.category_id) {
-      setFormData((prev) => ({
-        ...prev,
+      setFormData({
+        ...formData,
         category_id: categories[0].id,
-      }));
+      });
     }
-  }, [categories, formData.category_id, setFormData]);
+  }, [categories, formData, setFormData]);
+
+  // Set default category_id after categories are loaded, or sanitize draft
+  React.useEffect(() => {
+    if (categories && categories.length > 0) {
+      const validCategoryIds = categories.map((c) => c.id);
+      // If current category_id is missing or invalid, set to first valid
+      if (!formData.category_id || !validCategoryIds.includes(formData.category_id)) {
+        setFormData({
+          ...formData,
+          category_id: categories[0].id,
+        });
+      }
+    }
+  }, [categories, formData, setFormData]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
