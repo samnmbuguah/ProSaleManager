@@ -12,8 +12,11 @@ export function generateOrderNumber(): string {
  * If user is super_admin, returns the original where.
  * Otherwise, adds store_id to the where clause.
  */
-export function storeScope(user: { role: string; store_id?: number | null } | undefined, where: any = {}) {
+export function storeScope(
+  user: { role: string; store_id?: number | null } | undefined,
+  where: any = {},
+) {
   if (!user) return { ...where, store_id: -1 }; // never match if no user
-  if (user.role === 'super_admin') return where;
+  if (user.role === "super_admin") return where;
   return { ...where, store_id: user.store_id };
 }

@@ -1,5 +1,5 @@
-import { Link, useLocation } from 'wouter'
-import { useAuthContext } from '@/contexts/AuthContext'
+import { Link, useLocation } from "wouter";
+import { useAuthContext } from "@/contexts/AuthContext";
 import {
   Store,
   PackageSearch,
@@ -11,23 +11,17 @@ import {
   Menu,
   Wallet,
   ShoppingCart,
-  ShoppingBag
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useToast } from '@/hooks/use-toast'
-import { useState } from 'react'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger
-} from '@/components/ui/sheet'
-import { useCart } from '@/contexts/CartContext'
-import CartModal from '@/components/pos/CartModal'
-import { useStoreContext } from '@/contexts/StoreContext'
+  ShoppingBag,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useCart } from "@/contexts/CartContext";
+import CartModal from "@/components/pos/CartModal";
+import { useStoreContext } from "@/contexts/StoreContext";
 
-type AppRole = 'admin' | 'manager' | 'user' | 'super_admin' | 'cashier';
+type AppRole = "admin" | "manager" | "user" | "super_admin" | "cashier";
 interface Route {
   path: string;
   label: string;
@@ -35,81 +29,81 @@ interface Route {
 }
 const ROLE_ROUTES: Record<AppRole, Route[]> = {
   admin: [
-    { path: '/pos', label: 'POS', icon: Store },
-    { path: '/inventory', label: 'Inventory', icon: PackageSearch },
-    { path: '/customers', label: 'Customers', icon: Users },
-    { path: '/sales', label: 'Sales', icon: Receipt },
-    { path: '/reports', label: 'Reports', icon: BarChart3 },
-    { path: '/expenses', label: 'Expenses', icon: Wallet },
-    { path: '/shop', label: 'Shop', icon: ShoppingBag }
+    { path: "/pos", label: "POS", icon: Store },
+    { path: "/inventory", label: "Inventory", icon: PackageSearch },
+    { path: "/customers", label: "Customers", icon: Users },
+    { path: "/sales", label: "Sales", icon: Receipt },
+    { path: "/reports", label: "Reports", icon: BarChart3 },
+    { path: "/expenses", label: "Expenses", icon: Wallet },
+    { path: "/shop", label: "Shop", icon: ShoppingBag },
   ],
   manager: [
-    { path: '/pos', label: 'POS', icon: Store },
-    { path: '/inventory', label: 'Inventory', icon: PackageSearch },
-    { path: '/customers', label: 'Customers', icon: Users },
-    { path: '/sales', label: 'Sales', icon: Receipt },
-    { path: '/reports', label: 'Reports', icon: BarChart3 },
-    { path: '/expenses', label: 'Expenses', icon: Wallet },
-    { path: '/shop', label: 'Shop', icon: ShoppingBag }
+    { path: "/pos", label: "POS", icon: Store },
+    { path: "/inventory", label: "Inventory", icon: PackageSearch },
+    { path: "/customers", label: "Customers", icon: Users },
+    { path: "/sales", label: "Sales", icon: Receipt },
+    { path: "/reports", label: "Reports", icon: BarChart3 },
+    { path: "/expenses", label: "Expenses", icon: Wallet },
+    { path: "/shop", label: "Shop", icon: ShoppingBag },
   ],
   user: [
-    { path: '/pos', label: 'POS', icon: Store },
-    { path: '/inventory', label: 'Inventory', icon: PackageSearch },
-    { path: '/expenses', label: 'Expenses', icon: Wallet },
-    { path: '/shop', label: 'Shop', icon: ShoppingBag }
+    { path: "/pos", label: "POS", icon: Store },
+    { path: "/inventory", label: "Inventory", icon: PackageSearch },
+    { path: "/expenses", label: "Expenses", icon: Wallet },
+    { path: "/shop", label: "Shop", icon: ShoppingBag },
   ],
   super_admin: [
-    { path: '/pos', label: 'POS', icon: Store },
-    { path: '/inventory', label: 'Inventory', icon: PackageSearch },
-    { path: '/customers', label: 'Customers', icon: Users },
-    { path: '/sales', label: 'Sales', icon: Receipt },
-    { path: '/reports', label: 'Reports', icon: BarChart3 },
-    { path: '/expenses', label: 'Expenses', icon: Wallet },
-    { path: '/shop', label: 'Shop', icon: ShoppingBag }
+    { path: "/pos", label: "POS", icon: Store },
+    { path: "/inventory", label: "Inventory", icon: PackageSearch },
+    { path: "/customers", label: "Customers", icon: Users },
+    { path: "/sales", label: "Sales", icon: Receipt },
+    { path: "/reports", label: "Reports", icon: BarChart3 },
+    { path: "/expenses", label: "Expenses", icon: Wallet },
+    { path: "/shop", label: "Shop", icon: ShoppingBag },
   ],
   cashier: [
-    { path: '/pos', label: 'POS', icon: Store },
-    { path: '/inventory', label: 'Inventory', icon: PackageSearch },
-    { path: '/expenses', label: 'Expenses', icon: Wallet },
-    { path: '/shop', label: 'Shop', icon: ShoppingBag }
-  ]
-}
+    { path: "/pos", label: "POS", icon: Store },
+    { path: "/inventory", label: "Inventory", icon: PackageSearch },
+    { path: "/expenses", label: "Expenses", icon: Wallet },
+    { path: "/shop", label: "Shop", icon: ShoppingBag },
+  ],
+};
 
-export default function MainNav () {
-  const [location] = useLocation()
-  const { user, logout } = useAuthContext()
-  const { toast } = useToast()
-  const [isOpen, setIsOpen] = useState(false)
-  const { cart } = useCart()
-  const [cartOpen, setCartOpen] = useState(false)
-  const { currentStore, setCurrentStore, stores } = useStoreContext()
+export default function MainNav() {
+  const [location] = useLocation();
+  const { user, logout } = useAuthContext();
+  const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+  const { cart } = useCart();
+  const [cartOpen, setCartOpen] = useState(false);
+  const { currentStore, setCurrentStore, stores } = useStoreContext();
 
-  if (!user) return null
+  if (!user) return null;
 
-  const routes = ROLE_ROUTES[user.role as AppRole] || ROLE_ROUTES.user
+  const routes = ROLE_ROUTES[user.role as AppRole] || ROLE_ROUTES.user;
 
   const handleLogout = async () => {
     try {
-      await logout()
+      await logout();
       toast({
-        title: 'Success',
-        description: 'Logged out successfully'
-      })
+        title: "Success",
+        description: "Logged out successfully",
+      });
     } catch {
       toast({
-        variant: 'destructive',
-        title: 'Logout failed',
-        description: 'Please try again later'
-      })
+        variant: "destructive",
+        title: "Logout failed",
+        description: "Please try again later",
+      });
     }
-  }
+  };
 
   const NavLinks = () => (
     <>
       {routes.map(({ path, label, icon: Icon }: Route) => (
         <Link key={path} href={path}>
           <Button
-            variant={location === path ? 'default' : 'ghost'}
+            variant={location === path ? "default" : "ghost"}
             className="flex items-center space-x-2"
             onClick={() => setIsOpen(false)}
           >
@@ -119,7 +113,7 @@ export default function MainNav () {
         </Link>
       ))}
     </>
-  )
+  );
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b shadow-sm">
@@ -154,7 +148,12 @@ export default function MainNav () {
 
           <div className="flex items-center gap-x-2">
             {/* Floating Cart Button */}
-            <Button variant="ghost" size="icon" onClick={() => setCartOpen(true)} className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCartOpen(true)}
+              className="relative"
+            >
               <ShoppingCart className="h-5 w-5" />
               {cart.items.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs px-1">
@@ -175,28 +174,25 @@ export default function MainNav () {
                 </Button>
               </Link>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleLogout}
-              className="hover:bg-accent"
-            >
+            <Button variant="ghost" size="icon" onClick={handleLogout} className="hover:bg-accent">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
-          {(user?.role as AppRole) === 'super_admin' && stores.length > 0 && (
+          {(user?.role as AppRole) === "super_admin" && stores.length > 0 && (
             <div className="ml-4 flex items-center gap-2">
               <span className="text-sm text-gray-600">Store:</span>
               <select
                 className="border rounded px-2 py-1"
-                value={currentStore?.id || ''}
-                onChange={e => {
-                  const store = stores.find(s => s.id === Number(e.target.value))
-                  if (store) setCurrentStore(store)
+                value={currentStore?.id || ""}
+                onChange={(e) => {
+                  const store = stores.find((s) => s.id === Number(e.target.value));
+                  if (store) setCurrentStore(store);
                 }}
               >
-                {stores.map(store => (
-                  <option key={store.id} value={store.id}>{store.name}</option>
+                {stores.map((store) => (
+                  <option key={store.id} value={store.id}>
+                    {store.name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -204,5 +200,5 @@ export default function MainNav () {
         </div>
       </div>
     </nav>
-  )
+  );
 }

@@ -2,10 +2,10 @@ import express from "express";
 import { Op } from "sequelize";
 import Customer from "../models/Customer.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
-import { requireStoreContext } from '../middleware/store-context.middleware.js';
-import { storeScope } from '../utils/helpers.js';
+import { requireStoreContext } from "../middleware/store-context.middleware.js";
+import { storeScope } from "../utils/helpers.js";
 
-console.log('CUSTOMERS ROUTE FILE LOADED');
+console.log("CUSTOMERS ROUTE FILE LOADED");
 
 const router = express.Router();
 
@@ -16,10 +16,10 @@ router.use(requireStoreContext);
 // Get all customers
 router.get("/", async (req, res) => {
   if (!req.user || !req.user.id) {
-    return res.status(401).json({ message: 'Unauthorized: user not found in request.' });
+    return res.status(401).json({ message: "Unauthorized: user not found in request." });
   }
   let storeId = req.user?.store_id;
-  if (req.user?.role === 'super_admin' && req.query.store_id) {
+  if (req.user?.role === "super_admin" && req.query.store_id) {
     storeId = parseInt(req.query.store_id as string);
   }
   try {
@@ -31,24 +31,24 @@ router.get("/", async (req, res) => {
     // If no customers, create or fetch Walk-in Customer for this store
     if (customers.length === 0 && storeId) {
       let walkIn = await Customer.findOne({
-        where: { store_id: storeId, name: 'Walk-in Customer' }
+        where: { store_id: storeId, name: "Walk-in Customer" },
       });
       if (!walkIn) {
         try {
           walkIn = await Customer.create({
-            name: 'Walk-in Customer',
+            name: "Walk-in Customer",
             email: `walkin.${storeId}@example.com`,
-            phone: 'N/A',
-            address: 'N/A',
-            notes: 'Default walk-in customer',
+            phone: "N/A",
+            address: "N/A",
+            notes: "Default walk-in customer",
             loyalty_points: 0,
             is_active: true,
             store_id: storeId,
           });
-        } catch (err: any) {
+        } catch (error: unknown) {
           // If unique constraint error, try to fetch again
           walkIn = await Customer.findOne({
-            where: { store_id: storeId, name: 'Walk-in Customer' }
+            where: { store_id: storeId, name: "Walk-in Customer" },
           });
         }
       }
@@ -57,7 +57,7 @@ router.get("/", async (req, res) => {
     res.json({ data: customers });
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    res.status(500).json({ message: 'Error fetching customers', error: errorMsg });
+    res.status(500).json({ message: "Error fetching customers", error: errorMsg });
   }
 });
 
@@ -83,8 +83,8 @@ router.get("/search", async (req, res) => {
       order: [["name", "ASC"]],
     });
     res.json(customers);
-  } catch (error) {
-    console.error("Error searching customers:", error);
+  } catch {
+    console.error("Error searching customers:");
     res.status(500).json({ message: "Failed to search customers" });
   }
 });
@@ -101,7 +101,7 @@ router.post("/", async (req, res) => {
       email,
       phone,
       address,
-      store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
+      store_id: req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id,
     });
     res.status(201).json(customer);
   } catch (error: unknown) {
@@ -134,7 +134,7 @@ router.put("/:id", async (req, res) => {
     res.json(customer);
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    res.status(500).json({ message: 'Error updating customer', error: errorMsg });
+    res.status(500).json({ message: "Error updating customer", error: errorMsg });
   }
 });
 

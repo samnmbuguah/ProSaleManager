@@ -1,15 +1,15 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { UseFormReturn } from 'react-hook-form'
-import { type ProductFormData } from '@/types/product'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { UseFormReturn } from "react-hook-form";
+import { type ProductFormData } from "@/types/product";
 
 interface StockSectionProps {
-  form: UseFormReturn<ProductFormData>
+  form: UseFormReturn<ProductFormData>;
 }
 
-export function StockSection ({ form }: StockSectionProps) {
+export function StockSection({ form }: StockSectionProps) {
   return (
     <Card>
       <CardHeader>
@@ -23,7 +23,7 @@ export function StockSection ({ form }: StockSectionProps) {
               id="quantity"
               type="number"
               placeholder="0"
-              {...form.register('quantity', { valueAsNumber: true })}
+              {...form.register("quantity", { valueAsNumber: true })}
             />
           </div>
           <div className="space-y-2">
@@ -32,7 +32,7 @@ export function StockSection ({ form }: StockSectionProps) {
               id="min_quantity"
               type="number"
               placeholder="0"
-              {...form.register('min_quantity', { valueAsNumber: true })}
+              {...form.register("min_quantity", { valueAsNumber: true })}
             />
           </div>
         </div>
@@ -40,12 +40,12 @@ export function StockSection ({ form }: StockSectionProps) {
         <div className="flex items-center space-x-2">
           <Switch
             id="is_active"
-            checked={form.watch('is_active')}
-            onCheckedChange={(checked) => form.setValue('is_active', checked)}
+            checked={form.watch("is_active")}
+            onCheckedChange={(checked) => form.setValue("is_active", checked)}
           />
           <Label htmlFor="is_active">Product is active</Label>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

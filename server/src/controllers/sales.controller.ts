@@ -9,7 +9,7 @@ export const createSale = async (req: Request, res: Response) => {
     console.log("=== CREATE SALE START ===");
     console.log("Request body:", JSON.stringify(req.body, null, 2));
     console.log("User:", req.user);
-    
+
     t = await sequelize.transaction();
 
     const {
@@ -54,7 +54,8 @@ export const createSale = async (req: Request, res: Response) => {
         status: status || "completed", // Default to completed instead of pending
         payment_status: payment_status || "paid", // Explicitly track payment status
         delivery_fee: delivery_fee || 0,
-        store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
+        store_id:
+          req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id,
       },
       { transaction: t },
     );
@@ -82,7 +83,8 @@ export const createSale = async (req: Request, res: Response) => {
             unit_price: item.unit_price,
             total: item.total,
             unit_type: item.unit_type,
-            store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
+            store_id:
+              req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id,
           },
           { transaction: t },
         ),
@@ -132,12 +134,14 @@ export const createSale = async (req: Request, res: Response) => {
       console.error("Error type:", error.constructor.name);
       console.error("Error message:", error.message);
       console.error("Error stack:", error.stack);
-      
+
       if (error.name) {
         console.error("Error name:", error.name);
       }
-      
-      if (typeof (error as { parent?: { message?: string; code?: string } }).parent !== 'undefined') {
+
+      if (
+        typeof (error as { parent?: { message?: string; code?: string } }).parent !== "undefined"
+      ) {
         const parent = (error as { parent?: { message?: string; code?: string } }).parent;
         if (parent) {
           console.error("Parent error:", parent.message);
@@ -147,7 +151,7 @@ export const createSale = async (req: Request, res: Response) => {
     } else {
       console.error("Unknown error type:", error);
     }
-    
+
     // Only rollback if transaction exists and is not already committed/rolled back
     // if (t && !(t as any).finished) {
     //   try {
@@ -178,17 +182,20 @@ export const createSale = async (req: Request, res: Response) => {
       }
     }
 
-    res.status(statusCode).json({ 
+    res.status(statusCode).json({
       message: errorMessage,
-      error: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined
+      error:
+        process.env.NODE_ENV === "development" && error instanceof Error
+          ? error.message
+          : undefined,
     });
   }
 };
 
 export const getSales = async (req: Request, res: Response) => {
   try {
-    if (req.user?.role !== 'super_admin' && !req.user?.store_id) {
-      return res.status(400).json({ message: 'Store context missing' });
+    if (req.user?.role !== "super_admin" && !req.user?.store_id) {
+      return res.status(400).json({ message: "Store context missing" });
     }
     const page = parseInt(req.query.page as string) || 1;
     const pageSize = parseInt(req.query.pageSize as string) || 10;
@@ -231,8 +238,7 @@ export const getSales = async (req: Request, res: Response) => {
     });
   } catch (error: unknown) {
     if (error instanceof Error) {
-      const errorMessage =
-        error.message;
+      const errorMessage = error.message;
       res.status(500).json({ message: errorMessage });
     } else {
       res.status(500).json({ message: "Failed to fetch sales" });
@@ -261,9 +267,8 @@ export const getSaleItems = async (req: Request, res: Response) => {
     res.json(items);
   } catch (error: unknown) {
     if (error instanceof Error) {
-      const errorMessage =
-        error.message;
-    res.status(500).json({ message: errorMessage });
+      const errorMessage = error.message;
+      res.status(500).json({ message: errorMessage });
     } else {
       res.status(500).json({ message: "Failed to fetch sale items" });
     }
@@ -283,9 +288,10 @@ export const checkout = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "User not authenticated" });
     }
 
-    const store_id = req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id;
-    if (req.user?.role !== 'super_admin' && !store_id) {
-      return res.status(400).json({ message: 'Store context missing' });
+    const store_id =
+      req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id;
+    if (req.user?.role !== "super_admin" && !store_id) {
+      return res.status(400).json({ message: "Store context missing" });
     }
 
     const sale = await Sale.create({
@@ -299,20 +305,16 @@ export const checkout = async (req: Request, res: Response) => {
 
     // Create sale items
     await Promise.all(
-      items.map((item: {
-        product_id: number;
-        quantity: number;
-        unit_price: number;
-        total: number;
-      }) =>
-        SaleItem.create({
-          sale_id: sale.id,
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          total: item.total,
-          store_id,
-        }),
+      items.map(
+        (item: { product_id: number; quantity: number; unit_price: number; total: number }) =>
+          SaleItem.create({
+            sale_id: sale.id,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            total: item.total,
+            store_id,
+          }),
       ),
     );
 
@@ -333,8 +335,8 @@ export const getSaleById = async (req: Request, res: Response) => {
     if (isNaN(saleId)) {
       return res.status(400).json({ message: "Invalid sale ID" });
     }
-    if (req.user?.role !== 'super_admin' && !req.user?.store_id) {
-      return res.status(400).json({ message: 'Store context missing' });
+    if (req.user?.role !== "super_admin" && !req.user?.store_id) {
+      return res.status(400).json({ message: "Store context missing" });
     }
     const where = storeScope(req.user!, { id: saleId });
     const sale = await Sale.findOne({
@@ -369,9 +371,8 @@ export const getSaleById = async (req: Request, res: Response) => {
     res.json(sale);
   } catch (error: unknown) {
     if (error instanceof Error) {
-      const errorMessage =
-        error.message;
-    res.status(500).json({ message: errorMessage });
+      const errorMessage = error.message;
+      res.status(500).json({ message: errorMessage });
     } else {
       res.status(500).json({ message: "Failed to fetch sale" });
     }

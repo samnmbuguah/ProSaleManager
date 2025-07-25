@@ -34,22 +34,22 @@ describe("Multi-user Functionality", () => {
       username: "admin",
       fullname: "Admin User",
       role: USER_ROLES.ADMIN,
-      permissions: ["manage_users", "process_sales", "view_reports"]
+      permissions: ["manage_users", "process_sales", "view_reports"],
     },
     {
       id: 2,
       username: "manager",
       fullname: "Manager User",
       role: USER_ROLES.MANAGER,
-      permissions: ["view_reports", "process_sales"]
+      permissions: ["view_reports", "process_sales"],
     },
     {
       id: 3,
       username: "cashier",
       fullname: "Cashier User",
       role: USER_ROLES.CASHIER,
-      permissions: ["process_sales"]
-    }
+      permissions: ["process_sales"],
+    },
   ];
 
   describe("Role-based Access Control", () => {
@@ -82,7 +82,7 @@ describe("Multi-user Functionality", () => {
 
       // Function to simulate accessing admin-only functionality
       function accessAdminFunction(user: User): boolean {
-        return isAdmin(user) || hasPermission(user, 'admin_access');
+        return isAdmin(user) || hasPermission(user, "admin_access");
       }
 
       // Admin should access successfully
@@ -103,14 +103,14 @@ describe("Multi-user Functionality", () => {
         id: "session1",
         userId: 1,
         expiresAt: new Date(Date.now() + 3600000),
-        active: true
+        active: true,
       },
       {
         id: "session2",
         userId: 2,
         expiresAt: new Date(Date.now() + 3600000),
-        active: true
-      }
+        active: true,
+      },
     ];
 
     it("should validate active user sessions", () => {
@@ -131,7 +131,9 @@ describe("Multi-user Functionality", () => {
       // Function to simulate user logout
       function logoutUser(sessions: Session[], sessionId: string): Session[] {
         return sessions.map((session: Session) =>
-          session.id === sessionId ? { ...session, expiresAt: new Date(0) } : session
+          session.id === sessionId
+            ? { ...session, expiresAt: new Date(0) }
+            : session,
         );
       }
 
@@ -194,11 +196,11 @@ function hasPermission(user: User, permission: string): boolean {
 }
 
 function isAdmin(user: User): boolean {
-  return user.role === 'admin';
+  return user.role === "admin";
 }
 
 function accessAdminFunction(user: User): boolean {
-  return isAdmin(user) || hasPermission(user, 'admin_access');
+  return isAdmin(user) || hasPermission(user, "admin_access");
 }
 
 function isSessionValid(session: Session): boolean {
@@ -207,7 +209,7 @@ function isSessionValid(session: Session): boolean {
 
 function logoutUser(sessions: Session[], sessionId: string): Session[] {
   return sessions.map((session: Session) =>
-    session.id === sessionId ? { ...session, expiresAt: new Date(0) } : session
+    session.id === sessionId ? { ...session, expiresAt: new Date(0) } : session,
   );
 }
 

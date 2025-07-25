@@ -38,12 +38,14 @@ A modern Point of Sale (POS) system built with React (Vite), Express, and Postgr
 ## Installation
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/yourusername/ProSaleManager.git
    cd ProSaleManager
    ```
 
 2. **Install all dependencies:**
+
    ```bash
    npm run install:all
    ```
@@ -66,9 +68,11 @@ A modern Point of Sale (POS) system built with React (Vite), Express, and Postgr
 ## Development
 
 Start both frontend and backend in development mode:
+
 ```bash
 npm run dev
 ```
+
 - Frontend: Vite dev server (React)
 - Backend: Express with hot reload
 
@@ -77,11 +81,13 @@ npm run dev
 ```bash
 npm run build
 ```
+
 - Builds both client and server for production.
 
 ## Scripts
 
 **Root `package.json`:**
+
 - `dev` - Run both client and server in dev mode
 - `build` - Build both client and server
 - `install:all` - Install dependencies in root, client, and server
@@ -90,11 +96,13 @@ npm run build
 - `db:seed:all` - Seed the database
 
 **Client `package.json`:**
+
 - `dev` - Start Vite dev server
 - `build` - Build for production
 - `preview` - Preview production build
 
 **Server `package.json`:**
+
 - `dev` - Start Express server with hot reload
 - `build` - Build server (if using TypeScript)
 - `migrate` - Run Sequelize migrations

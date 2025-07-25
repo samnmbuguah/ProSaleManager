@@ -1,34 +1,29 @@
-import React, { useState, useEffect } from 'react'
-import type { Product } from '@/types/product'
-import { useToast } from '@/components/ui/use-toast'
-import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle, RefreshCcw, User, ShoppingCart } from 'lucide-react'
-import { useCart } from '@/contexts/CartContext'
-import { ProductSearch } from '@/components/pos/ProductSearch'
-import { Cart } from '@/components/pos/Cart'
-import { CheckoutDialog } from '@/components/pos/CheckoutDialog'
-import type { CartItem } from '@/types/pos'
-import { ReceiptDialog } from '@/components/pos/ReceiptDialog'
-import { useProducts } from '@/hooks/use-products'
-import { useCustomers } from '@/hooks/useCustomers'
-import { api } from '@/lib/api'
+import React, { useState, useEffect } from "react";
+import type { Product } from "@/types/product";
+import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, RefreshCcw, User, ShoppingCart } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
+import { ProductSearch } from "@/components/pos/ProductSearch";
+import { Cart } from "@/components/pos/Cart";
+import { CheckoutDialog } from "@/components/pos/CheckoutDialog";
+import type { CartItem } from "@/types/pos";
+import { ReceiptDialog } from "@/components/pos/ReceiptDialog";
+import { useProducts } from "@/hooks/use-products";
+import { useCustomers } from "@/hooks/useCustomers";
+import { api } from "@/lib/api";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const PosPage: React.FC = () => {
-  const {
-    products,
-    refetch,
-    error
-  } = useProducts()
+  const { products, refetch, error } = useProducts();
   const {
     cart,
     addToCart,
@@ -36,75 +31,73 @@ const PosPage: React.FC = () => {
     updateUnitType,
     updateUnitPrice,
     removeFromCart,
-    clearCart
-  } = useCart()
-  const { toast } = useToast()
-  const [selectedCustomer, setSelectedCustomer] = useState<number | null>(null)
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'mpesa'>('cash')
-  const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false)
-  const { customers, fetchCustomers } = useCustomers()
-  const [isReceiptDialogOpen, setIsReceiptDialogOpen] = useState(false)
-  const [currentSaleId, setCurrentSaleId] = useState<number | null>(null)
+    clearCart,
+  } = useCart();
+  const { toast } = useToast();
+  const [selectedCustomer, setSelectedCustomer] = useState<number | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "mpesa">("cash");
+  const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
+  const { customers, fetchCustomers } = useCustomers();
+  const [isReceiptDialogOpen, setIsReceiptDialogOpen] = useState(false);
+  const [currentSaleId, setCurrentSaleId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState({
-    checkout: false
-  })
-  const [deliveryFee, setDeliveryFee] = useState(200)
+    checkout: false,
+  });
+  const [deliveryFee, setDeliveryFee] = useState(200);
 
   // Load products and customers on component mount
   // Note: In development mode with React.StrictMode, this may run twice
   // which is expected behavior and helps catch certain types of bugs
   useEffect(() => {
-    refetch()
-    fetchCustomers()
-  }, [refetch, fetchCustomers])
+    refetch();
+    fetchCustomers();
+  }, [refetch, fetchCustomers]);
 
   // Set Walk-in Customer as default when customers are loaded
   useEffect(() => {
     if (customers.length > 0 && !selectedCustomer) {
       // Find the Walk-in Customer (should be the first customer with ID 1)
-      const walkInCustomer = customers.find(
-        (c) => c.name === 'Walk-in Customer'
-      )
+      const walkInCustomer = customers.find((c) => c.name === "Walk-in Customer");
       if (walkInCustomer) {
-        setSelectedCustomer(walkInCustomer.id)
+        setSelectedCustomer(walkInCustomer.id);
       }
     }
-  }, [customers, selectedCustomer])
+  }, [customers, selectedCustomer]);
 
   // Enhanced add to cart function that defaults to piece pricing
   const handleAddToCart = (product: Product) => {
     // Default to piece pricing
-    const unitType = 'piece'
-    const unitPrice = product.piece_selling_price || 0
+    const unitType = "piece";
+    const unitPrice = product.piece_selling_price || 0;
 
-    addToCart(product, unitType, unitPrice)
+    addToCart(product, unitType, unitPrice);
 
     toast({
-      title: 'Added to Cart',
-      description: `${product.name} added to cart (${unitType})`
-    })
-  }
+      title: "Added to Cart",
+      description: `${product.name} added to cart (${unitType})`,
+    });
+  };
 
   const handleCheckout = async (amountTendered: number, change: number) => {
     try {
-      setIsLoading((prev) => ({ ...prev, checkout: true }))
+      setIsLoading((prev) => ({ ...prev, checkout: true }));
 
       if (cart.items.length === 0) {
         toast({
-          title: 'Error',
-          description: 'Cart is empty',
-          variant: 'destructive'
-        })
-        return
+          title: "Error",
+          description: "Cart is empty",
+          variant: "destructive",
+        });
+        return;
       }
 
       if (!selectedCustomer) {
         toast({
-          title: 'Error',
-          description: 'Please select a customer',
-          variant: 'destructive'
-        })
-        return
+          title: "Error",
+          description: "Please select a customer",
+          variant: "destructive",
+        });
+        return;
       }
 
       // Format sale data for API
@@ -116,65 +109,63 @@ const PosPage: React.FC = () => {
             quantity: item.quantity,
             unit_price: item.unit_price,
             total: item.total,
-            unit_type: item.unit_type || 'piece'
+            unit_type: item.unit_type || "piece",
           })),
         total: cart.total + deliveryFee,
         delivery_fee: deliveryFee,
         customer_id: selectedCustomer,
         payment_method: paymentMethod,
-        status: 'completed',
-        payment_status: 'paid',
+        status: "completed",
+        payment_status: "paid",
         amount_paid: amountTendered,
-        change_amount: change
-      }
+        change_amount: change,
+      };
 
       // Use the configured API instance
-      const response = await api.post('/sales', saleData)
+      const response = await api.post("/sales", saleData);
 
       // Verify response format and extract sale ID
-      let saleId
+      let saleId;
       if (response.data && response.data.data && response.data.data.id) {
-        saleId = response.data.data.id
+        saleId = response.data.data.id;
       } else if (response.data && response.data.id) {
-        saleId = response.data.id
+        saleId = response.data.id;
       } else {
-        throw new Error('Invalid server response format')
+        throw new Error("Invalid server response format");
       }
 
       // Success - show toast and clear cart
       toast({
-        title: 'Success',
-        description: 'Checkout successful!'
-      })
+        title: "Success",
+        description: "Checkout successful!",
+      });
 
       // ONLY clear the cart after successful checkout using the context function
-      clearCart()
+      clearCart();
 
       // Close the checkout dialog immediately
-      setIsCheckoutDialogOpen(false)
+      setIsCheckoutDialogOpen(false);
 
       // Set the sale ID for the receipt dialog
-      setCurrentSaleId(saleId)
+      setCurrentSaleId(saleId);
 
       // Open the receipt dialog immediately
-      setIsReceiptDialogOpen(true)
+      setIsReceiptDialogOpen(true);
     } catch (error: unknown) {
       // Show detailed error message
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'Failed to complete checkout. Please try again.'
+        error instanceof Error ? error.message : "Failed to complete checkout. Please try again.";
       toast({
-        title: 'Server Error',
+        title: "Server Error",
         description: errorMessage,
-        variant: 'destructive'
-      })
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading((prev) => ({ ...prev, checkout: false }))
+      setIsLoading((prev) => ({ ...prev, checkout: false }));
     }
-  }
+  };
 
-  const selectedCustomerData = customers.find((c) => c.id === selectedCustomer)
+  const selectedCustomerData = customers.find((c) => c.id === selectedCustomer);
 
   return (
     <div className="container mx-auto p-2 sm:p-4 mt-16">
@@ -188,10 +179,8 @@ const PosPage: React.FC = () => {
               <span className="text-sm text-gray-600">Customer:</span>
             </div>
             <Select
-              value={selectedCustomer?.toString() || ''}
-              onValueChange={(value) =>
-                setSelectedCustomer(value ? parseInt(value) : null)
-              }
+              value={selectedCustomer?.toString() || ""}
+              onValueChange={(value) => setSelectedCustomer(value ? parseInt(value) : null)}
             >
               <SelectTrigger className="w-full sm:w-64">
                 <SelectValue placeholder="Select a customer" />
@@ -226,12 +215,7 @@ const PosPage: React.FC = () => {
                   <AlertTitle>Connection Error</AlertTitle>
                   <AlertDescription>
                     Failed to load products. Please try again later.
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => refetch()}
-                      className="ml-2"
-                    >
+                    <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-2">
                       <RefreshCcw className="h-4 w-4 mr-1" /> Retry
                     </Button>
                   </AlertDescription>
@@ -240,37 +224,35 @@ const PosPage: React.FC = () => {
 
               <div className="flex-1 min-h-0 overflow-y-auto">
                 <ProductSearch
-                  products={(products || []).filter(
-                    (product) => product?.sku !== 'SRV001'
-                  )}
+                  products={(products || []).filter((product) => product?.sku !== "SRV001")}
                   onSelect={handleAddToCart}
                   searchProducts={async (query: string) => {
                     try {
                       const response = await fetch(
                         `${import.meta.env.VITE_API_URL}/products/search?q=${query}`,
                         {
-                          credentials: 'include',
+                          credentials: "include",
                           headers: {
-                            'Content-Type': 'application/json'
-                          }
+                            "Content-Type": "application/json",
+                          },
                         }
-                      )
-                      if (!response.ok) { throw new Error('Failed to search products') }
+                      );
+                      if (!response.ok) {
+                        throw new Error("Failed to search products");
+                      }
 
-                      const data = await response.json()
-                      if (data.message === 'getProducts stub') {
-                        throw new Error(
-                          'Stub response received - API not properly configured'
-                        )
+                      const data = await response.json();
+                      if (data.message === "getProducts stub") {
+                        throw new Error("Stub response received - API not properly configured");
                       }
                       // setProducts(data.data || []) // This line is removed as per the edit hint
                     } catch (error) {
-                      console.error('Error:', error)
+                      console.error("Error:", error);
                       toast({
-                        title: 'Error',
-                        description: 'Failed to search products',
-                        variant: 'destructive'
-                      })
+                        title: "Error",
+                        description: "Failed to search products",
+                        variant: "destructive",
+                      });
                     }
                   }}
                 />
@@ -283,11 +265,9 @@ const PosPage: React.FC = () => {
         <div className="w-full lg:w-1/3 flex flex-col">
           <Cart
             items={cart.items as CartItem[]}
-            onUpdateQuantity={(
-              productId: number,
-              _unitType: string,
-              quantity: number
-            ) => updateQuantity(productId, quantity)}
+            onUpdateQuantity={(productId: number, _unitType: string, quantity: number) =>
+              updateQuantity(productId, quantity)
+            }
             onUpdateUnitType={updateUnitType}
             onUpdateUnitPrice={updateUnitPrice}
             onRemoveItem={removeFromCart}
@@ -321,7 +301,7 @@ const PosPage: React.FC = () => {
         currentSaleId={currentSaleId}
       />
     </div>
-  )
-}
+  );
+};
 
-export default PosPage
+export default PosPage;

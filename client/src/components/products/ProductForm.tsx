@@ -1,50 +1,48 @@
-import { useFieldArray, useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
+import { useFieldArray, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import { Card, CardContent } from '@/components/ui/card'
-import { Trash2 } from 'lucide-react'
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
+import { Trash2 } from "lucide-react";
 
 const priceUnitSchema = z.object({
-  stockUnit: z.string().min(1, 'Stock unit is required'),
-  sellingPrice: z.number().min(0, 'Selling price must be positive'),
-  buyingPrice: z.number().min(0, 'Buying price must be positive'),
-  conversionRate: z.number().min(0.0001, 'Conversion rate must be positive')
-})
+  stockUnit: z.string().min(1, "Stock unit is required"),
+  sellingPrice: z.number().min(0, "Selling price must be positive"),
+  buyingPrice: z.number().min(0, "Buying price must be positive"),
+  conversionRate: z.number().min(0.0001, "Conversion rate must be positive"),
+});
 
 const formSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().min(1, "Name is required"),
   description: z.string(),
-  defaultUnit: z.string().min(1, 'Default unit is required'),
-  priceUnits: z
-    .array(priceUnitSchema)
-    .min(1, 'At least one price unit is required')
+  defaultUnit: z.string().min(1, "Default unit is required"),
+  priceUnits: z.array(priceUnitSchema).min(1, "At least one price unit is required"),
   // ... other existing fields
-})
+});
 
 type FormData = z.infer<typeof formSchema>;
 
 const defaultPriceUnits = [
-  { stockUnit: 'piece', sellingPrice: 0, buyingPrice: 0, conversionRate: 1 },
-  { stockUnit: 'box', sellingPrice: 0, buyingPrice: 0, conversionRate: 1 },
-  { stockUnit: 'carton', sellingPrice: 0, buyingPrice: 0, conversionRate: 1 }
-]
+  { stockUnit: "piece", sellingPrice: 0, buyingPrice: 0, conversionRate: 1 },
+  { stockUnit: "box", sellingPrice: 0, buyingPrice: 0, conversionRate: 1 },
+  { stockUnit: "carton", sellingPrice: 0, buyingPrice: 0, conversionRate: 1 },
+];
 
 interface ProductFormProps {
   onSubmit: (data: FormData) => void;
@@ -61,26 +59,26 @@ interface ProductFormProps {
   };
 }
 
-export function ProductForm ({ onSubmit, initialData }: ProductFormProps) {
+export function ProductForm({ onSubmit, initialData }: ProductFormProps) {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: initialData?.name || '',
-      description: initialData?.description || '',
-      defaultUnit: initialData?.defaultUnit || 'piece',
-      priceUnits: initialData?.priceUnits || [defaultPriceUnits[0]]
+      name: initialData?.name || "",
+      description: initialData?.description || "",
+      defaultUnit: initialData?.defaultUnit || "piece",
+      priceUnits: initialData?.priceUnits || [defaultPriceUnits[0]],
       // ... other existing fields
-    }
-  })
+    },
+  });
 
   const { fields, append, remove } = useFieldArray({
-    name: 'priceUnits',
-    control: form.control
-  })
+    name: "priceUnits",
+    control: form.control,
+  });
 
   const handleSubmit = (data: FormData) => {
-    onSubmit(data)
-  }
+    onSubmit(data);
+  };
 
   return (
     <Form {...form}>
@@ -141,11 +139,7 @@ export function ProductForm ({ onSubmit, initialData }: ProductFormProps) {
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium">Price Units</h3>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => append(defaultPriceUnits[0])}
-            >
+            <Button type="button" variant="outline" onClick={() => append(defaultPriceUnits[0])}>
               Add Price Unit
             </Button>
           </div>
@@ -160,10 +154,7 @@ export function ProductForm ({ onSubmit, initialData }: ProductFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Stock Unit</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select unit" />
@@ -171,10 +162,7 @@ export function ProductForm ({ onSubmit, initialData }: ProductFormProps) {
                           </FormControl>
                           <SelectContent>
                             {defaultPriceUnits.map((unit) => (
-                              <SelectItem
-                                key={unit.stockUnit}
-                                value={unit.stockUnit}
-                              >
+                              <SelectItem key={unit.stockUnit} value={unit.stockUnit}>
                                 {unit.stockUnit}
                               </SelectItem>
                             ))}
@@ -196,9 +184,7 @@ export function ProductForm ({ onSubmit, initialData }: ProductFormProps) {
                             type="number"
                             step="0.0001"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(parseFloat(e.target.value))
-                            }
+                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
                           />
                         </FormControl>
                         <FormMessage />
@@ -217,9 +203,7 @@ export function ProductForm ({ onSubmit, initialData }: ProductFormProps) {
                             type="number"
                             step="0.01"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(parseFloat(e.target.value))
-                            }
+                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
                           />
                         </FormControl>
                         <FormMessage />
@@ -238,9 +222,7 @@ export function ProductForm ({ onSubmit, initialData }: ProductFormProps) {
                             type="number"
                             step="0.01"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(parseFloat(e.target.value))
-                            }
+                            onChange={(e) => field.onChange(parseFloat(e.target.value))}
                           />
                         </FormControl>
                         <FormMessage />
@@ -268,5 +250,5 @@ export function ProductForm ({ onSubmit, initialData }: ProductFormProps) {
         <Button type="submit">Save Product</Button>
       </form>
     </Form>
-  )
+  );
 }

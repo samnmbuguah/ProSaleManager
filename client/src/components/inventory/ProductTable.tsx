@@ -1,64 +1,50 @@
-import { useState } from 'react'
-import { Product, ProductFormData } from '@/types/product'
-import { formatCurrency } from '@/utils/formatters'
+import { useState } from "react";
+import { z } from "zod";
+import { Product, productSchema } from "@/types/product";
+import { formatCurrency } from "@/utils/formatters";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
-} from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog'
-import { ProductForm } from './ProductForm'
-import { Settings, Edit } from 'lucide-react'
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ProductForm } from "./ProductForm";
+import { Settings, Edit } from "lucide-react";
 
 interface ProductTableProps {
   products: Product[];
   isLoading: boolean;
-  onUpdateProduct?: (
-    id: number,
-    data: ProductFormData,
-  ) => Promise<void>;
+  onUpdateProduct?: (id: number, data: z.infer<typeof productSchema>) => Promise<void>;
 }
 
-export function ProductTable ({
-  products = [],
-  isLoading,
-  onUpdateProduct
-}: ProductTableProps) {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+export function ProductTable({ products = [], isLoading, onUpdateProduct }: ProductTableProps) {
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return <div>Loading...</div>;
   }
 
   if (!Array.isArray(products)) {
-    return <div>No products found</div>
+    return <div>No products found</div>;
   }
 
   const getStockStatus = (product: Product) => {
     if (product.quantity <= product.min_quantity) {
-      return { label: 'Low Stock', variant: 'destructive' as const }
+      return { label: "Low Stock", variant: "destructive" as const };
     }
-    return { label: 'In Stock', variant: 'default' as const }
-  }
+    return { label: "In Stock", variant: "default" as const };
+  };
 
-  const calculateProfitMargin = (
-    buyingPrice: number,
-    sellingPrice: number
-  ) => {
-    if (buyingPrice <= 0) return 'N/A'
-    return (((sellingPrice - buyingPrice) / buyingPrice) * 100).toFixed(1) + '%'
-  }
+  const calculateProfitMargin = (buyingPrice: number, sellingPrice: number) => {
+    if (buyingPrice <= 0) return "N/A";
+    return (((sellingPrice - buyingPrice) / buyingPrice) * 100).toFixed(1) + "%";
+  };
 
   return (
     <>
@@ -81,16 +67,13 @@ export function ProductTable ({
               return (
                 <TableRow key={product.id}>
                   <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.sku || 'N/A'}</TableCell>
+                  <TableCell>{product.sku || "N/A"}</TableCell>
                   <TableCell>{product.category_id}</TableCell>
                   <TableCell>
-                    {`KSh ${product.piece_buying_price.toLocaleString('en-KE')} / KSh ${product.piece_selling_price.toLocaleString('en-KE')}`}
+                    {`KSh ${product.piece_buying_price.toLocaleString("en-KE")} / KSh ${product.piece_selling_price.toLocaleString("en-KE")}`}
                   </TableCell>
                   <TableCell>
-                    {calculateProfitMargin(
-                      product.piece_buying_price,
-                      product.piece_selling_price
-                    )}
+                    {calculateProfitMargin(product.piece_buying_price, product.piece_selling_price)}
                   </TableCell>
                   <TableCell>{product.quantity}</TableCell>
                   <TableCell>
@@ -119,16 +102,13 @@ export function ProductTable ({
                     </div>
                   </TableCell>
                 </TableRow>
-              )
+              );
             })}
           </TableBody>
         </Table>
       </div>
 
-      <Dialog
-        open={!!editingProduct}
-        onOpenChange={() => setEditingProduct(null)}
-      >
+      <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Product</DialogTitle>
@@ -137,9 +117,9 @@ export function ProductTable ({
             <ProductForm
               initialData={{
                 name: editingProduct.name,
-                description: editingProduct.description || '',
-                sku: editingProduct.sku || '',
-                barcode: editingProduct.barcode || '',
+                description: editingProduct.description || "",
+                sku: editingProduct.sku || "",
+                barcode: editingProduct.barcode || "",
                 category_id: editingProduct.category_id,
                 piece_buying_price: editingProduct.piece_buying_price,
                 piece_selling_price: editingProduct.piece_selling_price,
@@ -149,13 +129,14 @@ export function ProductTable ({
                 dozen_selling_price: editingProduct.dozen_selling_price,
                 quantity: editingProduct.quantity,
                 min_quantity: editingProduct.min_quantity,
-                image_url: editingProduct.image_url || '',
-                is_active: editingProduct.is_active
+                image_url: editingProduct.image_url || "",
+                is_active: editingProduct.is_active,
+                stock_unit: editingProduct.stock_unit || "piece",
               }}
-              onSubmit={async (data: ProductFormData) => {
+              onSubmit={async (data: z.infer<typeof productSchema>) => {
                 if (onUpdateProduct && editingProduct.id) {
-                  await onUpdateProduct(editingProduct.id, data)
-                  setEditingProduct(null)
+                  await onUpdateProduct(editingProduct.id, data);
+                  setEditingProduct(null);
                 }
               }}
               isSubmitting={false}
@@ -164,23 +145,18 @@ export function ProductTable ({
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={!!selectedProduct}
-        onOpenChange={() => setSelectedProduct(null)}
-      >
+      <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
         <DialogContent className="max-w-3xl">
           {selectedProduct && (
             <div className="space-y-4">
               <DialogHeader>
-                <DialogTitle>
-                  Manage Product: {selectedProduct.name}
-                </DialogTitle>
+                <DialogTitle>Manage Product: {selectedProduct.name}</DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h3 className="font-medium">Stock Information</h3>
                   <p>Current Stock: {selectedProduct.quantity}</p>
-                  <p>Minimum Stock: {selectedProduct.min_quantity || 'Not set'}</p>
+                  <p>Minimum Stock: {selectedProduct.min_quantity || "Not set"}</p>
                 </div>
                 <div>
                   <h3 className="font-medium">Pricing Information</h3>
@@ -199,5 +175,5 @@ export function ProductTable ({
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

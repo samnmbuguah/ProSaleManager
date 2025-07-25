@@ -157,25 +157,28 @@ router.post("/", async (req, res) => {
       }
     });
 
-    await Product.bulkCreate(products.map((p) => ({
-      name: p.name,
-      sku: p.product_code || '',
-      barcode: '',
-      category_id: (categoryMap && categoryMap[p.category]) || 1,
-      piece_buying_price: p.buying_price || 0,
-      piece_selling_price: p.selling_price || 0,
-      pack_buying_price: p.buying_price || 0,
-      pack_selling_price: p.selling_price || 0,
-      dozen_buying_price: p.buying_price || 0,
-      dozen_selling_price: p.selling_price || 0,
-      quantity: p.quantity || 0,
-      min_quantity: p.min_stock || 0,
-      image_url: '',
-      is_active: true,
-      description: '',
-      created_at: new Date(),
-      updated_at: new Date(),
-    })));
+    await Product.bulkCreate(
+      products.map((p) => ({
+        name: p.name,
+        sku: p.product_code || "",
+        barcode: "",
+        category_id: (categoryMap && categoryMap[p.category]) || 1,
+        piece_buying_price: p.buying_price || 0,
+        piece_selling_price: p.selling_price || 0,
+        pack_buying_price: p.buying_price || 0,
+        pack_selling_price: p.selling_price || 0,
+        dozen_buying_price: p.buying_price || 0,
+        dozen_selling_price: p.selling_price || 0,
+        quantity: p.quantity || 0,
+        min_quantity: p.min_stock || 0,
+        image_url: "",
+        is_active: true,
+        description: "",
+        created_at: new Date(),
+        updated_at: new Date(),
+        stock_unit: p.stock_unit || "piece",
+      })),
+    );
 
     // Create sample suppliers
     const suppliers = [
@@ -217,15 +220,17 @@ router.post("/", async (req, res) => {
       },
     ];
 
-    await Customer.bulkCreate(customers.map((c) => ({
-      name: c.name,
-      email: c.email,
-      phone: c.phone,
-      loyalty_points: c.loyalty_points || 0,
-      address: 'N/A',
-      created_at: new Date(),
-      updated_at: new Date(),
-    })));
+    await Customer.bulkCreate(
+      customers.map((c) => ({
+        name: c.name,
+        email: c.email,
+        phone: c.phone,
+        loyalty_points: c.loyalty_points || 0,
+        address: "N/A",
+        created_at: new Date(),
+        updated_at: new Date(),
+      })),
+    );
 
     res.json({ message: "Database seeded successfully" });
   } catch (error) {

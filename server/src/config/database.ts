@@ -1,7 +1,7 @@
 import { Sequelize } from "sequelize";
 import dotenv from "dotenv";
 import path from "path";
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
@@ -9,8 +9,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: process.env.SQLITE_PATH || path.resolve(__dirname, '../../database.sqlite'),
+  dialect: "sqlite",
+  storage: process.env.SQLITE_PATH || path.resolve(__dirname, "../../database.sqlite"),
   logging: false,
 });
 
@@ -26,4 +26,3 @@ export const testConnection = async (): Promise<void> => {
     throw error;
   }
 };
-

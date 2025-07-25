@@ -1,6 +1,6 @@
-import { Router } from 'express';
-import { requireAuth } from '../middleware/auth.middleware.js';
-import { getProducts, searchProducts } from '../controllers/pos.controller.js';
+import { Router } from "express";
+import { requireAuth } from "../middleware/auth.middleware.js";
+import { getProducts, searchProducts } from "../controllers/pos.controller.js";
 
 const router = Router();
 
@@ -8,9 +8,9 @@ const router = Router();
 router.use(requireAuth);
 
 // Get all products for POS
-router.get('/products', getProducts);
+router.get("/products", getProducts);
 
 // Search products for POS
-router.get('/products/search', searchProducts);
+router.get("/products/search", searchProducts);
 
-export default router; 
+export default router;

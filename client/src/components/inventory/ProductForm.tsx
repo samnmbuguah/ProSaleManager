@@ -1,72 +1,82 @@
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { ProductFormData, productSchema } from '@/types/product'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { productSchema } from "@/types/product";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import { useCategories } from '@/hooks/use-categories'
-import React from 'react'
+  SelectValue,
+} from "@/components/ui/select";
+import { useCategories } from "@/hooks/use-categories";
+import React from "react";
 
 interface ProductFormProps {
-  initialData?: Partial<ProductFormData>;
-  onSubmit: (data: ProductFormData) => Promise<void>;
+  initialData?: Partial<z.infer<typeof productSchema>>;
+  onSubmit: (data: z.infer<typeof productSchema>) => Promise<void>;
   isSubmitting?: boolean;
 }
 
-export function ProductForm ({
-  initialData,
-  onSubmit,
-  isSubmitting
-}: ProductFormProps) {
-  const form = useForm<ProductFormData>({
+// Helper type to ensure stock_unit is required and not undefined
+type ProductFormType = Omit<z.infer<typeof productSchema>, "stock_unit"> & {
+  stock_unit: "piece" | "pack" | "dozen";
+};
+
+export function ProductForm({ initialData, onSubmit, isSubmitting }: ProductFormProps) {
+  const form = useForm<ProductFormType>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      name: '',
-      description: '',
-      sku: '',
-      barcode: '',
+      name: "",
+      description: "",
+      sku: "",
+      barcode: "",
       category_id: 1,
+      piece_buying_price: 0,
+      piece_selling_price: 0,
+      pack_buying_price: 0,
+      pack_selling_price: 0,
+      dozen_buying_price: 0,
+      dozen_selling_price: 0,
       quantity: 0,
       min_quantity: 0,
+      image_url: "",
       is_active: true,
-      ...initialData
-    }
-  })
+      ...initialData,
+      stock_unit: (initialData?.stock_unit as "piece" | "pack" | "dozen") ?? "piece",
+    },
+  });
 
-  const { data: categories, isLoading } = useCategories()
+  const { data: categories, isLoading } = useCategories();
 
   React.useEffect(() => {
-    if (categories && categories.length > 0 && !form.watch('category_id')) {
-      form.setValue('category_id', categories[0].id)
+    if (categories && categories.length > 0 && !form.watch("category_id")) {
+      form.setValue("category_id", categories[0].id);
     }
-  }, [categories, form])
+  }, [categories, form]);
 
-  const handleSubmit = async (data: ProductFormData) => {
-    await onSubmit(data)
-  }
+  // Debug: log form state on every render
+  React.useEffect(() => {
+    console.log("ProductForm form state:", form.getValues());
+  });
+
+  const handleSubmit = async (data: z.infer<typeof productSchema>) => {
+    console.log("Submitting product form data:", data);
+    await onSubmit(data);
+  };
 
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
       <div className="space-y-4">
         <div>
           <Label htmlFor="name">Name</Label>
-          <Input
-            id="name"
-            {...form.register('name')}
-            placeholder="Enter product name"
-          />
+          <Input id="name" {...form.register("name")} placeholder="Enter product name" />
           {form.formState.errors.name && (
-            <p className="text-sm text-red-500">
-              {form.formState.errors.name.message}
-            </p>
+            <p className="text-sm text-red-500">{form.formState.errors.name.message}</p>
           )}
         </div>
 
@@ -74,7 +84,7 @@ export function ProductForm ({
           <Label htmlFor="description">Description</Label>
           <Textarea
             id="description"
-            {...form.register('description')}
+            {...form.register("description")}
             placeholder="Enter product description"
           />
         </div>
@@ -82,22 +92,16 @@ export function ProductForm ({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="sku">SKU</Label>
-            <Input id="sku" {...form.register('sku')} placeholder="Enter SKU" />
+            <Input id="sku" {...form.register("sku")} placeholder="Enter SKU" />
           </div>
 
           <div>
             <Label htmlFor="barcode">Barcode</Label>
-            <Input
-              id="barcode"
-              {...form.register('barcode')}
-              placeholder="Enter barcode"
-            />
+            <Input id="barcode" {...form.register("barcode")} placeholder="Enter barcode" />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          {/* Remove Price and Cost Price fields */}
-        </div>
+        <div className="grid grid-cols-2 gap-4">{/* Remove Price and Cost Price fields */}</div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -105,13 +109,14 @@ export function ProductForm ({
             <Input
               id="quantity"
               type="number"
-              {...form.register('quantity', { valueAsNumber: true })}
+              value={form.watch("quantity") !== undefined ? String(form.watch("quantity")) : "0"}
+              onChange={(e) =>
+                form.setValue("quantity", e.target.value === "" ? 0 : Number(e.target.value))
+              }
               placeholder="Enter quantity"
             />
             {form.formState.errors.quantity && (
-              <p className="text-sm text-red-500">
-                {form.formState.errors.quantity.message}
-              </p>
+              <p className="text-sm text-red-500">{form.formState.errors.quantity.message}</p>
             )}
           </div>
 
@@ -120,48 +125,70 @@ export function ProductForm ({
             <Input
               id="min_quantity"
               type="number"
-              {...form.register('min_quantity', { valueAsNumber: true })}
+              value={
+                form.watch("min_quantity") !== undefined ? String(form.watch("min_quantity")) : "0"
+              }
+              onChange={(e) =>
+                form.setValue("min_quantity", e.target.value === "" ? 0 : Number(e.target.value))
+              }
               placeholder="Enter minimum quantity"
             />
             {form.formState.errors.min_quantity && (
-              <p className="text-sm text-red-500">
-                {form.formState.errors.min_quantity.message}
-              </p>
+              <p className="text-sm text-red-500">{form.formState.errors.min_quantity.message}</p>
             )}
           </div>
         </div>
 
         <div>
+          <Label htmlFor="stock_unit">Default Stock Unit</Label>
+          <Select
+            value={form.watch("stock_unit") || "piece"}
+            onValueChange={(value) =>
+              form.setValue("stock_unit", value as "piece" | "pack" | "dozen")
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select default unit" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="piece">Piece</SelectItem>
+              <SelectItem value="pack">Pack</SelectItem>
+              <SelectItem value="dozen">Dozen</SelectItem>
+            </SelectContent>
+          </Select>
+          {form.formState.errors.stock_unit && (
+            <p className="text-sm text-red-500">{form.formState.errors.stock_unit.message}</p>
+          )}
+        </div>
+
+        <div>
           <Label htmlFor="category_id">Category</Label>
           <Select
-            value={form.watch('category_id').toString()}
-            onValueChange={(value) =>
-              form.setValue('category_id', parseInt(value))
-            }
+            value={form.watch("category_id") !== undefined ? String(form.watch("category_id")) : ""}
+            onValueChange={(value) => form.setValue("category_id", parseInt(value))}
             disabled={isLoading || !categories}
           >
             <SelectTrigger>
-              <SelectValue placeholder={isLoading ? 'Loading...' : 'Select a category'} />
+              <SelectValue placeholder={isLoading ? "Loading..." : "Select a category"} />
             </SelectTrigger>
             <SelectContent>
-              {categories && categories.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id.toString()}>
-                  {cat.name}
-                </SelectItem>
-              ))}
+              {categories &&
+                categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id.toString()}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
           {form.formState.errors.category_id && (
-            <p className="text-sm text-red-500">
-              {form.formState.errors.category_id.message}
-            </p>
+            <p className="text-sm text-red-500">{form.formState.errors.category_id.message}</p>
           )}
         </div>
       </div>
 
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Saving...' : 'Save Product'}
+        {isSubmitting ? "Saving..." : "Save Product"}
       </Button>
     </form>
-  )
+  );
 }

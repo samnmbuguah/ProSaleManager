@@ -32,7 +32,7 @@ Store.init(
     tableName: "stores",
     timestamps: true,
     underscored: true,
-  }
+  },
 );
 
-export default Store; 
+export default Store;

@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 interface EnvConfig {
-  NODE_ENV: 'development' | 'production' | 'test';
+  NODE_ENV: "development" | "production" | "test";
   JWT_SECRET: string;
   COOKIE_SECRET: string;
   CLIENT_URL: string;
@@ -12,7 +12,7 @@ interface EnvConfig {
 }
 
 // Validate required environment variables
-const requiredEnvVars = ['JWT_SECRET', 'SQLITE_PATH'] as const;
+const requiredEnvVars = ["JWT_SECRET", "SQLITE_PATH"] as const;
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
     throw new Error(`${envVar} must be defined in environment variables`);
@@ -20,12 +20,12 @@ for (const envVar of requiredEnvVars) {
 }
 
 const env: EnvConfig = {
-  NODE_ENV: (process.env.NODE_ENV as EnvConfig['NODE_ENV']) || 'development',
+  NODE_ENV: (process.env.NODE_ENV as EnvConfig["NODE_ENV"]) || "development",
   JWT_SECRET: process.env.JWT_SECRET!,
-  COOKIE_SECRET: process.env.COOKIE_SECRET || 'your-cookie-secret',
-  CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
+  COOKIE_SECRET: process.env.COOKIE_SECRET || "your-cookie-secret",
+  CLIENT_URL: process.env.CLIENT_URL || "http://localhost:5173",
   DATABASE_URL: process.env.SQLITE_PATH!,
-  PORT: parseInt(process.env.PORT || '3000', 10),
+  PORT: parseInt(process.env.PORT || "3000", 10),
 };
 
 export default env;

@@ -1,7 +1,7 @@
-import React from 'react'
-import { Product } from '../../types/product'
-import { formatCurrency } from '../../utils/format'
-import { Button } from '@/components/ui/button'
+import React from "react";
+import { Product } from "../../types/product";
+import { formatCurrency } from "../../utils/format";
+import { Button } from "@/components/ui/button";
 
 interface ProductListProps {
   products: Product[];
@@ -9,13 +9,9 @@ interface ProductListProps {
   onDelete: (id: number) => void;
 }
 
-const ProductList: React.FC<ProductListProps> = ({
-  products,
-  onEdit,
-  onDelete
-}) => {
+const ProductList: React.FC<ProductListProps> = ({ products, onEdit, onDelete }) => {
   if (!products.length) {
-    return <div className="text-gray-500">No products available.</div>
+    return <div className="text-gray-500">No products available.</div>;
   }
   return (
     <div className="overflow-x-auto">
@@ -59,23 +55,13 @@ const ProductList: React.FC<ProductListProps> = ({
               <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
                 {formatCurrency(product.dozen_selling_price)}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                {product.quantity}
-              </td>
+              <td className="px-6 py-4 whitespace-nowrap">{product.quantity}</td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(product)}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => onEdit(product)}>
                     Edit
                   </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => onDelete(product.id)}
-                  >
+                  <Button variant="destructive" size="sm" onClick={() => onDelete(product.id)}>
                     Delete
                   </Button>
                 </div>
@@ -85,9 +71,9 @@ const ProductList: React.FC<ProductListProps> = ({
         </tbody>
       </table>
     </div>
-  )
-}
+  );
+};
 
-export default ProductList
+export default ProductList;
 
-export { }
+export {};

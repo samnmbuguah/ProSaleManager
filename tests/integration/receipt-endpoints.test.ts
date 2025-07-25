@@ -1,6 +1,6 @@
-const request = require('supertest');
-const app = require('../../app'); // Adjust path as needed
-import { jest, describe, it, expect } from '@jest/globals';
+const request = require("supertest");
+const app = require("../../app"); // Adjust path as needed
+import { jest, describe, it, expect } from "@jest/globals";
 import express from "express";
 import { ReceiptService } from "../../services/receipt.service";
 import salesRoutes from "../../routes/sales";

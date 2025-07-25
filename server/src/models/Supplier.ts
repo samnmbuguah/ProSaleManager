@@ -48,8 +48,8 @@ Supplier.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'stores',
-        key: 'id',
+        model: "stores",
+        key: "id",
       },
     },
   },

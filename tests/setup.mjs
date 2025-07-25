@@ -1,1 +1,1 @@
-console.log('Jest ESM setup loaded'); 
+console.log("Jest ESM setup loaded");

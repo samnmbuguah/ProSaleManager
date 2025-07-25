@@ -45,13 +45,7 @@ PurchaseOrder.init(
       allowNull: true,
     },
     status: {
-      type: DataTypes.ENUM(
-        "pending",
-        "approved",
-        "ordered",
-        "received",
-        "cancelled",
-      ),
+      type: DataTypes.ENUM("pending", "approved", "ordered", "received", "cancelled"),
       allowNull: false,
       defaultValue: "pending",
     },
@@ -68,8 +62,8 @@ PurchaseOrder.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'stores',
-        key: 'id',
+        model: "stores",
+        key: "id",
       },
     },
   },

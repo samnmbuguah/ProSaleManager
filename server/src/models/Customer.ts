@@ -64,18 +64,18 @@ Customer.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'stores',
-        key: 'id',
+        model: "stores",
+        key: "id",
       },
     },
   },
   {
     sequelize,
-    modelName: 'Customer',
-    tableName: 'customers',
+    modelName: "Customer",
+    tableName: "customers",
     timestamps: true,
     underscored: true,
-  }
+  },
 );
 
 export default Customer;

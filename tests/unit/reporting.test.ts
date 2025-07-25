@@ -61,7 +61,7 @@ describe("Report Generation", () => {
       function calculateTotalSales(sales: Sale[]): number {
         return sales.reduce(
           (total: number, sale: Sale) => total + Number(sale.total_amount),
-          0
+          0,
         );
       }
 
@@ -75,7 +75,7 @@ describe("Report Generation", () => {
       function filterSalesByDateRange(
         sales: Sale[],
         startDate: Date,
-        endDate: Date
+        endDate: Date,
       ): Sale[] {
         return sales.filter((sale: Sale) => {
           const saleDate = new Date(sale.createdAt);
@@ -99,7 +99,9 @@ describe("Report Generation", () => {
 
     it("should group sales by payment method", () => {
       // Function to group sales by payment method
-      function groupSalesByPaymentMethod(sales: Sale[]): Record<string, number> {
+      function groupSalesByPaymentMethod(
+        sales: Sale[],
+      ): Record<string, number> {
         return sales.reduce((result: Record<string, number>, sale: Sale) => {
           const method = sale.payment_method;
           result[method] = (result[method] || 0) + Number(sale.total_amount);
@@ -135,8 +137,13 @@ describe("Report Generation", () => {
       const minStockThreshold = 10;
 
       // Function to identify low stock products
-      function findLowStockProducts(products: Product[], threshold: number): Product[] {
-        return products.filter((product: Product) => product.quantity < threshold);
+      function findLowStockProducts(
+        products: Product[],
+        threshold: number,
+      ): Product[] {
+        return products.filter(
+          (product: Product) => product.quantity < threshold,
+        );
       }
 
       const lowStockProducts = findLowStockProducts(
@@ -151,15 +158,20 @@ describe("Report Generation", () => {
 
     it("should group products by category", () => {
       // Function to group products by category
-      function groupProductsByCategory(products: Product[]): Record<string, Product[]> {
-        return products.reduce((result: Record<string, Product[]>, product: Product) => {
-          const category = product.category;
-          if (!result[category]) {
-            result[category] = [];
-          }
-          result[category].push(product);
-          return result;
-        }, {});
+      function groupProductsByCategory(
+        products: Product[],
+      ): Record<string, Product[]> {
+        return products.reduce(
+          (result: Record<string, Product[]>, product: Product) => {
+            const category = product.category;
+            if (!result[category]) {
+              result[category] = [];
+            }
+            result[category].push(product);
+            return result;
+          },
+          {},
+        );
       }
 
       const groupedProducts = groupProductsByCategory(mockProducts);
@@ -175,7 +187,7 @@ describe("Report Generation", () => {
       // Function to summarize sales by date
       function summarizeSalesByDay(sales: Sale[]): Record<string, number> {
         return sales.reduce((result: Record<string, number>, sale: Sale) => {
-          const date = new Date(sale.createdAt).toISOString().split('T')[0];
+          const date = new Date(sale.createdAt).toISOString().split("T")[0];
           result[date] = (result[date] || 0) + Number(sale.total_amount);
           return result;
         }, {});

@@ -1,56 +1,45 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
-} from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { Trash2 } from 'lucide-react'
-import type { Expense } from '@/types/expense'
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import type { Expense } from "@/types/expense";
 
 interface ExpenseListProps {
   expenses: Expense[];
   onDeleteExpense: (id: number) => void;
 }
 
-export default function ExpenseList ({
-  expenses = [],
-  onDeleteExpense
-}: ExpenseListProps) {
+export default function ExpenseList({ expenses = [], onDeleteExpense }: ExpenseListProps) {
   const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString()
-  }
+    return new Date(dateString).toLocaleDateString();
+  };
 
   const formatAmount = (amount: number): string => {
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency: 'KES'
-    }).format(amount)
-  }
+    return new Intl.NumberFormat("en-KE", {
+      style: "currency",
+      currency: "KES",
+    }).format(amount);
+  };
 
   if (!Array.isArray(expenses) || expenses.length === 0) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>Expenses</CardTitle>
-          <CardDescription>
-            Your recent expenses will appear here
-          </CardDescription>
+          <CardDescription>Your recent expenses will appear here</CardDescription>
         </CardHeader>
         <CardContent className="text-center text-muted-foreground py-8">
           No expenses recorded yet
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -76,15 +65,9 @@ export default function ExpenseList ({
                 <TableCell>{expense.description}</TableCell>
                 <TableCell>{expense.category}</TableCell>
                 <TableCell>{formatDate(expense.date)}</TableCell>
-                <TableCell className="text-right">
-                  {formatAmount(expense.amount)}
-                </TableCell>
+                <TableCell className="text-right">{formatAmount(expense.amount)}</TableCell>
                 <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onDeleteExpense(expense.id)}
-                  >
+                  <Button variant="ghost" size="icon" onClick={() => onDeleteExpense(expense.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </TableCell>
@@ -94,5 +77,5 @@ export default function ExpenseList ({
         </Table>
       </CardContent>
     </Card>
-  )
+  );
 }

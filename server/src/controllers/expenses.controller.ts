@@ -5,8 +5,8 @@ import { storeScope } from "../utils/helpers.js";
 
 export const getExpenses = async (req: Request, res: Response) => {
   try {
-    if (req.user?.role !== 'super_admin' && !req.user?.store_id) {
-      return res.status(400).json({ message: 'Store context missing' });
+    if (req.user?.role !== "super_admin" && !req.user?.store_id) {
+      return res.status(400).json({ message: "Store context missing" });
     }
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -45,10 +45,11 @@ export const createExpense = async (req: Request, res: Response) => {
       await t.rollback();
       return res.status(401).json({ message: "User not authenticated" });
     }
-    const store_id = req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id;
-    if (req.user?.role !== 'super_admin' && !store_id) {
+    const store_id =
+      req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id;
+    if (req.user?.role !== "super_admin" && !store_id) {
       await t.rollback();
-      return res.status(400).json({ message: 'Store context missing' });
+      return res.status(400).json({ message: "Store context missing" });
     }
     const expense = await Expense.create(
       {
@@ -120,9 +121,9 @@ export const updateExpense = async (req: Request, res: Response) => {
 export const deleteExpense = async (req: Request, res: Response) => {
   const t = await sequelize.transaction();
   try {
-    if (req.user?.role !== 'super_admin' && !req.user?.store_id) {
+    if (req.user?.role !== "super_admin" && !req.user?.store_id) {
       await t.rollback();
-      return res.status(400).json({ message: 'Store context missing' });
+      return res.status(400).json({ message: "Store context missing" });
     }
     const { id } = req.params;
     const user_id = req.user?.id;

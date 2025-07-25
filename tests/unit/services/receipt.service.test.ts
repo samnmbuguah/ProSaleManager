@@ -1,6 +1,6 @@
 import { ReceiptService } from "../../../services/receipt.service";
 import twilio from "twilio";
-import { jest, describe, beforeEach, it, expect } from '@jest/globals';
+import { jest, describe, beforeEach, it, expect } from "@jest/globals";
 
 // Mock dependencies
 jest.mock("twilio", () => {

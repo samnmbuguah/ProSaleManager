@@ -1,89 +1,97 @@
-import { useState } from 'react'
+import { useState } from "react";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
-} from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ProductPerformanceData {
-  productId: number
-  productName: string
-  productSku: string
-  quantity: number
-  revenue: number
-  profit: number
-  lastSold: string | null
-  averagePrice: number
-  totalSales: number
+  productId: number;
+  productName: string;
+  productSku: string;
+  quantity: number;
+  revenue: number;
+  profit: number;
+  lastSold: string | null;
+  averagePrice: number;
+  totalSales: number;
 }
 
 interface ProductPerformanceSummary {
-  totalRevenue: number
-  totalProfit: number
-  totalQuantity: number
-  totalProducts: number
-  averageRevenue: number
-  averageProfit: number
+  totalRevenue: number;
+  totalProfit: number;
+  totalQuantity: number;
+  totalProducts: number;
+  averageRevenue: number;
+  averageProfit: number;
 }
 
 interface ProductPerformanceProps {
-  products: ProductPerformanceData[]
-  summary?: ProductPerformanceSummary
-  onDateRangeChange: (startDate: Date, endDate: Date) => void
-  onSortChange: (sortBy: string) => void
+  products: ProductPerformanceData[];
+  summary?: ProductPerformanceSummary;
+  onDateRangeChange: (startDate: Date, endDate: Date) => void;
+  onSortChange: (sortBy: string) => void;
 }
 
-export default function ProductPerformance ({
+export default function ProductPerformance({
   products,
   summary,
   onDateRangeChange,
-  onSortChange
+  onSortChange,
 }: ProductPerformanceProps) {
-  const [startDate, setStartDate] = useState<string>('')
-  const [endDate, setEndDate] = useState<string>('')
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
 
   // Ensure products is always an array
-  const safeProducts = Array.isArray(products) ? products : []
+  const safeProducts = Array.isArray(products) ? products : [];
 
   if (!Array.isArray(products)) {
-    return <div className="text-center text-red-500 py-12">Failed to load products data.</div>
+    return <div className="text-center text-red-500 py-12">Failed to load products data.</div>;
   }
 
   const handleDateRangeSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (startDate && endDate) {
-      onDateRangeChange(new Date(startDate), new Date(endDate))
+      onDateRangeChange(new Date(startDate), new Date(endDate));
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
           <h2 className="text-2xl font-bold">Product Performance</h2>
-          <p className="text-muted-foreground">
-            Showing {safeProducts.length} products
-          </p>
+          <p className="text-muted-foreground">Showing {safeProducts.length} products</p>
         </div>
         <div className="text-right">
           <p className="text-lg">
-            Total Revenue:{' '}
-            <span className="font-bold">KSh {(summary?.totalRevenue || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            Total Revenue:{" "}
+            <span className="font-bold">
+              KSh{" "}
+              {(summary?.totalRevenue || 0).toLocaleString("en-KE", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </span>
           </p>
           <p className="text-sm text-muted-foreground">
-            Total Profit: KSh {(summary?.totalProfit || 0).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            Total Profit: KSh{" "}
+            {(summary?.totalProfit || 0).toLocaleString("en-KE", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </p>
         </div>
       </div>
@@ -140,39 +148,47 @@ export default function ProductPerformance ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {safeProducts.length === 0
-            ? (
+          {safeProducts.length === 0 ? (
             <TableRow>
               <TableCell colSpan={7} className="text-center text-muted-foreground">
                 No products found. Add products and sales to see performance.
               </TableCell>
             </TableRow>
-              )
-            : (
-                safeProducts.map((product) => (
+          ) : (
+            safeProducts.map((product) => (
               <TableRow key={product.productId}>
                 <TableCell>{product.productName}</TableCell>
                 <TableCell>{product.productSku}</TableCell>
                 <TableCell className="text-right">{product.quantity}</TableCell>
                 <TableCell className="text-right">
-                  KSh {product.revenue.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  KSh{" "}
+                  {product.revenue.toLocaleString("en-KE", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </TableCell>
                 <TableCell className="text-right">
-                  KSh {product.profit.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  KSh{" "}
+                  {product.profit.toLocaleString("en-KE", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </TableCell>
                 <TableCell className="text-right">
-                  KSh {product.averagePrice.toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  KSh{" "}
+                  {product.averagePrice.toLocaleString("en-KE", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </TableCell>
                 <TableCell>
-                  {product.lastSold
-                    ? new Date(product.lastSold).toLocaleDateString()
-                    : 'Never'}
+                  {product.lastSold ? new Date(product.lastSold).toLocaleDateString() : "Never"}
                 </TableCell>
               </TableRow>
-                ))
-              )}
+            ))
+          )}
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }

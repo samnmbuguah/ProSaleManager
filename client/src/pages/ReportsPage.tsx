@@ -1,60 +1,72 @@
-import React, { useState } from 'react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import ProductPerformance from '../components/reports/ProductPerformance'
-import InventoryStatus from '../components/reports/InventoryStatus'
-import { useInventoryReport, useProductPerformanceReport } from '@/hooks/use-reports'
-import { Product } from '@/types/product'
+import React, { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ProductPerformance from "../components/reports/ProductPerformance";
+import InventoryStatus from "../components/reports/InventoryStatus";
+import { useInventoryReport, useProductPerformanceReport } from "@/hooks/use-reports";
+import { Product } from "@/types/product";
 
 // ErrorBoundary component
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
-  constructor (props: { children: React.ReactNode }) {
-    super(props)
-    this.state = { hasError: false }
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError () {
-    return { hasError: true }
+  static getDerivedStateFromError() {
+    return { hasError: true };
   }
 
-  componentDidCatch (error: Error, info: React.ErrorInfo) {
-    console.error('ErrorBoundary caught:', error, info)
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error("ErrorBoundary caught:", error, info);
   }
 
-  render () {
+  render() {
     if (this.state.hasError) {
-      return <div className="text-center text-red-500 py-12">Something went wrong in the reports page.</div>
+      return (
+        <div className="text-center text-red-500 py-12">
+          Something went wrong in the reports page.
+        </div>
+      );
     }
-    return this.props.children
+    return this.props.children;
   }
 }
 
-export default function ReportsPage () {
-  const { data: inventoryData, isLoading: inventoryLoading, error: inventoryError } = useInventoryReport()
-  const { data: performanceData, isLoading: performanceLoading, error: performanceError } = useProductPerformanceReport()
-  const [tab, setTab] = useState('inventory')
+export default function ReportsPage() {
+  const {
+    data: inventoryData,
+    isLoading: inventoryLoading,
+    error: inventoryError,
+  } = useInventoryReport();
+  const {
+    data: performanceData,
+    isLoading: performanceLoading,
+    error: performanceError,
+  } = useProductPerformanceReport();
+  const [tab, setTab] = useState("inventory");
 
   const handleDateRangeChange = () => {
     // This will be implemented to refetch data with date filters
-  }
+  };
 
   const handleSortChange = () => {
     // This will be implemented to sort the data
-  }
+  };
 
   const handleSearch = async () => {
     // This will be implemented to search products
-  }
+  };
 
   if (inventoryLoading || performanceLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
       </div>
-    )
+    );
   }
 
   if (inventoryError || performanceError) {
-    return <div className="text-center text-red-500 py-12">Failed to load reports data.</div>
+    return <div className="text-center text-red-500 py-12">Failed to load reports data.</div>;
   }
 
   return (
@@ -68,12 +80,10 @@ export default function ReportsPage () {
 
           <TabsContent value="inventory">
             <InventoryStatus
-              products={
-                (inventoryData?.products || []).map((p: Product) => ({
-                  ...p,
-                  price: p.piece_selling_price
-                }))
-              }
+              products={(inventoryData?.products || []).map((p: Product) => ({
+                ...p,
+                price: p.piece_selling_price,
+              }))}
               onSearch={handleSearch}
             />
           </TabsContent>
@@ -89,5 +99,5 @@ export default function ReportsPage () {
         </Tabs>
       </div>
     </ErrorBoundary>
-  )
+  );
 }

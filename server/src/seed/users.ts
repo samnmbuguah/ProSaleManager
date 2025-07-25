@@ -1,20 +1,22 @@
-import { User, Store } from '../models/index.js';
-import type { UserAttributes } from '../models/User.js';
-import { faker } from '@faker-js/faker';
+import { User, Store } from "../models/index.js";
+import type { UserAttributes } from "../models/User.js";
+import { faker } from "@faker-js/faker";
 
 export async function seedUsers() {
   try {
     // Clear all users except super_admin before seeding to avoid double hashing
-    await User.destroy({ where: { role: ['admin', 'sales', 'manager'] } });
-    
+    await User.destroy({ where: { role: ["admin", "sales", "manager"] } });
+
     // Get store references
-    const elteeStore = await Store.findOne({ where: { name: 'eltee' } });
-    const demoStore = await Store.findOne({ where: { name: 'Demo Store' } });
-    const branchStore = await Store.findOne({ where: { name: 'Branch Store' } });
-    
-    if (!elteeStore) throw new Error('eltee store not found');
-    if (!demoStore) throw new Error('Demo Store not found');
-    if (!branchStore) throw new Error('Branch Store not found');
+    const elteeStore = await Store.findOne({ where: { name: "eltee" } });
+    const demoStore = await Store.findOne({ where: { name: "Demo Store" } });
+    const branchStore = await Store.findOne({
+      where: { name: "Branch Store" },
+    });
+
+    if (!elteeStore) throw new Error("eltee store not found");
+    if (!demoStore) throw new Error("Demo Store not found");
+    if (!branchStore) throw new Error("Branch Store not found");
 
     const baseUsers: UserAttributes[] = [
       // Admins for each store
@@ -22,7 +24,7 @@ export async function seedUsers() {
         name: "Eltee Admin",
         email: "eltee.admin@prosale.com",
         password: "elteeadmin123",
-        role: 'admin',
+        role: "admin",
         is_active: true,
         store_id: elteeStore.id,
       },
@@ -30,7 +32,7 @@ export async function seedUsers() {
         name: "Demo Admin",
         email: "demo.admin@prosale.com",
         password: "demoadmin123",
-        role: 'admin',
+        role: "admin",
         is_active: true,
         store_id: demoStore.id,
       },
@@ -38,7 +40,7 @@ export async function seedUsers() {
         name: "Branch Admin",
         email: "branch.admin@prosale.com",
         password: "branchadmin123",
-        role: 'admin',
+        role: "admin",
         is_active: true,
         store_id: branchStore.id,
       },
@@ -47,7 +49,7 @@ export async function seedUsers() {
         name: "Eltee Cashier",
         email: "eltee.cashier@prosale.com",
         password: "eltee123",
-        role: 'sales',
+        role: "sales",
         is_active: true,
         store_id: elteeStore.id,
       },
@@ -55,7 +57,7 @@ export async function seedUsers() {
         name: "Demo Cashier",
         email: "demo.cashier@prosale.com",
         password: "demo123",
-        role: 'sales',
+        role: "sales",
         is_active: true,
         store_id: demoStore.id,
       },
@@ -63,7 +65,7 @@ export async function seedUsers() {
         name: "Branch Cashier",
         email: "branch.cashier@prosale.com",
         password: "branch123",
-        role: 'sales',
+        role: "sales",
         is_active: true,
         store_id: branchStore.id,
       },
@@ -72,7 +74,7 @@ export async function seedUsers() {
         name: "Eltee Manager",
         email: "eltee.manager@prosale.com",
         password: "elteemgr123",
-        role: 'manager',
+        role: "manager",
         is_active: true,
         store_id: elteeStore.id,
       },
@@ -80,7 +82,7 @@ export async function seedUsers() {
         name: "Demo Manager",
         email: "demo.manager@prosale.com",
         password: "demomgr123",
-        role: 'manager',
+        role: "manager",
         is_active: true,
         store_id: demoStore.id,
       },
@@ -88,7 +90,7 @@ export async function seedUsers() {
         name: "Branch Manager",
         email: "branch.manager@prosale.com",
         password: "branchmgr123",
-        role: 'manager',
+        role: "manager",
         is_active: true,
         store_id: branchStore.id,
       },
@@ -98,13 +100,13 @@ export async function seedUsers() {
     const stores = [elteeStore, demoStore, branchStore];
     for (const store of stores) {
       for (let i = 0; i < 5; i++) {
-        const roles = ['admin', 'sales', 'manager'] as const;
+        const roles = ["admin", "sales", "manager"] as const;
         const role = roles[Math.floor(Math.random() * roles.length)];
         baseUsers.push({
           name: faker.person.fullName(),
           email: faker.internet.email(),
           password: faker.internet.password(),
-          role: role as 'admin' | 'sales' | 'manager',
+          role: role as "admin" | "sales" | "manager",
           is_active: true,
           store_id: store.id,
         });
@@ -116,10 +118,10 @@ export async function seedUsers() {
       if (existing) {
         existing.password = user.password; // plain text, let model hook hash
         existing.name = user.name;
-        existing.role = user.role ?? 'sales';
+        existing.role = user.role ?? "sales";
         existing.is_active = user.is_active ?? true;
         existing.store_id = user.store_id;
-        existing.changed('password', true);
+        existing.changed("password", true);
         await existing.save();
       } else {
         await User.create(user); // plain text, let model hook hash
@@ -135,4 +137,4 @@ export async function seedUsers() {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   seedUsers();
-} 
+}

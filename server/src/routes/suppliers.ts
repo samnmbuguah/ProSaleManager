@@ -2,8 +2,8 @@ import { Router } from "express";
 import Supplier from "../models/Supplier.js";
 import { Op } from "sequelize";
 import { storeScope } from "../utils/helpers.js";
-import { requireAuth, attachStoreIdToUser } from '../middleware/auth.middleware.js';
-import { requireStoreContext } from '../middleware/store-context.middleware.js';
+import { requireAuth, attachStoreIdToUser } from "../middleware/auth.middleware.js";
+import { requireStoreContext } from "../middleware/store-context.middleware.js";
 
 const router = Router();
 
@@ -71,12 +71,19 @@ router.post("/", async (req, res) => {
   try {
     const supplier = await Supplier.create({
       ...req.body,
-      store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
+      store_id: req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id,
     });
     res.status(201).json({ success: true, data: supplier });
   } catch (error) {
-    if (error instanceof Error && typeof error.name === 'string' && error.name === "SequelizeUniqueConstraintError") {
-      return res.status(400).json({ success: false, error: "A supplier with this email already exists." });
+    if (
+      error instanceof Error &&
+      typeof error.name === "string" &&
+      error.name === "SequelizeUniqueConstraintError"
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "A supplier with this email already exists.",
+      });
     }
     console.error("Error creating supplier:", error);
     res.status(400).json({ success: false, error: "Failed to create supplier" });
