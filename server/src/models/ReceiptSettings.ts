@@ -1,5 +1,5 @@
-import { Model, DataTypes } from 'sequelize';
-import { sequelize } from '../config/database.js';
+import { Model, DataTypes } from "sequelize";
+import { sequelize } from "../config/database.js";
 
 class ReceiptSettings extends Model {
   declare id: number;
@@ -11,8 +11,8 @@ class ReceiptSettings extends Model {
   declare website: string;
   declare thank_you_message: string;
   declare show_logo: boolean;
-  declare font_size: 'small' | 'medium' | 'large';
-  declare paper_size: 'standard' | 'thermal';
+  declare font_size: "small" | "medium" | "large";
+  declare paper_size: "standard" | "thermal";
   declare logo_url: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -30,39 +30,39 @@ ReceiptSettings.init(
       allowNull: false,
       unique: true,
       references: {
-        model: 'stores',
-        key: 'id',
+        model: "stores",
+        key: "id",
       },
     },
     business_name: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: '',
+      defaultValue: "",
     },
     address: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: '',
+      defaultValue: "",
     },
     phone: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: '',
+      defaultValue: "",
     },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: '',
+      defaultValue: "",
     },
     website: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: '',
+      defaultValue: "",
     },
     thank_you_message: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'Thank you for your business!',
+      defaultValue: "Thank you for your business!",
     },
     show_logo: {
       type: DataTypes.BOOLEAN,
@@ -70,14 +70,14 @@ ReceiptSettings.init(
       defaultValue: true,
     },
     font_size: {
-      type: DataTypes.ENUM('small', 'medium', 'large'),
+      type: DataTypes.ENUM("small", "medium", "large"),
       allowNull: false,
-      defaultValue: 'medium',
+      defaultValue: "medium",
     },
     paper_size: {
-      type: DataTypes.ENUM('standard', 'thermal'),
+      type: DataTypes.ENUM("standard", "thermal"),
       allowNull: false,
-      defaultValue: 'thermal',
+      defaultValue: "thermal",
     },
     logo_url: {
       type: DataTypes.STRING,
@@ -87,11 +87,11 @@ ReceiptSettings.init(
   },
   {
     sequelize,
-    modelName: 'ReceiptSettings',
-    tableName: 'receipt_settings',
+    modelName: "ReceiptSettings",
+    tableName: "receipt_settings",
     timestamps: true,
     underscored: true,
-  }
+  },
 );
 
-export default ReceiptSettings; 
+export default ReceiptSettings;

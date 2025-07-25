@@ -1,28 +1,28 @@
-import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { supplierSchema, type SupplierFormData } from '@/types/supplier'
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { supplierSchema, type SupplierFormData } from "@/types/supplier";
 
 interface SupplierFormProps {
-  onSubmit: (data: SupplierFormData) => Promise<void>
-  defaultValues?: Partial<SupplierFormData>
-  isSubmitting?: boolean
+  onSubmit: (data: SupplierFormData) => Promise<void>;
+  defaultValues?: Partial<SupplierFormData>;
+  isSubmitting?: boolean;
 }
 
-export function SupplierForm ({ onSubmit, defaultValues, isSubmitting = false }: SupplierFormProps) {
+export function SupplierForm({ onSubmit, defaultValues, isSubmitting = false }: SupplierFormProps) {
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
-      name: defaultValues?.name || '',
-      email: defaultValues?.email || '',
-      phone: defaultValues?.phone || '',
-      address: defaultValues?.address || '',
-      contact_person: defaultValues?.contact_person || '',
-      status: defaultValues?.status || 'active'
-    }
-  })
+      name: defaultValues?.name || "",
+      email: defaultValues?.email || "",
+      phone: defaultValues?.phone || "",
+      address: defaultValues?.address || "",
+      contact_person: defaultValues?.contact_person || "",
+      status: defaultValues?.status || "active",
+    },
+  });
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -36,11 +36,10 @@ export function SupplierForm ({ onSubmit, defaultValues, isSubmitting = false }:
               id="name"
               {...field}
               placeholder="Enter supplier name"
-              className={fieldState.error ? 'border-red-500' : ''}
+              autoComplete="name"
+              className={fieldState.error ? "border-red-500" : ""}
             />
-            {fieldState.error && (
-              <p className="text-sm text-red-500">{fieldState.error.message}</p>
-            )}
+            {fieldState.error && <p className="text-sm text-red-500">{fieldState.error.message}</p>}
           </div>
         )}
       />
@@ -56,11 +55,10 @@ export function SupplierForm ({ onSubmit, defaultValues, isSubmitting = false }:
               type="email"
               {...field}
               placeholder="Enter email address"
-              className={fieldState.error ? 'border-red-500' : ''}
+              autoComplete="email"
+              className={fieldState.error ? "border-red-500" : ""}
             />
-            {fieldState.error && (
-              <p className="text-sm text-red-500">{fieldState.error.message}</p>
-            )}
+            {fieldState.error && <p className="text-sm text-red-500">{fieldState.error.message}</p>}
           </div>
         )}
       />
@@ -75,11 +73,10 @@ export function SupplierForm ({ onSubmit, defaultValues, isSubmitting = false }:
               id="phone"
               {...field}
               placeholder="Enter phone number"
-              className={fieldState.error ? 'border-red-500' : ''}
+              autoComplete="tel"
+              className={fieldState.error ? "border-red-500" : ""}
             />
-            {fieldState.error && (
-              <p className="text-sm text-red-500">{fieldState.error.message}</p>
-            )}
+            {fieldState.error && <p className="text-sm text-red-500">{fieldState.error.message}</p>}
           </div>
         )}
       />
@@ -94,11 +91,10 @@ export function SupplierForm ({ onSubmit, defaultValues, isSubmitting = false }:
               id="address"
               {...field}
               placeholder="Enter address"
-              className={fieldState.error ? 'border-red-500' : ''}
+              autoComplete="street-address"
+              className={fieldState.error ? "border-red-500" : ""}
             />
-            {fieldState.error && (
-              <p className="text-sm text-red-500">{fieldState.error.message}</p>
-            )}
+            {fieldState.error && <p className="text-sm text-red-500">{fieldState.error.message}</p>}
           </div>
         )}
       />
@@ -113,18 +109,17 @@ export function SupplierForm ({ onSubmit, defaultValues, isSubmitting = false }:
               id="contact_person"
               {...field}
               placeholder="Enter contact person name"
-              className={fieldState.error ? 'border-red-500' : ''}
+              autoComplete="organization"
+              className={fieldState.error ? "border-red-500" : ""}
             />
-            {fieldState.error && (
-              <p className="text-sm text-red-500">{fieldState.error.message}</p>
-            )}
+            {fieldState.error && <p className="text-sm text-red-500">{fieldState.error.message}</p>}
           </div>
         )}
       />
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? 'Saving...' : 'Save Supplier'}
+        {isSubmitting ? "Saving..." : "Save Supplier"}
       </Button>
     </form>
-  )
+  );
 }

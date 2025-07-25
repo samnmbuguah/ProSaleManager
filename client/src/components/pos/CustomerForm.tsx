@@ -1,26 +1,26 @@
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { Button } from '@/components/ui/button'
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 
 const customerSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email().optional().or(z.literal('')),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email().optional().or(z.literal("")),
   phone: z
     .string()
-    .regex(/^\+?[0-9]{10,}$/, 'Invalid phone number')
+    .regex(/^\+?[0-9]{10,}$/, "Invalid phone number")
     .optional()
-    .or(z.literal(''))
-})
+    .or(z.literal("")),
+});
 
 type CustomerFormData = z.infer<typeof customerSchema>;
 
@@ -28,15 +28,15 @@ interface CustomerFormProps {
   onSubmit: (data: CustomerFormData) => Promise<void>;
 }
 
-export function CustomerForm ({ onSubmit }: CustomerFormProps) {
+export function CustomerForm({ onSubmit }: CustomerFormProps) {
   const form = useForm<CustomerFormData>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      phone: ''
-    }
-  })
+      name: "",
+      email: "",
+      phone: "",
+    },
+  });
 
   return (
     <Form {...form}>
@@ -88,5 +88,5 @@ export function CustomerForm ({ onSubmit }: CustomerFormProps) {
         </Button>
       </form>
     </Form>
-  )
+  );
 }

@@ -1,17 +1,14 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { Receipt, Printer, Download, X } from 'lucide-react'
-import { api } from '@/lib/api'
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Receipt } from "lucide-react";
+import { api } from "@/lib/api";
+import { ReceiptPreview } from "./ReceiptPreview";
 
 interface ReceiptDialogProps {
   open: boolean;
@@ -21,6 +18,9 @@ interface ReceiptDialogProps {
 
 interface ReceiptData {
   id: number;
+  transaction_id: string;
+  timestamp: string;
+  total: number;
   total_amount: number;
   payment_method: string;
   amount_paid: number;
@@ -53,126 +53,61 @@ interface ReceiptData {
   }>;
 }
 
+// Map backend sale data to ReceiptPreview expected format
+function mapSaleToReceiptPreview(sale: unknown): import("@/hooks/use-pos").ReceiptData {
+  const s = sale as any;
+  return {
+    id: s.id ?? 0,
+    items: (s.items || []).map((item: any) => ({
+      name: item.Product?.name || "Unknown Product",
+      quantity: item.quantity ?? 0,
+      unit_price: item.unit_price ?? 0,
+      total: item.total ?? 0,
+      unit_type: item.unit_type ?? "",
+    })),
+    customer: s.Customer
+      ? {
+          name: s.Customer.name ?? "",
+          phone: s.Customer.phone ?? "",
+          email: s.Customer.email ?? "",
+        }
+      : undefined,
+    total: s.total_amount ?? 0,
+    payment_method: s.payment_method ?? "",
+    timestamp: s.createdAt ?? "",
+    transaction_id: s.id ? String(s.id) : "N/A",
+    cash_amount: s.amount_paid ?? undefined,
+    receipt_status: s.receipt_status || {},
+  };
+}
+
 export const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
   open,
   onOpenChange,
-  currentSaleId
+  currentSaleId,
 }) => {
-  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null)
-  const [receiptText, setReceiptText] = useState<string>('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPdf, setShowPdf] = useState(false)
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchReceiptData = useCallback(async () => {
-    if (!currentSaleId) return
-
-    setIsLoading(true)
+    if (!currentSaleId) return;
+    setIsLoading(true);
     try {
       // Fetch sale details
-      const saleResponse = await api.get(`/sales/${currentSaleId}`)
-      setReceiptData(saleResponse.data)
-
-      // Fetch receipt text (optional - don't fail if this endpoint has issues)
-      try {
-        const textResponse = await api.get(`/sales/${currentSaleId}/receipt/text`)
-        setReceiptText(textResponse.data.receipt)
-      } catch (textError) {
-        console.warn('Could not fetch receipt text:', textError)
-        // Set a fallback receipt text
-        setReceiptText(`Receipt #${currentSaleId}\nGenerated on ${new Date().toLocaleString()}`)
-      }
+      const saleResponse = await api.get(`/sales/${currentSaleId}`);
+      setReceiptData(saleResponse.data);
     } catch (error) {
-      console.error('Error fetching receipt data:', error)
-      // Set a basic error message
-      setReceiptText(`Error loading receipt #${currentSaleId}`)
+      console.error("Error fetching receipt data:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [currentSaleId])
+  }, [currentSaleId]);
 
   useEffect(() => {
     if (open && currentSaleId) {
-      fetchReceiptData()
+      fetchReceiptData();
     }
-  }, [open, currentSaleId, fetchReceiptData])
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency: 'KES',
-      minimumFractionDigits: 2
-    }).format(amount)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-KE', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
-  const handlePrint = () => {
-    const printWindow = window.open('', '_blank')
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Receipt #${receiptData?.id}</title>
-            <style>
-              body { font-family: monospace; margin: 20px; }
-              .header { text-align: center; margin-bottom: 20px; }
-              .items { margin: 20px 0; }
-              .item { margin: 10px 0; }
-              .total { border-top: 1px solid #000; padding-top: 10px; margin-top: 20px; }
-              .footer { text-align: center; margin-top: 20px; font-size: 12px; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h2>🧾 PROSALE MANAGER</h2>
-              <p>Receipt #${receiptData?.id}</p>
-              <p>${formatDate(receiptData?.createdAt || '')}</p>
-            </div>
-            <div class="items">
-              ${receiptData?.items?.map(item => `
-                <div class="item">
-                  <strong>${item.Product?.name || 'Unknown Product'}</strong><br>
-                  ${item.quantity} ${item.unit_type} x ${formatCurrency(item.unit_price)} = ${formatCurrency(item.total)}
-                </div>
-              `).join('') || 'No items found'}
-            </div>
-            <div class="total">
-              <strong>Total: ${formatCurrency(receiptData?.total_amount || 0)}</strong><br>
-              Payment Method: ${receiptData?.payment_method}<br>
-              ${receiptData?.payment_method === 'cash' && receiptData?.amount_paid
-          ? `Amount Paid: ${formatCurrency(receiptData.amount_paid)}<br>
-                   Change: ${formatCurrency(receiptData.amount_paid - receiptData.total_amount)}`
-          : ''
-        }
-            </div>
-            <div class="footer">
-              Thank you for your business!
-            </div>
-          </body>
-        </html>
-      `)
-      printWindow.document.close()
-      printWindow.print()
-    }
-  }
-
-  const handleDownload = () => {
-    const element = document.createElement('a')
-    const file = new Blob([receiptText], { type: 'text/plain' })
-    element.href = URL.createObjectURL(file)
-    element.download = `receipt-${receiptData?.id}.txt`
-    document.body.appendChild(element)
-    element.click()
-    document.body.removeChild(element)
-  }
+  }, [open, currentSaleId, fetchReceiptData]);
 
   if (isLoading) {
     return (
@@ -184,7 +119,7 @@ export const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
           </div>
         </DialogContent>
       </Dialog>
-    )
+    );
   }
 
   return (
@@ -199,31 +134,14 @@ export const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
             View and print the receipt for sale #{receiptData?.id}
           </DialogDescription>
         </DialogHeader>
-
-        <Card>
-          <CardContent className="pt-6">
-            <pre className="whitespace-pre-wrap text-sm font-mono bg-white p-4 rounded border overflow-x-auto">
-              {receiptText}
-            </pre>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <CardFooter className="flex gap-2 justify-end pt-6">
-          <Button variant="outline" onClick={handlePrint}>
-            <Printer className="w-4 h-4 mr-2" />
-            Print
-          </Button>
-          <Button variant="outline" onClick={handleDownload}>
-            <Download className="w-4 h-4 mr-2" />
-            Download
-          </Button>
-          <Button onClick={() => onOpenChange(false)}>
-            <X className="w-4 h-4 mr-2" />
-            Close
-          </Button>
-        </CardFooter>
+        {receiptData && (
+          <ReceiptPreview
+            receipt={mapSaleToReceiptPreview(receiptData)}
+            onSend={async () => {}}
+            onClose={() => onOpenChange(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};

@@ -1,4 +1,4 @@
-import { sequelize } from '../config/database.js';
+import { sequelize } from "../config/database.js";
 
 async function createTables() {
   try {
@@ -18,12 +18,12 @@ async function createTables() {
       );
     `);
 
-    console.log('Tables created successfully');
+    console.log("Tables created successfully");
     process.exit(0);
   } catch (error) {
-    console.error('Error creating tables:', error);
+    console.error("Error creating tables:", error);
     process.exit(1);
   }
 }
 
-createTables(); 
+createTables();

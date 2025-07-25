@@ -1,14 +1,14 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { UseFormReturn } from 'react-hook-form'
-import { type ProductFormData } from '@/types/product'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { UseFormReturn } from "react-hook-form";
+import { type ProductFormData } from "@/types/product";
 
 interface PriceUnitsSectionProps {
-  form: UseFormReturn<ProductFormData>
+  form: UseFormReturn<ProductFormData>;
 }
 
-export function PriceUnitsSection ({ form }: PriceUnitsSectionProps) {
+export function PriceUnitsSection({ form }: PriceUnitsSectionProps) {
   return (
     <Card>
       <CardHeader>
@@ -23,7 +23,7 @@ export function PriceUnitsSection ({ form }: PriceUnitsSectionProps) {
               type="number"
               step="0.01"
               placeholder="0.00"
-              {...form.register('piece_buying_price', { valueAsNumber: true })}
+              {...form.register("piece_buying_price", { valueAsNumber: true })}
             />
           </div>
           <div className="space-y-2">
@@ -33,7 +33,7 @@ export function PriceUnitsSection ({ form }: PriceUnitsSectionProps) {
               type="number"
               step="0.01"
               placeholder="0.00"
-              {...form.register('piece_selling_price', { valueAsNumber: true })}
+              {...form.register("piece_selling_price", { valueAsNumber: true })}
             />
           </div>
           <div className="space-y-2">
@@ -43,7 +43,7 @@ export function PriceUnitsSection ({ form }: PriceUnitsSectionProps) {
               type="number"
               step="0.01"
               placeholder="0.00"
-              {...form.register('pack_buying_price', { valueAsNumber: true })}
+              {...form.register("pack_buying_price", { valueAsNumber: true })}
             />
           </div>
           <div className="space-y-2">
@@ -53,7 +53,7 @@ export function PriceUnitsSection ({ form }: PriceUnitsSectionProps) {
               type="number"
               step="0.01"
               placeholder="0.00"
-              {...form.register('pack_selling_price', { valueAsNumber: true })}
+              {...form.register("pack_selling_price", { valueAsNumber: true })}
             />
           </div>
           <div className="space-y-2">
@@ -63,7 +63,7 @@ export function PriceUnitsSection ({ form }: PriceUnitsSectionProps) {
               type="number"
               step="0.01"
               placeholder="0.00"
-              {...form.register('dozen_buying_price', { valueAsNumber: true })}
+              {...form.register("dozen_buying_price", { valueAsNumber: true })}
             />
           </div>
           <div className="space-y-2">
@@ -73,11 +73,11 @@ export function PriceUnitsSection ({ form }: PriceUnitsSectionProps) {
               type="number"
               step="0.01"
               placeholder="0.00"
-              {...form.register('dozen_selling_price', { valueAsNumber: true })}
+              {...form.register("dozen_selling_price", { valueAsNumber: true })}
             />
           </div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

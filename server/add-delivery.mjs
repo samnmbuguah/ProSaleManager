@@ -1,24 +1,24 @@
-import { Sequelize } from 'sequelize';
+import { Sequelize } from "sequelize";
 
 // Create a connection to the database using the configuration from config.json
-const sequelize = new Sequelize('prosaledatabase', 'prosalemanager', 'prosalepassword', {
-  host: '127.0.0.1',
+const sequelize = new Sequelize("prosaledatabase", "prosalemanager", "prosalepassword", {
+  host: "127.0.0.1",
   port: 5432,
-  dialect: 'postgres'
+  dialect: "postgres",
 });
 
 async function addDeliveryProduct() {
   try {
     await sequelize.authenticate();
-    console.log('Connection has been established successfully.');
+    console.log("Connection has been established successfully.");
 
     // First check if the product already exists
     const [existingProducts] = await sequelize.query(
-      "SELECT * FROM products WHERE product_code = 'SRV001'"
+      "SELECT * FROM products WHERE product_code = 'SRV001'",
     );
-    
+
     if (existingProducts.length > 0) {
-      console.log('Delivery product already exists:');
+      console.log("Delivery product already exists:");
       console.log(JSON.stringify(existingProducts[0], null, 2));
       return;
     }
@@ -54,13 +54,13 @@ async function addDeliveryProduct() {
       ) RETURNING *;
     `);
 
-    console.log('Delivery product added successfully:');
+    console.log("Delivery product added successfully:");
     console.log(JSON.stringify(result[0], null, 2));
   } catch (error) {
-    console.error('Error adding delivery product:', error);
+    console.error("Error adding delivery product:", error);
   } finally {
     await sequelize.close();
   }
 }
 
-addDeliveryProduct(); 
+addDeliveryProduct();

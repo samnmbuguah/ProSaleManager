@@ -1,4 +1,4 @@
-import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+import { jest, describe, it, expect, beforeEach } from "@jest/globals";
 import { DeliveryService } from "../../../server/src/models/DeliveryService";
 import Product from "../../../server/src/models/Product";
 import { createDelivery } from "../../../server/src/services/delivery.service";

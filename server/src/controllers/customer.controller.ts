@@ -5,8 +5,8 @@ import { storeScope } from "../utils/helpers.js";
 
 export const searchCustomers = async (req: Request, res: Response) => {
   try {
-    if (req.user?.role !== 'super_admin' && !req.user?.store_id) {
-      return res.status(400).json({ message: 'Store context missing' });
+    if (req.user?.role !== "super_admin" && !req.user?.store_id) {
+      return res.status(400).json({ message: "Store context missing" });
     }
     const { q } = req.query;
     let where: any = {};
@@ -35,8 +35,8 @@ export const searchCustomers = async (req: Request, res: Response) => {
 
 export const createCustomer = async (req: Request, res: Response) => {
   try {
-    if (req.user?.role !== 'super_admin' && !req.user?.store_id) {
-      return res.status(400).json({ message: 'Store context missing' });
+    if (req.user?.role !== "super_admin" && !req.user?.store_id) {
+      return res.status(400).json({ message: "Store context missing" });
     }
     const { name, email, phone, address } = req.body;
     if (!name || !phone) {
@@ -47,7 +47,7 @@ export const createCustomer = async (req: Request, res: Response) => {
       email,
       phone,
       address,
-      store_id: req.user?.role === 'super_admin' ? (req.body.store_id ?? null) : req.user?.store_id,
+      store_id: req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id,
     });
     res.status(201).json(customer);
   } catch (error) {

@@ -11,4 +11,4 @@
     "dialect": "sqlite",
     "storage": "database.sqlite"
   }
-} 
+}

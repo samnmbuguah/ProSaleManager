@@ -2,10 +2,7 @@ import twilio from "twilio";
 import { Sale, Customer, Product, SaleItem, ReceiptSettings, Store } from "../models/index.js";
 
 // Initialize Twilio client
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN,
-);
+const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 const WHATSAPP_FROM_NUMBER = process.env.TWILIO_WHATSAPP_NUMBER;
 const SMS_FROM_NUMBER = process.env.TWILIO_PHONE_NUMBER;
@@ -14,7 +11,7 @@ export class ReceiptService {
   static async formatReceiptText(saleId: number): Promise<string> {
     try {
       console.log(`Formatting receipt text for sale ID: ${saleId}`);
-      
+
       const sale = await Sale.findByPk(saleId, {
         include: [
           { model: Customer },
@@ -23,7 +20,18 @@ export class ReceiptService {
             as: "items",
             include: [{ model: Product }],
           },
-          { model: Store, as: 'store', required: false, include: [{ model: ReceiptSettings, as: 'receiptSettings', required: false }] },
+          {
+            model: Store,
+            as: "store",
+            required: false,
+            include: [
+              {
+                model: ReceiptSettings,
+                as: "receiptSettings",
+                required: false,
+              },
+            ],
+          },
         ],
       });
 
@@ -37,19 +45,21 @@ export class ReceiptService {
       if ((sale as any).store && (sale as any).store.receiptSettings) {
         settings = (sale as any).store.receiptSettings;
       } else if (sale.store_id) {
-        settings = await ReceiptSettings.findOne({ where: { store_id: sale.store_id } });
+        settings = await ReceiptSettings.findOne({
+          where: { store_id: sale.store_id },
+        });
       }
 
       // Debug: Log the settings used
-      console.log('Receipt settings used:', settings);
+      console.log("Receipt settings used:", settings);
 
       // Fallback/defaults
-      const businessName = settings?.business_name || 'PROSALE MANAGER';
-      const address = settings?.address || '';
-      const phone = settings?.phone || '+254 XXX XXX XXX';
-      const email = settings?.email || 'info@prosalemanager.com';
-      const website = settings?.website || '';
-      const thankYouMessage = settings?.thank_you_message || 'Thank you for your business!';
+      const businessName = settings?.business_name || "PROSALE MANAGER";
+      const address = settings?.address || "";
+      const phone = settings?.phone || "+254 XXX XXX XXX";
+      const email = settings?.email || "info@prosalemanager.com";
+      const website = settings?.website || "";
+      const thankYouMessage = settings?.thank_you_message || "Thank you for your business!";
 
       const saleWithAssociations = sale as Sale & {
         Customer?: Customer;
@@ -59,7 +69,7 @@ export class ReceiptService {
         id: saleWithAssociations.id,
         hasCustomer: !!saleWithAssociations.Customer,
         hasItems: !!saleWithAssociations.items,
-        itemCount: saleWithAssociations.items?.length || 0
+        itemCount: saleWithAssociations.items?.length || 0,
       });
 
       // Type assertion for associations
@@ -74,19 +84,19 @@ export class ReceiptService {
       if (email) receiptText += `Email: ${email}\n`;
       if (website) receiptText += `Website: ${website}\n`;
       receiptText += `\n`;
-      
-      receiptText += `Receipt #${sale.id.toString().padStart(6, '0')}\n`;
-      receiptText += `Date: ${new Date(sale.createdAt).toLocaleString('en-KE', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+
+      receiptText += `Receipt #${sale.id.toString().padStart(6, "0")}\n`;
+      receiptText += `Date: ${new Date(sale.createdAt).toLocaleString("en-KE", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       })}\n`;
-      receiptText += `Time: ${new Date(sale.createdAt).toLocaleTimeString('en-KE', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
+      receiptText += `Time: ${new Date(sale.createdAt).toLocaleTimeString("en-KE", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
       })}\n\n`;
 
       if (saleWithAssociations.Customer) {
@@ -103,7 +113,7 @@ export class ReceiptService {
       }
 
       receiptText += `Served by: System Admin\n\n`;
-      
+
       receiptText += `╔══════════════════════════════════════╗\n`;
       receiptText += `║              ITEMS SOLD              ║\n`;
       receiptText += `╚══════════════════════════════════════╝\n\n`;
@@ -124,14 +134,17 @@ export class ReceiptService {
           console.error(`Missing product data for item:`, item);
           continue;
         }
-        
-        receiptText += `${itemNumber.toString().padStart(2, '0')}. ${product.name}\n`;
-        receiptText += `    ${item.quantity} ${item.unit_type} × KSh ${item.unit_price.toLocaleString('en-KE', {
+
+        receiptText += `${itemNumber.toString().padStart(2, "0")}. ${product.name}\n`;
+        receiptText += `    ${item.quantity} ${item.unit_type} × KSh ${item.unit_price.toLocaleString(
+          "en-KE",
+          {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          },
+        )} = KSh ${item.total.toLocaleString("en-KE", {
           minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        })} = KSh ${item.total.toLocaleString('en-KE', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
+          maximumFractionDigits: 2,
         })}\n\n`;
         itemNumber++;
       }
@@ -141,35 +154,41 @@ export class ReceiptService {
       receiptText += `╚══════════════════════════════════════╝\n\n`;
 
       const subtotal = sale.total_amount - sale.delivery_fee;
-      receiptText += `Subtotal:                    KSh ${subtotal.toLocaleString('en-KE', {
+      receiptText += `Subtotal:                    KSh ${subtotal.toLocaleString("en-KE", {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        maximumFractionDigits: 2,
       })}\n`;
 
       if (sale.delivery_fee > 0) {
-        receiptText += `Delivery Fee:                KSh ${sale.delivery_fee.toLocaleString('en-KE', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        })}\n`;
+        receiptText += `Delivery Fee:                KSh ${sale.delivery_fee.toLocaleString(
+          "en-KE",
+          {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          },
+        )}\n`;
       }
 
       receiptText += `──────────────────────────────────────────\n`;
-      receiptText += `TOTAL:                       KSh ${sale.total_amount.toLocaleString('en-KE', {
+      receiptText += `TOTAL:                       KSh ${sale.total_amount.toLocaleString("en-KE", {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2
+        maximumFractionDigits: 2,
       })}\n\n`;
 
       receiptText += `Payment Method: ${sale.payment_method.toUpperCase()}\n`;
 
       if (sale.payment_method === "cash" && sale.amount_paid) {
         const change = sale.amount_paid - sale.total_amount;
-        receiptText += `Amount Paid:                 KSh ${sale.amount_paid.toLocaleString('en-KE', {
+        receiptText += `Amount Paid:                 KSh ${sale.amount_paid.toLocaleString(
+          "en-KE",
+          {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          },
+        )}\n`;
+        receiptText += `Change:                      KSh ${change.toLocaleString("en-KE", {
           minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        })}\n`;
-        receiptText += `Change:                      KSh ${change.toLocaleString('en-KE', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
+          maximumFractionDigits: 2,
         })}\n`;
       }
 
@@ -177,10 +196,10 @@ export class ReceiptService {
       receiptText += `╔══════════════════════════════════════╗\n`;
       receiptText += `║         ${thankYouMessage.padEnd(30)}║\n`;
       receiptText += `╚══════════════════════════════════════╝\n\n`;
-      
+
       receiptText += `For inquiries: +254 XXX XXX XXX\n`;
       receiptText += `Email: info@prosalemanager.com\n\n`;
-      
+
       receiptText += `Generated by ProSale Manager\n`;
       receiptText += `© ${new Date().getFullYear()} All rights reserved\n`;
 
@@ -191,10 +210,7 @@ export class ReceiptService {
     }
   }
 
-  static async sendWhatsApp(
-    saleId: number,
-    phoneNumber: string,
-  ): Promise<boolean> {
+  static async sendWhatsApp(saleId: number, phoneNumber: string): Promise<boolean> {
     try {
       const receiptText = await this.formatReceiptText(saleId);
 

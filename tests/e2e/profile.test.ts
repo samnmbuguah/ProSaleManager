@@ -1,99 +1,125 @@
-import { Builder, By, until, WebDriver } from 'selenium-webdriver';
-import { Options as ChromeOptions } from 'selenium-webdriver/chrome';
-import { login, waitForElement } from './helpers';
-import { FRONTEND_URL } from './config';
+import { Builder, By, until, WebDriver } from "selenium-webdriver";
+import { Options as ChromeOptions } from "selenium-webdriver/chrome";
+import { login, waitForElement } from "./helpers";
+import { FRONTEND_URL } from "./config";
 
-describe('Profile Page Tests', () => {
-    let driver: WebDriver;
+describe("Profile Page Tests", () => {
+  let driver: WebDriver;
 
-    beforeAll(async () => {
-        driver = await new Builder()
-            .forBrowser('chrome')
-            .setChromeOptions(new ChromeOptions())
-            .build();
-        
-        // Login first
-        await login(driver);
-        
-        // Navigate to profile page
-        await driver.get(`${FRONTEND_URL}/profile`);
-        // Wait for a unique element on the profile page
-        await waitForElement(driver, 'input#name');
-    }, 60000);
+  beforeAll(async () => {
+    driver = await new Builder()
+      .forBrowser("chrome")
+      .setChromeOptions(new ChromeOptions())
+      .build();
 
-    afterAll(async () => {
-        await driver.quit();
-    });
+    // Login first
+    await login(driver);
 
-    it('should load profile page', async () => {
-        const title = await waitForElement(driver, 'h1');
-        const titleText = await title.getText();
-        expect(titleText).toContain('User Profile');
-    });
+    // Navigate to profile page
+    await driver.get(`${FRONTEND_URL}/profile`);
+    // Wait for a unique element on the profile page
+    await waitForElement(driver, "input#name");
+  }, 60000);
 
-    it('should update profile information', async () => {
-        // Fill in profile form
-        const nameInput = await waitForElement(driver, 'input#name');
-        await nameInput.clear();
-        await nameInput.sendKeys('Test User');
+  afterAll(async () => {
+    await driver.quit();
+  });
 
-        const emailInput = await waitForElement(driver, 'input#email');
-        await emailInput.clear();
-        await emailInput.sendKeys('test@example.com');
+  it("should load profile page", async () => {
+    const title = await waitForElement(driver, "h1");
+    const titleText = await title.getText();
+    expect(titleText).toContain("User Profile");
+  });
 
-        // Click save button
-        const saveButton = await driver.findElement(By.xpath("//button[contains(text(), 'Save Changes')]"));
-        await saveButton.click();
+  it("should update profile information", async () => {
+    // Fill in profile form
+    const nameInput = await waitForElement(driver, "input#name");
+    await nameInput.clear();
+    await nameInput.sendKeys("Test User");
 
-        // Wait for success message
-        const successMessage = await waitForElement(driver, '.text-green-600');
-        const messageText = await successMessage.getText();
-        expect(messageText).toContain('Profile updated successfully');
-    });
+    const emailInput = await waitForElement(driver, "input#email");
+    await emailInput.clear();
+    await emailInput.sendKeys("test@example.com");
 
-    it('should change password', async () => {
-        // Fill in password form
-        const currentPasswordInput = await waitForElement(driver, 'input[name="currentPassword"]');
-        await currentPasswordInput.sendKeys('admin123');
+    // Click save button
+    const saveButton = await driver.findElement(
+      By.xpath("//button[contains(text(), 'Save Changes')]"),
+    );
+    await saveButton.click();
 
-        const newPasswordInput = await waitForElement(driver, 'input[name="newPassword"]');
-        await newPasswordInput.sendKeys('newpassword123');
+    // Wait for success message
+    const successMessage = await waitForElement(driver, ".text-green-600");
+    const messageText = await successMessage.getText();
+    expect(messageText).toContain("Profile updated successfully");
+  });
 
-        const confirmPasswordInput = await waitForElement(driver, 'input[name="confirmPassword"]');
-        await confirmPasswordInput.sendKeys('newpassword123');
+  it("should change password", async () => {
+    // Fill in password form
+    const currentPasswordInput = await waitForElement(
+      driver,
+      'input[name="currentPassword"]',
+    );
+    await currentPasswordInput.sendKeys("admin123");
 
-        // Click change password button
-        const changePasswordButton = await driver.findElement(By.xpath("//button[contains(text(), 'Change Password')]"));
-        await changePasswordButton.click();
+    const newPasswordInput = await waitForElement(
+      driver,
+      'input[name="newPassword"]',
+    );
+    await newPasswordInput.sendKeys("newpassword123");
 
-        // Wait for success message
-        const successMessage = await waitForElement(driver, '.text-green-600');
-        const messageText = await successMessage.getText();
-        expect(messageText).toContain('Password changed successfully');
-    });
+    const confirmPasswordInput = await waitForElement(
+      driver,
+      'input[name="confirmPassword"]',
+    );
+    await confirmPasswordInput.sendKeys("newpassword123");
 
-    it('should update preferences', async () => {
-        // Toggle dark mode
-        const darkModeSwitch = await waitForElement(driver, 'input[type="checkbox"][name="darkMode"]');
-        await darkModeSwitch.click();
+    // Click change password button
+    const changePasswordButton = await driver.findElement(
+      By.xpath("//button[contains(text(), 'Change Password')]"),
+    );
+    await changePasswordButton.click();
 
-        // Toggle notifications
-        const notificationsSwitch = await waitForElement(driver, 'input[type="checkbox"][name="notifications"]');
-        await notificationsSwitch.click();
+    // Wait for success message
+    const successMessage = await waitForElement(driver, ".text-green-600");
+    const messageText = await successMessage.getText();
+    expect(messageText).toContain("Password changed successfully");
+  });
 
-        // Select language
-        const languageSelect = await waitForElement(driver, 'select[name="language"]');
-        await languageSelect.click();
-        const englishOption = await driver.findElement(By.xpath("//option[contains(text(), 'English')]"));
-        await englishOption.click();
+  it("should update preferences", async () => {
+    // Toggle dark mode
+    const darkModeSwitch = await waitForElement(
+      driver,
+      'input[type="checkbox"][name="darkMode"]',
+    );
+    await darkModeSwitch.click();
 
-        // Click save preferences button
-        const savePreferencesButton = await driver.findElement(By.xpath("//button[contains(text(), 'Save Preferences')]"));
-        await savePreferencesButton.click();
+    // Toggle notifications
+    const notificationsSwitch = await waitForElement(
+      driver,
+      'input[type="checkbox"][name="notifications"]',
+    );
+    await notificationsSwitch.click();
 
-        // Wait for success message
-        const successMessage = await waitForElement(driver, '.text-green-600');
-        const messageText = await successMessage.getText();
-        expect(messageText).toContain('Preferences updated successfully');
-    });
-}); 
+    // Select language
+    const languageSelect = await waitForElement(
+      driver,
+      'select[name="language"]',
+    );
+    await languageSelect.click();
+    const englishOption = await driver.findElement(
+      By.xpath("//option[contains(text(), 'English')]"),
+    );
+    await englishOption.click();
+
+    // Click save preferences button
+    const savePreferencesButton = await driver.findElement(
+      By.xpath("//button[contains(text(), 'Save Preferences')]"),
+    );
+    await savePreferencesButton.click();
+
+    // Wait for success message
+    const successMessage = await waitForElement(driver, ".text-green-600");
+    const messageText = await successMessage.getText();
+    expect(messageText).toContain("Preferences updated successfully");
+  });
+});

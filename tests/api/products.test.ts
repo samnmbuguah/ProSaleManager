@@ -1,7 +1,7 @@
 import request from "supertest";
 import express from "express";
-import app from '../../server/src/index.js';
-import Product from '../../server/src/models/Product';
+import app from "../../server/src/index.js";
+import Product from "../../server/src/models/Product";
 
 // This is a simplified version - in a real project you'd import your actual app
 const app = express();
@@ -10,8 +10,8 @@ const app = express();
 const mockAuth = (req: any, res: any, next: any) => {
   // Simulate checking for a valid auth token
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized' });
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Unauthorized" });
   }
   next();
 };
@@ -64,7 +64,7 @@ describe("Products API", () => {
   it("GET /api/products should return all products with auth", async () => {
     const res = await request(app)
       .get("/api/products")
-      .set('Authorization', 'Bearer test-token');
+      .set("Authorization", "Bearer test-token");
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveLength(1);
@@ -72,8 +72,7 @@ describe("Products API", () => {
   });
 
   it("GET /api/products should fail without auth", async () => {
-    const res = await request(app)
-      .get("/api/products");
+    const res = await request(app).get("/api/products");
 
     expect(res.statusCode).toBe(401);
   });
@@ -81,7 +80,7 @@ describe("Products API", () => {
   it("GET /api/pos/products should return all products with auth", async () => {
     const res = await request(app)
       .get("/api/pos/products")
-      .set('Authorization', 'Bearer test-token');
+      .set("Authorization", "Bearer test-token");
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveLength(1);
@@ -89,8 +88,7 @@ describe("Products API", () => {
   });
 
   it("GET /api/pos/products should fail without auth", async () => {
-    const res = await request(app)
-      .get("/api/pos/products");
+    const res = await request(app).get("/api/pos/products");
 
     expect(res.statusCode).toBe(401);
   });
@@ -98,7 +96,7 @@ describe("Products API", () => {
   it("GET /api/products/search should return filtered products with auth", async () => {
     const res = await request(app)
       .get("/api/products/search?q=test")
-      .set('Authorization', 'Bearer test-token');
+      .set("Authorization", "Bearer test-token");
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveLength(1);
@@ -108,7 +106,7 @@ describe("Products API", () => {
   it("GET /api/pos/products/search should return filtered products with auth", async () => {
     const res = await request(app)
       .get("/api/pos/products/search?q=test")
-      .set('Authorization', 'Bearer test-token');
+      .set("Authorization", "Bearer test-token");
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveLength(1);
@@ -118,15 +116,17 @@ describe("Products API", () => {
   it("GET /api/products/search with non-matching query should return empty array", async () => {
     const res = await request(app)
       .get("/api/products/search?q=nonexistent")
-      .set('Authorization', 'Bearer test-token');
+      .set("Authorization", "Bearer test-token");
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveLength(0);
   });
 
   it("POST /api/products should add a product with valid auth and csrf", async () => {
-    const jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBwcm9zYWxlLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1MTk3NjIzOCwiZXhwIjoxNzUyMDYyNjM4fQ.UJ23MfS1iQQbBiuDHVngjLezSc1yg57NPl9C-okQUCc";
-    const csrf = "1af322f09f6c8d111a0945b0f4b658a3c08775371ad364d06f16bf159ff45f06";
+    const jwt =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBwcm9zYWxlLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1MTk3NjIzOCwiZXhwIjoxNzUyMDYyNjM4fQ.UJ23MfS1iQQbBiuDHVngjLezSc1yg57NPl9C-okQUCc";
+    const csrf =
+      "1af322f09f6c8d111a0945b0f4b658a3c08775371ad364d06f16bf159ff45f06";
     const productPayload = {
       name: "Test Product API",
       category_id: 1,
@@ -138,7 +138,7 @@ describe("Products API", () => {
       dozen_selling_price: 180,
       quantity: 5,
       min_quantity: 2,
-      is_active: true
+      is_active: true,
     };
     const res = await request(app)
       .post("/api/products")

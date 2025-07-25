@@ -1,5 +1,5 @@
-import React from 'react'
-import type { Customer } from '@/types/customer'
+import React from "react";
+import type { Customer } from "@/types/customer";
 
 interface CustomerCardProps {
   customer: Customer;
@@ -27,20 +27,14 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onEdit, onDelete 
           </button>
         </div>
       </div>
-      {customer.email && (
-        <p className="text-sm text-gray-600 mb-1">Email: {customer.email}</p>
-      )}
-      {customer.phone && (
-        <p className="text-sm text-gray-600 mb-1">Phone: {customer.phone}</p>
-      )}
+      {customer.email && <p className="text-sm text-gray-600 mb-1">Email: {customer.email}</p>}
+      {customer.phone && <p className="text-sm text-gray-600 mb-1">Phone: {customer.phone}</p>}
       {customer.address && (
         <p className="text-sm text-gray-600 mb-1">Address: {customer.address}</p>
       )}
-      {customer.notes && (
-        <p className="text-sm text-gray-600">Notes: {customer.notes}</p>
-      )}
+      {customer.notes && <p className="text-sm text-gray-600">Notes: {customer.notes}</p>}
     </div>
-  )
-}
+  );
+};
 
-export default CustomerCard
+export default CustomerCard;

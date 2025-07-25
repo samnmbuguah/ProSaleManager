@@ -89,11 +89,12 @@ router.post("/", upload.single("image"), async (req, res) => {
     const productData = req.body;
 
     // Log the raw body for debugging
-    console.log('[ProductRoute] Received req.body:', req.body);
+    console.log("[ProductRoute] Received req.body:", req.body);
 
     // Coerce all fields to correct types and only keep model fields
-    const toNumber = (v: string | number | null | undefined): number | null => v === undefined || v === null || v === '' ? null : Number(v);
-    const toBool = (v: string | boolean | undefined): boolean => v === 'true' || v === true;
+    const toNumber = (v: string | number | null | undefined): number | null =>
+      v === undefined || v === null || v === "" ? null : Number(v);
+    const toBool = (v: string | boolean | undefined): boolean => v === "true" || v === true;
 
     const cleanProduct: Record<string, string | number | boolean | null | undefined> = {
       name: productData.name,
@@ -114,7 +115,7 @@ router.post("/", upload.single("image"), async (req, res) => {
     };
 
     // Log the cleaned and coerced data
-    console.log('[ProductRoute] Cleaned product data:', cleanProduct);
+    console.log("[ProductRoute] Cleaned product data:", cleanProduct);
 
     // Upload image if provided
     let image_url = null;
@@ -132,13 +133,14 @@ router.post("/", upload.single("image"), async (req, res) => {
         image_url = getImageUrl(req.file);
       }
     }
-    (cleanProduct as Record<string, string | number | boolean | null | undefined>).image_url = image_url;
+    (cleanProduct as Record<string, string | number | boolean | null | undefined>).image_url =
+      image_url;
 
     // Create the product
     const safeProduct = {
       ...cleanProduct,
-      name: String(cleanProduct.name || ''),
-      sku: String(cleanProduct.sku || ''),
+      name: String(cleanProduct.name || ""),
+      sku: String(cleanProduct.sku || ""),
       category_id: Number(cleanProduct.category_id || 1),
       piece_buying_price: Number(cleanProduct.piece_buying_price || 0),
       piece_selling_price: Number(cleanProduct.piece_selling_price || 0),
@@ -148,7 +150,8 @@ router.post("/", upload.single("image"), async (req, res) => {
       dozen_selling_price: Number(cleanProduct.dozen_selling_price || 0),
       quantity: Number(cleanProduct.quantity || 0),
       min_quantity: Number(cleanProduct.min_quantity || 0),
-      is_active: typeof cleanProduct.is_active === 'boolean' ? cleanProduct.is_active : true,
+      is_active: typeof cleanProduct.is_active === "boolean" ? cleanProduct.is_active : true,
+      stock_unit: productData.stock_unit || "piece",
     };
     const product = await Product.create(safeProduct);
 
@@ -201,8 +204,15 @@ router.put("/:id", upload.single("image"), async (req, res) => {
 
     // Log the data being sent to update
     console.log("Updating product with data:", productData);
-
+    console.log(
+      "Before update: product.stock_unit =",
+      product.stock_unit,
+      "productData.stock_unit =",
+      productData.stock_unit,
+    );
     await product.update(productData);
+    await product.reload();
+    console.log("After update: product.stock_unit =", product.stock_unit);
 
     // Return updated product
     const updatedProduct = await Product.findByPk(product.id);
@@ -231,8 +241,7 @@ router.delete("/:id", async (req, res) => {
       });
       if (refCount > 0) {
         return res.status(400).json({
-          message:
-            "Cannot delete product: it is referenced in purchase orders.",
+          message: "Cannot delete product: it is referenced in purchase orders.",
         });
       }
       // Delete image from Cloudinary if exists

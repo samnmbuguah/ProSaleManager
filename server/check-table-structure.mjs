@@ -1,16 +1,16 @@
-import { Sequelize } from 'sequelize';
+import { Sequelize } from "sequelize";
 
 // Create a connection to the database using the configuration from config.json
-const sequelize = new Sequelize('prosaledatabase', 'prosalemanager', 'prosalepassword', {
-  host: '127.0.0.1',
+const sequelize = new Sequelize("prosaledatabase", "prosalemanager", "prosalepassword", {
+  host: "127.0.0.1",
   port: 5432,
-  dialect: 'postgres'
+  dialect: "postgres",
 });
 
 async function checkTableStructure() {
   try {
     await sequelize.authenticate();
-    console.log('Connection has been established successfully.');
+    console.log("Connection has been established successfully.");
 
     // Get the table structure
     const [columns] = await sequelize.query(`
@@ -19,14 +19,14 @@ async function checkTableStructure() {
       WHERE table_name = 'products'
       ORDER BY ordinal_position;
     `);
-    
-    console.log('Products table structure:');
+
+    console.log("Products table structure:");
     console.log(columns);
   } catch (error) {
-    console.error('Error checking table structure:', error);
+    console.error("Error checking table structure:", error);
   } finally {
     await sequelize.close();
   }
 }
 
-checkTableStructure(); 
+checkTableStructure();

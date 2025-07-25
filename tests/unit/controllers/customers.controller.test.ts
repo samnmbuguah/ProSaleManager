@@ -1,6 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
-import { getCustomers, createCustomer } from '../../../src/controllers/customers.controller'; // Adjust the import path if needed
-import { jest, describe, beforeEach, it, expect } from '@jest/globals';
+import { Request, Response, NextFunction } from "express";
+import {
+  getCustomers,
+  createCustomer,
+} from "../../../src/controllers/customers.controller"; // Adjust the import path if needed
+import { jest, describe, beforeEach, it, expect } from "@jest/globals";
 
 // Mock necessary dependencies, e.g., the customer service
 // jest.mock('../../../src/services/customer.service', () => ({
@@ -8,7 +11,7 @@ import { jest, describe, beforeEach, it, expect } from '@jest/globals';
 //   createCustomer: jest.fn(),
 // }));
 
-describe('Customers Controller', () => {
+describe("Customers Controller", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
   let nextFunction: NextFunction = jest.fn();
@@ -21,7 +24,7 @@ describe('Customers Controller', () => {
     };
   });
 
-  it('should get all customers', async () => {
+  it("should get all customers", async () => {
     // Mock the service call to return dummy data
     // const mockCustomers = [{ id: 1, name: 'Test Customer' }];
     // (customerService.getAllCustomers as jest.Mock).mockResolvedValue(mockCustomers);
@@ -42,4 +45,4 @@ describe('Customers Controller', () => {
   // - Updating a customer
   // - Deleting a customer
   // - Error handling
-}); 
+});

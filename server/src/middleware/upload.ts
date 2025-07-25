@@ -21,11 +21,7 @@ const storage = useCloudinary
     });
 
 // File filter to accept only images
-const fileFilter = (
-  req: Request,
-  file: Express.Multer.File,
-  cb: multer.FileFilterCallback,
-) => {
+const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   if (!file.mimetype.startsWith("image/")) {
     return cb(new Error("Only image files are allowed."));
   }
@@ -45,18 +41,11 @@ const upload = multer({
 });
 
 // CSV file filter
-const csvFileFilter = (
-  req: Request,
-  file: Express.Multer.File,
-  cb: multer.FileFilterCallback,
-) => {
-  if (
-    file.mimetype === 'text/csv' ||
-    file.originalname.toLowerCase().endsWith('.csv')
-  ) {
+const csvFileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  if (file.mimetype === "text/csv" || file.originalname.toLowerCase().endsWith(".csv")) {
     cb(null, true);
   } else {
-    cb(new Error('Only CSV files are allowed.'));
+    cb(new Error("Only CSV files are allowed."));
   }
 };
 

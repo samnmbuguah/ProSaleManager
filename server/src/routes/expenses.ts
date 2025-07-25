@@ -1,6 +1,6 @@
 import express from "express";
 import { requireAuth } from "../middleware/auth.middleware.js";
-import { requireStoreContext } from '../middleware/store-context.middleware.js';
+import { requireStoreContext } from "../middleware/store-context.middleware.js";
 import {
   getExpenses,
   createExpense,

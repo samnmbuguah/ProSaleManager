@@ -60,6 +60,6 @@ export interface LoyaltyTransaction {
   id: number;
   customerId: number;
   points: number;
-  type: 'earn' | 'redeem';
+  type: "earn" | "redeem";
   createdAt: Date;
 }

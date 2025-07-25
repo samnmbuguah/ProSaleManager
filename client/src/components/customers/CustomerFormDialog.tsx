@@ -1,15 +1,15 @@
-import React from 'react'
+import React from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-import { Customer } from '@/types/customer'
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Customer } from "@/types/customer";
 
 interface CustomerFormDialogProps {
   open: boolean;
@@ -26,23 +26,19 @@ const CustomerFormDialog: React.FC<CustomerFormDialogProps> = ({
   formData,
   setFormData,
   onSubmit,
-  selectedCustomer
+  selectedCustomer,
 }) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {selectedCustomer ? 'Edit Customer' : 'Add New Customer'}
-          </DialogTitle>
-          <DialogDescription>
-            Fill in the customer details below.
-          </DialogDescription>
+          <DialogTitle>{selectedCustomer ? "Edit Customer" : "Add New Customer"}</DialogTitle>
+          <DialogDescription>Fill in the customer details below.</DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
@@ -50,7 +46,7 @@ const CustomerFormDialog: React.FC<CustomerFormDialogProps> = ({
             <Input
               id="name"
               name="name"
-              value={formData.name || ''}
+              value={formData.name || ""}
               onChange={handleInputChange}
               required
               className="w-full"
@@ -62,7 +58,7 @@ const CustomerFormDialog: React.FC<CustomerFormDialogProps> = ({
               id="email"
               name="email"
               type="email"
-              value={formData.email || ''}
+              value={formData.email || ""}
               onChange={handleInputChange}
               required
               className="w-full"
@@ -73,7 +69,7 @@ const CustomerFormDialog: React.FC<CustomerFormDialogProps> = ({
             <Input
               id="phone"
               name="phone"
-              value={formData.phone || ''}
+              value={formData.phone || ""}
               onChange={handleInputChange}
               required
               className="w-full"
@@ -84,19 +80,19 @@ const CustomerFormDialog: React.FC<CustomerFormDialogProps> = ({
             <Input
               id="address"
               name="address"
-              value={formData.address || ''}
+              value={formData.address || ""}
               onChange={handleInputChange}
               required
               className="w-full"
             />
           </div>
           <Button type="submit" className="w-full">
-            {selectedCustomer ? 'Update Customer' : 'Add Customer'}
+            {selectedCustomer ? "Update Customer" : "Add Customer"}
           </Button>
         </form>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
-export default CustomerFormDialog
+export default CustomerFormDialog;

@@ -109,7 +109,10 @@ describe("Receipt Service", () => {
     return receiptText;
   }
 
-  async function mockSendWhatsApp(saleId: number, phoneNumber: string): Promise<boolean> {
+  async function mockSendWhatsApp(
+    saleId: number,
+    phoneNumber: string,
+  ): Promise<boolean> {
     try {
       // In a real scenario, this would send the WhatsApp message
       // We'll just simulate success here
@@ -132,7 +135,10 @@ describe("Receipt Service", () => {
     }
   }
 
-  async function mockSendSMS(saleId: number, phoneNumber: string): Promise<boolean> {
+  async function mockSendSMS(
+    saleId: number,
+    phoneNumber: string,
+  ): Promise<boolean> {
     try {
       // In a real scenario, this would send the SMS
       // We'll just simulate success here

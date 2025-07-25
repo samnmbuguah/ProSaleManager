@@ -97,7 +97,7 @@ describe("Cart with Delivery Service", () => {
   // Helper functions to mimic cart functionality
   function addToCart(cart: Cart, product: Product): Cart {
     const existingItem = cart.items.find(
-      (item: CartItem) => item.product.product_code === "SRV001"
+      (item: CartItem) => item.product.product_code === "SRV001",
     );
 
     if (existingItem) {
@@ -106,7 +106,7 @@ describe("Cart with Delivery Service", () => {
         items: cart.items.map((item: CartItem) =>
           item.id === existingItem.id
             ? { ...item, quantity: item.quantity + 1 }
-            : item
+            : item,
         ),
       };
     }
@@ -125,7 +125,9 @@ describe("Cart with Delivery Service", () => {
   }
 
   function removeFromCart(cart: Cart, itemId: number): Cart {
-    const itemToRemove = cart.items.find((item: CartItem) => item.id === itemId);
+    const itemToRemove = cart.items.find(
+      (item: CartItem) => item.id === itemId,
+    );
     if (!itemToRemove) return cart;
 
     return {

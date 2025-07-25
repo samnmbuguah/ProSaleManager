@@ -9,6 +9,7 @@ class PurchaseOrderItem extends Model {
   declare unit_price: number;
   declare total_price: number;
   declare store_id: number;
+  declare unit_type: string;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -51,12 +52,16 @@ PurchaseOrderItem.init(
       allowNull: false,
       defaultValue: 0,
     },
+    unit_type: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     store_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: 'stores',
-        key: 'id',
+        model: "stores",
+        key: "id",
       },
     },
   },

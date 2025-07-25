@@ -1,5 +1,5 @@
 import { ReceiptService } from "../../services/receipt.service";
-import { jest, describe, it, expect } from '@jest/globals';
+import { jest, describe, it, expect } from "@jest/globals";
 
 // Mock the twilio and Sale model
 jest.mock("twilio", () => ({

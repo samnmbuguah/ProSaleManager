@@ -1,16 +1,16 @@
-import { useState } from 'react'
-import type { Customer } from '@/types/schema'
+import { useState } from "react";
+import type { Customer } from "@/types/schema";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
-} from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { format } from 'date-fns'
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { format } from "date-fns";
 
 interface Transaction {
   id: number;
@@ -26,25 +26,23 @@ interface CustomerHistoryProps {
   onDateRangeChange: (startDate: Date, endDate: Date) => void;
 }
 
-export default function CustomerHistory ({
+export default function CustomerHistory({
   customer,
   transactions,
-  onDateRangeChange
+  onDateRangeChange,
 }: CustomerHistoryProps) {
-  const [startDate, setStartDate] = useState<string>('')
-  const [endDate, setEndDate] = useState<string>('')
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
 
   const handleDateRangeSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (startDate && endDate) {
-      onDateRangeChange(new Date(startDate), new Date(endDate))
+      onDateRangeChange(new Date(startDate), new Date(endDate));
     }
-  }
+  };
 
-  const totalSpent = transactions.reduce((sum, t) => sum + t.amount, 0)
-  const averageTransaction = transactions.length
-    ? totalSpent / transactions.length
-    : 0
+  const totalSpent = transactions.reduce((sum, t) => sum + t.amount, 0);
+  const averageTransaction = transactions.length ? totalSpent / transactions.length : 0;
 
   return (
     <div className="space-y-6">
@@ -52,19 +50,15 @@ export default function CustomerHistory ({
         <div>
           <h2 className="text-2xl font-bold">{customer.name}</h2>
           <p className="text-muted-foreground">
-            Customer since {format(new Date(customer.createdAt), 'MMM d, yyyy')}
+            Customer since {format(new Date(customer.createdAt), "MMM d, yyyy")}
           </p>
         </div>
         <div className="text-right">
           <p className="text-lg">
-            Total Spent:{' '}
-            <span className="font-bold">
-              KSh {totalSpent.toLocaleString('en-KE')}
-            </span>
+            Total Spent: <span className="font-bold">KSh {totalSpent.toLocaleString("en-KE")}</span>
           </p>
           <p className="text-sm text-muted-foreground">
-            Average Transaction: KSh{' '}
-            {averageTransaction.toLocaleString('en-KE')}
+            Average Transaction: KSh {averageTransaction.toLocaleString("en-KE")}
           </p>
         </div>
       </div>
@@ -102,17 +96,15 @@ export default function CustomerHistory ({
         <TableBody>
           {transactions.map((transaction) => (
             <TableRow key={transaction.id}>
-              <TableCell>
-                {format(new Date(transaction.date), 'MMM d, yyyy')}
-              </TableCell>
+              <TableCell>{format(new Date(transaction.date), "MMM d, yyyy")}</TableCell>
               <TableCell>{transaction.items}</TableCell>
               <TableCell className="text-right">
-                KSh {transaction.amount.toLocaleString('en-KE')}
+                KSh {transaction.amount.toLocaleString("en-KE")}
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }

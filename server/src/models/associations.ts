@@ -8,7 +8,7 @@ import Supplier from "./Supplier.js";
 import ProductSupplier from "./ProductSupplier.js";
 import PurchaseOrder from "./PurchaseOrder.js";
 import PurchaseOrderItem from "./PurchaseOrderItem.js";
-import Category from './Category.js';
+import Category from "./Category.js";
 import Store from "./Store.js";
 import ReceiptSettings from "./ReceiptSettings.js";
 
@@ -71,8 +71,8 @@ export function setupAssociations() {
   });
 
   // Category - Product association
-  Category.hasMany(Product, { foreignKey: 'category_id' });
-  Product.belongsTo(Category, { foreignKey: 'category_id' });
+  Category.hasMany(Product, { foreignKey: "category_id" });
+  Product.belongsTo(Category, { foreignKey: "category_id" });
 
   // Store associations
   Store.hasMany(User, { foreignKey: "store_id" });
@@ -103,6 +103,9 @@ export function setupAssociations() {
   PurchaseOrderItem.belongsTo(Store, { foreignKey: "store_id" });
 
   // ReceiptSettings association
-  Store.hasOne(ReceiptSettings, { foreignKey: "store_id", as: "receiptSettings" });
+  Store.hasOne(ReceiptSettings, {
+    foreignKey: "store_id",
+    as: "receiptSettings",
+  });
   ReceiptSettings.belongsTo(Store, { foreignKey: "store_id", as: "store" });
 }

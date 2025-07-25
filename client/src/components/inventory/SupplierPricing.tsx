@@ -1,103 +1,98 @@
-import { useState } from 'react'
-import type { Product } from '@/types/product'
-import type { SupplierFormData, Supplier } from '@/types/supplier'
-import type { ProductSupplierFormData, ProductSupplier } from '@/types/product-supplier'
-import { useSuppliers } from '../../hooks/use-suppliers'
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog'
+import { useState } from "react";
+import type { Product } from "@/types/product";
+import type { SupplierFormData, Supplier } from "@/types/supplier";
+import type { ProductSupplierFormData, ProductSupplier } from "@/types/product-supplier";
+import { useSuppliers } from "../../hooks/use-suppliers";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { supplierSchema } from '@/types/supplier'
-import { productSupplierSchema } from '@/types/product-supplier'
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { supplierSchema } from "@/types/supplier";
+import { productSupplierSchema } from "@/types/product-supplier";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
-} from '@/components/ui/table'
-import { Plus } from 'lucide-react'
-import { Checkbox } from '@/components/ui/checkbox'
+  TableRow,
+} from "@/components/ui/table";
+import { Plus } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface SupplierPricingProps {
   product: Product;
 }
 
-export function SupplierPricing ({ product }: SupplierPricingProps) {
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [isLinkFormOpen, setIsLinkFormOpen] = useState(false)
+export function SupplierPricing({ product }: SupplierPricingProps) {
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isLinkFormOpen, setIsLinkFormOpen] = useState(false);
   const {
     suppliers,
     productSuppliers,
     createSupplier,
     createProductSupplier,
     isCreating,
-    isCreatingProductSupplier
-  } = useSuppliers()
+    isCreatingProductSupplier,
+  } = useSuppliers();
 
   const form = useForm<SupplierFormData>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      phone: '',
-      address: '',
-      contact_person: '',
-      status: 'active'
-    }
-  })
+      name: "",
+      email: "",
+      phone: "",
+      address: "",
+      contact_person: "",
+      status: "active",
+    },
+  });
 
   const linkForm = useForm<ProductSupplierFormData>({
     resolver: zodResolver(productSupplierSchema),
     defaultValues: {
       product_id: String(product.id),
-      supplier_id: '',
-      cost_price: '',
-      is_preferred: 'false'
-    }
-  })
+      supplier_id: "",
+      cost_price: "",
+      is_preferred: "false",
+    },
+  });
 
   const onSubmit = async (data: SupplierFormData) => {
     await createSupplier({
       ...data,
-      contact_person: data.contact_person || '',
-      status: 'active',
+      contact_person: data.contact_person || "",
+      status: "active",
       address: data.address || null,
-      phone: data.phone || null
-    })
-    setIsFormOpen(false)
-    form.reset()
-  }
+      phone: data.phone || null,
+    });
+    setIsFormOpen(false);
+    form.reset();
+  };
 
   const onLinkSubmit = async (data: ProductSupplierFormData) => {
     await createProductSupplier({
       product_id: Number(data.product_id),
       supplier_id: Number(data.supplier_id),
-      price: parseFloat(data.cost_price)
-    })
-    setIsLinkFormOpen(false)
-    linkForm.reset()
-  }
+      price: parseFloat(data.cost_price),
+    });
+    setIsLinkFormOpen(false);
+    linkForm.reset();
+  };
 
   const productSuppliersList =
     productSuppliers?.filter(
       (ps: ProductSupplier) => Number(ps.product_id) === Number(product.id)
-    ) || []
+    ) || [];
 
   return (
     <div className="space-y-4">
@@ -127,15 +122,13 @@ export function SupplierPricing ({ product }: SupplierPricingProps) {
           {productSuppliersList.map((ps: ProductSupplier) => (
             <TableRow key={ps.id}>
               <TableCell>
-                {suppliers?.find((s: Supplier) => s.id === Number(ps.supplier_id))
-                  ?.name || 'Unknown Supplier'}
+                {suppliers?.find((s: Supplier) => s.id === Number(ps.supplier_id))?.name ||
+                  "Unknown Supplier"}
               </TableCell>
               <TableCell>KSh {Number(ps.cost_price).toFixed(2)}</TableCell>
-              <TableCell>{ps.is_preferred ? 'Yes' : 'No'}</TableCell>
+              <TableCell>{ps.is_preferred ? "Yes" : "No"}</TableCell>
               <TableCell>
-                {ps.last_supply_date
-                  ? new Date(ps.last_supply_date).toLocaleDateString()
-                  : 'Never'}
+                {ps.last_supply_date ? new Date(ps.last_supply_date).toLocaleDateString() : "Never"}
               </TableCell>
             </TableRow>
           ))}
@@ -156,7 +149,7 @@ export function SupplierPricing ({ product }: SupplierPricingProps) {
                   <FormItem>
                     <FormLabel>Name</FormLabel>
                     <FormControl>
-                      <Input {...field} value={field.value || ''} />
+                      <Input {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -169,11 +162,7 @@ export function SupplierPricing ({ product }: SupplierPricingProps) {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input
-                        type="email"
-                        {...field}
-                        value={field.value || ''}
-                      />
+                      <Input type="email" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -186,7 +175,7 @@ export function SupplierPricing ({ product }: SupplierPricingProps) {
                   <FormItem>
                     <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input {...field} value={field.value || ''} />
+                      <Input {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -199,7 +188,7 @@ export function SupplierPricing ({ product }: SupplierPricingProps) {
                   <FormItem>
                     <FormLabel>Address</FormLabel>
                     <FormControl>
-                      <Input {...field} value={field.value || ''} />
+                      <Input {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -219,10 +208,7 @@ export function SupplierPricing ({ product }: SupplierPricingProps) {
             <DialogTitle>Link Supplier to Product</DialogTitle>
           </DialogHeader>
           <Form {...linkForm}>
-            <form
-              onSubmit={linkForm.handleSubmit(onLinkSubmit)}
-              className="space-y-4"
-            >
+            <form onSubmit={linkForm.handleSubmit(onLinkSubmit)} className="space-y-4">
               <FormField
                 control={linkForm.control}
                 name="supplier_id"
@@ -234,9 +220,7 @@ export function SupplierPricing ({ product }: SupplierPricingProps) {
                         {...field}
                         className="w-full p-2 border rounded"
                         onChange={(e) =>
-                          field.onChange(
-                            e.target.value ? Number(e.target.value) : undefined
-                          )
+                          field.onChange(e.target.value ? Number(e.target.value) : undefined)
                         }
                       >
                         <option value="">Select a supplier</option>
@@ -258,12 +242,7 @@ export function SupplierPricing ({ product }: SupplierPricingProps) {
                   <FormItem>
                     <FormLabel>Cost Price</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        {...field}
-                        value={field.value || ''}
-                      />
+                      <Input type="number" step="0.01" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -276,10 +255,8 @@ export function SupplierPricing ({ product }: SupplierPricingProps) {
                   <FormItem className="flex flex-row items-center space-x-2">
                     <FormControl>
                       <Checkbox
-                        checked={field.value === 'true'}
-                        onCheckedChange={(checked) =>
-                          field.onChange(String(checked))
-                        }
+                        checked={field.value === "true"}
+                        onCheckedChange={(checked) => field.onChange(String(checked))}
                       />
                     </FormControl>
                     <FormLabel>Preferred Supplier</FormLabel>
@@ -295,5 +272,5 @@ export function SupplierPricing ({ product }: SupplierPricingProps) {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

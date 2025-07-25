@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -34,4 +34,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  postgres_data: 
+  postgres_data:

@@ -1,19 +1,14 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
-} from '@/components/ui/table'
-import type { Supplier } from '@/types/supplier'
-import type { PurchaseOrderItem } from '@/types/purchase-order'
+  TableRow,
+} from "@/components/ui/table";
+import type { Supplier } from "@/types/supplier";
+import type { PurchaseOrderItem } from "@/types/purchase-order";
 
 interface PurchaseOrderDetailsProps {
   orderId: number | null;
@@ -23,18 +18,18 @@ interface PurchaseOrderDetailsProps {
   items?: PurchaseOrderItem[];
 }
 
-export function PurchaseOrderDetails ({
+export function PurchaseOrderDetails({
   isOpen,
   onClose,
   supplier,
-  items
+  items,
 }: PurchaseOrderDetailsProps) {
   const formatCurrency = (amount: string | number) => {
-    return `KSh ${Number(amount).toLocaleString('en-KE', {
+    return `KSh ${Number(amount).toLocaleString("en-KE", {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })}`
-  }
+      maximumFractionDigits: 2,
+    })}`;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={() => onClose()}>
@@ -52,8 +47,7 @@ export function PurchaseOrderDetails ({
           </div>
         )}
 
-        {Array.isArray(items) && items.length > 0
-          ? (
+        {Array.isArray(items) && items.length > 0 ? (
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -69,36 +63,39 @@ export function PurchaseOrderDetails ({
               <TableBody>
                 {items.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell>{item.Product?.name || item.product_name || 'N/A'}</TableCell>
-                    <TableCell>{item.unit_type || 'N/A'}</TableCell>
+                    <TableCell>{item.Product?.name || item.product_name || "N/A"}</TableCell>
+                    <TableCell>{item.unit_type || "N/A"}</TableCell>
                     <TableCell>{item.quantity}</TableCell>
-                    <TableCell>{
-                      item.unit_price != null && !isNaN(Number(item.unit_price))
+                    <TableCell>
+                      {item.unit_price != null && !isNaN(Number(item.unit_price))
                         ? formatCurrency(item.unit_price)
-                        : 'KSh N/A'
-                    }</TableCell>
-                    <TableCell>{
-                      item.Product?.piece_selling_price != null && !isNaN(Number(item.Product?.piece_selling_price))
+                        : "KSh N/A"}
+                    </TableCell>
+                    <TableCell>
+                      {item.Product?.piece_selling_price != null &&
+                      !isNaN(Number(item.Product?.piece_selling_price))
                         ? formatCurrency(item.Product.piece_selling_price)
-                        : 'KSh N/A'
-                    }</TableCell>
-                    <TableCell>{
-                      item.unit_price != null && !isNaN(Number(item.unit_price)) && item.quantity != null && !isNaN(Number(item.quantity))
+                        : "KSh N/A"}
+                    </TableCell>
+                    <TableCell>
+                      {item.unit_price != null &&
+                      !isNaN(Number(item.unit_price)) &&
+                      item.quantity != null &&
+                      !isNaN(Number(item.quantity))
                         ? formatCurrency(String(Number(item.unit_price) * Number(item.quantity)))
-                        : 'KSh N/A'
-                    }</TableCell>
+                        : "KSh N/A"}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
-            )
-          : (
+        ) : (
           <div className="text-center text-muted-foreground py-8">
             No items found for this order.
           </div>
-            )}
+        )}
       </DialogContent>
     </Dialog>
-  )
+  );
 }

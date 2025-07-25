@@ -1,6 +1,6 @@
-const request = require('supertest');
-const app = require('../../app'); // Adjust path as needed
-import { jest, describe, it, expect } from '@jest/globals';
+const request = require("supertest");
+const app = require("../../app"); // Adjust path as needed
+import { jest, describe, it, expect } from "@jest/globals";
 import router from "../../routes/sales.js";
 import { ReceiptService } from "../../services/receipt.service.js";
 
@@ -39,10 +39,12 @@ describe("Sales Routes", () => {
       // Mock successful WhatsApp sending
       (ReceiptService.sendWhatsApp as jest.Mock).mockResolvedValue(true);
 
-      const response = await request(testApp).post("/sales/1/send-receipt").send({
-        method: "whatsapp",
-        phoneNumber: "+254712345678",
-      });
+      const response = await request(testApp)
+        .post("/sales/1/send-receipt")
+        .send({
+          method: "whatsapp",
+          phoneNumber: "+254712345678",
+        });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -58,10 +60,12 @@ describe("Sales Routes", () => {
       // Mock successful SMS sending
       (ReceiptService.sendSMS as jest.Mock).mockResolvedValue(true);
 
-      const response = await request(testApp).post("/sales/1/send-receipt").send({
-        method: "sms",
-        phoneNumber: "+254712345678",
-      });
+      const response = await request(testApp)
+        .post("/sales/1/send-receipt")
+        .send({
+          method: "sms",
+          phoneNumber: "+254712345678",
+        });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
@@ -71,9 +75,11 @@ describe("Sales Routes", () => {
     });
 
     it("should return 400 when phone number is missing", async () => {
-      const response = await request(testApp).post("/sales/1/send-receipt").send({
-        method: "whatsapp",
-      });
+      const response = await request(testApp)
+        .post("/sales/1/send-receipt")
+        .send({
+          method: "whatsapp",
+        });
 
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ message: "Phone number is required" });
@@ -81,10 +87,12 @@ describe("Sales Routes", () => {
     });
 
     it("should return 400 for invalid method", async () => {
-      const response = await request(testApp).post("/sales/1/send-receipt").send({
-        method: "invalid",
-        phoneNumber: "+254712345678",
-      });
+      const response = await request(testApp)
+        .post("/sales/1/send-receipt")
+        .send({
+          method: "invalid",
+          phoneNumber: "+254712345678",
+        });
 
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
@@ -98,10 +106,12 @@ describe("Sales Routes", () => {
       // Mock failed WhatsApp sending
       (ReceiptService.sendWhatsApp as jest.Mock).mockResolvedValue(false);
 
-      const response = await request(testApp).post("/sales/1/send-receipt").send({
-        method: "whatsapp",
-        phoneNumber: "+254712345678",
-      });
+      const response = await request(testApp)
+        .post("/sales/1/send-receipt")
+        .send({
+          method: "whatsapp",
+          phoneNumber: "+254712345678",
+        });
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({

@@ -1,24 +1,23 @@
-import React, { useState } from 'react'
-import { useEffect } from 'react'
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import type { Customer } from '@/types/customer'
+  SelectValue,
+} from "@/components/ui/select";
+import type { Customer } from "@/types/customer";
 
 interface CheckoutDialogProps {
   open: boolean;
@@ -26,8 +25,8 @@ interface CheckoutDialogProps {
   cartTotal: number;
   deliveryFee: number;
   setDeliveryFee: (fee: number) => void;
-  paymentMethod: 'cash' | 'mpesa';
-  setPaymentMethod: (method: 'cash' | 'mpesa') => void;
+  paymentMethod: "cash" | "mpesa";
+  setPaymentMethod: (method: "cash" | "mpesa") => void;
   customers: Customer[];
   selectedCustomer: number | null;
   setSelectedCustomer: (id: number | null) => void;
@@ -47,34 +46,32 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   selectedCustomer,
   setSelectedCustomer,
   onCheckout,
-  isLoadingCheckout
+  isLoadingCheckout,
 }) => {
-  const [amountTendered, setAmountTendered] = useState('')
-  const total = cartTotal + deliveryFee
-  const tendered = parseFloat(amountTendered)
-  const balance = paymentMethod === 'cash' && !isNaN(tendered) ? tendered - total : 0
-  const canCheckout = paymentMethod === 'cash' ? tendered >= total : true
+  const [amountTendered, setAmountTendered] = useState("");
+  const total = cartTotal + deliveryFee;
+  const tendered = parseFloat(amountTendered);
+  const balance = paymentMethod === "cash" && !isNaN(tendered) ? tendered - total : 0;
+  const canCheckout = paymentMethod === "cash" ? tendered >= total : true;
 
   useEffect(() => {
-    if (paymentMethod !== 'cash') setAmountTendered('')
-  }, [paymentMethod])
+    if (paymentMethod !== "cash") setAmountTendered("");
+  }, [paymentMethod]);
 
   // Auto-select Walk-in Customer if none is selected when dialog opens
   useEffect(() => {
-    if (open && (!selectedCustomer || !customers.some(c => c.id === selectedCustomer))) {
-      const walkIn = customers.find(c => c.name === 'Walk-in Customer')
-      if (walkIn) setSelectedCustomer(walkIn.id)
+    if (open && (!selectedCustomer || !customers.some((c) => c.id === selectedCustomer))) {
+      const walkIn = customers.find((c) => c.name === "Walk-in Customer");
+      if (walkIn) setSelectedCustomer(walkIn.id);
     }
-  }, [open, customers, selectedCustomer, setSelectedCustomer])
+  }, [open, customers, selectedCustomer, setSelectedCustomer]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Complete Sale</DialogTitle>
-          <DialogDescription>
-            Select payment method and customer details
-          </DialogDescription>
+          <DialogDescription>Select payment method and customer details</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
@@ -92,14 +89,14 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
           <div className="space-y-2">
             <Label>Customer (Optional)</Label>
             <Select
-              value={selectedCustomer ? selectedCustomer.toString() : ''}
+              value={selectedCustomer ? selectedCustomer.toString() : ""}
               onValueChange={(value) => {
-                if (value === '' || value === 'walk_in') {
-                  const walkIn = customers.find(c => c.name === 'Walk-in Customer')
-                  if (walkIn) setSelectedCustomer(walkIn.id)
-                  else setSelectedCustomer(null)
+                if (value === "" || value === "walk_in") {
+                  const walkIn = customers.find((c) => c.name === "Walk-in Customer");
+                  if (walkIn) setSelectedCustomer(walkIn.id);
+                  else setSelectedCustomer(null);
                 } else {
-                  setSelectedCustomer(parseInt(value))
+                  setSelectedCustomer(parseInt(value));
                 }
               }}
             >
@@ -107,16 +104,20 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
                 <SelectValue placeholder="Select customer" />
               </SelectTrigger>
               <SelectContent>
-                {customers.find(c => c.name === 'Walk-in Customer') && (
-                  <SelectItem value={customers.find(c => c.name === 'Walk-in Customer')!.id.toString()}>
+                {customers.find((c) => c.name === "Walk-in Customer") && (
+                  <SelectItem
+                    value={customers.find((c) => c.name === "Walk-in Customer")!.id.toString()}
+                  >
                     Walk-in Customer
                   </SelectItem>
                 )}
-                {(customers || []).filter(c => c.name !== 'Walk-in Customer').map((customer) => (
-                  <SelectItem key={customer.id} value={customer.id.toString()}>
-                    {customer.name}
-                  </SelectItem>
-                ))}
+                {(customers || [])
+                  .filter((c) => c.name !== "Walk-in Customer")
+                  .map((customer) => (
+                    <SelectItem key={customer.id} value={customer.id.toString()}>
+                      {customer.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -136,7 +137,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               <span>Total Amount:</span>
               <span>KSh {total.toFixed(2)}</span>
             </div>
-            {paymentMethod === 'cash' && (
+            {paymentMethod === "cash" && (
               <div className="space-y-2 mt-2 p-3 rounded bg-blue-50 border">
                 <Label htmlFor="amount-tendered">Amount Tendered</Label>
                 <Input
@@ -145,17 +146,21 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
                   min={total}
                   step={0.01}
                   value={amountTendered}
-                  onChange={e => setAmountTendered(e.target.value)}
+                  onChange={(e) => setAmountTendered(e.target.value)}
                   placeholder="Enter amount tendered"
                 />
                 <div className="flex justify-between text-base mt-2">
                   <span>Balance:</span>
-                  <span className={balance < 0 ? 'text-red-600 font-bold' : 'text-green-700 font-bold'}>
-                    KSh {balance >= 0 ? balance.toFixed(2) : '0.00'}
+                  <span
+                    className={balance < 0 ? "text-red-600 font-bold" : "text-green-700 font-bold"}
+                  >
+                    KSh {balance >= 0 ? balance.toFixed(2) : "0.00"}
                   </span>
                 </div>
                 {balance < 0 && (
-                  <div className="text-xs text-red-500 mt-1">Amount tendered must be at least total</div>
+                  <div className="text-xs text-red-500 mt-1">
+                    Amount tendered must be at least total
+                  </div>
                 )}
               </div>
             )}
@@ -165,11 +170,14 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={() => onCheckout(tendered, balance)} disabled={isLoadingCheckout || !canCheckout}>
-            {isLoadingCheckout ? 'Processing...' : 'Complete Sale'}
+          <Button
+            onClick={() => onCheckout(tendered, balance)}
+            disabled={isLoadingCheckout || !canCheckout}
+          >
+            {isLoadingCheckout ? "Processing..." : "Complete Sale"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};

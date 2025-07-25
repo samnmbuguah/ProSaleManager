@@ -1,14 +1,14 @@
-import { z } from 'zod'
+import { z } from "zod";
 
 export const loyaltyPointsSchema = z.object({
   customer_id: z.number(),
   sale_id: z.number().nullable(),
-  points: z.string()
-})
+  points: z.string(),
+});
 
 export type LoyaltyPointsFormData = z.infer<typeof loyaltyPointsSchema>;
 
-export interface LoyaltyPoints extends Omit<LoyaltyPointsFormData, 'points'> {
+export interface LoyaltyPoints extends Omit<LoyaltyPointsFormData, "points"> {
   id: number;
   points: number;
   created_at: Date | null;

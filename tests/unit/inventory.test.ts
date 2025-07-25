@@ -97,7 +97,10 @@ describe("Inventory Management", () => {
   describe("Stock Adjustments", () => {
     it("should properly increase stock after a restock", () => {
       // Function to simulate restocking
-      function restockProduct(product: Product, restockQuantity: number): Product {
+      function restockProduct(
+        product: Product,
+        restockQuantity: number,
+      ): Product {
         return {
           ...product,
           quantity: product.quantity + restockQuantity,
@@ -117,7 +120,10 @@ describe("Inventory Management", () => {
 
     it("should handle stock adjustments for damaged goods", () => {
       // Function to simulate adjusting stock for damaged goods
-      function adjustStockForDamage(product: Product, damagedQuantity: number): Product {
+      function adjustStockForDamage(
+        product: Product,
+        damagedQuantity: number,
+      ): Product {
         return {
           ...product,
           quantity: Math.max(0, product.quantity - damagedQuantity),
@@ -149,7 +155,10 @@ describe("Inventory Management", () => {
       const excessiveDamageQuantity = 5;
 
       // Function to simulate adjusting stock for damaged goods with protection against negative values
-      function adjustStockForDamage(product: Product, damagedQuantity: number): Product {
+      function adjustStockForDamage(
+        product: Product,
+        damagedQuantity: number,
+      ): Product {
         return {
           ...product,
           quantity: Math.max(0, product.quantity - damagedQuantity),

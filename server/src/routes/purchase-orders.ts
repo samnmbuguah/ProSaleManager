@@ -4,8 +4,13 @@ import PurchaseOrderItem from "../models/PurchaseOrderItem.js";
 import Supplier from "../models/Supplier.js";
 import Product from "../models/Product.js";
 import { generateOrderNumber } from "../utils/helpers.js";
+import { requireAuth, requireRole } from "../middleware/auth.middleware.js";
+import { requireStoreContext } from "../middleware/store-context.middleware.js";
 
 const router = Router();
+
+router.use(requireAuth);
+router.use(requireStoreContext);
 
 // Get all purchase orders
 router.get("/", async (req, res) => {
@@ -20,8 +25,8 @@ router.get("/", async (req, res) => {
         {
           model: PurchaseOrderItem,
           include: [Product],
-          as: 'items'
-        }
+          as: "items",
+        },
       ],
       order: [["createdAt", "DESC"]],
     });
@@ -35,11 +40,13 @@ router.get("/", async (req, res) => {
 // Create a new purchase order
 router.post("/", async (req, res) => {
   try {
+    if (!req.user) return res.status(401).json({ error: "User context missing" });
     const { supplier_id, expected_delivery_date, notes, items } = req.body;
 
     // Calculate total amount
     const total_amount = items.reduce(
-      (sum: number, item: { quantity: number; unit_price?: number; buying_price?: number }) => sum + (Number(item.quantity) || 0) * (Number(item.unit_price ?? item.buying_price) || 0),
+      (sum: number, item: { quantity: number; unit_price?: number; buying_price?: number }) =>
+        sum + (Number(item.quantity) || 0) * (Number(item.unit_price ?? item.buying_price) || 0),
       0,
     );
 
@@ -52,17 +59,19 @@ router.post("/", async (req, res) => {
       notes,
       total_amount,
       status: "pending",
+      store_id: req.user.store_id,
     });
 
-    // Create purchase order items
     await Promise.all(
-      items.map((item: { product_id: number; quantity: number; unit_price: number; total: number }) =>
+      items.map((item: { product_id: string; quantity: number; unit_price?: number; unit_type?: string }) =>
         PurchaseOrderItem.create({
           purchase_order_id: order.id,
           product_id: item.product_id,
           quantity: item.quantity,
           unit_price: item.unit_price,
-          total_price: item.quantity * item.unit_price,
+          total_price: item.quantity * (item.unit_price ?? 0),
+          unit_type: item.unit_type, // <-- FIX: include unit_type
+          store_id: req.user!.store_id,
         }),
       ),
     );
@@ -72,6 +81,7 @@ router.post("/", async (req, res) => {
       include: [
         {
           model: Supplier,
+          as: "supplier",
           attributes: ["name"],
         },
       ],
@@ -113,39 +123,60 @@ router.get("/:id", async (req, res) => {
 });
 
 // Update purchase order status
-router.put("/:id/status", async (req, res) => {
+router.put(
+  "/:id/status",
+  requireAuth,
+  requireRole(["admin", "manager", "cashier", "super_admin"]),
+  async (req, res) => {
+    try {
+      const { status } = req.body;
+      const order = await PurchaseOrder.findByPk(req.params.id);
+
+      if (!order) {
+        return res.status(404).json({ error: "Purchase order not found" });
+      }
+
+      // Enforce allowed status transitions
+      const currentStatus = order.status;
+      const transitions: Record<string, string[]> = {
+        pending: ["approved", "rejected"],
+        approved: ["received"],
+        ordered: [],
+        received: [],
+        cancelled: [],
+      };
+      const allowed = transitions[currentStatus] || [];
+      if (!allowed || !allowed.includes(status)) {
+        return res.status(400).json({
+          error: `Cannot change status from ${currentStatus} to ${status}`,
+        });
+      }
+
+      order.status = status;
+      await order.save();
+
+      res.json(order);
+    } catch (error) {
+      console.error("Error updating purchase order status:", error);
+      res.status(500).json({ error: "Failed to update purchase order status" });
+    }
+  },
+);
+
+// Delete purchase order
+router.delete("/:id", requireAuth, requireRole(["admin", "super_admin"]), async (req, res) => {
   try {
-    const { status } = req.body;
     const order = await PurchaseOrder.findByPk(req.params.id);
 
     if (!order) {
       return res.status(404).json({ error: "Purchase order not found" });
     }
 
-    await order.update({ status });
-
-    // If status is 'received', update product quantity
-    if (status === "received") {
-      const items = await PurchaseOrderItem.findAll({
-        where: { purchase_order_id: order.id },
-        include: [Product],
-      });
-
-      for (const item of items) {
-        const product = (item as any).Product;
-        if (!product || typeof product !== 'object' || !('name' in product) || !('id' in product)) {
-          // Log a warning and skip this item
-          console.warn(`Product with id ${item.product_id} not found for order item ${item.id}. Skipping inventory update for this item.`);
-          continue;
-        }
-        // ... (rest of your logic, e.g., update inventory)
-      }
-    }
-
-    res.json(order);
+    await order.destroy();
+    res.status(204).send();
   } catch (error) {
-    console.error("Error updating purchase order status:", error);
-    res.status(500).json({ error: "Failed to update purchase order status" });
+    console.error("Error deleting purchase order:", error);
+    res.status(500).json({ error: "Failed to delete purchase order" });
   }
 });
 

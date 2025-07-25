@@ -1,8 +1,8 @@
-import { Customer } from '../models/index.js';
+import { Customer } from "../models/index.js";
 
 async function clearCustomers() {
   await Customer.destroy({ where: {} });
-  console.log('All customers deleted.');
+  console.log("All customers deleted.");
 }
 
-clearCustomers().then(() => process.exit(0)); 
+clearCustomers().then(() => process.exit(0));
