@@ -7,13 +7,15 @@ export function useProducts() {
     queryKey: ["products"],
     queryFn: async () => {
       const response = await api.get(API_ENDPOINTS.products.list);
-      // Defensive: Only return array if present, else []
-      return Array.isArray(response.data.data) ? response.data.data : [];
+      // Accept both { data: [...] } and [...] as valid responses
+      if (Array.isArray(response.data)) return response.data;
+      if (Array.isArray(response.data.data)) return response.data.data;
+      return [];
     },
   });
 
   return {
-    products: data || [],
+    products: !isLoading && Array.isArray(data) ? data : [],
     isLoading,
     error,
     refetch,
