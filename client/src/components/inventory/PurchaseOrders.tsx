@@ -260,7 +260,7 @@ export function PurchaseOrders({
     ) {
       return ["approved", "rejected"];
     }
-    if (currentStatus === "approved" && userRole === "cashier") {
+    if (currentStatus === "approved" && userRole === "sales") {
       return ["received"];
     }
     return [];
@@ -355,8 +355,8 @@ export function PurchaseOrders({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Purchase Orders</h2>
-        {/* Allow both admin and cashier to create purchase orders */}
-        {user && ((user.role as AppRole) === "admin" || (user.role as AppRole) === "cashier") && (
+        {/* Allow both admin and sales to create purchase orders */}
+        {user && ((user.role as AppRole) === "admin" || (user.role as AppRole) === "sales") && (
           <Button onClick={() => setIsAddDialogOpen(true)}>Create Purchase Order</Button>
         )}
       </div>
