@@ -15,14 +15,17 @@ import POSPage from "@/pages/PosPage";
 import ProfilePage from "@/pages/ProfilePage";
 import ReportsPage from "@/pages/ReportsPage";
 import ShopPage from "@/pages/ShopPage";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useLocation } from "wouter";
 
-function ProtectedRoute({
-  component: Component,
-  roles,
-}: {
+type AppRole = "admin" | "user" | "sales";
+
+type ProtectedRouteProps = {
   component: React.ComponentType;
-  roles?: ("admin" | "user")[];
-}) {
+  roles?: AppRole[];
+};
+
+function ProtectedRoute({ component: Component, roles }: ProtectedRouteProps) {
   return (
     <RoleBasedRoute allowedRoles={roles || ["admin", "user"]}>
       <div className="min-h-screen bg-background flex flex-col">
@@ -33,6 +36,21 @@ function ProtectedRoute({
       </div>
     </RoleBasedRoute>
   );
+}
+
+function RootRedirect() {
+  const { user } = useAuthContext();
+  const [, setLocation] = useLocation();
+  useEffect(() => {
+    if (user?.role === "admin" || user?.role === "sales") {
+      setLocation("/pos");
+    } else if (user?.role === "user") {
+      setLocation("/shop");
+    } else {
+      setLocation("/auth");
+    }
+  }, [user, setLocation]);
+  return null;
 }
 
 function App() {
@@ -47,26 +65,24 @@ function App() {
       <Switch>
         <Route path="/auth" component={AuthPage} />
 
-        <Route path="/shop" component={ShopPage} />
-
-        <Route path="/">
-          <ProtectedRoute component={POSPage} roles={["admin", "user"]} />
+        <Route path="/shop">
+          <ProtectedRoute component={ShopPage} roles={["admin", "user", "sales"]} />
         </Route>
 
         <Route path="/pos">
-          <ProtectedRoute component={POSPage} roles={["admin", "user"]} />
+          <ProtectedRoute component={POSPage} roles={["admin", "sales"]} />
         </Route>
 
         <Route path="/inventory">
-          <ProtectedRoute component={InventoryPage} roles={["admin", "user"]} />
+          <ProtectedRoute component={InventoryPage} roles={["admin", "sales"]} />
         </Route>
 
         <Route path="/expenses">
-          <ProtectedRoute component={ExpensesPage} roles={["admin", "user"]} />
+          <ProtectedRoute component={ExpensesPage} roles={["admin", "sales"]} />
         </Route>
 
         <Route path="/sales">
-          <ProtectedRoute component={SalesPage} roles={["admin"]} />
+          <ProtectedRoute component={SalesPage} roles={["admin", "sales"]} />
         </Route>
 
         <Route path="/customers">
@@ -78,8 +94,10 @@ function App() {
         </Route>
 
         <Route path="/profile">
-          <ProtectedRoute component={ProfilePage} roles={["admin", "user"]} />
+          <ProtectedRoute component={ProfilePage} roles={["admin", "sales", "user"]} />
         </Route>
+
+        <Route path="/" component={RootRedirect} />
       </Switch>
       <Toaster />
     </>
