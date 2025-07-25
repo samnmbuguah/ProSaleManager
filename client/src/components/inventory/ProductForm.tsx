@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCategories } from "@/hooks/use-categories";
+import { useCreateCategory } from "@/hooks/use-categories";
 import React from "react";
 
 interface ProductFormProps {
@@ -52,6 +53,10 @@ export function ProductForm({ initialData, onSubmit, isSubmitting }: ProductForm
   });
 
   const { data: categories, isLoading } = useCategories();
+  const createCategory = useCreateCategory();
+  const [showAddCategory, setShowAddCategory] = React.useState(false);
+  const [newCategoryName, setNewCategoryName] = React.useState("");
+  const [newCategoryDesc, setNewCategoryDesc] = React.useState("");
 
   React.useEffect(() => {
     if (categories && categories.length > 0 && !form.watch("category_id")) {
@@ -164,12 +169,19 @@ export function ProductForm({ initialData, onSubmit, isSubmitting }: ProductForm
         <div>
           <Label htmlFor="category_id">Category</Label>
           <Select
-            value={form.watch("category_id") !== undefined ? String(form.watch("category_id")) : ""}
-            onValueChange={(value) => form.setValue("category_id", parseInt(value))}
+            value={form.watch("category_id")?.toString() || ""}
+            onValueChange={(value) => {
+              if (value === "__add__") {
+                setShowAddCategory(true);
+              } else {
+                setShowAddCategory(false);
+                form.setValue("category_id", Number(value));
+              }
+            }}
             disabled={isLoading || !categories}
           >
             <SelectTrigger>
-              <SelectValue placeholder={isLoading ? "Loading..." : "Select a category"} />
+              <SelectValue placeholder={isLoading ? "Loading..." : "Select category"} />
             </SelectTrigger>
             <SelectContent>
               {categories &&
@@ -178,8 +190,46 @@ export function ProductForm({ initialData, onSubmit, isSubmitting }: ProductForm
                     {cat.name}
                   </SelectItem>
                 ))}
+              <SelectItem value="__add__">+ Add new category</SelectItem>
             </SelectContent>
           </Select>
+          {showAddCategory && (
+            <div className="mt-2 flex gap-2 items-end">
+              <div>
+                <Input
+                  placeholder="New category name"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  className="mb-1"
+                />
+                <Input
+                  placeholder="Description (optional)"
+                  value={newCategoryDesc}
+                  onChange={(e) => setNewCategoryDesc(e.target.value)}
+                  className="mb-1"
+                />
+              </div>
+              <Button
+                type="button"
+                disabled={createCategory.isLoading || !newCategoryName.trim()}
+                onClick={async () => {
+                  try {
+                    const res = await createCategory.mutateAsync({ name: newCategoryName.trim(), description: newCategoryDesc });
+                    if (res?.data?.id) {
+                      form.setValue("category_id", res.data.id);
+                      setShowAddCategory(false);
+                      setNewCategoryName("");
+                      setNewCategoryDesc("");
+                    }
+                  } catch (err: any) {
+                    alert(err?.response?.data?.message || "Failed to create category");
+                  }
+                }}
+              >
+                {createCategory.isLoading ? "Adding..." : "Add"}
+              </Button>
+            </div>
+          )}
           {form.formState.errors.category_id && (
             <p className="text-sm text-red-500">{form.formState.errors.category_id.message}</p>
           )}
