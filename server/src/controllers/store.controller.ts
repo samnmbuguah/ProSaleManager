@@ -12,7 +12,24 @@ export const getReceiptSettings = async (req: Request, res: Response) => {
       where: { store_id: storeId },
     });
     if (!settings) {
-      return res.status(404).json({ message: "Receipt settings not found for this store" });
+      // Return default settings if not found
+      return res.json({
+        id: null,
+        store_id: storeId,
+        business_name: "PROSALE MANAGER",
+        address: "",
+        phone: "+254 XXX XXX XXX",
+        email: "info@prosalemanager.com",
+        website: "",
+        thank_you_message: "Thank you for your business!",
+        show_logo: true,
+        font_size: "medium",
+        paper_size: "thermal",
+        logo_url: null,
+        createdAt: null,
+        updatedAt: null,
+        isDefault: true,
+      });
     }
     res.json(settings);
   } catch (error) {
