@@ -6,10 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useReceiptSettingsApi } from "@/lib/receipt-settings";
+import { useToast } from "@/components/ui/use-toast";
 
-export function ReceiptSettings() {
+export function ReceiptSettings({ onClose }: { onClose?: () => void }) {
   const { settings, updateSettings, isLoading, isError, error, updateStatus } =
     useReceiptSettingsApi();
+  const { toast } = useToast();
 
   // Local state for form fields
   const [form, setForm] = useState(settings);
@@ -28,7 +30,16 @@ export function ReceiptSettings() {
   };
 
   const handleSave = () => {
-    updateSettings(form);
+    updateSettings(form, {
+      onSuccess: () => {
+        toast({
+          title: "Receipt settings saved",
+          description: "Your receipt settings have been updated successfully.",
+          variant: "default",
+        });
+        if (onClose) onClose();
+      },
+    });
     setDirty(false);
   };
 
