@@ -6,6 +6,7 @@ import { Op } from "sequelize";
 import { storeScope } from "../utils/helpers.js";
 import { requireStoreContext } from "../middleware/store-context.middleware.js";
 import { requireAuth, attachStoreIdToUser } from "../middleware/auth.middleware.js";
+import Expense from "../models/Expense.js";
 
 const router = Router();
 
@@ -286,6 +287,41 @@ router.get(
       res.status(500).json({
         success: false,
         message: "Failed to fetch sales summary report",
+      });
+    }
+  },
+);
+
+// Get expenses summary report
+router.get(
+  "/expenses-summary",
+  requireAuth,
+  attachStoreIdToUser,
+  requireStoreContext,
+  async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+      const dateFilter: Record<string, unknown> = {};
+      if (startDate && endDate) {
+        dateFilter.date = {
+          [Op.between]: [new Date(startDate as string), new Date(endDate as string)],
+        };
+      }
+      const where = storeScope(req.user!, { ...dateFilter });
+      const expenses = await Expense.findAll({ where });
+      const totalExpenses = expenses.reduce((sum, exp) => sum + parseFloat(String(exp.amount || 0)), 0);
+      res.json({
+        success: true,
+        data: {
+          totalExpenses,
+          count: expenses.length,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching expenses summary report:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch expenses summary report",
       });
     }
   },
