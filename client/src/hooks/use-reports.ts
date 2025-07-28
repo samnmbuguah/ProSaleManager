@@ -11,21 +11,31 @@ export function useInventoryReport() {
   });
 }
 
-export function useProductPerformanceReport() {
+export function useProductPerformanceReport(startDate?: Date, endDate?: Date, sortBy?: string) {
   return useQuery({
-    queryKey: ["product-performance-report"],
+    queryKey: [
+      "product-performance-report",
+      startDate?.toISOString(),
+      endDate?.toISOString(),
+      sortBy,
+    ],
     queryFn: async () => {
-      const res = await api.get("/reports/product-performance");
+      const params: Record<string, string> = {};
+      if (startDate) params.startDate = startDate.toISOString();
+      if (endDate) params.endDate = endDate.toISOString();
+      if (sortBy) params.sortBy = sortBy;
+      const res = await api.get("/reports/product-performance", { params });
       return res.data.data;
     },
   });
 }
 
-export function useSalesSummary() {
+export function useSalesSummary(period?: string) {
   return useQuery({
-    queryKey: ["sales-summary"],
+    queryKey: ["sales-summary", period],
     queryFn: async () => {
-      const res = await api.get("/reports/sales-summary");
+      const params = period ? { period } : {};
+      const res = await api.get("/reports/sales-summary", { params });
       return res.data.data;
     },
   });
