@@ -12,6 +12,10 @@ const seedAll = async () => {
   try {
     console.log("Starting database seeding...");
 
+    if (process.env.NODE_ENV !== "development") {
+      throw new Error("Seeding is only allowed in development environment.");
+    }
+
     // 1. Sync database
     await sequelize.sync({ force: true });
     console.log("Database synced successfully");
@@ -41,6 +45,10 @@ const undoAll = async () => {
   try {
     console.log("Starting database cleanup...");
 
+    if (process.env.NODE_ENV !== "development") {
+      throw new Error("Undo is only allowed in development environment.");
+    }
+
     // Drop all tables
     await sequelize.drop();
     console.log("All tables dropped successfully");
@@ -56,6 +64,10 @@ const undoAll = async () => {
 const resetAll = async () => {
   try {
     console.log("Starting database reset...");
+
+    if (process.env.NODE_ENV !== "development") {
+      throw new Error("Reset is only allowed in development environment.");
+    }
 
     // Drop all tables
     await sequelize.drop();
