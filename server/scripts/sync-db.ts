@@ -6,7 +6,11 @@ const syncDatabase = async () => {
   try {
     console.log("Starting database synchronization...");
 
-    await sequelize.sync({ alter: true });
+    if (process.env.NODE_ENV === "development") {
+      await sequelize.sync({ alter: true });
+    } else {
+      await sequelize.sync(); // Non-destructive in production
+    }
 
     console.log("Database synchronized successfully!");
     process.exit(0);
