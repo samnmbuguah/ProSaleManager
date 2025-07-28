@@ -2,8 +2,15 @@ import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProductPerformance from "../components/reports/ProductPerformance";
 import InventoryStatus from "../components/reports/InventoryStatus";
-import { useInventoryReport, useProductPerformanceReport, useSalesSummary, useExpensesSummary } from "@/hooks/use-reports";
+import {
+  useInventoryReport,
+  useProductPerformanceReport,
+  useSalesSummary,
+  useExpensesSummary,
+} from "@/hooks/use-reports";
 import { Product } from "@/types/product";
+import { SalesChart } from "../components/reports/SalesChart";
+import { api } from "@/lib/api";
 
 // ErrorBoundary component
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
@@ -33,37 +40,53 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 export default function ReportsPage() {
-  const {
-    data: inventoryData,
-    isLoading: inventoryLoading,
-    error: inventoryError,
-  } = useInventoryReport();
+  const { data: inventoryData, isLoading: inventoryLoading } = useInventoryReport();
+  const [performanceStartDate, setPerformanceStartDate] = useState<Date | undefined>(undefined);
+  const [performanceEndDate, setPerformanceEndDate] = useState<Date | undefined>(undefined);
+  const [performanceSortBy, setPerformanceSortBy] = useState<string | undefined>("revenue");
   const {
     data: performanceData,
     isLoading: performanceLoading,
-    error: performanceError,
-  } = useProductPerformanceReport();
-  const { data: salesSummary, isLoading: salesSummaryLoading } = useSalesSummary();
+  } = useProductPerformanceReport(
+    performanceStartDate,
+    performanceEndDate,
+    performanceSortBy
+  );
+  const [period, setPeriod] = useState<
+    "today" | "this_week" | "last_week" | "this_month" | "last_month"
+  >("this_week");
+  const { data: salesSummary, isLoading: salesSummaryLoading } = useSalesSummary(period);
   const { data: expensesSummary, isLoading: expensesSummaryLoading } = useExpensesSummary();
   const [tab, setTab] = useState("inventory");
+  const [searchResults, setSearchResults] = useState<Product[] | null>(null);
 
-  const handleDateRangeChange = () => {
-    // This will be implemented to refetch data with date filters
+  const handleDateRangeChange = (start: Date, end: Date) => {
+    setPerformanceStartDate(start);
+    setPerformanceEndDate(end);
   };
 
-  const handleSortChange = () => {
-    // This will be implemented to sort the data
+  const handleSortChange = (sortBy: string) => {
+    setPerformanceSortBy(sortBy);
   };
 
-  const handleSearch = async () => {
-    // This will be implemented to search products
+  const handleSearch = async (query: string) => {
+    if (!query || query.trim() === "") {
+      setSearchResults(null);
+      return;
+    }
+    try {
+      const res = await api.get("/products/search", { params: { q: query } });
+      setSearchResults(res.data.data || []);
+    } catch (error) {
+      setSearchResults([]);
+    }
   };
 
   // Top sellers (top 3 by revenue)
   const topSellers = (performanceData?.products || [])
     .slice()
-    .sort((a: any, b: any) => b.revenue - a.revenue)
-    .slice(0, 3);
+    .sort((a: { revenue: number }, b: { revenue: number }) => b.revenue - a.revenue)
+    .slice(0, 3) as Array<{ productId: number; productName: string; revenue: number }>;
 
   if (inventoryLoading || performanceLoading || salesSummaryLoading || expensesSummaryLoading) {
     return (
@@ -73,24 +96,39 @@ export default function ReportsPage() {
     );
   }
 
-  if (inventoryError || performanceError) {
-    return <div className="text-center text-red-500 py-12">Failed to load reports data.</div>;
-  }
-
   return (
     <ErrorBoundary>
       <div className="container mx-auto p-4 mt-16">
+        {/* Period Selector */}
+        <div className="flex gap-2 mb-4">
+          {(["today", "this_week", "last_week", "this_month", "last_month"] as const).map((p) => (
+            <button
+              key={p}
+              className={`px-3 py-1 rounded ${period === p ? "bg-primary text-white" : "bg-gray-200"}`}
+              onClick={() => setPeriod(p)}
+            >
+              {p.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+            </button>
+          ))}
+        </div>
+        {/* Sales Performance Chart */}
+        <div className="mb-8">
+          <SalesChart
+            data={salesSummary?.current?.salesByDay || {}}
+            compareData={salesSummary?.compare?.salesByDay || {}}
+          />
+        </div>
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {/* Total Sales by Payment Method */}
           <div className="bg-white rounded shadow p-4">
             <h3 className="font-semibold mb-2">Sales by Payment Method</h3>
-            {salesSummary?.paymentMethods ? (
+            {salesSummary?.current?.paymentMethods ? (
               <ul>
-                {Object.entries(salesSummary.paymentMethods).map(([method, count]: [string, unknown]) => (
+                {Object.entries(salesSummary.current.paymentMethods).map(([method, amount]: [string, unknown]) => (
                   <li key={method} className="flex justify-between">
                     <span className="capitalize">{method}</span>
-                    <span>{Number(count)}</span>
+                    <span>KSh {Number(amount).toLocaleString()}</span>
                   </li>
                 ))}
               </ul>
@@ -113,7 +151,7 @@ export default function ReportsPage() {
             <h3 className="font-semibold mb-2">Top Sellers</h3>
             {topSellers.length > 0 ? (
               <ol className="list-decimal list-inside">
-                {topSellers.map((p: any) => (
+                {topSellers.map((p) => (
                   <li key={p.productId} className="flex justify-between">
                     <span>{p.productName}</span>
                     <span>KSh {p.revenue.toLocaleString()}</span>
@@ -133,10 +171,17 @@ export default function ReportsPage() {
 
           <TabsContent value="inventory">
             <InventoryStatus
-              products={(inventoryData?.products || []).map((p: Product) => ({
-                ...p,
-                price: p.piece_selling_price,
-              }))}
+              products={
+                searchResults !== null
+                  ? searchResults.map((p: Product) => ({
+                      ...p,
+                      price: p.piece_selling_price,
+                    }))
+                  : (inventoryData?.products || []).map((p: Product) => ({
+                      ...p,
+                      price: p.piece_selling_price,
+                    }))
+              }
               onSearch={handleSearch}
             />
           </TabsContent>
