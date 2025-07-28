@@ -119,6 +119,7 @@ export default function ProductPerformance({
           <Button type="submit">Filter</Button>
         </form>
 
+        {/* Sort dropdown moved outside the form */}
         <div className="grid w-full max-w-sm items-center gap-1.5">
           <label htmlFor="sortBy">Sort By</label>
           <Select onValueChange={onSortChange}>
