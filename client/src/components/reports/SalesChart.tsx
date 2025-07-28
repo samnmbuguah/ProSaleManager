@@ -8,21 +8,11 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-interface SalesData {
-  date: string;
-  mpesa: number;
-  cash: number;
-  total: number;
-}
-
 interface SalesChartProps {
-  data: SalesData[];
-  period: "today" | "week" | "month" | "year";
-  onPeriodChange: (period: "today" | "week" | "month" | "year") => void;
+  data: Record<string, number>;
+  compareData?: Record<string, number>;
 }
 
 // Format number as KSh currency
@@ -33,65 +23,20 @@ function formatCurrency(amount: number): string {
   })}`;
 }
 
-export function SalesChart({ data = [], period, onPeriodChange }: SalesChartProps) {
-  const getDateFormat = (period: string) => {
-    switch (period) {
-      case "today":
-        return "HH:mm";
-      case "week":
-        return "EEE";
-      case "month":
-        return "MMM d";
-      case "year":
-        return "MMM";
-      default:
-        return "HH:mm";
-    }
-  };
-
-  // Add proper type checking and default value
-  const chartData = Array.isArray(data)
-    ? data.map((sale) => ({
-        ...sale,
-        date: format(new Date(sale.date), getDateFormat(period)),
-      }))
-    : [];
+export function SalesChart({ data = {}, compareData = {} }: SalesChartProps) {
+  // Prepare chart data: merge dates from both periods
+  const allDates = Array.from(new Set([...Object.keys(data), ...Object.keys(compareData)])).sort();
+  const chartData = allDates.map((date) => ({
+    date,
+    current: data[date] || 0,
+    compare: compareData[date] || 0,
+  }));
 
   if (chartData.length === 0) {
     return (
       <Card className="p-6 space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Sales Overview</h2>
-          <div className="flex gap-2">
-            <Button
-              variant={period === "today" ? "default" : "outline"}
-              onClick={() => onPeriodChange("today")}
-              size="sm"
-            >
-              Today
-            </Button>
-            <Button
-              variant={period === "week" ? "default" : "outline"}
-              onClick={() => onPeriodChange("week")}
-              size="sm"
-            >
-              This Week
-            </Button>
-            <Button
-              variant={period === "month" ? "default" : "outline"}
-              onClick={() => onPeriodChange("month")}
-              size="sm"
-            >
-              This Month
-            </Button>
-            <Button
-              variant={period === "year" ? "default" : "outline"}
-              onClick={() => onPeriodChange("year")}
-              size="sm"
-            >
-              This Year
-            </Button>
-          </div>
+          <h2 className="text-lg font-semibold">Sales Performance</h2>
         </div>
         <div className="h-[300px] flex items-center justify-center">
           <p className="text-muted-foreground">No sales data available for this period</p>
@@ -103,53 +48,21 @@ export function SalesChart({ data = [], period, onPeriodChange }: SalesChartProp
   return (
     <Card className="p-6 space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Sales Overview</h2>
-        <div className="flex gap-2">
-          <Button
-            variant={period === "today" ? "default" : "outline"}
-            onClick={() => onPeriodChange("today")}
-            size="sm"
-          >
-            Today
-          </Button>
-          <Button
-            variant={period === "week" ? "default" : "outline"}
-            onClick={() => onPeriodChange("week")}
-            size="sm"
-          >
-            This Week
-          </Button>
-          <Button
-            variant={period === "month" ? "default" : "outline"}
-            onClick={() => onPeriodChange("month")}
-            size="sm"
-          >
-            This Month
-          </Button>
-          <Button
-            variant={period === "year" ? "default" : "outline"}
-            onClick={() => onPeriodChange("year")}
-            size="sm"
-          >
-            This Year
-          </Button>
-        </div>
+        <h2 className="text-lg font-semibold">Sales Performance</h2>
       </div>
-
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
-            <YAxis tickFormatter={(value) => `KSh ${value.toLocaleString("en-KE")}`} />
+            <YAxis tickFormatter={(value) => value.toLocaleString("en-KE")} />
             <Tooltip
               formatter={(value: number) => formatCurrency(value)}
               labelFormatter={(label) => `Date: ${label}`}
             />
             <Legend />
-            <Line type="monotone" dataKey="mpesa" name="M-Pesa" stroke="#10b981" strokeWidth={2} />
-            <Line type="monotone" dataKey="cash" name="Cash" stroke="#6366f1" strokeWidth={2} />
-            <Line type="monotone" dataKey="total" name="Total" stroke="#000000" strokeWidth={2} />
+            <Line type="monotone" dataKey="current" name="Current Period" stroke="#6366f1" strokeWidth={2} />
+            <Line type="monotone" dataKey="compare" name="Previous Period" stroke="#10b981" strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>
       </div>
