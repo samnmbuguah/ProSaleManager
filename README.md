@@ -1,6 +1,74 @@
 # ProSaleManager
 
-A modern Point of Sale (POS) system built with React (Vite), Express, and PostgreSQL. ProSaleManager helps businesses manage inventory, track sales, and handle product pricing with multiple unit types.
+A comprehensive Point of Sale (POS) system with inventory management, customer tracking, and sales analytics.
+
+## Database Management
+
+### Migrations
+This project uses Sequelize migrations for safe database schema management. **Never use destructive syncs in production.**
+
+#### Available Migration Commands:
+```bash
+# Apply all pending migrations
+npm run migrate
+
+# Undo the last migration
+npm run migrate:undo
+
+# Undo all migrations
+npm run migrate:undo:all
+
+# Check migration status
+npm run migrate:status
+
+# Generate a new migration
+npm run migrate:generate migration-name
+```
+
+#### Migration Workflow:
+1. **Update your models** in `src/models/`
+2. **Generate a migration**: `npm run migrate:generate your-change-name`
+3. **Edit the migration file** in `src/database/migrations/` to match your model changes
+4. **Test the migration**: `npm run migrate`
+5. **Deploy safely**: The deployment script includes automatic database backups
+
+### Seeding
+This project uses Sequelize CLI for database seeding with safe, reversible operations.
+
+#### Available Seeding Commands:
+```bash
+# Seed all data (recommended)
+npm run seed:all
+
+# Undo all seeding
+npm run seed:undo:all
+
+# Undo last seed
+npm run seed:undo
+
+# Generate a new seed file
+npm run seed:generate seed-name
+
+# Legacy seeding (for development only)
+npm run seed:legacy
+```
+
+#### Seeding Workflow:
+1. **Use `npm run seed:all`** for initial data setup
+2. **Generate new seeds**: `npm run seed:generate your-seed-name`
+3. **Edit the seed file** in `src/database/seeders/`
+4. **Test the seed**: `npm run seed:all`
+5. **Undo if needed**: `npm run seed:undo:all`
+
+### Safe Production Deployment
+- **Database backups** are automatically created before each deployment
+- **Non-destructive syncs** in production (only migrations allowed)
+- **Rollback support** for all schema changes
+- **Backup retention**: Last 7 days of backups kept automatically
+
+### Development vs Production
+- **Development**: Can use `npm run seed:all` for testing
+- **Production**: Only migrations allowed, seeding blocked for safety
 
 ## Features
 
