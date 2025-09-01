@@ -53,14 +53,18 @@ fi
 mkdir -p production/server/public
 cp -r client/dist/* production/server/public/
 
-# 9. Upload to cPanel server
+# 9. Copy database file
+echo "Copying database file..."
+cp database.sqlite production/server/database.sqlite
+
+# 10. Upload to cPanel server
 echo "Uploading to server using rsync..."
 rsync -avz -e "ssh -p 21098" production/server/ elteijae@198.54.114.246:/home/elteijae/eltee_store/
 
-# 10. Clean up old backups (keep last 7 days)
+# 11. Clean up old backups (keep last 7 days)
 echo "Cleaning up old backups..."
 ssh -p 21098 elteijae@198.54.114.246 "find $BACKUP_DIR -name 'database-backup-*.sqlite' -mtime +7 -delete"
 
-# 11. Do NOT delete production folder after deployment
+# 12. Do NOT delete production folder after deployment
 
 echo "Deployment complete!" 
