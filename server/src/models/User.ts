@@ -7,7 +7,8 @@ export interface UserAttributes {
   email: string;
   password: string;
   name: string;
-  role?: "super_admin" | "admin" | "sales" | "manager";
+  phone?: string | null;
+  role?: "super_admin" | "admin" | "sales" | "manager" | "client";
   is_active?: boolean;
   last_login?: Date;
   store_id?: number | null;
@@ -18,7 +19,8 @@ class User extends Model<UserAttributes> implements UserAttributes {
   declare email: string;
   declare password: string;
   declare name: string;
-  declare role: "super_admin" | "admin" | "sales" | "manager";
+  declare phone?: string | null;
+  declare role: "super_admin" | "admin" | "sales" | "manager" | "client";
   declare is_active: boolean;
   declare last_login?: Date;
   declare store_id?: number | null;
@@ -52,6 +54,10 @@ User.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    phone: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     store_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -61,8 +67,8 @@ User.init(
       },
     },
     role: {
-      type: DataTypes.ENUM("super_admin", "admin", "sales", "manager"),
-      defaultValue: "sales",
+      type: DataTypes.ENUM("super_admin", "admin", "sales", "manager", "client"),
+      defaultValue: "client",
     },
     is_active: {
       type: DataTypes.BOOLEAN,
