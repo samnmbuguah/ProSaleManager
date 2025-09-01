@@ -5,8 +5,6 @@ import { requireAuth } from "../middleware/auth.middleware.js";
 import { requireStoreContext } from "../middleware/store-context.middleware.js";
 import { storeScope } from "../utils/helpers.js";
 
-console.log("CUSTOMERS ROUTE FILE LOADED");
-
 const router = express.Router();
 
 // Apply authentication middleware to all customer routes
