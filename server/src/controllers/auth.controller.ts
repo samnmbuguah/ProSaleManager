@@ -6,7 +6,7 @@ import { ApiError } from "../utils/api-error.js";
 import { catchAsync } from "../utils/catch-async.js";
 
 export const register = catchAsync(async (req: Request, res: Response) => {
-  const { name, email, password: plainPassword, role } = req.body;
+  const { name, email, password: plainPassword, role, phone } = req.body;
 
   // Check if user already exists
   const existingUser = await User.findOne({ where: { email } });
@@ -23,7 +23,8 @@ export const register = catchAsync(async (req: Request, res: Response) => {
     name,
     email,
     password: hashedPassword,
-    role: role || "sales",
+    role: role || "client",
+    phone: phone || null,
     is_active: true,
   });
 
