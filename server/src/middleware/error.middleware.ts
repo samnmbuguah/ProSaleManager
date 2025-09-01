@@ -1,18 +1,18 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 
 export interface ApiError extends Error {
   statusCode?: number;
   isOperational?: boolean;
 }
 
-export const errorHandler = (err: ApiError, req: Request, res: Response) => {
+export const errorHandler = (err: ApiError, req: Request, res: Response, next: NextFunction) => {
   console.error("Error:", err);
   if (err && err.stack) {
     console.error("Stack:", err.stack);
   }
   if (res.headersSent) {
     console.error("Error handler called after headers sent!");
-    return;
+    return next(err);
   }
 
   // Default error

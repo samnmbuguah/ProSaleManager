@@ -1,6 +1,6 @@
 import express from "express";
 import authRoutes from "./auth.routes.js";
-import productRoutes from "./product.routes.js";
+import productRoutes from "./products.js";
 import customerRoutes from "./customers.js";
 import supplierRoutes from "./suppliers.js";
 import salesRoutes from "./sales.js";

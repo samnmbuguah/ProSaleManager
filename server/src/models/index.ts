@@ -1,5 +1,6 @@
 import { sequelize } from "../config/database.js";
 import User from "./User.js";
+import UserPreference from "./UserPreference.js";
 import Product from "./Product.js";
 import Category from "./Category.js";
 import Customer from "./Customer.js";
@@ -21,6 +22,7 @@ setupAssociations();
 export {
   sequelize,
   User,
+  UserPreference,
   Product,
   Category,
   Customer,
