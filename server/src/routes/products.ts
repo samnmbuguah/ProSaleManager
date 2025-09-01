@@ -51,19 +51,12 @@ router.get("/", requireAuth, async (req, res) => {
     const pageNum = Number(page);
     const offset = (pageNum - 1) * limitNum;
 
-    console.log(`🔍 Pagination debug: page=${pageNum}, limit=${limitNum}, offset=${offset}`);
-    console.log(`🔍 Where clause:`, JSON.stringify(where, null, 2));
-
     const { count, rows: products } = await Product.findAndCountAll({
       where,
       order: [["name", "ASC"]],
       limit: limitNum,
       offset: offset
     });
-
-    console.log(`🔍 Query result: count=${count}, products returned=${products.length}`);
-    console.log(`🔍 Expected limit: ${limitNum}, actual returned: ${products.length}`);
-    console.log(`🔍 Raw query params: limit=${limitNum}, offset=${offset}`);
 
     const totalPages = Math.ceil(count / limitNum);
 
@@ -78,7 +71,6 @@ router.get("/", requireAuth, async (req, res) => {
       }
     };
 
-    console.log(`🔍 Sending response:`, JSON.stringify(responseData, null, 2));
     res.json(responseData);
   } catch (error) {
     console.error("Error fetching products:", error);
