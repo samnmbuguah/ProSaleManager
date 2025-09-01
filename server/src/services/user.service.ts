@@ -6,6 +6,7 @@ export const createUser = async (userData: {
   email: string;
   password: string;
   role?: string;
+  phone?: string;
 }) => {
   try {
     const hashedPassword = await bcryptjs.hash(userData.password, 10);
@@ -13,7 +14,7 @@ export const createUser = async (userData: {
     const user = await User.create({
       ...userData,
       password: hashedPassword,
-      role: (userData.role as "admin" | "sales" | "manager") || "sales",
+      role: (userData.role as "super_admin" | "admin" | "sales" | "manager" | "client") || "client",
     });
 
     return user;
