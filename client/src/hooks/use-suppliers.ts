@@ -7,16 +7,13 @@ export function useSuppliers() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: suppliersRaw, isLoading } = useQuery({
+  const { data: suppliers, isLoading } = useQuery({
     queryKey: ["suppliers"],
     queryFn: async () => {
       const response = await api.get(API_ENDPOINTS.suppliers.list);
-      return response.data;
+      return response.data.data;
     },
   });
-
-  // Always return an array for suppliers
-  const suppliers = Array.isArray(suppliersRaw) ? suppliersRaw : (suppliersRaw?.data ?? []);
 
   const createSupplierMutation = useMutation({
     mutationFn: async (data: Omit<Supplier, "id" | "created_at" | "updated_at">) => {
