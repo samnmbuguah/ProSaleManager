@@ -37,7 +37,7 @@ const ROLE_ROUTES: Record<AppRole, Route[]> = {
     { path: "/sales", label: "Sales", icon: Receipt },
     { path: "/reports", label: "Reports", icon: BarChart3 },
     { path: "/expenses", label: "Expenses", icon: Wallet },
-    { path: "/shop", label: "Shop", icon: ShoppingBag },
+    { path: "/", label: "Shop", icon: ShoppingBag },
   ],
   manager: [
     { path: "/pos", label: "POS", icon: Store },
@@ -46,13 +46,13 @@ const ROLE_ROUTES: Record<AppRole, Route[]> = {
     { path: "/sales", label: "Sales", icon: Receipt },
     { path: "/reports", label: "Reports", icon: BarChart3 },
     { path: "/expenses", label: "Expenses", icon: Wallet },
-    { path: "/shop", label: "Shop", icon: ShoppingBag },
+    { path: "/", label: "Shop", icon: ShoppingBag },
   ],
   user: [
     { path: "/pos", label: "POS", icon: Store },
     { path: "/inventory", label: "Inventory", icon: PackageSearch },
     { path: "/expenses", label: "Expenses", icon: Wallet },
-    { path: "/shop", label: "Shop", icon: ShoppingBag },
+    { path: "/", label: "Shop", icon: ShoppingBag },
   ],
   super_admin: [
     { path: "/pos", label: "POS", icon: Store },
@@ -61,14 +61,14 @@ const ROLE_ROUTES: Record<AppRole, Route[]> = {
     { path: "/sales", label: "Sales", icon: Receipt },
     { path: "/reports", label: "Reports", icon: BarChart3 },
     { path: "/expenses", label: "Expenses", icon: Wallet },
-    { path: "/shop", label: "Shop", icon: ShoppingBag },
+    { path: "/", label: "Shop", icon: ShoppingBag },
     { path: "/users", label: "Users", icon: Users },
   ],
   sales: [
     { path: "/pos", label: "POS", icon: Store },
     { path: "/inventory", label: "Inventory", icon: PackageSearch },
     { path: "/expenses", label: "Expenses", icon: Wallet },
-    { path: "/shop", label: "Shop", icon: ShoppingBag },
+    { path: "/", label: "Shop", icon: ShoppingBag },
   ],
 };
 
