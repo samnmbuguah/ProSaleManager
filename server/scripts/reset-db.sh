@@ -1,17 +1,30 @@
 #!/bin/bash
 
-# Set PostgreSQL password
-export PGPASSWORD='prosalepassword'
+echo "🔄 Resetting database with latest schema..."
+echo "⚠️  WARNING: This will delete all existing data!"
 
-echo "Dropping all tables..."
-psql -h localhost -U prosalemanager -d prosaledatabase << EOF
-DROP SCHEMA public CASCADE;
-CREATE SCHEMA public;
-GRANT ALL ON SCHEMA public TO prosalemanager;
-GRANT ALL ON SCHEMA public TO public;
-EOF
+# Run the sync script
+npx tsx scripts/sync-db.ts
 
-echo "Running migrations..."
-cd server && npm run migrate
+echo ""
+echo "🌱 Seeding initial data..."
 
-echo "Database reset complete!" 
+# Seed the database
+npx tsx src/seed/stores.ts
+npx tsx src/seed/categories.ts
+npx tsx src/seed/users.ts
+npx tsx src/seed/products.ts
+npx tsx src/seed/customers.ts
+npx tsx src/seed/suppliers.ts
+
+echo ""
+echo "✅ Database reset and seeded successfully!"
+echo "🔐 User roles: super_admin, admin, manager, sales, client"
+echo "👤 Default user role: client"
+echo "🏪 Shop page is now the default for client users"
+echo ""
+echo "📋 Test credentials:"
+echo "   Super Admin: superadmin@prosale.com / superadmin123"
+echo "   Eltee Admin: eltee.admin@prosale.com / elteeadmin123"
+echo "   Eltee Cashier: eltee.cashier@prosale.com / eltee123"
+echo "   Eltee Manager: eltee.manager@prosale.com / elteemgr123"
