@@ -6,11 +6,11 @@ import app from "../../server/src/app.js";
 describe("Auth API", () => {
   describe("POST /api/auth/register", () => {
     it("should return 400 if email already exists", async () => {
-      // admin@prosale.com is already seeded
+      // eltee.admin@prosale.com is already seeded
       const response = await request(app).post("/api/auth/register").send({
         name: "Admin User",
-        email: "admin@prosale.com",
-        password: "prosale123",
+        email: "eltee.admin@prosale.com",
+        password: "elteeadmin123",
         role: "admin",
       });
       console.log("Register existing user response:", response.body);
@@ -46,7 +46,7 @@ describe("Auth API", () => {
   describe("POST /api/auth/login", () => {
     it("should return 401 for invalid credentials", async () => {
       const response = await request(app).post("/api/auth/login").send({
-        email: "admin@prosale.com",
+        email: "eltee.admin@prosale.com",
         password: "wrongpassword",
       });
       console.log("Login invalid credentials response:", response.body);
@@ -62,11 +62,11 @@ describe("Auth API", () => {
 
     it("should return token for valid credentials", async () => {
       const response = await request(app).post("/api/auth/login").send({
-        email: "admin@prosale.com",
-        password: "prosale123",
+        email: "eltee.admin@prosale.com",
+        password: "elteeadmin123",
       });
       expect(response.status).toBe(200);
-      expect(response.body.data).toHaveProperty("email", "admin@prosale.com");
+      expect(response.body.data).toHaveProperty("email", "eltee.admin@prosale.com");
       // Optionally, check for set-cookie header
       expect(response.headers["set-cookie"]).toBeDefined();
     });
@@ -78,8 +78,8 @@ describe("Auth API", () => {
     beforeAll(async () => {
       // Login as seeded user and get cookie
       const loginResponse = await request(app).post("/api/auth/login").send({
-        email: "admin@prosale.com",
-        password: "prosale123",
+        email: "eltee.admin@prosale.com",
+        password: "elteeadmin123",
       });
       cookie = loginResponse.headers["set-cookie"][0].split(";")[0];
     });
@@ -94,7 +94,7 @@ describe("Auth API", () => {
         .get("/api/auth/me")
         .set("Cookie", [cookie]);
       expect(response.status).toBe(200);
-      expect(response.body.data).toHaveProperty("email", "admin@prosale.com");
+      expect(response.body.data).toHaveProperty("email", "eltee.admin@prosale.com");
     });
   });
 
@@ -104,8 +104,8 @@ describe("Auth API", () => {
     beforeAll(async () => {
       // Login as seeded user and get cookie
       const loginResponse = await request(app).post("/api/auth/login").send({
-        email: "admin@prosale.com",
-        password: "prosale123",
+        email: "eltee.admin@prosale.com",
+        password: "elteeadmin123",
       });
       cookie = loginResponse.headers["set-cookie"][0].split(";")[0];
     });
