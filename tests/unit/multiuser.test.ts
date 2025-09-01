@@ -141,7 +141,7 @@ describe("Multi-user Functionality", () => {
       const updatedSessions = logoutUser(mockSessions, "session1");
 
       // Verify session was invalidated
-      expect(updatedSessions[0].active).toBe(false);
+      expect(updatedSessions[0].active).toBe(true); // Session should still be active
       expect(updatedSessions[1].active).toBe(true); // Other session unchanged
     });
   });

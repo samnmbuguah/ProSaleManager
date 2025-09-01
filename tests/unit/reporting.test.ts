@@ -1,6 +1,3 @@
-import { Sale } from "../../../server/src/models/Sale";
-import { Product } from "../../../server/src/models/Product";
-
 describe("Report Generation", () => {
   // Mock sales data
   const mockSales = [
@@ -58,9 +55,9 @@ describe("Report Generation", () => {
   describe("Sales Reports", () => {
     it("should calculate total sales correctly", () => {
       // Function to calculate total sales
-      function calculateTotalSales(sales: Sale[]): number {
+      function calculateTotalSales(sales: any[]): number {
         return sales.reduce(
-          (total: number, sale: Sale) => total + Number(sale.total_amount),
+          (total: number, sale: any) => total + Number(sale.total_amount),
           0,
         );
       }
@@ -73,11 +70,11 @@ describe("Report Generation", () => {
     it("should filter sales by date range", () => {
       // Function to filter sales by date range
       function filterSalesByDateRange(
-        sales: Sale[],
+        sales: any[],
         startDate: Date,
         endDate: Date,
-      ): Sale[] {
-        return sales.filter((sale: Sale) => {
+      ): any[] {
+        return sales.filter((sale: any) => {
           const saleDate = new Date(sale.createdAt);
           return saleDate >= startDate && saleDate <= endDate;
         });
@@ -100,9 +97,9 @@ describe("Report Generation", () => {
     it("should group sales by payment method", () => {
       // Function to group sales by payment method
       function groupSalesByPaymentMethod(
-        sales: Sale[],
+        sales: any[],
       ): Record<string, number> {
-        return sales.reduce((result: Record<string, number>, sale: Sale) => {
+        return sales.reduce((result: Record<string, number>, sale: any) => {
           const method = sale.payment_method;
           result[method] = (result[method] || 0) + Number(sale.total_amount);
           return result;
@@ -120,8 +117,8 @@ describe("Report Generation", () => {
   describe("Inventory Reports", () => {
     it("should calculate total inventory value", () => {
       // Function to calculate total inventory value
-      function calculateInventoryValue(products: Product[]): number {
-        return products.reduce((total: number, product: Product) => {
+      function calculateInventoryValue(products: any[]): number {
+        return products.reduce((total: number, product: any) => {
           return total + product.quantity * product.selling_price;
         }, 0);
       }
@@ -138,11 +135,11 @@ describe("Report Generation", () => {
 
       // Function to identify low stock products
       function findLowStockProducts(
-        products: Product[],
+        products: any[],
         threshold: number,
-      ): Product[] {
+      ): any[] {
         return products.filter(
-          (product: Product) => product.quantity < threshold,
+          (product: any) => product.quantity < threshold,
         );
       }
 
@@ -159,10 +156,10 @@ describe("Report Generation", () => {
     it("should group products by category", () => {
       // Function to group products by category
       function groupProductsByCategory(
-        products: Product[],
-      ): Record<string, Product[]> {
+        products: any[],
+      ): Record<string, any[]> {
         return products.reduce(
-          (result: Record<string, Product[]>, product: Product) => {
+          (result: Record<string, any[]>, product: any) => {
             const category = product.category;
             if (!result[category]) {
               result[category] = [];
@@ -185,8 +182,8 @@ describe("Report Generation", () => {
   describe("Dynamic Report Generation", () => {
     it("should generate sales summary by day", () => {
       // Function to summarize sales by date
-      function summarizeSalesByDay(sales: Sale[]): Record<string, number> {
-        return sales.reduce((result: Record<string, number>, sale: Sale) => {
+      function summarizeSalesByDay(sales: any[]): Record<string, number> {
+        return sales.reduce((result: Record<string, number>, sale: any) => {
           const date = new Date(sale.createdAt).toISOString().split("T")[0];
           result[date] = (result[date] || 0) + Number(sale.total_amount);
           return result;
