@@ -90,4 +90,11 @@ export const API_ENDPOINTS = {
     addPoints: `${API_BASE_URL}/loyalty/add-points`,
     redeemPoints: `${API_BASE_URL}/loyalty/redeem-points`,
   },
+  favorites: {
+    list: `${API_BASE_URL}/favorites`,
+    check: (productId: number) => `${API_BASE_URL}/favorites/check/${productId}`,
+    add: (productId: number) => `${API_BASE_URL}/favorites/${productId}`,
+    remove: (productId: number) => `${API_BASE_URL}/favorites/${productId}`,
+    toggle: (productId: number) => `${API_BASE_URL}/favorites/${productId}/toggle`,
+  },
 } as const;

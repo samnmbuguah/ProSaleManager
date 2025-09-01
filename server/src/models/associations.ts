@@ -12,6 +12,7 @@ import PurchaseOrderItem from "./PurchaseOrderItem.js";
 import Category from "./Category.js";
 import Store from "./Store.js";
 import ReceiptSettings from "./ReceiptSettings.js";
+import Favorite from "./Favorite.js";
 
 export function setupAssociations() {
   // User - UserPreference association
@@ -113,4 +114,11 @@ export function setupAssociations() {
     as: "receiptSettings",
   });
   ReceiptSettings.belongsTo(Store, { foreignKey: "store_id", as: "store" });
+
+  // Favorite associations
+  User.hasMany(Favorite, { foreignKey: "user_id", as: "favorites" });
+  Favorite.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
+  Product.hasMany(Favorite, { foreignKey: "product_id", as: "favorites" });
+  Favorite.belongsTo(Product, { foreignKey: "product_id", as: "product" });
 }
