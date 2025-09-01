@@ -1,5 +1,6 @@
 import { Router } from "express";
 import Product from "../models/Product.js";
+import Category from "../models/Category.js";
 import { Op, Sequelize } from "sequelize";
 import upload, { getImageUrl } from "../middleware/upload.js";
 // Cloudinary import commented out for testing
@@ -16,7 +17,7 @@ async function uploadToCloudinary(file: Express.Multer.File): Promise<string> {
 }
 
 // Get all products with filtering and pagination
-router.get("/", requireAuth, async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const {
       page = 1,
@@ -43,7 +44,7 @@ router.get("/", requireAuth, async (req, res) => {
     }
 
     // Add store filtering for non-super-admin users
-    if (req.user && req.user.role !== 'super_admin') {
+    if (req.user && req.user.role !== 'super_admin' && req.user.store_id) {
       where.store_id = req.user.store_id;
     }
 
@@ -53,6 +54,13 @@ router.get("/", requireAuth, async (req, res) => {
 
     const { count, rows: products } = await Product.findAndCountAll({
       where,
+      include: [
+        {
+          model: Category,
+          as: "Category",
+          attributes: ["id", "name"]
+        }
+      ],
       order: [["name", "ASC"]],
       limit: limitNum,
       offset: offset
@@ -83,7 +91,7 @@ router.get("/", requireAuth, async (req, res) => {
 });
 
 // Search products endpoint - must come before /:id routes
-router.get("/search", requireAuth, async (req, res) => {
+router.get("/search", async (req, res) => {
   try {
     const { q: query, category_id } = req.query;
     console.log("Received search query:", query);
@@ -105,12 +113,19 @@ router.get("/search", requireAuth, async (req, res) => {
     }
 
     // Add store filtering for non-super-admin users
-    if (req.user && req.user.role !== 'super_admin') {
+    if (req.user && req.user.role !== 'super_admin' && req.user.store_id) {
       where.store_id = req.user.store_id;
     }
 
     const products = await Product.findAll({
       where,
+      include: [
+        {
+          model: Category,
+          as: "Category",
+          attributes: ["id", "name"]
+        }
+      ],
       order: [["name", "ASC"]],
     });
 
@@ -656,7 +671,7 @@ router.post("/:id/adjust-stock", requireAuth, requireRole(["admin", "manager"]),
 });
 
 // Get a single product - must come after all specific routes
-router.get("/:id", requireAuth, async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findByPk(req.params.id);
 
