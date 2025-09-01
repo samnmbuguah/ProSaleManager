@@ -20,6 +20,13 @@ export const getProducts = catchAsync(async (req: Request, res: Response) => {
   }
   const products = await Product.findAll({
     where,
+    include: [
+      {
+        model: Category,
+        as: "Category",
+        attributes: ["id", "name"]
+      }
+    ],
     order: [["name", "ASC"]],
   });
   res.json({
@@ -38,7 +45,16 @@ export const getProduct = catchAsync(async (req: Request, res: Response) => {
     }
     where.store_id = req.user.store_id;
   }
-  const product = await Product.findOne({ where });
+  const product = await Product.findOne({
+    where,
+    include: [
+      {
+        model: Category,
+        as: "Category",
+        attributes: ["id", "name"]
+      }
+    ]
+  });
 
   if (!product) {
     throw new ApiError(404, "Product not found");

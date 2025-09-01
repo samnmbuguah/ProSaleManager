@@ -1,12 +1,20 @@
 import { Request, Response } from "express";
 import { Product } from "../models/index.js";
+import Category from "../models/Category.js";
 import { Op } from "sequelize";
 import { Sequelize } from "sequelize";
 
 export const getProducts = async (req: Request, res: Response) => {
   try {
     const products = await Product.findAll({
-      include: ["price_units"],
+      include: [
+        "price_units",
+        {
+          model: Category,
+          as: "Category",
+          attributes: ["id", "name"]
+        }
+      ],
       order: [["name", "ASC"]],
       where: {
         quantity: {
@@ -29,7 +37,13 @@ export const searchProducts = async (req: Request, res: Response) => {
     }
     const search = String(q).toLowerCase();
     const products = await Product.findAll({
-      // include: ['price_units'], // Uncomment if you have price_units association
+      include: [
+        {
+          model: Category,
+          as: "Category",
+          attributes: ["id", "name"]
+        }
+      ],
       where: {
         [Op.or]: [
           Sequelize.where(Sequelize.fn("lower", Sequelize.col("name")), "LIKE", `%${search}%`),
