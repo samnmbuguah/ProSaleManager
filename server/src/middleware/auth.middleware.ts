@@ -104,7 +104,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
           store_id: user?.role === "super_admin" ? null : user?.store_id,
         };
       }
-      next();
+      await next();
     },
   );
 };
@@ -155,7 +155,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
           store_id: user?.role === "super_admin" ? null : user?.store_id,
         };
       }
-      next();
+      await next();
     },
   );
 };

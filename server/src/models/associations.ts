@@ -1,4 +1,5 @@
 import User from "./User.js";
+import UserPreference from "./UserPreference.js";
 import Customer from "./Customer.js";
 import Sale from "./Sale.js";
 import SaleItem from "./SaleItem.js";
@@ -13,6 +14,10 @@ import Store from "./Store.js";
 import ReceiptSettings from "./ReceiptSettings.js";
 
 export function setupAssociations() {
+  // User - UserPreference association
+  User.hasOne(UserPreference, { foreignKey: "user_id" });
+  UserPreference.belongsTo(User, { foreignKey: "user_id" });
+
   // User - Sale association
   User.hasMany(Sale, { foreignKey: "user_id" });
   Sale.belongsTo(User, { foreignKey: "user_id" });
