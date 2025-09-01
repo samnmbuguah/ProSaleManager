@@ -11,7 +11,7 @@ export function useCategories() {
     queryKey: ["categories"],
     queryFn: async () => {
       const response = await api.get(API_ENDPOINTS.categories.list);
-      return response.data;
+      return response.data.data;
     },
   });
 }
