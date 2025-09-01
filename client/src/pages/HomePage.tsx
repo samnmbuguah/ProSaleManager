@@ -142,7 +142,7 @@ export default function HomePage() {
             Swal.fire({
                 icon: "success",
                 title: "Order placed!",
-                text: "Your order has been submitted successfully.",
+                text: "Your order has been submitted successfully. Our staff will process it and contact you soon.",
             });
             clearCart();
         } catch (e: unknown) {

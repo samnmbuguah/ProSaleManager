@@ -66,6 +66,10 @@ export const createOrder = async (req: Request, res: Response) => {
       await t.rollback();
       return res.status(400).json({ message: "Store context missing" });
     }
+    // Set status based on user role - clients get "unprocessed" status
+    const orderStatus = req.user?.role === "client" ? "unprocessed" : "pending";
+    const paymentStatus = req.user?.role === "client" ? "pending" : "pending";
+    
     const sale = await Sale.create(
       {
         user_id: userId,
@@ -73,8 +77,8 @@ export const createOrder = async (req: Request, res: Response) => {
         total_amount: total,
         payment_method: "pending",
         amount_paid: 0,
-        status: "pending",
-        payment_status: "pending",
+        status: orderStatus,
+        payment_status: paymentStatus,
         delivery_fee: 0,
         store_id,
       },
