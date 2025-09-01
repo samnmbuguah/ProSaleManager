@@ -75,7 +75,9 @@ api.interceptors.request.use(async (config) => {
         }
       }
     }
-  } catch {}
+  } catch {
+    // Ignore errors in store_id handling
+  }
   return config;
 });
 
@@ -105,8 +107,8 @@ api.interceptors.response.use(
       }
     }
 
-    // Handle 401 errors (unauthorized)
-    if (error.response?.status === 401) {
+    // Handle 401 errors (unauthorized) - don't redirect if on root route
+    if (error.response?.status === 401 && window.location.pathname !== "/") {
       toast({
         title: "Session expired",
         description: "Please log in again.",
