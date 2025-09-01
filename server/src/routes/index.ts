@@ -13,6 +13,7 @@ import productSupplierRoutes from "./product-suppliers.js";
 import seedRoutes from "./seed.js";
 import orderRoutes from "./order.routes.js";
 import storesRoutes from "./stores.js";
+import favoritesRoutes from "./favorites.js";
 import { ApiError } from "../utils/api-error.js";
 
 const router = express.Router();
@@ -35,5 +36,6 @@ router.use("/product-suppliers", productSupplierRoutes);
 router.use("/seed", seedRoutes);
 router.use("/orders", orderRoutes);
 router.use("/stores", storesRoutes);
+router.use("/favorites", favoritesRoutes);
 
 export default router;

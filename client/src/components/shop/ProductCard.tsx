@@ -6,6 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Heart, ShoppingCart, Plus, Minus, Package } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { useFavoriteStatus, useToggleFavorite } from "@/hooks/use-favorites";
+import { useAuth } from "@/hooks/use-auth";
 import type { Product } from "@/types/product";
 
 interface ProductCardProps {
@@ -20,6 +23,18 @@ export default function ProductCard({ product, onImageError, imageError, viewMod
     const [selectedUnit, setSelectedUnit] = useState<"piece" | "pack" | "dozen">("piece");
     const [quantity, setQuantity] = useState(1);
     const [isAddingToCart, setIsAddingToCart] = useState(false);
+
+    const { isAuthenticated } = useAuth();
+    const { data: favoriteStatus } = useFavoriteStatus(product.id);
+    const toggleFavorite = useToggleFavorite();
+
+    const handleToggleFavorite = () => {
+        if (!isAuthenticated) {
+            // You could show a login prompt here
+            return;
+        }
+        toggleFavorite.mutate(product.id);
+    };
 
     // Get price based on selected unit
     const getPrice = (unit: "piece" | "pack" | "dozen") => {
@@ -99,12 +114,31 @@ export default function ProductCard({ product, onImageError, imageError, viewMod
                 {/* Product Image */}
                 <div className="w-full sm:w-48 h-48 sm:h-32 flex-shrink-0">
                     {!imageError ? (
-                        <img
-                            src={product.images?.[0] || product.image_url || "/placeholder-product.jpg"}
-                            alt={product.name}
-                            className="w-full h-full object-cover rounded-lg"
-                            onError={() => onImageError(product.id)}
-                        />
+                        product.images && product.images.length > 1 ? (
+                            <Carousel className="w-full h-full">
+                                <CarouselContent>
+                                    {product.images.map((img, idx) => (
+                                        <CarouselItem key={idx}>
+                                            <img
+                                                src={img}
+                                                alt={product.name}
+                                                className="w-full h-full object-cover rounded-lg"
+                                                onError={() => onImageError(product.id)}
+                                            />
+                                        </CarouselItem>
+                                    ))}
+                                </CarouselContent>
+                                <CarouselPrevious className="left-1 top-1/2 -translate-y-1/2 h-6 w-6" />
+                                <CarouselNext className="right-1 top-1/2 -translate-y-1/2 h-6 w-6" />
+                            </Carousel>
+                        ) : (
+                            <img
+                                src={product.images?.[0] || product.image_url || "/placeholder-product.jpg"}
+                                alt={product.name}
+                                className="w-full h-full object-cover rounded-lg"
+                                onError={() => onImageError(product.id)}
+                            />
+                        )
                     ) : (
                         <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
                             <Package className="w-8 h-8 text-gray-400" />
@@ -181,16 +215,34 @@ export default function ProductCard({ product, onImageError, imageError, viewMod
                                 </Button>
                             </div>
 
-                            {/* Add to Cart Button */}
-                            <Button
-                                id={`add-to-cart-${product.id}`}
-                                onClick={handleAddToCart}
-                                disabled={isAddingToCart}
-                                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-                            >
-                                <ShoppingCart className="w-4 h-4" />
-                                Add to Cart
-                            </Button>
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-2">
+                                {/* Wishlist Button */}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className={`flex items-center gap-2 ${favoriteStatus?.isFavorite ? 'text-red-500 border-red-500' : ''
+                                        }`}
+                                    onClick={handleToggleFavorite}
+                                    disabled={toggleFavorite.isPending}
+                                >
+                                    <Heart
+                                        className={`w-4 h-4 ${favoriteStatus?.isFavorite ? 'fill-current' : ''
+                                            }`}
+                                    />
+                                </Button>
+
+                                {/* Add to Cart Button */}
+                                <Button
+                                    id={`add-to-cart-${product.id}`}
+                                    onClick={handleAddToCart}
+                                    disabled={isAddingToCart}
+                                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                                >
+                                    <ShoppingCart className="w-4 h-4" />
+                                    Add to Cart
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -205,12 +257,31 @@ export default function ProductCard({ product, onImageError, imageError, viewMod
                 {/* Product Image */}
                 <div className="aspect-square overflow-hidden">
                     {!imageError ? (
-                        <img
-                            src={product.images?.[0] || product.image_url || "/placeholder-product.jpg"}
-                            alt={product.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            onError={() => onImageError(product.id)}
-                        />
+                        product.images && product.images.length > 1 ? (
+                            <Carousel className="w-full h-full">
+                                <CarouselContent>
+                                    {product.images.map((img, idx) => (
+                                        <CarouselItem key={idx}>
+                                            <img
+                                                src={img}
+                                                alt={product.name}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                onError={() => onImageError(product.id)}
+                                            />
+                                        </CarouselItem>
+                                    ))}
+                                </CarouselContent>
+                                <CarouselPrevious className="left-2 top-1/2 -translate-y-1/2 h-8 w-8" />
+                                <CarouselNext className="right-2 top-1/2 -translate-y-1/2 h-8 w-8" />
+                            </Carousel>
+                        ) : (
+                            <img
+                                src={product.images?.[0] || product.image_url || "/placeholder-product.jpg"}
+                                alt={product.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                onError={() => onImageError(product.id)}
+                            />
+                        )
                     ) : (
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                             <Package className="w-12 h-12 text-gray-400" />
@@ -222,9 +293,15 @@ export default function ProductCard({ product, onImageError, imageError, viewMod
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="absolute top-2 right-2 bg-white/80 hover:bg-white"
+                    className={`absolute top-2 right-2 bg-white/80 hover:bg-white ${favoriteStatus?.isFavorite ? 'text-red-500' : 'text-gray-600'
+                        }`}
+                    onClick={handleToggleFavorite}
+                    disabled={toggleFavorite.isPending}
                 >
-                    <Heart className="w-4 h-4" />
+                    <Heart
+                        className={`w-4 h-4 ${favoriteStatus?.isFavorite ? 'fill-current' : ''
+                            }`}
+                    />
                 </Button>
 
                 {/* Stock Badge */}
