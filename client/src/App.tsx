@@ -14,12 +14,12 @@ import CustomersPage from "@/pages/CustomersPage";
 import POSPage from "@/pages/PosPage";
 import ProfilePage from "@/pages/ProfilePage";
 import ReportsPage from "@/pages/ReportsPage";
-import ShopPage from "@/pages/ShopPage";
+import HomePage from "@/pages/HomePage";
 import UserManagementPage from "@/pages/UserManagementPage";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
 
-type AppRole = "admin" | "manager" | "user" | "super_admin" | "sales";
+type AppRole = "admin" | "manager" | "user" | "super_admin" | "sales" | "client";
 
 type ProtectedRouteProps = {
   component: React.ComponentType;
@@ -28,7 +28,7 @@ type ProtectedRouteProps = {
 
 function ProtectedRoute({ component: Component, roles }: ProtectedRouteProps) {
   return (
-    <RoleBasedRoute allowedRoles={roles || ["admin", "user"]}>
+    <RoleBasedRoute allowedRoles={roles || ["admin", "user", "client"]}>
       <div className="min-h-screen bg-background flex flex-col">
         <MainNav />
         <main className="flex-1">
@@ -48,9 +48,10 @@ function RootRedirect() {
     } else if (user?.role === "admin" || user?.role === "sales") {
       setLocation("/pos");
     } else if (user?.role === "manager") {
-      setLocation("/shop");
+      setLocation("/pos");
     } else {
-      setLocation("/auth");
+      // For client users or unauthenticated users, stay on home page (shop)
+      // No redirect needed as HomePage handles both cases
     }
   }, [user, setLocation]);
   return null;
@@ -68,9 +69,7 @@ function App() {
       <Switch>
         <Route path="/auth" component={AuthPage} />
 
-        <Route path="/shop">
-          <ProtectedRoute component={ShopPage} roles={["admin", "user", "sales", "super_admin", "manager"]} />
-        </Route>
+        <Route path="/" component={HomePage} />
 
         <Route path="/pos">
           <ProtectedRoute component={POSPage} roles={["admin", "sales", "super_admin", "manager"]} />
@@ -97,14 +96,14 @@ function App() {
         </Route>
 
         <Route path="/profile">
-          <ProtectedRoute component={ProfilePage} roles={["admin", "sales", "user", "super_admin", "manager"]} />
+          <ProtectedRoute component={ProfilePage} roles={["admin", "sales", "user", "super_admin", "manager", "client"]} />
         </Route>
 
         <Route path="/users">
           <ProtectedRoute component={UserManagementPage} roles={["super_admin"]} />
         </Route>
 
-        <Route path="/" component={RootRedirect} />
+        <Route path="/admin" component={RootRedirect} />
       </Switch>
       <Toaster />
     </>
