@@ -2,7 +2,8 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: "admin" | "manager" | "user" | "sales";
+  role: "super_admin" | "admin" | "manager" | "sales";
+  store_id?: number | null;
   created_at?: string;
   updated_at?: string;
 }

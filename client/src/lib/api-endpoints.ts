@@ -14,6 +14,10 @@ export const API_ENDPOINTS = {
     create: `${API_BASE_URL}/users`,
     update: (id: number) => `${API_BASE_URL}/users/${id}`,
     delete: (id: number) => `${API_BASE_URL}/users/${id}`,
+    profile: `${API_BASE_URL}/users/profile`,
+    changePassword: `${API_BASE_URL}/users/change-password`,
+    preferences: `${API_BASE_URL}/users/preferences`,
+    roles: `${API_BASE_URL}/users/roles`,
   },
   products: {
     list: `${API_BASE_URL}/products`,

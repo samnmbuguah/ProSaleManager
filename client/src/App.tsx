@@ -15,10 +15,11 @@ import POSPage from "@/pages/PosPage";
 import ProfilePage from "@/pages/ProfilePage";
 import ReportsPage from "@/pages/ReportsPage";
 import ShopPage from "@/pages/ShopPage";
+import UserManagementPage from "@/pages/UserManagementPage";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
 
-type AppRole = "admin" | "user" | "sales";
+type AppRole = "admin" | "manager" | "user" | "super_admin" | "sales";
 
 type ProtectedRouteProps = {
   component: React.ComponentType;
@@ -42,9 +43,11 @@ function RootRedirect() {
   const { user } = useAuthContext();
   const [, setLocation] = useLocation();
   useEffect(() => {
-    if (user?.role === "admin" || user?.role === "sales") {
+    if (user?.role === "super_admin") {
+      setLocation("/users");
+    } else if (user?.role === "admin" || user?.role === "sales") {
       setLocation("/pos");
-    } else if (user?.role === "user") {
+    } else if (user?.role === "manager") {
       setLocation("/shop");
     } else {
       setLocation("/auth");
@@ -66,35 +69,39 @@ function App() {
         <Route path="/auth" component={AuthPage} />
 
         <Route path="/shop">
-          <ProtectedRoute component={ShopPage} roles={["admin", "user", "sales"]} />
+          <ProtectedRoute component={ShopPage} roles={["admin", "user", "sales", "super_admin", "manager"]} />
         </Route>
 
         <Route path="/pos">
-          <ProtectedRoute component={POSPage} roles={["admin", "sales"]} />
+          <ProtectedRoute component={POSPage} roles={["admin", "sales", "super_admin", "manager"]} />
         </Route>
 
         <Route path="/inventory">
-          <ProtectedRoute component={InventoryPage} roles={["admin", "sales"]} />
+          <ProtectedRoute component={InventoryPage} roles={["admin", "sales", "super_admin", "manager"]} />
         </Route>
 
         <Route path="/expenses">
-          <ProtectedRoute component={ExpensesPage} roles={["admin", "sales"]} />
+          <ProtectedRoute component={ExpensesPage} roles={["admin", "sales", "super_admin", "manager"]} />
         </Route>
 
         <Route path="/sales">
-          <ProtectedRoute component={SalesPage} roles={["admin", "sales"]} />
+          <ProtectedRoute component={SalesPage} roles={["admin", "sales", "super_admin", "manager"]} />
         </Route>
 
         <Route path="/customers">
-          <ProtectedRoute component={CustomersPage} roles={["admin"]} />
+          <ProtectedRoute component={CustomersPage} roles={["admin", "super_admin", "manager"]} />
         </Route>
 
         <Route path="/reports">
-          <ProtectedRoute component={ReportsPage} roles={["admin"]} />
+          <ProtectedRoute component={ReportsPage} roles={["admin", "super_admin", "manager"]} />
         </Route>
 
         <Route path="/profile">
-          <ProtectedRoute component={ProfilePage} roles={["admin", "sales", "user"]} />
+          <ProtectedRoute component={ProfilePage} roles={["admin", "sales", "user", "super_admin", "manager"]} />
+        </Route>
+
+        <Route path="/users">
+          <ProtectedRoute component={UserManagementPage} roles={["super_admin"]} />
         </Route>
 
         <Route path="/" component={RootRedirect} />
