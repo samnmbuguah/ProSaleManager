@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ const loginSchema = z.object({
 const registerSchema = z.object({
   email: z.string().email("Invalid email address"),
   name: z.string().min(2, "Name must be at least 2 characters"),
+  phone: z.string().min(10, "Phone number must be at least 10 digits"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -29,16 +31,22 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [shouldNavigate, setShouldNavigate] = useState(false);
   const { login, register, isLoading } = useAuth();
+  const { user } = useAuthContext();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
   // Handle navigation after successful auth
   useEffect(() => {
-    if (shouldNavigate) {
-      setLocation("/pos");
+    if (shouldNavigate && user) {
+      // Only clients go to root route (/), everyone else goes to POS (/pos)
+      if (user.role === "client") {
+        setLocation("/");
+      } else {
+        setLocation("/pos");
+      }
       setShouldNavigate(false);
     }
-  }, [shouldNavigate, setLocation]);
+  }, [shouldNavigate, user, setLocation]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -53,6 +61,7 @@ export default function AuthPage() {
     defaultValues: {
       email: "",
       name: "",
+      phone: "",
       password: "",
     },
   });
@@ -69,6 +78,7 @@ export default function AuthPage() {
           email: data.email,
           password: data.password,
           name: (data as RegisterFormData).name,
+          phone: (data as RegisterFormData).phone,
         });
         setShouldNavigate(true);
       }
@@ -149,12 +159,12 @@ export default function AuthPage() {
               {(isLogin
                 ? loginForm.formState.errors.email
                 : registerForm.formState.errors.email) && (
-                <p className="text-sm font-medium text-destructive">
-                  {isLogin
-                    ? loginForm.formState.errors.email?.message
-                    : registerForm.formState.errors.email?.message}
-                </p>
-              )}
+                  <p className="text-sm font-medium text-destructive">
+                    {isLogin
+                      ? loginForm.formState.errors.email?.message
+                      : registerForm.formState.errors.email?.message}
+                  </p>
+                )}
             </div>
 
             {!isLogin && (
@@ -171,6 +181,26 @@ export default function AuthPage() {
                 {registerForm.formState.errors.name && (
                   <p className="text-sm font-medium text-destructive">
                     {registerForm.formState.errors.name.message}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {!isLogin && (
+              <div className="space-y-2">
+                <label htmlFor="phone" className="text-sm font-medium">
+                  Phone Number
+                </label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  autoComplete="tel"
+                  disabled={isLoading}
+                  {...registerForm.register("phone")}
+                />
+                {registerForm.formState.errors.phone && (
+                  <p className="text-sm font-medium text-destructive">
+                    {registerForm.formState.errors.phone.message}
                   </p>
                 )}
               </div>
@@ -203,12 +233,12 @@ export default function AuthPage() {
               {(isLogin
                 ? loginForm.formState.errors.password
                 : registerForm.formState.errors.password) && (
-                <p className="text-sm font-medium text-destructive">
-                  {isLogin
-                    ? loginForm.formState.errors.password?.message
-                    : registerForm.formState.errors.password?.message}
-                </p>
-              )}
+                  <p className="text-sm font-medium text-destructive">
+                    {isLogin
+                      ? loginForm.formState.errors.password?.message
+                      : registerForm.formState.errors.password?.message}
+                  </p>
+                )}
             </div>
 
             {(isLogin ? loginForm.formState.errors.root : registerForm.formState.errors.root) && (
