@@ -1,32 +1,34 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
+import { useStoreContext } from "@/contexts/StoreContext";
+import { useToast } from "@/hooks/use-toast";
 import {
   Store,
   PackageSearch,
   Users,
+  Receipt,
   BarChart3,
+  Wallet,
+  ShoppingBag,
+  Menu,
   LogOut,
   User,
-  Receipt,
-  Menu,
-  Wallet,
   ShoppingCart,
-  ShoppingBag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { useCart } from "@/contexts/CartContext";
 import CartModal from "@/components/pos/CartModal";
-import { useStoreContext } from "@/contexts/StoreContext";
 
 type AppRole = "admin" | "manager" | "user" | "super_admin" | "sales";
+
 interface Route {
   path: string;
   label: string;
   icon: React.ElementType;
 }
+
 const ROLE_ROUTES: Record<AppRole, Route[]> = {
   admin: [
     { path: "/pos", label: "POS", icon: Store },
@@ -60,6 +62,7 @@ const ROLE_ROUTES: Record<AppRole, Route[]> = {
     { path: "/reports", label: "Reports", icon: BarChart3 },
     { path: "/expenses", label: "Expenses", icon: Wallet },
     { path: "/shop", label: "Shop", icon: ShoppingBag },
+    { path: "/users", label: "Users", icon: Users },
   ],
   sales: [
     { path: "/pos", label: "POS", icon: Store },

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
 import { useLocation } from "wouter";
 import { Loader2, User, Save, Eye, EyeOff } from "lucide-react";
 import {
@@ -27,8 +28,18 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+interface UserPreference {
+  id: number;
+  user_id: number;
+  dark_mode: boolean;
+  notifications: boolean;
+  language: string;
+  theme: string;
+  timezone: string;
+}
+
 export default function ProfilePage() {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, setUser } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -44,10 +55,14 @@ export default function ProfilePage() {
     confirmPassword: "",
   });
 
-  const [preferences, setPreferences] = useState({
-    darkMode: false,
+  const [preferences, setPreferences] = useState<UserPreference>({
+    id: 0,
+    user_id: 0,
+    dark_mode: false,
     notifications: true,
     language: "english",
+    theme: "default",
+    timezone: "UTC",
   });
 
   const [showPassword, setShowPassword] = useState({
@@ -59,6 +74,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState({
     profile: false,
     password: false,
+    preferences: false,
   });
 
   const [errors, setErrors] = useState({
@@ -68,9 +84,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!isAuthenticated && !authLoading) {
-      // checkSession(); // Not needed, handled by AuthProvider
+      setLocation("/auth");
     }
-  }, [isAuthenticated, authLoading]);
+  }, [isAuthenticated, authLoading, setLocation]);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -90,8 +106,18 @@ export default function ProfilePage() {
         name: user.name || "",
         email: user.email || "",
       });
+      fetchUserPreferences();
     }
   }, [user]);
+
+  const fetchUserPreferences = async () => {
+    try {
+      const response = await api.get(API_ENDPOINTS.users.preferences);
+      setPreferences(response.data.data);
+    } catch (error) {
+      console.error("Failed to fetch user preferences:", error);
+    }
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,26 +134,29 @@ export default function ProfilePage() {
         throw new Error("Email is required");
       }
 
-      // In a real app, this would be an API call to update the user profile
-      await api.put("/api/users/profile", profileData);
+      // Update profile via API
+      const response = await api.put(API_ENDPOINTS.users.profile, profileData);
 
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Update local user state
+      if (setUser && response.data.data) {
+        setUser(response.data.data);
+      }
 
       toast({
         title: "Success",
         description: "Profile updated successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || "Failed to update profile";
       setErrors((prev) => ({
         ...prev,
-        profile: error instanceof Error ? error.message : "Failed to update profile",
+        profile: errorMessage,
       }));
 
       toast({
         variant: "destructive",
         title: "Update Failed",
-        description: error instanceof Error ? error.message : "Failed to update profile",
+        description: errorMessage,
       });
     } finally {
       setIsLoading((prev) => ({ ...prev, profile: false }));
@@ -157,11 +186,11 @@ export default function ProfilePage() {
         throw new Error("Passwords do not match");
       }
 
-      // In a real app, this would be an API call to change the password
-      await api.post("/api/users/change-password", passwordData);
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Change password via API
+      await api.post(API_ENDPOINTS.users.changePassword, {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
 
       // Clear password fields after successful update
       setPasswordData({
@@ -174,16 +203,17 @@ export default function ProfilePage() {
         title: "Success",
         description: "Password changed successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || "Failed to change password";
       setErrors((prev) => ({
         ...prev,
-        password: error instanceof Error ? error.message : "Failed to change password",
+        password: errorMessage,
       }));
 
       toast({
         variant: "destructive",
         title: "Password Change Failed",
-        description: error instanceof Error ? error.message : "Failed to change password",
+        description: errorMessage,
       });
     } finally {
       setIsLoading((prev) => ({ ...prev, password: false }));
@@ -197,16 +227,32 @@ export default function ProfilePage() {
     }));
   };
 
-  const handlePreferenceChange = (key: string, value: string | boolean) => {
-    setPreferences((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+  const handlePreferenceChange = async (key: keyof UserPreference, value: string | boolean) => {
+    try {
+      setIsLoading((prev) => ({ ...prev, preferences: true }));
 
-    toast({
-      title: "Preference Updated",
-      description: `${key.charAt(0).toUpperCase() + key.slice(1)} setting updated`,
-    });
+      const updatedPreferences = {
+        ...preferences,
+        [key]: value,
+      };
+
+      // Update preferences via API
+      const response = await api.put(API_ENDPOINTS.users.preferences, updatedPreferences);
+      setPreferences(response.data.data);
+
+      toast({
+        title: "Preference Updated",
+        description: `${key.charAt(0).toUpperCase() + key.slice(1)} setting updated`,
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: error.response?.data?.message || "Failed to update preference",
+      });
+    } finally {
+      setIsLoading((prev) => ({ ...prev, preferences: false }));
+    }
   };
 
   if (authLoading || !isAuthenticated || !user) {
@@ -282,6 +328,13 @@ export default function ProfilePage() {
                       value={
                         user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ""
                       }
+                      disabled
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Store</Label>
+                    <Input
+                      value={user.store_id ? "Store ID: " + user.store_id : "Global Access"}
                       disabled
                     />
                   </div>
@@ -470,8 +523,9 @@ export default function ProfilePage() {
                   <p className="text-sm text-muted-foreground">Toggle dark mode</p>
                 </div>
                 <Switch
-                  checked={preferences.darkMode}
-                  onCheckedChange={(checked) => handlePreferenceChange("darkMode", checked)}
+                  checked={preferences.dark_mode}
+                  onCheckedChange={(checked) => handlePreferenceChange("dark_mode", checked)}
+                  disabled={isLoading.preferences}
                 />
               </div>
 
@@ -483,6 +537,7 @@ export default function ProfilePage() {
                 <Switch
                   checked={preferences.notifications}
                   onCheckedChange={(checked) => handlePreferenceChange("notifications", checked)}
+                  disabled={isLoading.preferences}
                 />
               </div>
 
@@ -492,6 +547,7 @@ export default function ProfilePage() {
                 <Select
                   value={preferences.language}
                   onValueChange={(value) => handlePreferenceChange("language", value)}
+                  disabled={isLoading.preferences}
                 >
                   <SelectTrigger className="w-full md:w-[240px]">
                     <SelectValue placeholder="Select language" />
@@ -500,6 +556,50 @@ export default function ProfilePage() {
                     <SelectItem value="english">English</SelectItem>
                     <SelectItem value="swahili">Swahili</SelectItem>
                     <SelectItem value="french">French</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-medium">Theme</h4>
+                <p className="text-sm text-muted-foreground">Select your preferred theme</p>
+                <Select
+                  value={preferences.theme}
+                  onValueChange={(value) => handlePreferenceChange("theme", value)}
+                  disabled={isLoading.preferences}
+                >
+                  <SelectTrigger className="w-full md:w-[240px]">
+                    <SelectValue placeholder="Select theme" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">Default</SelectItem>
+                    <SelectItem value="modern">Modern</SelectItem>
+                    <SelectItem value="classic">Classic</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-medium">Timezone</h4>
+                <p className="text-sm text-muted-foreground">Select your timezone</p>
+                <Select
+                  value={preferences.timezone}
+                  onValueChange={(value) => handlePreferenceChange("timezone", value)}
+                  disabled={isLoading.preferences}
+                >
+                  <SelectTrigger className="w-full md:w-[240px]">
+                    <SelectValue placeholder="Select timezone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="UTC">UTC</SelectItem>
+                    <SelectItem value="America/New_York">Eastern Time</SelectItem>
+                    <SelectItem value="America/Chicago">Central Time</SelectItem>
+                    <SelectItem value="America/Denver">Mountain Time</SelectItem>
+                    <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
+                    <SelectItem value="Europe/London">London</SelectItem>
+                    <SelectItem value="Europe/Paris">Paris</SelectItem>
+                    <SelectItem value="Asia/Tokyo">Tokyo</SelectItem>
+                    <SelectItem value="Africa/Nairobi">Nairobi</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
