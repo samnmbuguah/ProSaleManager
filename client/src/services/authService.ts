@@ -9,6 +9,7 @@ interface LoginCredentials {
 
 interface RegisterData extends LoginCredentials {
   name: string;
+  phone?: string;
 }
 
 interface AuthResponse {
@@ -32,6 +33,7 @@ export const authService = {
       email: data.email.trim(),
       password: data.password,
       name: data.name.trim(),
+      phone: data.phone?.trim() || null,
     };
     const response = await api.post<{ data: User }>(API_ENDPOINTS.auth.register, formattedData);
     return response.data;
