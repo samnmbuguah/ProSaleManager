@@ -75,3 +75,7 @@ server/src/db/seed.sqlite
 /production
 server/.env.test
 .env.test
+
+# Ignore local seed user files
+server/src/seed/users.ts
+server/src/database/seeders/20250728122816-initial-data.js
