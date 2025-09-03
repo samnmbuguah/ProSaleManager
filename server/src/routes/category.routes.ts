@@ -11,8 +11,8 @@ import {
 const router = Router();
 
 // All authenticated users can view categories
-router.get("/", requireAuth, getCategories);
-router.get("/:id", requireAuth, getCategory);
+router.get("/", getCategories);
+router.get("/:id", getCategory);
 
 // Only admin and manager can modify categories
 router.use(requireAuth);
