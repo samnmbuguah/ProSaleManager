@@ -181,7 +181,10 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       Object.entries(payload).forEach(([key, value]) => {
         formDataToSend.append(key, String(value));
       });
-      imageFiles.forEach((file) => formDataToSend.append("images", file));
+      // Only send the first image since server expects single image upload
+      if (imageFiles.length > 0) {
+        formDataToSend.append("image", imageFiles[0]);
+      }
       try {
         await onSubmit(e, imageFiles[0]); // Pass first file for legacy support
       } catch (err: unknown) {
