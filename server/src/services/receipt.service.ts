@@ -1,5 +1,5 @@
 import twilio from "twilio";
-import { Sale, Customer, Product, SaleItem, ReceiptSettings, Store } from "../models/index.js";
+import { Sale, User, Product, SaleItem, ReceiptSettings, Store } from "../models/index.js";
 
 // Initialize Twilio client
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
@@ -14,7 +14,7 @@ export class ReceiptService {
 
       const sale = await Sale.findByPk(saleId, {
         include: [
-          { model: Customer },
+          { model: User, as: "Customer" },
           {
             model: SaleItem,
             as: "items",
@@ -62,7 +62,7 @@ export class ReceiptService {
       const thankYouMessage = settings?.thank_you_message || "Thank you for your business!";
 
       const saleWithAssociations = sale as Sale & {
-        Customer?: Customer;
+        Customer?: User;
         items?: SaleItem[];
       };
       console.log(`Sale found:`, {

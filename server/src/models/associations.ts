@@ -1,6 +1,5 @@
 import User from "./User.js";
 import UserPreference from "./UserPreference.js";
-import Customer from "./Customer.js";
 import Sale from "./Sale.js";
 import SaleItem from "./SaleItem.js";
 import Product from "./Product.js";
@@ -23,9 +22,9 @@ export function setupAssociations() {
   User.hasMany(Sale, { foreignKey: "user_id" });
   Sale.belongsTo(User, { foreignKey: "user_id" });
 
-  // Customer - Sale association
-  Customer.hasMany(Sale, { foreignKey: "customer_id" });
-  Sale.belongsTo(Customer, { foreignKey: "customer_id", constraints: false });
+  // Client User (customer) - Sale association
+  User.hasMany(Sale, { foreignKey: "customer_id", as: "ClientSales" });
+  Sale.belongsTo(User, { foreignKey: "customer_id", as: "Customer", constraints: false });
 
   // Sale - SaleItem association
   Sale.hasMany(SaleItem, { foreignKey: "sale_id", as: "items" });
@@ -87,8 +86,7 @@ export function setupAssociations() {
   Store.hasMany(Product, { foreignKey: "store_id" });
   Product.belongsTo(Store, { foreignKey: "store_id" });
 
-  Store.hasMany(Customer, { foreignKey: "store_id" });
-  Customer.belongsTo(Store, { foreignKey: "store_id" });
+  // Store - Users association already exists via User model; clients are users with role='client'
 
   Store.hasMany(Sale, { foreignKey: "store_id" });
   Sale.belongsTo(Store, { foreignKey: "store_id", as: "store" });

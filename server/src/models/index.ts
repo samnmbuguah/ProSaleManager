@@ -3,7 +3,7 @@ import User from "./User.js";
 import UserPreference from "./UserPreference.js";
 import Product from "./Product.js";
 import Category from "./Category.js";
-import Customer from "./Customer.js";
+// import Customer from "./Customer.js";
 import Supplier from "./Supplier.js";
 import ProductSupplier from "./ProductSupplier.js";
 import PurchaseOrder from "./PurchaseOrder.js";
@@ -26,7 +26,6 @@ export {
   UserPreference,
   Product,
   Category,
-  Customer,
   Supplier,
   ProductSupplier,
   PurchaseOrder,

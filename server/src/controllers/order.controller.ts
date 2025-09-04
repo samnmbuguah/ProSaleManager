@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Sale, SaleItem, Product, Customer } from "../models/index.js";
+import { Sale, SaleItem, Product, User } from "../models/index.js";
 import { sequelize } from "../config/database.js";
 import { storeScope } from "../utils/helpers.js";
 
@@ -15,7 +15,7 @@ export const getOrders = async (req: Request, res: Response) => {
       where,
       include: [
         { model: SaleItem, as: "items", include: [Product] },
-        { model: Customer, attributes: ["id", "name", "email", "phone"] },
+        { model: User, as: "Customer", attributes: ["id", "name", "email", "phone"] },
       ],
       order: [["createdAt", "DESC"]],
     });
@@ -36,7 +36,7 @@ export const getOrder = async (req: Request, res: Response) => {
       where,
       include: [
         { model: SaleItem, as: "items", include: [Product] },
-        { model: Customer, attributes: ["id", "name", "email", "phone"] },
+        { model: User, as: "Customer", attributes: ["id", "name", "email", "phone"] },
       ],
     });
     if (!order) return res.status(404).json({ message: "Order not found" });
@@ -69,7 +69,7 @@ export const createOrder = async (req: Request, res: Response) => {
     // Set status based on user role - clients get "unprocessed" status
     const orderStatus = req.user?.role === "client" ? "unprocessed" : "pending";
     const paymentStatus = req.user?.role === "client" ? "pending" : "pending";
-    
+
     const sale = await Sale.create(
       {
         user_id: userId,

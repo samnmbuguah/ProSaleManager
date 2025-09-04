@@ -32,7 +32,7 @@ Sale.init(
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: "customers",
+        model: "users",
         key: "id",
       },
     },
