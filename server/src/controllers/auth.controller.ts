@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { User } from "../models/index.js";
+import { User, Store } from "../models/index.js";
 import { ApiError } from "../utils/api-error.js";
 import { catchAsync } from "../utils/catch-async.js";
 
@@ -14,18 +14,28 @@ export const register = catchAsync(async (req: Request, res: Response) => {
     throw new ApiError(400, "User already exists");
   }
 
-  // Hash password
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(plainPassword, salt);
+  // Determine store assignment: prefer resolved store context, else first store
+  let storeId: number | null = null;
+  try {
+    if (req.store?.id) {
+      storeId = req.store.id;
+    } else {
+      const defaultStore = await Store.findOne({ order: [["id", "ASC"]] });
+      storeId = defaultStore ? defaultStore.id : null;
+    }
+  } catch {
+    storeId = null;
+  }
 
-  // Create user
+  // Create user (always role client from frontend). Let model hooks hash the password.
   const user = await User.create({
     name,
     email,
-    password: hashedPassword,
-    role: role || "client",
+    password: plainPassword,
+    role: "client",
     phone: phone || null,
     is_active: true,
+    store_id: storeId,
   });
 
   // Generate token
@@ -56,8 +66,8 @@ export const register = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const login = catchAsync(async (req: Request, res: Response) => {
-  console.log("Login attempt:", req.body);
   const { email, password: loginPassword } = req.body;
+  console.log("Login attempt for email:", email);
 
   // Validate required fields
   if (!email || !loginPassword) {

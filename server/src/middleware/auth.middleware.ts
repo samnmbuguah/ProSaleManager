@@ -24,50 +24,46 @@ declare global {
 // Middleware to resolve store from domain or subdomain
 export const resolveStore = async (req: Request, res: Response, next: NextFunction) => {
   const host = req.headers.host || "";
-  let subdomain = "";
 
-  if (host.endsWith(".local")) {
-    subdomain = host.replace(".local", "");
-  } else if (host.endsWith(".eltee.store")) {
-    subdomain = host.replace(".eltee.store", "");
-  } else {
-    // fallback: take first part
-    subdomain = host.split(".")[0];
+  // Prefer path-based store resolution: expect URL like /api/... or /:store/... (frontend) and for API we stay /api
+  // We will try to extract the first non-empty segment from the referer path if present, else from req.headers["x-store-slug"], else default to first store
+  const referer = req.headers.referer || "";
+  let storeSlug: string | null = null;
+
+  try {
+    if (typeof referer === "string" && referer) {
+      const url = new URL(referer);
+      const segments = url.pathname.split("/").filter(Boolean);
+      // If path starts with auth, skip. Otherwise first segment is store slug
+      if (segments.length > 0 && segments[0] !== "auth") {
+        storeSlug = segments[0];
+      }
+    }
+  } catch {
+    // ignore
   }
 
-  // If on the main domain (eltee.store or www.eltee.store), allow all users
-  if (host === "eltee.store" || host === "www.eltee.store") {
-    return next();
+  if (!storeSlug && typeof req.headers["x-store-slug"] === "string") {
+    storeSlug = req.headers["x-store-slug"] as string;
   }
 
   let store: Store | null = null;
-  if (subdomain) {
-    store = await Store.findOne({ where: { subdomain } });
+  if (storeSlug) {
+    store = await Store.findOne({ where: { name: storeSlug } });
   }
 
   if (!store) {
-    // Only allow super admin login on the main domain (no store subdomain)
-    if (
-      req.path.startsWith("/api/auth/login") &&
-      req.method === "POST" &&
-      req.body &&
-      req.body.email &&
-      req.body.email.endsWith("@prosale.com") // adjust as needed for super admin
-    ) {
-      return next();
-    }
-    return res.status(400).json({
-      success: false,
-      error: "Store subdomain required",
-      message: "You must access this route from a valid store subdomain.",
-    });
+    // Fallback to first store in DB
+    store = await Store.findOne({ order: [["id", "ASC"]] });
   }
 
-  req.store = {
-    id: store.id,
-    name: store.name,
-    subdomain: store.subdomain,
-  };
+  if (store) {
+    req.store = {
+      id: store.id,
+      name: store.name,
+      subdomain: store.subdomain,
+    };
+  }
   next();
 };
 
