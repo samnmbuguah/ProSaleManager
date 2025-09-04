@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Swal from "sweetalert2";
-import { Search, ShoppingCart, User, Star, Filter, Grid, List, ChevronDown, Menu, LogOut } from "lucide-react";
+import { Search, ShoppingCart, User, Star, Filter, Grid, List, ChevronDown, Menu, LogOut, Heart } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
 import CategoryFilter from "@/components/shop/CategoryFilter";
 import CartDrawer from "@/components/shop/CartDrawer";
@@ -243,6 +243,15 @@ export default function HomePage() {
                                     >
                                         <User className="w-4 h-4 text-gray-600" />
                                         <span className="text-sm text-gray-700">{(user?.name || '').split(' ')[0] || user?.name}</span>
+                                    </Button>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        className="flex items-center gap-2"
+                                        onClick={() => (window.location.href = `/${(window.location.pathname.split('/')[1] || '').trim()}/favorites`)}
+                                    >
+                                        <Heart className="h-4 w-4" />
+                                        <span className="text-sm">Favorites</span>
                                     </Button>
                                     <Button variant="ghost" size="sm" onClick={async () => { try { await api.post('/auth/logout'); window.location.href = '/'; } catch { } }}>
                                         <LogOut className="h-4 w-4" />
