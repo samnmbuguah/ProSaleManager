@@ -314,6 +314,7 @@ export default function ProfilePage() {
                       id="name"
                       value={profileData.name}
                       onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                      autoComplete="name"
                       required
                     />
                   </div>
@@ -329,6 +330,7 @@ export default function ProfilePage() {
                           email: e.target.value,
                         })
                       }
+                      autoComplete="email"
                       required
                     />
                   </div>
@@ -402,6 +404,7 @@ export default function ProfilePage() {
                             currentPassword: e.target.value,
                           })
                         }
+                        autoComplete="current-password"
                         required
                       />
                       <Button
@@ -435,6 +438,7 @@ export default function ProfilePage() {
                             newPassword: e.target.value,
                           })
                         }
+                        autoComplete="new-password"
                         required
                       />
                       <Button
@@ -469,6 +473,7 @@ export default function ProfilePage() {
                             confirmPassword: e.target.value,
                           })
                         }
+                        autoComplete="new-password"
                         required
                       />
                       <Button
