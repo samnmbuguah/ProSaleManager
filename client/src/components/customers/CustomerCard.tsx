@@ -29,10 +29,6 @@ const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onEdit, onDelete 
       </div>
       {customer.email && <p className="text-sm text-gray-600 mb-1">Email: {customer.email}</p>}
       {customer.phone && <p className="text-sm text-gray-600 mb-1">Phone: {customer.phone}</p>}
-      {customer.address && (
-        <p className="text-sm text-gray-600 mb-1">Address: {customer.address}</p>
-      )}
-      {customer.notes && <p className="text-sm text-gray-600">Notes: {customer.notes}</p>}
     </div>
   );
 };

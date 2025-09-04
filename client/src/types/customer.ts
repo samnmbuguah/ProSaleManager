@@ -4,8 +4,7 @@ export const customerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email format").nullable(),
   phone: z.string().nullable(),
-  address: z.string().nullable(),
-  notes: z.string().optional(),
+  // address and notes removed; client users use User fields
 });
 
 export interface Customer {
@@ -13,8 +12,6 @@ export interface Customer {
   name: string;
   email: string | null;
   phone: string | null;
-  address: string | null;
-  notes?: string;
   createdAt?: string;
   updatedAt?: string;
 }
