@@ -4,7 +4,7 @@ import type { SupplierFormData, Supplier } from "@/types/supplier";
 import type { ProductSupplierFormData, ProductSupplier } from "@/types/product-supplier";
 import { useSuppliers } from "../../hooks/use-suppliers";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -139,6 +139,9 @@ export function SupplierPricing({ product }: SupplierPricingProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Supplier</DialogTitle>
+            <DialogDescription>
+              Fill in the supplier information below to add a new supplier to your system.
+            </DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

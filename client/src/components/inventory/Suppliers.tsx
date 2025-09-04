@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Edit, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -262,6 +263,7 @@ const Suppliers = () => {
                   <TableCell>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => handleEdit(supplier)}>
+                        <Edit className="h-4 w-4 mr-1" />
                         Edit
                       </Button>
                       <Button
@@ -269,6 +271,7 @@ const Suppliers = () => {
                         size="sm"
                         onClick={() => handleDelete(supplier.id)}
                       >
+                        <Trash2 className="h-4 w-4 mr-1" />
                         Delete
                       </Button>
                     </div>
