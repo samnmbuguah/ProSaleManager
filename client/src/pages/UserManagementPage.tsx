@@ -38,14 +38,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import UserTable from "@/components/users/UserTable";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -601,93 +594,13 @@ export default function UserManagementPage() {
           <CardDescription>Manage user accounts and permissions</CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Store</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Last Login</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{user.name}</div>
-                          <div className="text-sm text-muted-foreground">{user.email}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getRoleBadgeVariant(user.role)}>
-                          <div className="flex items-center gap-1">
-                            {getRoleIcon(user.role)}
-                            {userRoles.find((r) => r.value === user.role)?.label || user.role}
-                          </div>
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {user.store ? (
-                          <div className="flex items-center gap-2">
-                            <Store className="h-4 w-4 text-muted-foreground" />
-                            <span>{user.store.name}</span>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">Global</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={user.is_active ? "default" : "secondary"}>
-                          {user.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {user.last_login ? (
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">
-                              {new Date(user.last_login).toLocaleDateString()}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">Never</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {new Date(user.created_at).toLocaleDateString()}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" size="sm" onClick={() => openEditDialog(user)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          {user.role !== "super_admin" && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openDeleteDialog(user)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+          <UserTable
+            users={users}
+            userRoles={userRoles}
+            onEdit={openEditDialog}
+            onDelete={openDeleteDialog}
+            isLoading={isLoading}
+          />
 
               {/* Pagination */}
               {pagination.pages > 1 && (
