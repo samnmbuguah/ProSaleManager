@@ -48,6 +48,15 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   onCheckout,
   isLoadingCheckout,
 }) => {
+  // Set Walk-in Customer as default when dialog opens
+  useEffect(() => {
+    if (open && customers.length > 0 && !selectedCustomer) {
+      const walkInCustomer = customers.find((c) => c.name === "Walk-in Customer");
+      if (walkInCustomer) {
+        setSelectedCustomer(walkInCustomer.id);
+      }
+    }
+  }, [open, customers, selectedCustomer, setSelectedCustomer]);
   const [amountTendered, setAmountTendered] = useState("");
   const total = cartTotal + deliveryFee;
   const tendered = parseFloat(amountTendered);

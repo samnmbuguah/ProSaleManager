@@ -58,6 +58,31 @@ export function useCustomers() {
     );
   };
 
+  const ensureWalkInCustomer = async () => {
+    if (!customers) return null;
+    
+    let walkInCustomer = customers.find(c => c.name === "Walk-in Customer");
+    
+    if (!walkInCustomer) {
+      // Create Walk-in Customer if it doesn't exist
+      try {
+        const newWalkInCustomer = {
+          name: "Walk-in Customer",
+          email: "walkin@example.com",
+          phone: "N/A",
+        };
+        await createCustomerMutation.mutateAsync(newWalkInCustomer);
+        // Refetch customers to get the new one
+        await queryClient.invalidateQueries({ queryKey: ["customers"] });
+        walkInCustomer = customers.find(c => c.name === "Walk-in Customer");
+      } catch (error) {
+        console.error("Failed to create Walk-in Customer:", error);
+      }
+    }
+    
+    return walkInCustomer;
+  };
+
   return {
     customers,
     isLoading,
@@ -65,5 +90,6 @@ export function useCustomers() {
     createCustomer: createCustomerMutation.mutate,
     isCreating: createCustomerMutation.isPending,
     searchCustomers,
+    ensureWalkInCustomer,
   };
 }
