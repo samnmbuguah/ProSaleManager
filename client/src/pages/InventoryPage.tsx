@@ -87,7 +87,7 @@ const InventoryPage: React.FC = () => {
             formDataToSend.append(key, Array.isArray(value) ? value.join(",") : (value ?? ""));
           }
         });
-        formDataToSend.append("images", localImageFile);
+        formDataToSend.append("image", localImageFile);
         if (selectedProduct) {
           response = await api.put(
             API_ENDPOINTS.products.update(selectedProduct.id),
