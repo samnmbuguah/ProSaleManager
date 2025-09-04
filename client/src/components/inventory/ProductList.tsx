@@ -1,6 +1,5 @@
 import React from "react";
 import { Product } from "../../types/product";
-import { formatCurrency } from "../../utils/format";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
 import { 

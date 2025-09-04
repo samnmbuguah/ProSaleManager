@@ -4,9 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Store, Calendar, Users, Shield } from "lucide-react";
 import { 
   ResponsiveTable, 
-  createTextColumn, 
-  createBadgeColumn, 
-  createDateColumn, 
   createActionsColumn,
   ResponsiveTableColumn 
 } from "@/components/ui/responsive-table";
