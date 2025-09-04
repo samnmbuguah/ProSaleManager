@@ -102,9 +102,17 @@ export default function AuthPage() {
               <label htmlFor="email" className="text-sm font-medium">
                 Email
               </label>
-              <Input id="email" type="email" autoComplete="email" disabled={isLoading} {...loginForm.register("email")} />
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                disabled={isLoading}
+                {...loginForm.register("email")}
+              />
               {loginForm.formState.errors.email && (
-                <p className="text-sm font-medium text-destructive">{loginForm.formState.errors.email?.message}</p>
+                <p className="text-sm font-medium text-destructive">
+                  {loginForm.formState.errors.email?.message}
+                </p>
               )}
             </div>
 
@@ -113,7 +121,13 @@ export default function AuthPage() {
                 Password
               </label>
               <div className="relative">
-                <Input id="password" type={showPassword ? "text" : "password"} autoComplete="current-password" disabled={isLoading} {...loginForm.register("password")} />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  disabled={isLoading}
+                  {...loginForm.register("password")}
+                />
                 <Button
                   type="button"
                   variant="ghost"
@@ -125,12 +139,16 @@ export default function AuthPage() {
                 </Button>
               </div>
               {loginForm.formState.errors.password && (
-                <p className="text-sm font-medium text-destructive">{loginForm.formState.errors.password?.message}</p>
+                <p className="text-sm font-medium text-destructive">
+                  {loginForm.formState.errors.password?.message}
+                </p>
               )}
             </div>
 
             {loginForm.formState.errors.root && (
-              <p className="text-sm font-medium text-destructive">{loginForm.formState.errors.root?.message}</p>
+              <p className="text-sm font-medium text-destructive">
+                {loginForm.formState.errors.root?.message}
+              </p>
             )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>

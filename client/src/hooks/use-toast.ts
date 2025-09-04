@@ -21,21 +21,21 @@ function genId() {
 
 type Action =
   | {
-    type: "ADD_TOAST";
-    toast: ToasterToast;
-  }
+      type: "ADD_TOAST";
+      toast: ToasterToast;
+    }
   | {
-    type: "UPDATE_TOAST";
-    toast: Partial<ToasterToast>;
-  }
+      type: "UPDATE_TOAST";
+      toast: Partial<ToasterToast>;
+    }
   | {
-    type: "DISMISS_TOAST";
-    toastId?: ToasterToast["id"];
-  }
+      type: "DISMISS_TOAST";
+      toastId?: ToasterToast["id"];
+    }
   | {
-    type: "REMOVE_TOAST";
-    toastId?: ToasterToast["id"];
-  };
+      type: "REMOVE_TOAST";
+      toastId?: ToasterToast["id"];
+    };
 
 interface State {
   toasts: ToasterToast[];
@@ -91,9 +91,9 @@ export const reducer = (state: State, action: Action): State => {
         toasts: state.toasts.map((t) =>
           t.id === toastId || toastId === undefined
             ? {
-              ...t,
-              open: false,
-            }
+                ...t,
+                open: false,
+              }
             : t
         ),
       };
@@ -207,7 +207,7 @@ function useToast() {
     toast: (...args: Parameters<typeof toast>) => {
       if (!isMounted.current) {
         console.warn("Toast called before hook is mounted");
-        return { id: genId(), dismiss: () => { }, update: () => { } }; // Return a dummy object
+        return { id: genId(), dismiss: () => {}, update: () => {} }; // Return a dummy object
       }
       return toast(...args);
     },

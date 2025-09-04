@@ -214,7 +214,10 @@ export function ProductForm({ initialData, onSubmit, isSubmitting }: ProductForm
                 disabled={createCategory.isPending || !newCategoryName.trim()}
                 onClick={async () => {
                   try {
-                    const res = await createCategory.mutateAsync({ name: newCategoryName.trim(), description: newCategoryDesc });
+                    const res = await createCategory.mutateAsync({
+                      name: newCategoryName.trim(),
+                      description: newCategoryDesc,
+                    });
                     if (res?.data?.id) {
                       form.setValue("category_id", res.data.id);
                       setShowAddCategory(false);

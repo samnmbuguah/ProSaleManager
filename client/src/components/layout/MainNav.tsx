@@ -70,9 +70,7 @@ const ROLE_ROUTES: Record<AppRole, Route[]> = {
     { path: "expenses", label: "Expenses", icon: Wallet },
     { path: "favorites", label: "Favorites", icon: Heart },
   ],
-  client: [
-    { path: "favorites", label: "Favorites", icon: Heart },
-  ],
+  client: [{ path: "favorites", label: "Favorites", icon: Heart }],
 };
 
 export default function MainNav() {

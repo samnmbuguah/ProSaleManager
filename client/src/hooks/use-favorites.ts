@@ -5,152 +5,173 @@ import type { Product } from "@/types/product";
 
 // Get user's favorites
 export function useFavorites() {
-    return useQuery<Product[]>({
-        queryKey: ["favorites"],
-        queryFn: async () => {
-            const response = await api.get(API_ENDPOINTS.favorites.list);
-            return response.data.data;
-        },
-        enabled: true, // Only run when user is authenticated
-    });
+  return useQuery<Product[]>({
+    queryKey: ["favorites"],
+    queryFn: async () => {
+      const response = await api.get(API_ENDPOINTS.favorites.list);
+      return response.data.data;
+    },
+    enabled: true, // Only run when user is authenticated
+  });
 }
 
 // Check if a product is in favorites
 export function useFavoriteStatus(productId: number) {
-    return useQuery<{ isFavorite: boolean }>({
-        queryKey: ["favorite-status", productId],
-        queryFn: async () => {
-            const response = await api.get(API_ENDPOINTS.favorites.check(productId));
-            return response.data.data;
-        },
-        enabled: !!productId,
-    });
+  return useQuery<{ isFavorite: boolean }>({
+    queryKey: ["favorite-status", productId],
+    queryFn: async () => {
+      const response = await api.get(API_ENDPOINTS.favorites.check(productId));
+      return response.data.data;
+    },
+    enabled: !!productId,
+  });
 }
 
 // Toggle favorite status
 export function useToggleFavorite() {
-    const queryClient = useQueryClient();
-    const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
-    return useMutation({
-        mutationFn: async (productId: number) => {
-            const response = await api.patch(API_ENDPOINTS.favorites.toggle(productId));
-            return response.data;
-        },
-        onMutate: async (productId: number) => {
-            await queryClient.cancelQueries({ queryKey: ["favorite-status", productId] });
-            const previousStatus = queryClient.getQueryData<{ isFavorite: boolean }>(["favorite-status", productId]);
+  return useMutation({
+    mutationFn: async (productId: number) => {
+      const response = await api.patch(API_ENDPOINTS.favorites.toggle(productId));
+      return response.data;
+    },
+    onMutate: async (productId: number) => {
+      await queryClient.cancelQueries({ queryKey: ["favorite-status", productId] });
+      const previousStatus = queryClient.getQueryData<{ isFavorite: boolean }>([
+        "favorite-status",
+        productId,
+      ]);
 
-            // Optimistically update to the new value
-            const nextIsFavorite = !previousStatus?.isFavorite;
-            queryClient.setQueryData(["favorite-status", productId], { isFavorite: nextIsFavorite });
+      // Optimistically update to the new value
+      const nextIsFavorite = !previousStatus?.isFavorite;
+      queryClient.setQueryData(["favorite-status", productId], { isFavorite: nextIsFavorite });
 
-            return { previousStatus, productId };
-        },
-        onSuccess: (data, productId) => {
-            // Update the favorite status for this product
-            queryClient.setQueryData(["favorite-status", productId], data.data);
+      return { previousStatus, productId };
+    },
+    onSuccess: (data, productId) => {
+      // Update the favorite status for this product
+      queryClient.setQueryData(["favorite-status", productId], data.data);
 
-            // Update the favorites list
-            queryClient.invalidateQueries({ queryKey: ["favorites"] });
+      // Update the favorites list
+      queryClient.invalidateQueries({ queryKey: ["favorites"] });
 
-            toast({
-                title: "Success",
-                description: data.message,
-            });
-        },
-        onError: (error: any, _productId: number, context: { previousStatus?: { isFavorite: boolean }, productId: number } | undefined) => {
-            // Rollback optimistic update
-            if (context?.previousStatus) {
-                queryClient.setQueryData(["favorite-status", context.productId], context.previousStatus);
-            }
-            toast({
-                variant: "destructive",
-                title: "Error",
-                description: error.response?.data?.message || "Failed to update favorites",
-            });
-        },
-    });
+      toast({
+        title: "Success",
+        description: data.message,
+      });
+    },
+    onError: (
+      error: any,
+      _productId: number,
+      context: { previousStatus?: { isFavorite: boolean }; productId: number } | undefined
+    ) => {
+      // Rollback optimistic update
+      if (context?.previousStatus) {
+        queryClient.setQueryData(["favorite-status", context.productId], context.previousStatus);
+      }
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.response?.data?.message || "Failed to update favorites",
+      });
+    },
+  });
 }
 
 // Add to favorites
 export function useAddToFavorites() {
-    const queryClient = useQueryClient();
-    const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
-    return useMutation({
-        mutationFn: async (productId: number) => {
-            const response = await api.post(API_ENDPOINTS.favorites.add(productId));
-            return response.data;
-        },
-        onMutate: async (productId: number) => {
-            await queryClient.cancelQueries({ queryKey: ["favorite-status", productId] });
-            const previousStatus = queryClient.getQueryData<{ isFavorite: boolean }>(["favorite-status", productId]);
-            queryClient.setQueryData(["favorite-status", productId], { isFavorite: true });
-            return { previousStatus, productId };
-        },
-        onSuccess: (data, productId) => {
-            // Update the favorite status for this product
-            queryClient.setQueryData(["favorite-status", productId], { isFavorite: true });
+  return useMutation({
+    mutationFn: async (productId: number) => {
+      const response = await api.post(API_ENDPOINTS.favorites.add(productId));
+      return response.data;
+    },
+    onMutate: async (productId: number) => {
+      await queryClient.cancelQueries({ queryKey: ["favorite-status", productId] });
+      const previousStatus = queryClient.getQueryData<{ isFavorite: boolean }>([
+        "favorite-status",
+        productId,
+      ]);
+      queryClient.setQueryData(["favorite-status", productId], { isFavorite: true });
+      return { previousStatus, productId };
+    },
+    onSuccess: (data, productId) => {
+      // Update the favorite status for this product
+      queryClient.setQueryData(["favorite-status", productId], { isFavorite: true });
 
-            // Update the favorites list
-            queryClient.invalidateQueries({ queryKey: ["favorites"] });
+      // Update the favorites list
+      queryClient.invalidateQueries({ queryKey: ["favorites"] });
 
-            toast({
-                title: "Success",
-                description: data.message,
-            });
-        },
-        onError: (error: any, _productId: number, context: { previousStatus?: { isFavorite: boolean }, productId: number } | undefined) => {
-            if (context?.previousStatus) {
-                queryClient.setQueryData(["favorite-status", context.productId], context.previousStatus);
-            }
-            toast({
-                variant: "destructive",
-                title: "Error",
-                description: error.response?.data?.message || "Failed to add to favorites",
-            });
-        },
-    });
+      toast({
+        title: "Success",
+        description: data.message,
+      });
+    },
+    onError: (
+      error: any,
+      _productId: number,
+      context: { previousStatus?: { isFavorite: boolean }; productId: number } | undefined
+    ) => {
+      if (context?.previousStatus) {
+        queryClient.setQueryData(["favorite-status", context.productId], context.previousStatus);
+      }
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.response?.data?.message || "Failed to add to favorites",
+      });
+    },
+  });
 }
 
 // Remove from favorites
 export function useRemoveFromFavorites() {
-    const queryClient = useQueryClient();
-    const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
-    return useMutation({
-        mutationFn: async (productId: number) => {
-            const response = await api.delete(API_ENDPOINTS.favorites.remove(productId));
-            return response.data;
-        },
-        onMutate: async (productId: number) => {
-            await queryClient.cancelQueries({ queryKey: ["favorite-status", productId] });
-            const previousStatus = queryClient.getQueryData<{ isFavorite: boolean }>(["favorite-status", productId]);
-            queryClient.setQueryData(["favorite-status", productId], { isFavorite: false });
-            return { previousStatus, productId };
-        },
-        onSuccess: (data, productId) => {
-            // Update the favorite status for this product
-            queryClient.setQueryData(["favorite-status", productId], { isFavorite: false });
+  return useMutation({
+    mutationFn: async (productId: number) => {
+      const response = await api.delete(API_ENDPOINTS.favorites.remove(productId));
+      return response.data;
+    },
+    onMutate: async (productId: number) => {
+      await queryClient.cancelQueries({ queryKey: ["favorite-status", productId] });
+      const previousStatus = queryClient.getQueryData<{ isFavorite: boolean }>([
+        "favorite-status",
+        productId,
+      ]);
+      queryClient.setQueryData(["favorite-status", productId], { isFavorite: false });
+      return { previousStatus, productId };
+    },
+    onSuccess: (data, productId) => {
+      // Update the favorite status for this product
+      queryClient.setQueryData(["favorite-status", productId], { isFavorite: false });
 
-            // Update the favorites list
-            queryClient.invalidateQueries({ queryKey: ["favorites"] });
+      // Update the favorites list
+      queryClient.invalidateQueries({ queryKey: ["favorites"] });
 
-            toast({
-                title: "Success",
-                description: data.message,
-            });
-        },
-        onError: (error: any, _productId: number, context: { previousStatus?: { isFavorite: boolean }, productId: number } | undefined) => {
-            if (context?.previousStatus) {
-                queryClient.setQueryData(["favorite-status", context.productId], context.previousStatus);
-            }
-            toast({
-                variant: "destructive",
-                title: "Error",
-                description: error.response?.data?.message || "Failed to remove from favorites",
-            });
-        },
-    });
+      toast({
+        title: "Success",
+        description: data.message,
+      });
+    },
+    onError: (
+      error: any,
+      _productId: number,
+      context: { previousStatus?: { isFavorite: boolean }; productId: number } | undefined
+    ) => {
+      if (context?.previousStatus) {
+        queryClient.setQueryData(["favorite-status", context.productId], context.previousStatus);
+      }
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.response?.data?.message || "Failed to remove from favorites",
+      });
+    },
+  });
 }

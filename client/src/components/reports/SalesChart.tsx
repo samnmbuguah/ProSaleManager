@@ -61,8 +61,20 @@ export function SalesChart({ data = {}, compareData = {} }: SalesChartProps) {
               labelFormatter={(label) => `Date: ${label}`}
             />
             <Legend />
-            <Line type="monotone" dataKey="current" name="Current Period" stroke="#6366f1" strokeWidth={2} />
-            <Line type="monotone" dataKey="compare" name="Previous Period" stroke="#10b981" strokeWidth={2} />
+            <Line
+              type="monotone"
+              dataKey="current"
+              name="Current Period"
+              stroke="#6366f1"
+              strokeWidth={2}
+            />
+            <Line
+              type="monotone"
+              dataKey="compare"
+              name="Previous Period"
+              stroke="#10b981"
+              strokeWidth={2}
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>

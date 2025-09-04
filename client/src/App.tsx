@@ -73,19 +73,31 @@ function App() {
         <Route path="/" component={HomePage} />
 
         <Route path="/:store/pos">
-          <ProtectedRoute component={POSPage} roles={["admin", "sales", "super_admin", "manager"]} />
+          <ProtectedRoute
+            component={POSPage}
+            roles={["admin", "sales", "super_admin", "manager"]}
+          />
         </Route>
 
         <Route path="/:store/inventory">
-          <ProtectedRoute component={InventoryPage} roles={["admin", "sales", "super_admin", "manager"]} />
+          <ProtectedRoute
+            component={InventoryPage}
+            roles={["admin", "sales", "super_admin", "manager"]}
+          />
         </Route>
 
         <Route path="/:store/expenses">
-          <ProtectedRoute component={ExpensesPage} roles={["admin", "sales", "super_admin", "manager"]} />
+          <ProtectedRoute
+            component={ExpensesPage}
+            roles={["admin", "sales", "super_admin", "manager"]}
+          />
         </Route>
 
         <Route path="/:store/sales">
-          <ProtectedRoute component={SalesPage} roles={["admin", "sales", "super_admin", "manager"]} />
+          <ProtectedRoute
+            component={SalesPage}
+            roles={["admin", "sales", "super_admin", "manager"]}
+          />
         </Route>
 
         <Route path="/:store/customers">
@@ -97,15 +109,24 @@ function App() {
         </Route>
 
         <Route path="/:store/profile">
-          <ProtectedRoute component={ProfilePage} roles={["admin", "sales", "user", "super_admin", "manager", "client"]} />
+          <ProtectedRoute
+            component={ProfilePage}
+            roles={["admin", "sales", "user", "super_admin", "manager", "client"]}
+          />
         </Route>
 
         <Route path="/:store/favorites">
-          <ProtectedRoute component={FavoritesPage} roles={["admin", "sales", "user", "super_admin", "manager", "client"]} />
+          <ProtectedRoute
+            component={FavoritesPage}
+            roles={["admin", "sales", "user", "super_admin", "manager", "client"]}
+          />
         </Route>
 
         <Route path="/profile">
-          <ProtectedRoute component={ProfilePage} roles={["admin", "sales", "user", "super_admin", "manager", "client"]} />
+          <ProtectedRoute
+            component={ProfilePage}
+            roles={["admin", "sales", "user", "super_admin", "manager", "client"]}
+          />
         </Route>
 
         <Route path="/:store/users">

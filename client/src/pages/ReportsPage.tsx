@@ -44,10 +44,7 @@ export default function ReportsPage() {
   const [performanceStartDate, setPerformanceStartDate] = useState<Date | undefined>(undefined);
   const [performanceEndDate, setPerformanceEndDate] = useState<Date | undefined>(undefined);
   const [performanceSortBy, setPerformanceSortBy] = useState<string | undefined>("revenue");
-  const {
-    data: performanceData,
-    isLoading: performanceLoading,
-  } = useProductPerformanceReport(
+  const { data: performanceData, isLoading: performanceLoading } = useProductPerformanceReport(
     performanceStartDate,
     performanceEndDate,
     performanceSortBy
@@ -125,12 +122,14 @@ export default function ReportsPage() {
             <h3 className="font-semibold mb-2">Sales by Payment Method</h3>
             {salesSummary?.current?.paymentMethods ? (
               <ul>
-                {Object.entries(salesSummary.current.paymentMethods).map(([method, amount]: [string, unknown]) => (
-                  <li key={method} className="flex justify-between">
-                    <span className="capitalize">{method}</span>
-                    <span>KSh {Number(amount).toLocaleString()}</span>
-                  </li>
-                ))}
+                {Object.entries(salesSummary.current.paymentMethods).map(
+                  ([method, amount]: [string, unknown]) => (
+                    <li key={method} className="flex justify-between">
+                      <span className="capitalize">{method}</span>
+                      <span>KSh {Number(amount).toLocaleString()}</span>
+                    </li>
+                  )
+                )}
               </ul>
             ) : (
               <span>No data</span>
