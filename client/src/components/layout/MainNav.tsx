@@ -16,6 +16,7 @@ import {
   LogOut,
   User,
   ShoppingCart,
+  Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -70,7 +71,10 @@ const ROLE_ROUTES: Record<AppRole, Route[]> = {
     { path: "expenses", label: "Expenses", icon: Wallet },
     { path: "favorites", label: "Favorites", icon: Heart },
   ],
-  client: [{ path: "favorites", label: "Favorites", icon: Heart }],
+  client: [
+    { path: "orders", label: "My Orders", icon: Package },
+    { path: "favorites", label: "Favorites", icon: Heart }
+  ],
 };
 
 export default function MainNav() {
