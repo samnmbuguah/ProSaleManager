@@ -1,7 +1,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -32,7 +31,6 @@ export interface ResponsiveTableProps<T = any> {
   emptyMessage?: string;
   className?: string;
   cardClassName?: string;
-  showCardView?: boolean; // Force card view even on desktop
 }
 
 export function ResponsiveTable<T = any>({
@@ -44,7 +42,6 @@ export function ResponsiveTable<T = any>({
   emptyMessage = "No data available",
   className,
   cardClassName,
-  showCardView = false,
 }: ResponsiveTableProps<T>) {
   // Sort columns by priority (higher priority first)
   const sortedColumns = [...columns].sort((a, b) => (b.priority || 0) - (a.priority || 0));

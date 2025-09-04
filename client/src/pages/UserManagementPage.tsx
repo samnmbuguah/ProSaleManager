@@ -8,13 +8,7 @@ import {
   Loader2,
   Plus,
   Search,
-  Edit,
-  Trash2,
-  UserPlus,
-  Users,
-  Shield,
   Store,
-  Calendar,
   Eye,
   EyeOff,
 } from "lucide-react";
@@ -39,7 +33,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import UserTable from "@/components/users/UserTable";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -325,35 +318,6 @@ export default function UserManagementPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case "super_admin":
-        return "destructive";
-      case "admin":
-        return "default";
-      case "manager":
-        return "secondary";
-      case "sales":
-        return "outline";
-      default:
-        return "outline";
-    }
-  };
-
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case "super_admin":
-        return <Shield className="h-4 w-4" />;
-      case "admin":
-        return <Shield className="h-4 w-4" />;
-      case "manager":
-        return <Users className="h-4 w-4" />;
-      case "sales":
-        return <UserPlus className="h-4 w-4" />;
-      default:
-        return <UserPlus className="h-4 w-4" />;
-    }
-  };
 
   if (authLoading || !isAuthenticated) {
     return (
