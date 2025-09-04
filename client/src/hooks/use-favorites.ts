@@ -37,6 +37,16 @@ export function useToggleFavorite() {
             const response = await api.patch(API_ENDPOINTS.favorites.toggle(productId));
             return response.data;
         },
+        onMutate: async (productId: number) => {
+            await queryClient.cancelQueries({ queryKey: ["favorite-status", productId] });
+            const previousStatus = queryClient.getQueryData<{ isFavorite: boolean }>(["favorite-status", productId]);
+
+            // Optimistically update to the new value
+            const nextIsFavorite = !previousStatus?.isFavorite;
+            queryClient.setQueryData(["favorite-status", productId], { isFavorite: nextIsFavorite });
+
+            return { previousStatus, productId };
+        },
         onSuccess: (data, productId) => {
             // Update the favorite status for this product
             queryClient.setQueryData(["favorite-status", productId], data.data);
@@ -49,7 +59,11 @@ export function useToggleFavorite() {
                 description: data.message,
             });
         },
-        onError: (error: any) => {
+        onError: (error: any, _productId: number, context: { previousStatus?: { isFavorite: boolean }, productId: number } | undefined) => {
+            // Rollback optimistic update
+            if (context?.previousStatus) {
+                queryClient.setQueryData(["favorite-status", context.productId], context.previousStatus);
+            }
             toast({
                 variant: "destructive",
                 title: "Error",
@@ -69,6 +83,12 @@ export function useAddToFavorites() {
             const response = await api.post(API_ENDPOINTS.favorites.add(productId));
             return response.data;
         },
+        onMutate: async (productId: number) => {
+            await queryClient.cancelQueries({ queryKey: ["favorite-status", productId] });
+            const previousStatus = queryClient.getQueryData<{ isFavorite: boolean }>(["favorite-status", productId]);
+            queryClient.setQueryData(["favorite-status", productId], { isFavorite: true });
+            return { previousStatus, productId };
+        },
         onSuccess: (data, productId) => {
             // Update the favorite status for this product
             queryClient.setQueryData(["favorite-status", productId], { isFavorite: true });
@@ -81,7 +101,10 @@ export function useAddToFavorites() {
                 description: data.message,
             });
         },
-        onError: (error: any) => {
+        onError: (error: any, _productId: number, context: { previousStatus?: { isFavorite: boolean }, productId: number } | undefined) => {
+            if (context?.previousStatus) {
+                queryClient.setQueryData(["favorite-status", context.productId], context.previousStatus);
+            }
             toast({
                 variant: "destructive",
                 title: "Error",
@@ -101,6 +124,12 @@ export function useRemoveFromFavorites() {
             const response = await api.delete(API_ENDPOINTS.favorites.remove(productId));
             return response.data;
         },
+        onMutate: async (productId: number) => {
+            await queryClient.cancelQueries({ queryKey: ["favorite-status", productId] });
+            const previousStatus = queryClient.getQueryData<{ isFavorite: boolean }>(["favorite-status", productId]);
+            queryClient.setQueryData(["favorite-status", productId], { isFavorite: false });
+            return { previousStatus, productId };
+        },
         onSuccess: (data, productId) => {
             // Update the favorite status for this product
             queryClient.setQueryData(["favorite-status", productId], { isFavorite: false });
@@ -113,7 +142,10 @@ export function useRemoveFromFavorites() {
                 description: data.message,
             });
         },
-        onError: (error: any) => {
+        onError: (error: any, _productId: number, context: { previousStatus?: { isFavorite: boolean }, productId: number } | undefined) => {
+            if (context?.previousStatus) {
+                queryClient.setQueryData(["favorite-status", context.productId], context.previousStatus);
+            }
             toast({
                 variant: "destructive",
                 title: "Error",
