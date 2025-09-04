@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Op } from "sequelize";
-import { Customer } from "../models/index.js";
+import { User } from "../models/index.js";
 import { storeScope } from "../utils/helpers.js";
 
 export const searchCustomers = async (req: Request, res: Response) => {
@@ -21,10 +21,11 @@ export const searchCustomers = async (req: Request, res: Response) => {
       };
     }
     where = storeScope(req.user!, where);
-    const customers = await Customer.findAll({
-      where,
+    const customers = await User.findAll({
+      where: { ...where, role: "client" },
       limit: 10,
       order: [["name", "ASC"]],
+      attributes: ["id", "name", "email", "phone", "store_id"],
     });
     return res.json(customers);
   } catch (error) {
@@ -38,15 +39,17 @@ export const createCustomer = async (req: Request, res: Response) => {
     if (req.user?.role !== "super_admin" && !req.user?.store_id) {
       return res.status(400).json({ message: "Store context missing" });
     }
-    const { name, email, phone, address } = req.body;
+    const { name, email, phone } = req.body;
     if (!name || !phone) {
       return res.status(400).json({ message: "Name and phone are required" });
     }
-    const customer = await Customer.create({
+    const customer = await User.create({
       name,
       email,
       phone,
-      address,
+      role: "client",
+      password: Math.random().toString(36).slice(2),
+      is_active: true,
       store_id: req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id,
     });
     res.status(201).json(customer);
