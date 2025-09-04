@@ -3,7 +3,7 @@ import * as React from "react";
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_REMOVE_DELAY = 4000; // total lifecycle before hard removal (ms)
 
 type ToasterToast = ToastProps & {
   id: string;
@@ -21,21 +21,21 @@ function genId() {
 
 type Action =
   | {
-      type: "ADD_TOAST";
-      toast: ToasterToast;
-    }
+    type: "ADD_TOAST";
+    toast: ToasterToast;
+  }
   | {
-      type: "UPDATE_TOAST";
-      toast: Partial<ToasterToast>;
-    }
+    type: "UPDATE_TOAST";
+    toast: Partial<ToasterToast>;
+  }
   | {
-      type: "DISMISS_TOAST";
-      toastId?: ToasterToast["id"];
-    }
+    type: "DISMISS_TOAST";
+    toastId?: ToasterToast["id"];
+  }
   | {
-      type: "REMOVE_TOAST";
-      toastId?: ToasterToast["id"];
-    };
+    type: "REMOVE_TOAST";
+    toastId?: ToasterToast["id"];
+  };
 
 interface State {
   toasts: ToasterToast[];
@@ -91,9 +91,9 @@ export const reducer = (state: State, action: Action): State => {
         toasts: state.toasts.map((t) =>
           t.id === toastId || toastId === undefined
             ? {
-                ...t,
-                open: false,
-              }
+              ...t,
+              open: false,
+            }
             : t
         ),
       };
@@ -175,6 +175,11 @@ function toast({ ...props }: Toast) {
     },
   });
 
+  // Auto-dismiss after a short delay for better UX
+  setTimeout(() => {
+    dismiss();
+  }, 3500);
+
   return {
     id,
     dismiss,
@@ -202,7 +207,7 @@ function useToast() {
     toast: (...args: Parameters<typeof toast>) => {
       if (!isMounted.current) {
         console.warn("Toast called before hook is mounted");
-        return { id: genId(), dismiss: () => {}, update: () => {} }; // Return a dummy object
+        return { id: genId(), dismiss: () => { }, update: () => { } }; // Return a dummy object
       }
       return toast(...args);
     },

@@ -11,12 +11,7 @@ import { useLocation } from "wouter";
 
 export function Toaster() {
   const { toasts } = useToast();
-  const [location] = useLocation();
-
-  // Temporarily prevent rendering toasts on the auth page for debugging
-  if (location === "/auth") {
-    return null;
-  }
+  useLocation(); // Location is used internally by the toast component
 
   return (
     <ToastProvider>

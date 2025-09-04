@@ -16,21 +16,12 @@ const loginSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-const registerSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
-
 type LoginFormData = z.infer<typeof loginSchema>;
-type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [shouldNavigate, setShouldNavigate] = useState(false);
-  const { login, register, isLoading } = useAuth();
+  const { login, isLoading } = useAuth();
   const { user } = useAuthContext();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -56,35 +47,12 @@ export default function AuthPage() {
     },
   });
 
-  const registerForm = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      email: "",
-      name: "",
-      phone: "",
-      password: "",
-    },
-  });
-
-  const onSubmit = async (data: LoginFormData | RegisterFormData) => {
+  const onSubmit = async (data: LoginFormData) => {
     try {
-      // setIsLoading(true) // This line is removed as per the edit hint.
-
-      if (isLogin) {
-        await login({ email: data.email, password: data.password });
-        setShouldNavigate(true);
-      } else {
-        await register({
-          email: data.email,
-          password: data.password,
-          name: (data as RegisterFormData).name,
-          phone: (data as RegisterFormData).phone,
-        });
-        setShouldNavigate(true);
-      }
+      await login({ email: data.email, password: data.password });
+      setShouldNavigate(true);
     } catch (error: unknown) {
       console.error("Auth error:", error);
-      const form = isLogin ? loginForm : registerForm;
 
       // Show error toast
       let errorMessage =
@@ -115,111 +83,37 @@ export default function AuthPage() {
       });
 
       // Set form error
-      form.setError("root", {
+      loginForm.setError("root", {
         message: errorMessage,
       });
-    } finally {
-      // setIsLoading(false) // This line is removed as per the edit hint.
     }
-  };
-
-  const toggleMode = () => {
-    setIsLogin(!isLogin);
-    loginForm.reset();
-    registerForm.reset();
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>{isLogin ? "Login" : "Register"}</CardTitle>
-          <CardDescription>
-            {isLogin
-              ? "Welcome back! Please login to continue."
-              : "Create an account to get started."}
-          </CardDescription>
+          <CardTitle>Login</CardTitle>
+          <CardDescription>{"Welcome back! Please login to continue."}</CardDescription>
         </CardHeader>
         <CardContent>
-          <form
-            onSubmit={(isLogin ? loginForm : registerForm).handleSubmit(onSubmit)}
-            className="space-y-4"
-          >
+          <form onSubmit={loginForm.handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
                 Email
               </label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                disabled={isLoading}
-                {...(isLogin ? loginForm.register("email") : registerForm.register("email"))}
-              />
-              {(isLogin
-                ? loginForm.formState.errors.email
-                : registerForm.formState.errors.email) && (
-                  <p className="text-sm font-medium text-destructive">
-                    {isLogin
-                      ? loginForm.formState.errors.email?.message
-                      : registerForm.formState.errors.email?.message}
-                  </p>
-                )}
+              <Input id="email" type="email" autoComplete="email" disabled={isLoading} {...loginForm.register("email")} />
+              {loginForm.formState.errors.email && (
+                <p className="text-sm font-medium text-destructive">{loginForm.formState.errors.email?.message}</p>
+              )}
             </div>
-
-            {!isLogin && (
-              <div className="space-y-2">
-                <label htmlFor="name" className="text-sm font-medium">
-                  Name
-                </label>
-                <Input
-                  id="name"
-                  autoComplete="name"
-                  disabled={isLoading}
-                  {...registerForm.register("name")}
-                />
-                {registerForm.formState.errors.name && (
-                  <p className="text-sm font-medium text-destructive">
-                    {registerForm.formState.errors.name.message}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {!isLogin && (
-              <div className="space-y-2">
-                <label htmlFor="phone" className="text-sm font-medium">
-                  Phone Number
-                </label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  autoComplete="tel"
-                  disabled={isLoading}
-                  {...registerForm.register("phone")}
-                />
-                {registerForm.formState.errors.phone && (
-                  <p className="text-sm font-medium text-destructive">
-                    {registerForm.formState.errors.phone.message}
-                  </p>
-                )}
-              </div>
-            )}
 
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium">
                 Password
               </label>
               <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete={isLogin ? "current-password" : "new-password"}
-                  disabled={isLoading}
-                  {...(isLogin
-                    ? loginForm.register("password")
-                    : registerForm.register("password"))}
-                />
+                <Input id="password" type={showPassword ? "text" : "password"} autoComplete="current-password" disabled={isLoading} {...loginForm.register("password")} />
                 <Button
                   type="button"
                   variant="ghost"
@@ -230,37 +124,20 @@ export default function AuthPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
-              {(isLogin
-                ? loginForm.formState.errors.password
-                : registerForm.formState.errors.password) && (
-                  <p className="text-sm font-medium text-destructive">
-                    {isLogin
-                      ? loginForm.formState.errors.password?.message
-                      : registerForm.formState.errors.password?.message}
-                  </p>
-                )}
+              {loginForm.formState.errors.password && (
+                <p className="text-sm font-medium text-destructive">{loginForm.formState.errors.password?.message}</p>
+              )}
             </div>
 
-            {(isLogin ? loginForm.formState.errors.root : registerForm.formState.errors.root) && (
-              <p className="text-sm font-medium text-destructive">
-                {isLogin
-                  ? loginForm.formState.errors.root?.message
-                  : registerForm.formState.errors.root?.message}
-              </p>
+            {loginForm.formState.errors.root && (
+              <p className="text-sm font-medium text-destructive">{loginForm.formState.errors.root?.message}</p>
             )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {isLogin ? "Login" : "Register"}
+              Login
             </Button>
           </form>
-
-          <div className="mt-4 text-center text-sm">
-            {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-            <Button variant="link" onClick={toggleMode} disabled={isLoading}>
-              {isLogin ? "Sign up" : "Login"}
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </div>
