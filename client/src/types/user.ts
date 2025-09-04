@@ -18,7 +18,12 @@ export interface AuthState {
   setError: (error: string | null) => void;
   setLoading: (isLoading: boolean) => void;
   login: (credentials: { email: string; password: string }) => Promise<void>;
-  register: (data: { name: string; email: string; password: string; phone?: string }) => Promise<void>;
+  register: (data: {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+  }) => Promise<void>;
   logout: () => Promise<void>;
   checkSession: () => Promise<void>;
 }

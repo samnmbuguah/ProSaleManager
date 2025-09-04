@@ -64,7 +64,7 @@ const PosPage: React.FC = () => {
         }
       }
     };
-    
+
     setDefaultCustomer();
   }, [customers, selectedCustomer, ensureWalkInCustomer]);
 

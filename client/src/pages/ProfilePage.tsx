@@ -147,7 +147,8 @@ export default function ProfilePage() {
         description: "Profile updated successfully",
       });
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to update profile";
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to update profile";
       setErrors((prev) => ({
         ...prev,
         profile: errorMessage,
@@ -204,7 +205,8 @@ export default function ProfilePage() {
         description: "Password changed successfully",
       });
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to change password";
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to change password";
       setErrors((prev) => ({
         ...prev,
         password: errorMessage,

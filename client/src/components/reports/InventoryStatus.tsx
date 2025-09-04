@@ -47,9 +47,7 @@ export default function InventoryStatus({ products, onSearch }: InventoryStatusP
     }
     // Alphanumeric sort for strings
     if (typeof aValue === "string" && typeof bValue === "string") {
-      return sortDirection === "asc"
-        ? aValue.localeCompare(bValue)
-        : bValue.localeCompare(aValue);
+      return sortDirection === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
     }
     return 0;
   });
@@ -97,28 +95,31 @@ export default function InventoryStatus({ products, onSearch }: InventoryStatusP
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead onClick={() => handleSort("name")}
-              className="cursor-pointer select-none">
+            <TableHead onClick={() => handleSort("name")} className="cursor-pointer select-none">
               Product {sortColumn === "name" && (sortDirection === "asc" ? "▲" : "▼")}
             </TableHead>
-            <TableHead onClick={() => handleSort("sku")}
-              className="cursor-pointer select-none">
+            <TableHead onClick={() => handleSort("sku")} className="cursor-pointer select-none">
               Product Code {sortColumn === "sku" && (sortDirection === "asc" ? "▲" : "▼")}
             </TableHead>
-            <TableHead onClick={() => handleSort("price")}
-              className="text-right cursor-pointer select-none">
+            <TableHead
+              onClick={() => handleSort("price")}
+              className="text-right cursor-pointer select-none"
+            >
               Price {sortColumn === "price" && (sortDirection === "asc" ? "▲" : "▼")}
             </TableHead>
-            <TableHead onClick={() => handleSort("quantity")}
-              className="text-right cursor-pointer select-none">
+            <TableHead
+              onClick={() => handleSort("quantity")}
+              className="text-right cursor-pointer select-none"
+            >
               Quantity {sortColumn === "quantity" && (sortDirection === "asc" ? "▲" : "▼")}
             </TableHead>
-            <TableHead onClick={() => handleSort("status")}
-              className="cursor-pointer select-none">
+            <TableHead onClick={() => handleSort("status")} className="cursor-pointer select-none">
               Status {sortColumn === "status" && (sortDirection === "asc" ? "▲" : "▼")}
             </TableHead>
-            <TableHead onClick={() => handleSort("value")}
-              className="text-right cursor-pointer select-none">
+            <TableHead
+              onClick={() => handleSort("value")}
+              className="text-right cursor-pointer select-none"
+            >
               Value {sortColumn === "value" && (sortDirection === "asc" ? "▲" : "▼")}
             </TableHead>
           </TableRow>
