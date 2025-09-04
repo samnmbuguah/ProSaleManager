@@ -185,22 +185,18 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       try {
         await onSubmit(e, imageFiles[0]); // Pass first file for legacy support
       } catch (err: unknown) {
-        if (err instanceof Error && err.message.includes("SKU")) {
-          alert("SKU already exists. Please use a unique SKU.");
-        } else {
-          alert("Failed to save product: " + (err instanceof Error ? err.message : String(err)));
-        }
+        // Error handling is now done in the parent component (InventoryPage)
+        // This catch block is kept for any additional cleanup if needed
+        console.error("ProductFormDialog error:", err);
       }
       return;
     }
     try {
       await onSubmit(e);
     } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes("SKU")) {
-        alert("SKU already exists. Please use a unique SKU.");
-      } else {
-        alert("Failed to save product: " + (err instanceof Error ? err.message : String(err)));
-      }
+      // Error handling is now done in the parent component (InventoryPage)
+      // This catch block is kept for any additional cleanup if needed
+      console.error("ProductFormDialog error:", err);
     }
     if (!selectedProduct) {
       localStorage.removeItem(FORM_DRAFT_KEY);

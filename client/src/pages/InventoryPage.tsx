@@ -143,11 +143,76 @@ const InventoryPage: React.FC = () => {
       dispatch(fetchProducts());
     } catch (error: unknown) {
       console.error("Error:", error);
-      toast({
-        title: "Error",
-        description: `Failed to ${selectedProduct ? "update" : "create"} product`,
-        variant: "destructive",
-      });
+      
+      // Handle specific error cases
+      let errorMessage = `Failed to ${selectedProduct ? "update" : "create"} product`;
+      let errorTitle = "Error";
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { data?: { message?: string; error?: string } } };
+        const serverMessage = axiosError.response?.data?.message;
+        const serverError = axiosError.response?.data?.error;
+        
+        if (serverMessage) {
+          if (serverMessage.includes("SKU") && serverMessage.includes("already exists")) {
+            errorTitle = "SKU Already Exists";
+            errorMessage = "A product with this SKU already exists. Please use a unique SKU.";
+            
+            // Generate a suggested unique SKU
+            const currentSku = formData.sku;
+            if (currentSku) {
+              const timestamp = Date.now().toString().slice(-4);
+              const suggestedSku = `${currentSku}-${timestamp}`;
+              errorMessage += `\n\nSuggested SKU: ${suggestedSku}`;
+            }
+          } else if (serverMessage.includes("category") && serverMessage.includes("not found")) {
+            errorTitle = "Invalid Category";
+            errorMessage = "The selected category does not exist. Please select a valid category.";
+          } else if (serverMessage.includes("required") || serverMessage.includes("missing")) {
+            errorTitle = "Missing Required Fields";
+            errorMessage = serverMessage;
+          } else {
+            errorMessage = serverMessage;
+          }
+        } else if (serverError) {
+          errorMessage = serverError;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      // For SKU errors, show a more detailed toast with action
+      if (errorTitle === "SKU Already Exists" && formData.sku) {
+        const timestamp = Date.now().toString().slice(-4);
+        const suggestedSku = `${formData.sku}-${timestamp}`;
+        
+        toast({
+          title: errorTitle,
+          description: "A product with this SKU already exists. Click 'Use Suggested SKU' to automatically update the form.",
+          variant: "destructive",
+          action: (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                dispatch(setFormData({ ...formData, sku: suggestedSku }));
+                toast({
+                  title: "SKU Updated",
+                  description: `SKU updated to: ${suggestedSku}`,
+                });
+              }}
+            >
+              Use Suggested SKU
+            </Button>
+          ),
+        });
+      } else {
+        toast({
+          title: errorTitle,
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } finally {
       setUploading(false);
       setUploadProgress(null);
