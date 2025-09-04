@@ -10,11 +10,12 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -71,12 +72,15 @@ function OrderDetailsDialog({ order, open, onClose }: OrderDetailsDialogProps) {
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                        <Package className="h-5 w-5" />
-                        Order Details - #{order.id}
-                    </DialogTitle>
-                </DialogHeader>
+                        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Order Details - #{order.id}
+          </DialogTitle>
+          <DialogDescription>
+            View detailed information about your order including items, payment status, and delivery information.
+          </DialogDescription>
+        </DialogHeader>
 
                 <div className="space-y-6">
                     {/* Order Summary */}
