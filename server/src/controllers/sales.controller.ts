@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import type { Transaction } from "sequelize";
-import { Sale, SaleItem, User, Customer, Product, sequelize } from "../models/index.js";
+import { Sale, SaleItem, User, Product, sequelize } from "../models/index.js";
 import { storeScope } from "../utils/helpers.js";
 
 export const createSale = async (req: Request, res: Response) => {
@@ -107,7 +107,8 @@ export const createSale = async (req: Request, res: Response) => {
           attributes: ["id", "name", "email"],
         },
         {
-          model: Customer,
+          model: User,
+          as: "Customer",
           attributes: ["id", "name", "email", "phone"],
         },
         {
@@ -210,7 +211,8 @@ export const getSales = async (req: Request, res: Response) => {
           required: false,
         },
         {
-          model: Customer,
+          model: User,
+          as: "Customer",
           attributes: ["id", "name", "email", "phone"],
           required: false,
         },
@@ -347,7 +349,8 @@ export const getSaleById = async (req: Request, res: Response) => {
           attributes: ["id", "name", "email"],
         },
         {
-          model: Customer,
+          model: User,
+          as: "Customer",
           attributes: ["id", "name", "email", "phone"],
           required: false,
         },
