@@ -145,8 +145,8 @@ export default function ProductCard({
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <CarouselPrevious className="left-1 top-1/2 -translate-y-1/2 h-6 w-6" />
-                <CarouselNext className="right-1 top-1/2 -translate-y-1/2 h-6 w-6" />
+                <CarouselPrevious className="left-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-8 sm:w-8 bg-white/80 hover:bg-white shadow-md" />
+                <CarouselNext className="right-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-8 sm:w-8 bg-white/80 hover:bg-white shadow-md" />
               </Carousel>
             ) : (
               <img
@@ -277,7 +277,7 @@ export default function ProductCard({
     <Card className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
       <div className="relative">
         {/* Product Image */}
-        <div className="aspect-square overflow-hidden">
+        <div className="aspect-square overflow-hidden relative">
           {!imageError ? (
             product.images && product.images.length > 1 ? (
               <Carousel className="w-full h-full">
@@ -293,8 +293,8 @@ export default function ProductCard({
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <CarouselPrevious className="left-2 top-1/2 -translate-y-1/2 h-8 w-8" />
-                <CarouselNext className="right-2 top-1/2 -translate-y-1/2 h-8 w-8" />
+                <CarouselPrevious className="left-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-8 sm:w-8 bg-white/80 hover:bg-white shadow-md" />
+                <CarouselNext className="right-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-8 sm:w-8 bg-white/80 hover:bg-white shadow-md" />
               </Carousel>
             ) : (
               <img
@@ -315,28 +315,28 @@ export default function ProductCard({
         <Button
           variant="ghost"
           size="sm"
-          className={`absolute top-2 right-2 bg-white/80 hover:bg-white ${
+          className={`absolute top-1 right-1 sm:top-2 sm:right-2 bg-white/80 hover:bg-white h-6 w-6 sm:h-8 sm:w-8 p-0 ${
             favoriteStatus?.isFavorite ? "text-red-500" : "text-gray-600"
           }`}
           onClick={handleToggleFavorite}
           disabled={toggleFavorite.isPending}
         >
-          <Heart className={`w-4 h-4 ${favoriteStatus?.isFavorite ? "fill-current" : ""}`} />
+          <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${favoriteStatus?.isFavorite ? "fill-current" : ""}`} />
         </Button>
 
         {/* Stock Badge */}
         {product.quantity <= product.min_quantity && (
-          <Badge variant="destructive" className="absolute top-2 left-2">
+          <Badge variant="destructive" className="absolute top-1 left-1 sm:top-2 sm:left-2 text-xs">
             Low Stock
           </Badge>
         )}
       </div>
 
-      <CardContent className="p-4">
+      <CardContent className="p-3 sm:p-4">
         {/* Product Info */}
         <div className="mb-3">
-          <h3 className="font-semibold text-lg mb-1 line-clamp-2">{product.name}</h3>
-          <p className="text-gray-600 text-sm mb-2 line-clamp-2">{product.description}</p>
+          <h3 className="font-semibold text-base sm:text-lg mb-1 line-clamp-2">{product.name}</h3>
+          <p className="text-gray-600 text-xs sm:text-sm mb-2 line-clamp-2">{product.description}</p>
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="secondary" className="text-xs">
               {product.Category?.name || "Uncategorized"}
@@ -347,10 +347,10 @@ export default function ProductCard({
         {/* Price */}
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-2xl font-bold text-green-600">
+            <span className="text-lg sm:text-2xl font-bold text-green-600">
               KSh {currentPrice.toLocaleString()}
             </span>
-            <span className="text-sm text-gray-500">{getUnitLabel(selectedUnit)}</span>
+            <span className="text-xs sm:text-sm text-gray-500">{getUnitLabel(selectedUnit)}</span>
           </div>
 
           {/* Unit Selection */}
@@ -385,22 +385,22 @@ export default function ProductCard({
         <div className="space-y-3">
           {/* Quantity Controls */}
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Quantity:</span>
+            <span className="text-xs sm:text-sm font-medium">Quantity:</span>
             <div className="flex items-center border rounded-lg">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={decrementQuantity}
                 disabled={quantity <= 1}
-                className="h-8 w-8 p-0"
+                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
               >
-                <Minus className="w-4 h-4" />
+                <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
               </Button>
               <Input
                 type="number"
                 value={quantity}
                 onChange={(e) => handleQuantityChange(e.target.value)}
-                className="w-16 h-8 text-center border-0 focus:ring-0"
+                className="w-12 sm:w-16 h-7 sm:h-8 text-center border-0 focus:ring-0 text-xs sm:text-sm"
                 min="1"
                 max="99"
               />
@@ -409,9 +409,9 @@ export default function ProductCard({
                 size="sm"
                 onClick={incrementQuantity}
                 disabled={quantity >= 99}
-                className="h-8 w-8 p-0"
+                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
               </Button>
             </div>
           </div>
@@ -421,9 +421,9 @@ export default function ProductCard({
             id={`add-to-cart-${product.id}`}
             onClick={handleAddToCart}
             disabled={isAddingToCart}
-            className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+            className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm h-8 sm:h-10"
           >
-            <ShoppingCart className="w-4 h-4" />
+            <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
             {isAddingToCart ? "Adding..." : "Add to Cart"}
           </Button>
         </div>
