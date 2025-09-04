@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Favorite, Product } from "../models/index.js";
+import { Favorite, Product, Category } from "../models/index.js";
 import { catchAsync } from "../utils/catch-async.js";
 import { ApiError } from "../utils/api-error.js";
 
@@ -19,11 +19,10 @@ export const getUserFavorites = catchAsync(async (req: Request, res: Response) =
                 as: "product",
                 include: [
                     {
-                        model: require("../models/Category.js").default,
-                        as: "Category",
-                        attributes: ["id", "name"]
-                    }
-                ]
+                        model: Category,
+                        attributes: ["id", "name"],
+                    },
+                ],
             }
         ],
         order: [["created_at", "DESC"]]
