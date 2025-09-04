@@ -17,6 +17,7 @@ import ReportsPage from "@/pages/ReportsPage";
 import HomePage from "@/pages/HomePage";
 import UserManagementPage from "@/pages/UserManagementPage";
 import FavoritesPage from "@/pages/FavoritesPage";
+import OrdersPage from "@/pages/OrdersPage";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
 
@@ -118,6 +119,13 @@ function App() {
         <Route path="/:store/favorites">
           <ProtectedRoute
             component={FavoritesPage}
+            roles={["admin", "sales", "user", "super_admin", "manager", "client"]}
+          />
+        </Route>
+
+        <Route path="/:store/orders">
+          <ProtectedRoute
+            component={OrdersPage}
             roles={["admin", "sales", "user", "super_admin", "manager", "client"]}
           />
         </Route>

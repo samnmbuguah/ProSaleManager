@@ -1,8 +1,10 @@
 import { useProducts } from "@/hooks/use-products";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/use-auth";
+import { useStoreContext } from "@/contexts/StoreContext";
 import { useEffect, useState } from "react";
 import { api, API_ENDPOINTS } from "@/lib/api";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,6 +39,7 @@ import {
   Menu,
   LogOut,
   Heart,
+  Package,
 } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
 import CategoryFilter from "@/components/shop/CategoryFilter";
@@ -62,6 +65,7 @@ export default function HomePage() {
   const products = Array.isArray(rawProducts) ? rawProducts : [];
   const { cart, clearCart } = useCart();
   const { user, isAuthenticated, login, register } = useAuth();
+  const { currentStore } = useStoreContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
@@ -260,28 +264,38 @@ export default function HomePage() {
 
               {isAuthenticated ? (
                 <div className="hidden sm:flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full hover:bg-gray-200"
-                    onClick={() => (window.location.href = "/profile")}
-                  >
-                    <User className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm text-gray-700">
-                      {(user?.name || "").split(" ")[0] || user?.name}
-                    </span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-2"
-                    onClick={() =>
-                      (window.location.href = `/${(window.location.pathname.split("/")[1] || "").trim()}/favorites`)
-                    }
-                  >
-                    <Heart className="h-4 w-4" />
-                    <span className="text-sm">Favorites</span>
-                  </Button>
+                  <Link href="/profile">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full hover:bg-gray-200"
+                    >
+                      <User className="w-4 h-4 text-gray-600" />
+                      <span className="text-sm text-gray-700">
+                        {(user?.name || "").split(" ")[0] || user?.name}
+                      </span>
+                    </Button>
+                  </Link>
+                  <Link href={`/${currentStore?.name || ""}/orders`}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <Package className="h-4 w-4" />
+                      <span className="text-sm">My Orders</span>
+                    </Button>
+                  </Link>
+                  <Link href={`/${currentStore?.name || ""}/favorites`}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <Heart className="h-4 w-4" />
+                      <span className="text-sm">Favorites</span>
+                    </Button>
+                  </Link>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -317,19 +331,27 @@ export default function HomePage() {
               >
                 <Menu className="w-4 h-4" />
               </Button>
-              {/* Mobile quick actions for client: Favorites and Logout */}
+              {/* Mobile quick actions for client: Orders, Favorites and Logout */}
               {isAuthenticated && (
                 <>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="sm:hidden"
-                    onClick={() =>
-                      (window.location.href = `/${(window.location.pathname.split("/")[1] || "").trim()}/favorites`)
-                    }
-                  >
-                    Favorites
-                  </Button>
+                  <Link href={`/${currentStore?.name || ""}/orders`}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="sm:hidden"
+                    >
+                      Orders
+                    </Button>
+                  </Link>
+                  <Link href={`/${currentStore?.name || ""}/favorites`}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="sm:hidden"
+                    >
+                      Favorites
+                    </Button>
+                  </Link>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -496,11 +518,10 @@ export default function HomePage() {
 
         {/* Products Grid */}
         <div
-          className={`grid gap-6 mb-8 ${
-            viewMode === "grid"
-              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-              : "grid-cols-1"
-          }`}
+          className={`grid gap-6 mb-8 ${viewMode === "grid"
+            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            : "grid-cols-1"
+            }`}
         >
           {paginatedProducts.map((product) => (
             <ProductCard
@@ -660,12 +681,12 @@ export default function HomePage() {
               {(isLogin
                 ? loginForm.formState.errors.email
                 : registerForm.formState.errors.email) && (
-                <p className="text-sm text-red-600 mt-1">
-                  {isLogin
-                    ? loginForm.formState.errors.email?.message
-                    : registerForm.formState.errors.email?.message}
-                </p>
-              )}
+                  <p className="text-sm text-red-600 mt-1">
+                    {isLogin
+                      ? loginForm.formState.errors.email?.message
+                      : registerForm.formState.errors.email?.message}
+                  </p>
+                )}
             </div>
 
             {!isLogin && (
@@ -695,12 +716,12 @@ export default function HomePage() {
               {(isLogin
                 ? loginForm.formState.errors.password
                 : registerForm.formState.errors.password) && (
-                <p className="text-sm text-red-600 mt-1">
-                  {isLogin
-                    ? loginForm.formState.errors.password?.message
-                    : registerForm.formState.errors.password?.message}
-                </p>
-              )}
+                  <p className="text-sm text-red-600 mt-1">
+                    {isLogin
+                      ? loginForm.formState.errors.password?.message
+                      : registerForm.formState.errors.password?.message}
+                  </p>
+                )}
             </div>
 
             <div className="flex flex-col gap-3 pt-4">
