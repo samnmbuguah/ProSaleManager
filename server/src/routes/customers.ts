@@ -1,6 +1,6 @@
 import express from "express";
 import { Op } from "sequelize";
-import Customer from "../models/Customer.js";
+import User from "../models/User.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import { requireStoreContext } from "../middleware/store-context.middleware.js";
 import { storeScope } from "../utils/helpers.js";
@@ -22,31 +22,31 @@ router.get("/", async (req, res) => {
   }
   try {
     const where = storeScope({ ...req.user, store_id: storeId }, {});
-    let customers = await Customer.findAll({
-      where,
+    let customers = await User.findAll({
+      where: { ...where, role: "client" },
       order: [["name", "ASC"]],
+      attributes: ["id", "name", "email", "phone", "store_id"],
     });
     // If no customers, create or fetch Walk-in Customer for this store
     if (customers.length === 0 && storeId) {
-      let walkIn = await Customer.findOne({
-        where: { store_id: storeId, name: "Walk-in Customer" },
+      let walkIn = await User.findOne({
+        where: { store_id: storeId, name: "Walk-in Customer", role: "client" },
       });
       if (!walkIn) {
         try {
-          walkIn = await Customer.create({
+          walkIn = await User.create({
             name: "Walk-in Customer",
             email: `walkin.${storeId}@example.com`,
             phone: "N/A",
-            address: "N/A",
-            notes: "Default walk-in customer",
-            loyalty_points: 0,
+            role: "client",
+            password: Math.random().toString(36).slice(2),
             is_active: true,
             store_id: storeId,
           });
         } catch (error: unknown) {
           // If unique constraint error, try to fetch again
-          walkIn = await Customer.findOne({
-            where: { store_id: storeId, name: "Walk-in Customer" },
+          walkIn = await User.findOne({
+            where: { store_id: storeId, name: "Walk-in Customer", role: "client" },
           });
         }
       }
@@ -75,10 +75,11 @@ router.get("/search", async (req, res) => {
       };
     }
     where = storeScope(req.user, where);
-    const customers = await Customer.findAll({
-      where,
+    const customers = await User.findAll({
+      where: { ...where, role: "client" },
       limit: 10,
       order: [["name", "ASC"]],
+      attributes: ["id", "name", "email", "phone", "store_id"],
     });
     res.json(customers);
   } catch {
@@ -90,15 +91,17 @@ router.get("/search", async (req, res) => {
 // Create a new customer
 router.post("/", async (req, res) => {
   try {
-    const { name, email, phone, address } = req.body;
+    const { name, email, phone } = req.body;
     if (!name || !phone) {
       return res.status(400).json({ message: "Name and phone are required" });
     }
-    const customer = await Customer.create({
+    const customer = await User.create({
       name,
       email,
       phone,
-      address,
+      role: "client",
+      password: Math.random().toString(36).slice(2),
+      is_active: true,
       store_id: req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id,
     });
     res.status(201).json(customer);
@@ -117,9 +120,9 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, phone, address } = req.body;
+    const { name, email, phone } = req.body;
     const where = storeScope(req.user, { id });
-    const customer = await Customer.findOne({ where });
+    const customer = await User.findOne({ where: { ...where, role: "client" } });
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
     }
@@ -127,7 +130,6 @@ router.put("/:id", async (req, res) => {
       name,
       email,
       phone,
-      address,
     });
     res.json(customer);
   } catch (error: unknown) {
@@ -141,7 +143,7 @@ router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const where = storeScope(req.user, { id });
-    const customer = await Customer.findOne({ where });
+    const customer = await User.findOne({ where: { ...where, role: "client" } });
     if (!customer) {
       return res.status(404).json({ message: "Customer not found" });
     }
