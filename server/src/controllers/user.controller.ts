@@ -311,12 +311,27 @@ export const getUserPreferences = catchAsync(async (req: Request, res: Response)
     throw new ApiError(401, "Authentication required");
   }
 
-  let preferences = await UserPreference.findOne({ where: { user_id: userId } });
+  // Ensure userId is an integer
+  const userIdInt = parseInt(userId.toString(), 10);
+  if (isNaN(userIdInt)) {
+    throw new ApiError(400, "Invalid user ID");
+  }
+
+  console.log("Getting preferences for user_id:", userIdInt, "type:", typeof userIdInt);
+
+  // Verify user exists before creating preferences
+  const userExists = await User.findByPk(userIdInt);
+  if (!userExists) {
+    throw new ApiError(404, "User not found");
+  }
+
+  let preferences = await UserPreference.findOne({ where: { user_id: userIdInt } });
 
   // Create default preferences if none exist
   if (!preferences) {
+    console.log("Creating default preferences for user_id:", userIdInt);
     preferences = await UserPreference.create({
-      user_id: userId,
+      user_id: userIdInt,
       dark_mode: false,
       notifications: true,
       language: "english",
@@ -338,9 +353,15 @@ export const updateUserPreferences = catchAsync(async (req: Request, res: Respon
     throw new ApiError(401, "Authentication required");
   }
 
+  // Ensure userId is an integer
+  const userIdInt = parseInt(userId.toString(), 10);
+  if (isNaN(userIdInt)) {
+    throw new ApiError(400, "Invalid user ID");
+  }
+
   const { dark_mode, notifications, language, theme, timezone } = req.body;
 
-  let preferences = await UserPreference.findOne({ where: { user_id: userId } });
+  let preferences = await UserPreference.findOne({ where: { user_id: userIdInt } });
 
   if (preferences) {
     await preferences.update({
@@ -352,7 +373,7 @@ export const updateUserPreferences = catchAsync(async (req: Request, res: Respon
     });
   } else {
     preferences = await UserPreference.create({
-      user_id: userId,
+      user_id: userIdInt,
       dark_mode: dark_mode !== undefined ? dark_mode : false,
       notifications: notifications !== undefined ? notifications : true,
       language: language || "english",
