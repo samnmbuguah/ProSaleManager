@@ -52,7 +52,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (stored) {
       try {
         setCurrentStore(JSON.parse(stored));
-      } catch {}
+      } catch {
+        // Ignore parsing errors
+      }
     }
   }, []);
 

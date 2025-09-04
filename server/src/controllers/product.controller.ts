@@ -10,7 +10,7 @@ import PurchaseOrderItem from "../models/PurchaseOrderItem.js";
 import ProductSupplier from "../models/ProductSupplier.js";
 
 export const getProducts = catchAsync(async (req: Request, res: Response) => {
-  const where: any = {};
+  const where: Record<string, unknown> = {};
   if (req.user?.role !== "super_admin") {
     if (!req.user?.store_id) {
       res.status(400).json({ success: false, message: "Store context missing" });
@@ -37,7 +37,7 @@ export const getProducts = catchAsync(async (req: Request, res: Response) => {
 
 export const getProduct = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const where: any = { id };
+  const where: Record<string, unknown> = { id };
   if (req.user?.role !== "super_admin") {
     if (!req.user?.store_id) {
       res.status(400).json({ success: false, message: "Store context missing" });
@@ -229,25 +229,27 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
       success: true,
       data: product,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     // Handle Sequelize unique/foreign key constraint errors
-    if (err.name === "SequelizeUniqueConstraintError" && err.errors?.[0]?.path === "sku") {
+    if (err && typeof err === 'object' && 'name' in err && err.name === "SequelizeUniqueConstraintError" &&
+      'errors' in err && Array.isArray(err.errors) && err.errors[0] &&
+      typeof err.errors[0] === 'object' && 'path' in err.errors[0] && err.errors[0].path === "sku") {
       res.status(400).json({
         success: false,
         message: "SKU already exists. Please use a unique SKU.",
       });
       return;
     }
-    if (err.name === "SequelizeForeignKeyConstraintError") {
+    if (err && typeof err === 'object' && 'name' in err && err.name === "SequelizeForeignKeyConstraintError") {
       res.status(400).json({
         success: false,
-        message: "Foreign key constraint error: " + err.message,
+        message: "Foreign key constraint error: " + ((err as { message?: string }).message || "Unknown error"),
       });
       return;
     }
     res.status(500).json({
       success: false,
-      message: err.message || "Failed to create product.",
+      message: (err as { message?: string }).message || "Failed to create product.",
     });
   }
 });
@@ -280,7 +282,7 @@ export const updateProduct = catchAsync(async (req: Request, res: Response) => {
     "images",
     "stock_unit", // <-- Added to allow updating stock_unit
   ];
-  const updateData: Record<string, any> = {};
+  const updateData: Record<string, unknown> = {};
   for (const field of allowedFields) {
     if (req.body[field] !== undefined) {
       let value = req.body[field];

@@ -224,8 +224,11 @@ export function ProductForm({ initialData, onSubmit, isSubmitting }: ProductForm
                       setNewCategoryName("");
                       setNewCategoryDesc("");
                     }
-                  } catch (err: any) {
-                    alert(err?.response?.data?.message || "Failed to create category");
+                  } catch (err: unknown) {
+                    alert(
+                      (err as { response?: { data?: { message?: string } } })?.response?.data
+                        ?.message || "Failed to create category"
+                    );
                   }
                 }}
               >

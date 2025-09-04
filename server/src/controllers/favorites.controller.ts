@@ -30,7 +30,7 @@ export const getUserFavorites = catchAsync(async (req: Request, res: Response) =
 
     res.json({
         success: true,
-        data: favorites.map((fav: any) => fav.product)
+        data: favorites.map((fav) => (fav as any).product)
     });
 });
 

@@ -4,7 +4,6 @@ import { ApiError } from "../utils/api-error.js";
 import User from "../models/User.js";
 import UserPreference from "../models/UserPreference.js";
 import Store from "../models/Store.js";
-import bcrypt from "bcryptjs";
 import { Op } from "sequelize";
 
 // Get all users (with pagination and filtering)
@@ -12,12 +11,12 @@ export const getUsers = catchAsync(async (req: Request, res: Response) => {
   const { page = 1, limit = 10, role, store_id, search } = req.query;
   const offset = (Number(page) - 1) * Number(limit);
 
-  const whereClause: any = {};
+  const whereClause: Record<string, unknown> = {};
 
   if (role) whereClause.role = role;
   if (store_id) whereClause.store_id = store_id;
   if (search) {
-    whereClause[Op.or] = [
+    (whereClause as any)[Op.or] = [
       { name: { [Op.iLike]: `%${search}%` } },
       { email: { [Op.iLike]: `%${search}%` } }
     ];
@@ -138,7 +137,7 @@ export const createUser = catchAsync(async (req: Request, res: Response) => {
   });
 
   // Return user without password
-  const userData = user.toJSON() as any;
+  const userData = user.toJSON() as unknown as Record<string, unknown>;
   delete userData.password;
 
   res.status(201).json({
@@ -194,7 +193,7 @@ export const updateUser = catchAsync(async (req: Request, res: Response) => {
   });
 
   // Return updated user without password
-  const userData = user.toJSON() as any;
+  const userData = user.toJSON() as unknown as Record<string, unknown>;
   delete userData.password;
 
   res.json({
@@ -258,7 +257,7 @@ export const updateProfile = catchAsync(async (req: Request, res: Response) => {
   });
 
   // Return updated user without password
-  const userData = user.toJSON() as any;
+  const userData = user.toJSON() as unknown as Record<string, unknown>;
   delete userData.password;
 
   res.json({

@@ -146,9 +146,12 @@ export default function ProfilePage() {
         title: "Success",
         description: "Profile updated successfully",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorMessage =
-        error.response?.data?.message || error.message || "Failed to update profile";
+        (error as { response?: { data?: { message?: string } }; message?: string })?.response?.data
+          ?.message ||
+        (error as { message?: string })?.message ||
+        "Failed to update profile";
       setErrors((prev) => ({
         ...prev,
         profile: errorMessage,
@@ -204,9 +207,12 @@ export default function ProfilePage() {
         title: "Success",
         description: "Password changed successfully",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorMessage =
-        error.response?.data?.message || error.message || "Failed to change password";
+        (error as { response?: { data?: { message?: string } }; message?: string })?.response?.data
+          ?.message ||
+        (error as { message?: string })?.message ||
+        "Failed to change password";
       setErrors((prev) => ({
         ...prev,
         password: errorMessage,
@@ -246,11 +252,13 @@ export default function ProfilePage() {
         title: "Preference Updated",
         description: `${key.charAt(0).toUpperCase() + key.slice(1)} setting updated`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Update Failed",
-        description: error.response?.data?.message || "Failed to update preference",
+        description:
+          (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          "Failed to update preference",
       });
     } finally {
       setIsLoading((prev) => ({ ...prev, preferences: false }));

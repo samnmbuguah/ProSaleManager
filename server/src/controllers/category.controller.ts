@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
+import { Op } from "sequelize";
 import Category from "../models/Category.js";
 
 export const getCategories = async (req: Request, res: Response) => {
   try {
     const { is_active } = req.query;
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (is_active !== undefined) {
       where.is_active = is_active === 'true';
     }
@@ -87,7 +88,7 @@ export const updateCategory = async (req: Request, res: Response) => {
       const existing = await Category.findOne({
         where: {
           name: name.trim(),
-          id: { [require('sequelize').Op.ne]: req.params.id }
+          id: { [Op.ne]: req.params.id }
         }
       });
       if (existing) {

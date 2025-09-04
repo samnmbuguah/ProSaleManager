@@ -1,12 +1,11 @@
 import { Request, Response } from "express";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User, Store } from "../models/index.js";
 import { ApiError } from "../utils/api-error.js";
 import { catchAsync } from "../utils/catch-async.js";
 
 export const register = catchAsync(async (req: Request, res: Response) => {
-  const { name, email, password: plainPassword, role, phone } = req.body;
+  const { name, email, password: plainPassword, phone } = req.body;
 
   // Check if user already exists
   const existingUser = await User.findOne({ where: { email } });

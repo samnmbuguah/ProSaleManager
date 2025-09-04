@@ -886,7 +886,7 @@ export default {
     console.log('👤 Default user role: client');
   },
 
-  async down (queryInterface, Sequelize) {
+  async down (queryInterface) {
     // Drop all tables in reverse order
     await queryInterface.dropTable('receipt_settings');
     await queryInterface.dropTable('user_preferences');

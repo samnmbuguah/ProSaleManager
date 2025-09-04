@@ -3,7 +3,15 @@ import { User, Store } from "../models/index.js";
 export async function seedCustomers() {
   const stores = await Store.findAll();
   if (!stores.length) throw new Error("No stores found");
-  const customers: any[] = [];
+  const customers: Array<{
+    name: string;
+    email: string;
+    phone: string;
+    role: "client";
+    password: string;
+    is_active: boolean;
+    store_id: number;
+  }> = [];
   for (const store of stores) {
     customers.push(
       // Walk-in Customer (default)

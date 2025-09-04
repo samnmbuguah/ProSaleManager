@@ -63,7 +63,7 @@ export function useToggleFavorite() {
       });
     },
     onError: (
-      error: any,
+      error: unknown,
       _productId: number,
       context: { previousStatus?: { isFavorite: boolean }; productId: number } | undefined
     ) => {
@@ -74,7 +74,9 @@ export function useToggleFavorite() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.response?.data?.message || "Failed to update favorites",
+        description:
+          (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          "Failed to update favorites",
       });
     },
   });
@@ -112,7 +114,7 @@ export function useAddToFavorites() {
       });
     },
     onError: (
-      error: any,
+      error: unknown,
       _productId: number,
       context: { previousStatus?: { isFavorite: boolean }; productId: number } | undefined
     ) => {
@@ -122,7 +124,9 @@ export function useAddToFavorites() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.response?.data?.message || "Failed to add to favorites",
+        description:
+          (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          "Failed to add to favorites",
       });
     },
   });
@@ -160,7 +164,7 @@ export function useRemoveFromFavorites() {
       });
     },
     onError: (
-      error: any,
+      error: unknown,
       _productId: number,
       context: { previousStatus?: { isFavorite: boolean }; productId: number } | undefined
     ) => {
@@ -170,7 +174,9 @@ export function useRemoveFromFavorites() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.response?.data?.message || "Failed to remove from favorites",
+        description:
+          (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          "Failed to remove from favorites",
       });
     },
   });

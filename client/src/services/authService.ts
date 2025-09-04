@@ -47,8 +47,8 @@ export const authService = {
     try {
       const response = await api.get<AuthResponse>(API_ENDPOINTS.auth.me);
       return response.data.authenticated ? response.data.data : null;
-    } catch (error: any) {
-      if (error.response && error.response.status === 401) {
+    } catch (error: unknown) {
+      if ((error as { response?: { status?: number } })?.response?.status === 401) {
         toast({
           title: "Session expired",
           description: "Please log in again.",

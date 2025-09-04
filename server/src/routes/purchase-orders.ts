@@ -164,11 +164,11 @@ router.put(
             product.quantity += item.quantity;
             // Only update the relevant unit's buying price
             if (item.unit_type && item.unit_price !== undefined) {
-              (product as any)[`${item.unit_type}_buying_price`] = Number(item.unit_price);
+              (product as unknown as Record<string, unknown>)[`${item.unit_type}_buying_price`] = Number(item.unit_price);
             }
             // Only update selling price if present on the item
             if (item.unit_type && item.selling_price !== undefined) {
-              (product as any)[`${item.unit_type}_selling_price`] = Number(item.selling_price);
+              (product as unknown as Record<string, unknown>)[`${item.unit_type}_selling_price`] = Number(item.selling_price);
             }
             await product.save();
           }

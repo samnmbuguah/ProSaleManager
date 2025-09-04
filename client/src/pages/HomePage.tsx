@@ -289,7 +289,9 @@ export default function HomePage() {
                       try {
                         await api.post("/auth/logout");
                         window.location.href = "/";
-                      } catch {}
+                      } catch {
+                        // Ignore logout errors
+                      }
                     }}
                   >
                     <LogOut className="h-4 w-4" />
@@ -336,7 +338,9 @@ export default function HomePage() {
                       try {
                         await api.post("/auth/logout");
                         window.location.href = "/";
-                      } catch {}
+                      } catch {
+                        // Ignore logout errors
+                      }
                     }}
                   >
                     Logout

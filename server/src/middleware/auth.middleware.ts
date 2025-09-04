@@ -23,7 +23,6 @@ declare global {
 
 // Middleware to resolve store from domain or subdomain
 export const resolveStore = async (req: Request, res: Response, next: NextFunction) => {
-  const host = req.headers.host || "";
 
   // Prefer path-based store resolution: expect URL like /api/... or /:store/... (frontend) and for API we stay /api
   // We will try to extract the first non-empty segment from the referer path if present, else from req.headers["x-store-slug"], else default to first store

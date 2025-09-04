@@ -74,7 +74,7 @@ export default function ReportsPage() {
     try {
       const res = await api.get("/products/search", { params: { q: query } });
       setSearchResults(res.data.data || []);
-    } catch (error) {
+    } catch {
       setSearchResults([]);
     }
   };
