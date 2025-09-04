@@ -1,13 +1,8 @@
-import request from "supertest";
+import supertest from "supertest";
 import app from "../../server/src/app.js";
 import { sequelize } from "../../server/src/config/database.js";
 import Customer from "../../server/src/models/Customer.js";
-import { authenticateAllUsers, TestAuthContext, testUnauthorizedAccess, testForbiddenAccess } from "../utils/auth-helpers.js";
-
-// Helper function for authenticated requests - use local import like products tests
-const createAuthenticatedRequest = (token: string) => {
-    return request(app).set('Authorization', `Bearer ${token}`);
-};
+import { authenticateAllUsers, TestAuthContext, testUnauthorizedAccess, testForbiddenAccess, createAuthenticatedRequest } from "../utils/auth-helpers.js";
 
 describe("Customers API", () => {
     let authTokens: TestAuthContext;
@@ -143,7 +138,7 @@ describe("Customers API", () => {
                 email: "other@customer.com",
                 phone: "+2222222222",
                 address: "888 Other St",
-                store_id: 999
+                store_id: 2
             });
 
             const response = await createAuthenticatedRequest(authTokens.admin.token)

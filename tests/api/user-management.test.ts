@@ -1,4 +1,4 @@
-import request from "supertest";
+import supertest from "supertest";
 import app from "../../server/src/app.js";
 import { sequelize } from "../../server/src/config/database.js";
 import User from "../../server/src/models/User.js";

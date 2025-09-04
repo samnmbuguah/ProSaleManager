@@ -1,17 +1,12 @@
-import request from "supertest";
+import supertest from "supertest";
 import app from "../../server/src/app.js";
 import { sequelize } from "../../server/src/config/database.js";
 import Sale from "../../server/src/models/Sale.js";
 import SaleItem from "../../server/src/models/SaleItem.js";
 import Product from "../../server/src/models/Product.js";
 import Customer from "../../server/src/models/Customer.js";
-import { authenticateAllUsers, TestAuthContext, testUnauthorizedAccess, testForbiddenAccess } from "../utils/auth-helpers.js";
+import { authenticateAllUsers, TestAuthContext, testUnauthorizedAccess, testForbiddenAccess, createAuthenticatedRequest } from "../utils/auth-helpers.js";
 import { createTestProduct, TEST_CATEGORIES } from "../fixtures/products.js";
-
-// Helper function for authenticated requests - use local import like products tests
-const createAuthenticatedRequest = (token: string) => {
-    return request(app).set('Authorization', `Bearer ${token}`);
-};
 
 describe("Sales API", () => {
     let authTokens: TestAuthContext;
