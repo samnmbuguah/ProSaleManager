@@ -149,6 +149,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
           role: (decoded as jwt.JwtPayload).role,
           store_id: user?.role === "super_admin" ? null : user?.store_id,
         };
+        console.log(`requireAuth: user_id=${req.user.id}, role=${req.user.role}, store_id=${req.user.store_id}, db_user_store_id=${user?.store_id}`);
       }
       await next();
     },

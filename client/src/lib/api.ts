@@ -35,12 +35,13 @@ export const fetchCsrfToken = async () => {
 
 // Add request interceptor for CSRF token, auth, and store_id for super admin
 api.interceptors.request.use(async (config) => {
-  // Remove noisy debug logs
   // Skip CSRF token for:
   // 1. GET requests to non-auth endpoints
   // 2. The CSRF token endpoint itself
+  // 3. DELETE requests (they don't need CSRF in this implementation)
   if (
     (config.method === "get" && !config.url?.startsWith("/auth")) ||
+    config.method === "delete" ||
     config.url === API_ENDPOINTS.auth.csrfToken
   ) {
     return config;
