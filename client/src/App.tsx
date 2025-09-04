@@ -16,6 +16,7 @@ import ProfilePage from "@/pages/ProfilePage";
 import ReportsPage from "@/pages/ReportsPage";
 import HomePage from "@/pages/HomePage";
 import UserManagementPage from "@/pages/UserManagementPage";
+import FavoritesPage from "@/pages/FavoritesPage";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
 
@@ -71,37 +72,47 @@ function App() {
 
         <Route path="/" component={HomePage} />
 
-        <Route path="/pos">
+        <Route path="/:store/pos">
           <ProtectedRoute component={POSPage} roles={["admin", "sales", "super_admin", "manager"]} />
         </Route>
 
-        <Route path="/inventory">
+        <Route path="/:store/inventory">
           <ProtectedRoute component={InventoryPage} roles={["admin", "sales", "super_admin", "manager"]} />
         </Route>
 
-        <Route path="/expenses">
+        <Route path="/:store/expenses">
           <ProtectedRoute component={ExpensesPage} roles={["admin", "sales", "super_admin", "manager"]} />
         </Route>
 
-        <Route path="/sales">
+        <Route path="/:store/sales">
           <ProtectedRoute component={SalesPage} roles={["admin", "sales", "super_admin", "manager"]} />
         </Route>
 
-        <Route path="/customers">
+        <Route path="/:store/customers">
           <ProtectedRoute component={CustomersPage} roles={["admin", "super_admin", "manager"]} />
         </Route>
 
-        <Route path="/reports">
+        <Route path="/:store/reports">
           <ProtectedRoute component={ReportsPage} roles={["admin", "super_admin", "manager"]} />
+        </Route>
+
+        <Route path="/:store/profile">
+          <ProtectedRoute component={ProfilePage} roles={["admin", "sales", "user", "super_admin", "manager", "client"]} />
+        </Route>
+
+        <Route path="/:store/favorites">
+          <ProtectedRoute component={FavoritesPage} roles={["admin", "sales", "user", "super_admin", "manager", "client"]} />
         </Route>
 
         <Route path="/profile">
           <ProtectedRoute component={ProfilePage} roles={["admin", "sales", "user", "super_admin", "manager", "client"]} />
         </Route>
 
-        <Route path="/users">
+        <Route path="/:store/users">
           <ProtectedRoute component={UserManagementPage} roles={["super_admin"]} />
         </Route>
+
+        <Route path="/:store" component={HomePage} />
 
         <Route path="/admin" component={RootRedirect} />
       </Switch>
