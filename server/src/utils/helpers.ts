@@ -14,7 +14,7 @@ export function generateOrderNumber(): string {
  */
 export function storeScope(
   user: { role: string; store_id?: number | null } | undefined,
-  where: any = {},
+  where: Record<string, unknown> = {},
 ) {
   if (!user) return { ...where, store_id: -1 }; // never match if no user
   if (user.role === "super_admin") return where;

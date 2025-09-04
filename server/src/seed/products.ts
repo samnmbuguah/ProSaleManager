@@ -19,7 +19,7 @@ async function fetchPexelsImages(query: string, perPage = 3): Promise<string[]> 
   );
   if (!res.ok) throw new Error(`Pexels API error: ${res.statusText}`);
   const data = await res.json();
-  return data.photos.map((photo: any) => photo.src.large);
+  return data.photos.map((photo: Record<string, unknown>) => (photo.src as Record<string, unknown>).large as string);
 }
 
 function randomFrom<T>(arr: T[]): T {

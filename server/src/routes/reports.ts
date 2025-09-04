@@ -10,6 +10,85 @@ import Expense from "../models/Expense.js";
 
 const router = Router();
 
+// Helper functions for date calculations
+function toNairobiTime(date: Date): Date {
+  return new Date(date.getTime() + 3 * 60 * 60 * 1000);
+}
+
+function getMondayNairobi(date: Date): Date {
+  const nairobi = toNairobiTime(date);
+  const day = nairobi.getDay();
+  const diff = nairobi.getDate() - day + (day === 0 ? -6 : 1);
+  const mondayNairobi = new Date(nairobi);
+  mondayNairobi.setDate(diff);
+  mondayNairobi.setHours(0, 0, 0, 0);
+  // Convert back to UTC for DB query
+  return new Date(mondayNairobi.getTime() - 3 * 60 * 60 * 1000);
+}
+
+function getFirstDayOfMonthNairobi(date: Date): Date {
+  const nairobi = toNairobiTime(date);
+  const firstDay = new Date(nairobi.getFullYear(), nairobi.getMonth(), 1, 0, 0, 0, 0);
+  return new Date(firstDay.getTime() - 3 * 60 * 60 * 1000);
+}
+
+function getFirstDayOfNextMonthNairobi(date: Date): Date {
+  const nairobi = toNairobiTime(date);
+  const firstDayNextMonth = new Date(nairobi.getFullYear(), nairobi.getMonth() + 1, 1, 0, 0, 0, 0);
+  return new Date(firstDayNextMonth.getTime() - 3 * 60 * 60 * 1000);
+}
+
+// Helper to fetch sales summary for a period
+async function getSummary(
+  req: { user?: { role: string; store_id?: number | null } },
+  start: Date | undefined,
+  end: Date | undefined
+) {
+  const dateFilter: Record<string, unknown> = {};
+  if (start && end) {
+    dateFilter.createdAt = { [Op.gte]: start, [Op.lt]: end };
+  }
+  const sales = (await Sale.findAll({
+    where: storeScope(req.user!, {
+      status: "completed",
+      ...dateFilter,
+    }),
+    include: [
+      {
+        model: SaleItem,
+        as: "items",
+      },
+    ],
+  })) as Array<Sale & { items?: SaleItem[] }>;
+  const totalSales = sales.length;
+  const totalRevenue = sales.reduce(
+    (sum, sale) => sum + parseFloat(String(sale.total_amount || "0")),
+    0,
+  );
+  const totalItems = sales.reduce((sum, sale) => sum + (sale.items?.length || 0), 0);
+  const paymentMethods = sales.reduce(
+    (acc, sale) => {
+      const method = sale.payment_method || "unknown";
+      acc[method] = (acc[method] || 0) + parseFloat(String(sale.total_amount || 0));
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
+  // Group by day
+  const salesByDay: Record<string, number> = {};
+  sales.forEach((sale) => {
+    const date = sale.createdAt.toISOString().slice(0, 10);
+    salesByDay[date] = (salesByDay[date] || 0) + parseFloat(String(sale.total_amount || 0));
+  });
+  return {
+    totalSales,
+    totalRevenue,
+    totalItems,
+    paymentMethods,
+    salesByDay,
+  };
+}
+
 // Get inventory status report
 router.get(
   "/inventory",
@@ -107,7 +186,17 @@ router.get(
       >;
 
       // Aggregate product performance data
-      const productPerformanceMap = new Map<number, any>();
+      const productPerformanceMap = new Map<number, {
+        productId: number;
+        productName: string;
+        productSku: string;
+        quantity: number;
+        revenue: number;
+        profit: number;
+        lastSold: Date | null;
+        averagePrice: number;
+        totalSales: number;
+      }>();
 
       sales.forEach((sale) => {
         sale.items?.forEach((item) => {
@@ -129,6 +218,8 @@ router.get(
           }
 
           const performance = productPerformanceMap.get(productId);
+          if (!performance) return;
+
           const quantity = parseFloat(String(item.quantity)) || 0;
           const total = parseFloat(String(item.total)) || 0;
 
@@ -149,7 +240,7 @@ router.get(
         });
       });
 
-      let productPerformance = Array.from(productPerformanceMap.values()) as Array<{
+      const productPerformance = Array.from(productPerformanceMap.values()) as Array<{
         productId: number;
         productName: string;
         productSku: string;
@@ -217,31 +308,6 @@ router.get(
       const { startDate, endDate, period } = req.query;
       const now = new Date();
       let start: Date | undefined, end: Date | undefined, compareStart: Date | undefined, compareEnd: Date | undefined;
-      // Helper to convert UTC date to Nairobi local time (manual +3 offset)
-      function toNairobiTime(date: Date) {
-        return new Date(date.getTime() + 3 * 60 * 60 * 1000);
-      }
-      // Helper to get start of week in Nairobi timezone
-      function getMondayNairobi(date: Date) {
-        const nairobi = toNairobiTime(date);
-        const day = nairobi.getDay();
-        const diff = nairobi.getDate() - day + (day === 0 ? -6 : 1);
-        const mondayNairobi = new Date(nairobi);
-        mondayNairobi.setDate(diff);
-        mondayNairobi.setHours(0, 0, 0, 0);
-        // Convert back to UTC for DB query
-        return new Date(mondayNairobi.getTime() - 3 * 60 * 60 * 1000);
-      }
-      function getFirstDayOfMonthNairobi(date: Date) {
-        const nairobi = toNairobiTime(date);
-        const firstDay = new Date(nairobi.getFullYear(), nairobi.getMonth(), 1, 0, 0, 0, 0);
-        return new Date(firstDay.getTime() - 3 * 60 * 60 * 1000);
-      }
-      function getFirstDayOfNextMonthNairobi(date: Date) {
-        const nairobi = toNairobiTime(date);
-        const firstDayNextMonth = new Date(nairobi.getFullYear(), nairobi.getMonth() + 1, 1, 0, 0, 0, 0);
-        return new Date(firstDayNextMonth.getTime() - 3 * 60 * 60 * 1000);
-      }
       // Determine period
       if (period === "today") {
         const nairobi = toNairobiTime(now);
@@ -280,55 +346,9 @@ router.get(
         start = new Date(startDate as string);
         end = new Date(endDate as string);
       }
-      // Helper to fetch sales summary for a period
-      async function getSummary(start: Date | undefined, end: Date | undefined) {
-        const dateFilter: Record<string, unknown> = {};
-        if (start && end) {
-          dateFilter.createdAt = { [Op.gte]: start, [Op.lt]: end };
-        }
-        const sales = (await Sale.findAll({
-          where: storeScope(req.user!, {
-            status: "completed",
-            ...dateFilter,
-          }),
-          include: [
-            {
-              model: SaleItem,
-              as: "items",
-            },
-          ],
-        })) as Array<Sale & { items?: SaleItem[] }>;
-        const totalSales = sales.length;
-        const totalRevenue = sales.reduce(
-          (sum, sale) => sum + parseFloat(String(sale.total_amount || "0")),
-          0,
-        );
-        const totalItems = sales.reduce((sum, sale) => sum + (sale.items?.length || 0), 0);
-        const paymentMethods = sales.reduce(
-          (acc, sale) => {
-            const method = sale.payment_method || "unknown";
-            acc[method] = (acc[method] || 0) + parseFloat(String(sale.total_amount || 0));
-            return acc;
-          },
-          {} as Record<string, number>,
-        );
-        // Group by day
-        const salesByDay: Record<string, number> = {};
-        sales.forEach((sale) => {
-          const date = sale.createdAt.toISOString().slice(0, 10);
-          salesByDay[date] = (salesByDay[date] || 0) + parseFloat(String(sale.total_amount || 0));
-        });
-        return {
-          totalSales,
-          totalRevenue,
-          totalItems,
-          paymentMethods,
-          salesByDay,
-        };
-      }
       // Fetch current and comparison period summaries
-      const current = await getSummary(start, end);
-      const compare = compareStart && compareEnd ? await getSummary(compareStart, compareEnd) : null;
+      const current = await getSummary(req, start, end);
+      const compare = compareStart && compareEnd ? await getSummary(req, compareStart, compareEnd) : null;
       res.json({
         success: true,
         data: {

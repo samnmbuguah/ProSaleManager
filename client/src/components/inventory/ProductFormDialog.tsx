@@ -61,7 +61,9 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
             parsedDraft.category_id = categories[0].id;
           }
           setFormData({ ...formData, ...parsedDraft });
-        } catch {}
+        } catch {
+          // Ignore parsing errors
+        }
       }
     }
   }, [selectedProduct, categories]);
@@ -98,6 +100,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   // Only initialize formData from selectedProduct when dialog is first opened for editing
   React.useEffect(() => {
     if (open && selectedProduct) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { Category, ...rest } = selectedProduct;
       setFormData({
         ...rest,

@@ -55,28 +55,32 @@ interface ReceiptData {
 
 // Map backend sale data to ReceiptPreview expected format
 function mapSaleToReceiptPreview(sale: unknown): import("@/hooks/use-pos").ReceiptData {
-  const s = sale as any;
+  const s = sale as Record<string, unknown>;
   return {
-    id: s.id ?? 0,
-    items: (s.items || []).map((item: any) => ({
-      name: item.Product?.name || "Unknown Product",
-      quantity: item.quantity ?? 0,
-      unit_price: item.unit_price ?? 0,
-      total: item.total ?? 0,
-      unit_type: item.unit_type ?? "",
-    })),
+    id: (s.id as number) ?? 0,
+    items: ((s.items as unknown[]) || []).map((item: unknown) => {
+      const i = item as Record<string, unknown>;
+      const product = i.Product as Record<string, unknown> | undefined;
+      return {
+        name: (product?.name as string) || "Unknown Product",
+        quantity: (i.quantity as number) ?? 0,
+        unit_price: (i.unit_price as number) ?? 0,
+        total: (i.total as number) ?? 0,
+        unit_type: (i.unit_type as string) ?? "",
+      };
+    }),
     customer: s.Customer
       ? {
-          name: s.Customer.name ?? "",
-          phone: s.Customer.phone ?? "",
-          email: s.Customer.email ?? "",
-        }
+        name: ((s.Customer as Record<string, unknown>).name as string) ?? "",
+        phone: ((s.Customer as Record<string, unknown>).phone as string) ?? "",
+        email: ((s.Customer as Record<string, unknown>).email as string) ?? "",
+      }
       : undefined,
-    total: s.total_amount ?? 0,
-    payment_method: s.payment_method ?? "",
-    timestamp: s.createdAt ?? "",
+    total: (s.total_amount as number) ?? 0,
+    payment_method: (s.payment_method as string) ?? "",
+    timestamp: (s.createdAt as string) ?? "",
     transaction_id: s.id ? String(s.id) : "N/A",
-    cash_amount: s.amount_paid ?? undefined,
+    cash_amount: (s.amount_paid as number) ?? undefined,
     receipt_status: s.receipt_status || {},
   };
 }
@@ -137,7 +141,7 @@ export const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
         {receiptData && (
           <ReceiptPreview
             receipt={mapSaleToReceiptPreview(receiptData)}
-            onSend={async () => {}}
+            onSend={async () => { }}
             onClose={() => onOpenChange(false)}
           />
         )}

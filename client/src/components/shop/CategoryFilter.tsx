@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useCategories } from "@/hooks/use-categories";
+import { useCategories, Category } from "@/hooks/use-categories";
 
 interface CategoryFilterProps {
   selectedCategory: number | null;
@@ -31,7 +31,7 @@ export default function CategoryFilter({
           )}
         </Button>
 
-        {categories?.map((category: any) => (
+        {categories?.map((category: Category) => (
           <Button
             key={category.id}
             variant={selectedCategory === category.id ? "default" : "outline"}

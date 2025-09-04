@@ -42,8 +42,11 @@ export class ReceiptService {
 
       // Fetch receipt settings for the store
       let settings: ReceiptSettings | null = null;
-      if ((sale as any).store && (sale as any).store.receiptSettings) {
-        settings = (sale as any).store.receiptSettings;
+      if ((sale as unknown as Record<string, unknown>).store && (sale as unknown as Record<string, unknown>).store &&
+        typeof (sale as unknown as Record<string, unknown>).store === 'object' &&
+        (sale as unknown as Record<string, unknown>).store &&
+        'receiptSettings' in ((sale as unknown as Record<string, unknown>).store as Record<string, unknown>)) {
+        settings = ((sale as unknown as Record<string, unknown>).store as Record<string, unknown>).receiptSettings as ReceiptSettings;
       } else if (sale.store_id) {
         settings = await ReceiptSettings.findOne({
           where: { store_id: sale.store_id },
@@ -129,13 +132,13 @@ export class ReceiptService {
       let itemNumber = 1;
       for (const item of items) {
         // Add null checks for item and Product association
-        const product = (item as any).Product;
+        const product = (item as unknown as Record<string, unknown>).Product as Record<string, unknown> | undefined;
         if (!item || !product) {
           console.error(`Missing product data for item:`, item);
           continue;
         }
 
-        receiptText += `${itemNumber.toString().padStart(2, "0")}. ${product.name}\n`;
+        receiptText += `${itemNumber.toString().padStart(2, "0")}. ${(product as { name?: string }).name || "Unknown Product"}\n`;
         receiptText += `    ${item.quantity} ${item.unit_type} × KSh ${item.unit_price.toLocaleString(
           "en-KE",
           {

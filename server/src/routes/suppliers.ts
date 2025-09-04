@@ -29,7 +29,7 @@ router.get("/", async (req, res) => {
 router.get("/search", async (req, res) => {
   try {
     const { q } = req.query;
-    let where: any = {};
+    let where: Record<string, unknown> = {};
     if (q) {
       where = {
         [Op.or]: [

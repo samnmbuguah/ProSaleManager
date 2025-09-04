@@ -16,7 +16,7 @@ router.get("/", async (req, res) => {
   if (!req.user || !req.user.id) {
     return res.status(401).json({ message: "Unauthorized: user not found in request." });
   }
-  let storeId = req.user?.store_id;
+  let storeId = req.user?.store_id || req.store?.id;
   if (req.user?.role === "super_admin" && req.query.store_id) {
     storeId = parseInt(req.query.store_id as string);
   }
@@ -43,7 +43,7 @@ router.get("/", async (req, res) => {
             is_active: true,
             store_id: storeId,
           });
-        } catch (error: unknown) {
+        } catch {
           // If unique constraint error, try to fetch again
           walkIn = await User.findOne({
             where: { store_id: storeId, name: "Walk-in Customer", role: "client" },
@@ -63,7 +63,7 @@ router.get("/", async (req, res) => {
 router.get("/search", async (req, res) => {
   try {
     const { q } = req.query;
-    let where: any = {};
+    let where: Record<string, unknown> = {};
     if (q) {
       const searchQuery = q.toString().toLowerCase();
       where = {
@@ -102,7 +102,7 @@ router.post("/", async (req, res) => {
       role: "client",
       password: Math.random().toString(36).slice(2),
       is_active: true,
-      store_id: req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id,
+      store_id: req.user?.role === "super_admin" ? (req.body.store_id ?? null) : (req.user?.store_id || req.store?.id),
     });
     res.status(201).json(customer);
   } catch (error: unknown) {

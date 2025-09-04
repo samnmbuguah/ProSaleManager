@@ -2,7 +2,7 @@
 
 // Path aliases
 declare module "@/*" {
-  const content: any;
+  const content: unknown;
   export default content;
 }
 

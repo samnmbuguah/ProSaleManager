@@ -9,7 +9,7 @@ export const searchCustomers = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Store context missing" });
     }
     const { q } = req.query;
-    let where: any = {};
+    let where: Record<string, unknown> = {};
     if (q) {
       const searchQuery = q.toString().toLowerCase();
       where = {

@@ -22,7 +22,9 @@ export function useCustomers() {
         try {
           const user = JSON.parse(userStr);
           isSuperAdmin = user?.role === "super_admin";
-        } catch {}
+        } catch {
+          // Ignore parsing errors
+        }
       }
       if (isSuperAdmin && currentStore?.id) {
         url += `?store_id=${currentStore.id}`;
@@ -51,5 +53,20 @@ export function useCustomers() {
     }
   }, [currentStore]);
 
-  return { customers, isLoading, error, fetchCustomers, setCustomers };
+  const ensureWalkInCustomer = useCallback(async () => {
+    // Check if walk-in customer already exists
+    const walkInCustomer = customers.find((customer) => customer.name === "Walk-in Customer");
+    if (walkInCustomer) {
+      return walkInCustomer;
+    }
+
+    // If no walk-in customer exists, fetch customers to ensure it's created
+    await fetchCustomers();
+    const updatedWalkInCustomer = customers.find(
+      (customer) => customer.name === "Walk-in Customer"
+    );
+    return updatedWalkInCustomer || null;
+  }, [customers, fetchCustomers]);
+
+  return { customers, isLoading, error, fetchCustomers, setCustomers, ensureWalkInCustomer };
 }

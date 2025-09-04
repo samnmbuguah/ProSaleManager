@@ -167,7 +167,7 @@ export default function UserManagementPage() {
       const response = await api.get(`${API_ENDPOINTS.users.list}?${params}`);
       setUsers(response.data.data);
       setPagination(response.data.pagination);
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Error",
@@ -241,11 +241,13 @@ export default function UserManagementPage() {
       setIsCreateDialogOpen(false);
       resetForm();
       fetchUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.response?.data?.message || "Failed to create user",
+        description:
+          (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          "Failed to create user",
       });
     } finally {
       setIsCreating(false);
@@ -257,7 +259,7 @@ export default function UserManagementPage() {
 
     try {
       setIsUpdating(true);
-      const updateData: any = { ...formData };
+      const updateData: Record<string, unknown> = { ...formData };
       if (!updateData.password) delete updateData.password;
 
       await api.put(API_ENDPOINTS.users.update(editingUser.id), updateData);
@@ -271,11 +273,13 @@ export default function UserManagementPage() {
       setEditingUser(null);
       resetForm();
       fetchUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.response?.data?.message || "Failed to update user",
+        description:
+          (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          "Failed to update user",
       });
     } finally {
       setIsUpdating(false);
@@ -297,11 +301,13 @@ export default function UserManagementPage() {
       setIsDeleteDialogOpen(false);
       setEditingUser(null);
       fetchUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.response?.data?.message || "Failed to delete user",
+        description:
+          (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          "Failed to delete user",
       });
     } finally {
       setIsDeleting(false);

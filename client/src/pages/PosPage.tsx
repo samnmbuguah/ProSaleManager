@@ -37,7 +37,7 @@ const PosPage: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "mpesa">("cash");
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
-  const { customers, fetchCustomers, ensureWalkInCustomer } = useCustomers();
+  const { customers, fetchCustomers } = useCustomers();
   const [isReceiptDialogOpen, setIsReceiptDialogOpen] = useState(false);
   const [currentSaleId, setCurrentSaleId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState({
@@ -55,18 +55,17 @@ const PosPage: React.FC = () => {
 
   // Set Walk-in Customer as default when customers are loaded
   useEffect(() => {
-    const setDefaultCustomer = async () => {
-      if (customers.length > 0 && !selectedCustomer) {
-        // Ensure Walk-in Customer exists and set as default
-        const walkInCustomer = await ensureWalkInCustomer();
-        if (walkInCustomer) {
-          setSelectedCustomer(walkInCustomer.id);
-        }
+    if (customers && customers.length > 0 && !selectedCustomer) {
+      // Find the Walk-in Customer (backend should have created it)
+      const walkInCustomer = customers.find((c) => c.name === "Walk-in Customer");
+      if (walkInCustomer) {
+        setSelectedCustomer(walkInCustomer.id);
+      } else if (customers.length > 0) {
+        // If no Walk-in Customer found, select the first customer
+        setSelectedCustomer(customers[0].id);
       }
-    };
-
-    setDefaultCustomer();
-  }, [customers, selectedCustomer, ensureWalkInCustomer]);
+    }
+  }, [customers, selectedCustomer]);
 
   // Enhanced add to cart function that defaults to piece pricing
   const handleAddToCart = (product: Product) => {

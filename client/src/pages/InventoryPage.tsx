@@ -122,7 +122,7 @@ const InventoryPage: React.FC = () => {
         const payload: Partial<z.infer<typeof productSchema>> = {};
         allowedFields.forEach((field) => {
           if (formData[field] !== undefined) {
-            payload[field] = formData[field] as any;
+            (payload as Record<string, unknown>)[field] = formData[field];
           }
         });
         if (selectedProduct) {

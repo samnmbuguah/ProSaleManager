@@ -20,15 +20,15 @@ export const errorHandler = (err: ApiError, req: Request, res: Response, next: N
   error.message = err.message;
 
   // Sequelize validation error
-  if (err.name === "SequelizeValidationError" && Array.isArray((err as any).errors)) {
-    const message = (err as any).errors.map((val: { message: string }) => val.message);
+  if (err.name === "SequelizeValidationError" && Array.isArray((err as unknown as Record<string, unknown>).errors)) {
+    const message = (((err as unknown as Record<string, unknown>).errors) as Array<{ message: string }>).map((val: { message: string }) => val.message);
     error.message = message.join(", ");
     error.statusCode = 400;
   }
 
   // Sequelize unique constraint error
-  if (err.name === "SequelizeUniqueConstraintError" && Array.isArray((err as any).errors)) {
-    const message = (err as any).errors.map((val: { message: string }) => val.message);
+  if (err.name === "SequelizeUniqueConstraintError" && Array.isArray((err as unknown as Record<string, unknown>).errors)) {
+    const message = (((err as unknown as Record<string, unknown>).errors) as Array<{ message: string }>).map((val: { message: string }) => val.message);
     error.message = message.join(", ");
     error.statusCode = 400;
   }

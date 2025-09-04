@@ -28,7 +28,7 @@ router.get("/", async (req, res) => {
       search
     } = req.query;
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     // Add filters
     if (category_id) where.category_id = Number(category_id);
@@ -37,7 +37,7 @@ router.get("/", async (req, res) => {
       where.quantity = { [Op.lte]: { [Op.col]: 'min_quantity' } };
     }
     if (search) {
-      where[Op.or] = [
+      (where as any)[Op.or] = [
         { name: { [Op.iLike]: `%${search}%` } },
         { sku: { [Op.iLike]: `%${search}%` } }
       ];
@@ -100,7 +100,7 @@ router.get("/search", async (req, res) => {
       return res.json({ success: true, data: [] });
     }
 
-    const where: any = {
+    const where: Record<string, unknown> = {
       [Op.or]: [
         Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('name')), 'LIKE', `%${query.toLowerCase()}%`),
         Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('sku')), 'LIKE', `%${query.toLowerCase()}%`)
@@ -178,7 +178,7 @@ router.put("/bulk-price-update", requireAuth, requireRole(["admin", "manager"]),
 
       const increaseMultiplier = 1 + (Number(price_increase_percent) / 100);
 
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         piece_selling_price: Math.round(product.piece_selling_price * increaseMultiplier * 100) / 100
       };
 
@@ -493,7 +493,7 @@ router.delete("/:id", requireAuth, requireRole(["admin", "manager"]), async (req
         try {
           // For testing, just log the image deletion
           console.log(`Would delete image: ${product.image_url}`);
-        } catch (error) {
+        } catch {
           console.log("Image deletion not available, skipping");
         }
       }
