@@ -28,8 +28,8 @@ export const validateCsrfToken = (req: Request, res: Response, next: NextFunctio
     return res.status(403).json({ message: "Invalid CSRF token" });
   }
 
-  // Remove used token
-  tokens.delete(token);
+  // Don't remove token immediately - let it expire naturally
+  // This prevents multiple CSRF calls for the same session
   next();
 };
 

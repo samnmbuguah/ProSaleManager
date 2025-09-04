@@ -381,6 +381,7 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.single
 
     // Check if user has access to this product's store
     if (req.user && req.user.role !== 'super_admin' && product.store_id !== req.user.store_id) {
+      console.log(`PUT Access denied: product.store_id=${product.store_id}, user.store_id=${req.user.store_id}, user.role=${req.user.role}`);
       return res.status(403).json({
         success: false,
         message: "Access denied to this product"
@@ -472,6 +473,7 @@ router.delete("/:id", requireAuth, requireRole(["admin", "manager"]), async (req
     if (product) {
       // Check if user has access to this product's store
       if (req.user && req.user.role !== 'super_admin' && product.store_id !== req.user.store_id) {
+        console.log(`DELETE Access denied: product.store_id=${product.store_id}, user.store_id=${req.user.store_id}, user.role=${req.user.role}`);
         return res.status(403).json({
           success: false,
           message: "Access denied to this product"
