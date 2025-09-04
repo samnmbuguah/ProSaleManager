@@ -102,8 +102,8 @@ router.get("/search", async (req, res) => {
 
     const where: Record<string, unknown> = {
       [Op.or]: [
-        Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('name')), 'LIKE', `%${query.toLowerCase()}%`),
-        Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('sku')), 'LIKE', `%${query.toLowerCase()}%`)
+        Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('Product.name')), 'LIKE', `%${query.toLowerCase()}%`),
+        Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('Product.sku')), 'LIKE', `%${query.toLowerCase()}%`)
       ]
     };
 
