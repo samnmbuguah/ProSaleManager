@@ -11,7 +11,7 @@ import {
   Receipt,
   BarChart3,
   Wallet,
-  ShoppingBag,
+  Heart,
   Menu,
   LogOut,
   User,
@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import CartModal from "@/components/pos/CartModal";
 
-type AppRole = "admin" | "manager" | "user" | "super_admin" | "sales";
+type AppRole = "admin" | "manager" | "user" | "super_admin" | "sales" | "client";
 
 interface Route {
   path: string;
@@ -31,44 +31,47 @@ interface Route {
 
 const ROLE_ROUTES: Record<AppRole, Route[]> = {
   admin: [
-    { path: "/pos", label: "POS", icon: Store },
-    { path: "/inventory", label: "Inventory", icon: PackageSearch },
-    { path: "/customers", label: "Customers", icon: Users },
-    { path: "/sales", label: "Sales", icon: Receipt },
-    { path: "/reports", label: "Reports", icon: BarChart3 },
-    { path: "/expenses", label: "Expenses", icon: Wallet },
-    { path: "/", label: "Shop", icon: ShoppingBag },
+    { path: "pos", label: "POS", icon: Store },
+    { path: "inventory", label: "Inventory", icon: PackageSearch },
+    { path: "customers", label: "Customers", icon: Users },
+    { path: "sales", label: "Sales", icon: Receipt },
+    { path: "reports", label: "Reports", icon: BarChart3 },
+    { path: "expenses", label: "Expenses", icon: Wallet },
+    { path: "favorites", label: "Favorites", icon: Heart },
   ],
   manager: [
-    { path: "/pos", label: "POS", icon: Store },
-    { path: "/inventory", label: "Inventory", icon: PackageSearch },
-    { path: "/customers", label: "Customers", icon: Users },
-    { path: "/sales", label: "Sales", icon: Receipt },
-    { path: "/reports", label: "Reports", icon: BarChart3 },
-    { path: "/expenses", label: "Expenses", icon: Wallet },
-    { path: "/", label: "Shop", icon: ShoppingBag },
+    { path: "pos", label: "POS", icon: Store },
+    { path: "inventory", label: "Inventory", icon: PackageSearch },
+    { path: "customers", label: "Customers", icon: Users },
+    { path: "sales", label: "Sales", icon: Receipt },
+    { path: "reports", label: "Reports", icon: BarChart3 },
+    { path: "expenses", label: "Expenses", icon: Wallet },
+    { path: "favorites", label: "Favorites", icon: Heart },
   ],
   user: [
-    { path: "/pos", label: "POS", icon: Store },
-    { path: "/inventory", label: "Inventory", icon: PackageSearch },
-    { path: "/expenses", label: "Expenses", icon: Wallet },
-    { path: "/", label: "Shop", icon: ShoppingBag },
+    { path: "pos", label: "POS", icon: Store },
+    { path: "inventory", label: "Inventory", icon: PackageSearch },
+    { path: "expenses", label: "Expenses", icon: Wallet },
+    { path: "favorites", label: "Favorites", icon: Heart },
   ],
   super_admin: [
-    { path: "/pos", label: "POS", icon: Store },
-    { path: "/inventory", label: "Inventory", icon: PackageSearch },
-    { path: "/customers", label: "Customers", icon: Users },
-    { path: "/sales", label: "Sales", icon: Receipt },
-    { path: "/reports", label: "Reports", icon: BarChart3 },
-    { path: "/expenses", label: "Expenses", icon: Wallet },
-    { path: "/", label: "Shop", icon: ShoppingBag },
-    { path: "/users", label: "Users", icon: Users },
+    { path: "pos", label: "POS", icon: Store },
+    { path: "inventory", label: "Inventory", icon: PackageSearch },
+    { path: "customers", label: "Customers", icon: Users },
+    { path: "sales", label: "Sales", icon: Receipt },
+    { path: "reports", label: "Reports", icon: BarChart3 },
+    { path: "expenses", label: "Expenses", icon: Wallet },
+    { path: "favorites", label: "Favorites", icon: Heart },
+    { path: "users", label: "Users", icon: Users },
   ],
   sales: [
-    { path: "/pos", label: "POS", icon: Store },
-    { path: "/inventory", label: "Inventory", icon: PackageSearch },
-    { path: "/expenses", label: "Expenses", icon: Wallet },
-    { path: "/", label: "Shop", icon: ShoppingBag },
+    { path: "pos", label: "POS", icon: Store },
+    { path: "inventory", label: "Inventory", icon: PackageSearch },
+    { path: "expenses", label: "Expenses", icon: Wallet },
+    { path: "favorites", label: "Favorites", icon: Heart },
+  ],
+  client: [
+    { path: "favorites", label: "Favorites", icon: Heart },
   ],
 };
 
@@ -101,12 +104,15 @@ export default function MainNav() {
     }
   };
 
+  const storePrefix = currentStore?.name ? `/${currentStore.name}` : "";
+  const firstName = (user.name || "").split(" ")[0] || user.name;
+
   const NavLinks = () => (
     <>
       {routes.map(({ path, label, icon: Icon }: Route) => (
-        <Link key={path} href={path}>
+        <Link key={path} href={`${storePrefix}/${path}`.replace(/\/$/, "")}>
           <Button
-            variant={location === path ? "default" : "ghost"}
+            variant={location === `${storePrefix}/${path}`.replace(/\/$/, "") ? "default" : "ghost"}
             className="flex items-center space-x-2"
             onClick={() => setIsOpen(false)}
           >
@@ -122,32 +128,45 @@ export default function MainNav() {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b shadow-sm">
       <div className="max-w-7xl mx-auto w-full px-6">
         <div className="h-16 min-h-16 flex items-center justify-between w-full">
-          {/* Left placeholder for spacing on mobile */}
-          <div className="flex-1 flex items-center md:hidden" />
+          {/* Left logo linking to homepage */}
+          <div className="flex items-center">
+            <Link href={`${storePrefix}` || "/"}>
+              <Button variant="ghost" className="flex items-center gap-2 px-2">
+                <div className="w-6 h-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">E</span>
+                </div>
+                <span className="hidden sm:inline font-semibold">Eltee Store</span>
+              </Button>
+            </Link>
+          </div>
 
           {/* Mobile Menu */}
-          <div className="md:hidden">
-            <Sheet open={isOpen} onOpenChange={setIsOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left">
-                <SheetHeader>
-                  <SheetTitle>Menu</SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col space-y-2 mt-4">
-                  <NavLinks />
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+          {(user.role as AppRole) !== "client" && (
+            <div className="md:hidden">
+              <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left">
+                  <SheetHeader>
+                    <SheetTitle>Menu</SheetTitle>
+                  </SheetHeader>
+                  <div className="flex flex-col space-y-2 mt-4">
+                    <NavLinks />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+          )}
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-x-4">
-            <NavLinks />
-          </div>
+          {(user.role as AppRole) !== "client" && (
+            <div className="hidden md:flex items-center gap-x-4">
+              <NavLinks />
+            </div>
+          )}
 
           <div className="flex items-center gap-x-2">
             {/* Floating Cart Button */}
@@ -166,14 +185,14 @@ export default function MainNav() {
             </Button>
             <CartModal open={cartOpen} onOpenChange={setCartOpen} />
             <div className="hidden md:flex items-center gap-x-2">
-              <Link href="/profile">
+              <Link href={`${storePrefix}/profile`.replace(/\/$/, "")}>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="flex items-center gap-x-2 hover:bg-accent"
                 >
                   <User className="h-4 w-4" />
-                  <span className="truncate align-middle">{user.name}</span>
+                  <span className="truncate align-middle">{firstName}</span>
                 </Button>
               </Link>
             </div>
