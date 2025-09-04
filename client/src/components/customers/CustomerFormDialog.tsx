@@ -75,17 +75,6 @@ const CustomerFormDialog: React.FC<CustomerFormDialogProps> = ({
               className="w-full"
             />
           </div>
-          <div>
-            <Label htmlFor="address">Address *</Label>
-            <Input
-              id="address"
-              name="address"
-              value={formData.address || ""}
-              onChange={handleInputChange}
-              required
-              className="w-full"
-            />
-          </div>
           <Button type="submit" className="w-full">
             {selectedCustomer ? "Update Customer" : "Add Customer"}
           </Button>

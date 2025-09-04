@@ -3,7 +3,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { customerSchema, type CustomerInsert } from "@/types/customer";
 
 interface CustomerFormProps {
@@ -19,8 +18,6 @@ export function CustomerForm({ onSubmit, defaultValues, isSubmitting = false }: 
       name: defaultValues?.name || "",
       email: defaultValues?.email || undefined,
       phone: defaultValues?.phone || undefined,
-      address: defaultValues?.address || undefined,
-      notes: defaultValues?.notes || "",
     },
   });
 
@@ -73,42 +70,6 @@ export function CustomerForm({ onSubmit, defaultValues, isSubmitting = false }: 
               {...field}
               value={field.value || ""}
               placeholder="Enter phone number"
-              className={fieldState.error ? "border-red-500" : ""}
-            />
-            {fieldState.error && <p className="text-sm text-red-500">{fieldState.error.message}</p>}
-          </div>
-        )}
-      />
-
-      <Controller
-        name="address"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <div className="space-y-2">
-            <Label htmlFor="address">Address</Label>
-            <Textarea
-              id="address"
-              {...field}
-              value={field.value || ""}
-              placeholder="Enter address"
-              className={fieldState.error ? "border-red-500" : ""}
-            />
-            {fieldState.error && <p className="text-sm text-red-500">{fieldState.error.message}</p>}
-          </div>
-        )}
-      />
-
-      <Controller
-        name="notes"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              {...field}
-              value={field.value || ""}
-              placeholder="Enter additional notes"
               className={fieldState.error ? "border-red-500" : ""}
             />
             {fieldState.error && <p className="text-sm text-red-500">{fieldState.error.message}</p>}

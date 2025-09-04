@@ -26,8 +26,6 @@ const CustomerList: React.FC<CustomerListProps> = ({
             name: "",
             email: null,
             phone: "",
-            address: null,
-            notes: undefined,
           })
         }
         disabled={isSubmitting}

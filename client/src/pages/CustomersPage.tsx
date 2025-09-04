@@ -105,7 +105,7 @@ const CustomersPage = () => {
 
   // Add customer: open dialog with empty form
   const handleAddCustomer = () => {
-    setFormData({ name: "", email: "", phone: "", address: "", notes: "" });
+    setFormData({ name: "", email: "", phone: "" });
     setSelectedCustomer(null);
     setIsDialogOpen(true);
   };
@@ -116,8 +116,6 @@ const CustomersPage = () => {
       name: customer.name || "",
       email: customer.email || "",
       phone: customer.phone || "",
-      address: customer.address || "",
-      notes: customer.notes || "",
     });
     setSelectedCustomer(customer);
     setIsDialogOpen(true);
