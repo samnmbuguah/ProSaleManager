@@ -64,27 +64,27 @@ const Product = sequelize.define<ProductInstance>(
       allowNull: false,
     },
     piece_buying_price: {
-      type: DataTypes.DOUBLE,
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
     piece_selling_price: {
-      type: DataTypes.DOUBLE,
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
     pack_buying_price: {
-      type: DataTypes.DOUBLE,
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
     pack_selling_price: {
-      type: DataTypes.DOUBLE,
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
     dozen_buying_price: {
-      type: DataTypes.DOUBLE,
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
     dozen_selling_price: {
-      type: DataTypes.DOUBLE,
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
     quantity: {
@@ -155,64 +155,64 @@ const Product = sequelize.define<ProductInstance>(
   buyingPrice: number,
   sellingPrice: number,
 ) {
-  // No discounts: pack = 4 pieces, dozen = 12 pieces
+    // No discounts: pack = 4 pieces, dozen = 12 pieces
 
-  // Ensure all price fields are numbers
-  this.set("piece_buying_price", Number(this.get("piece_buying_price")));
-  this.set("piece_selling_price", Number(this.get("piece_selling_price")));
-  this.set("pack_buying_price", Number(this.get("pack_buying_price")));
-  this.set("pack_selling_price", Number(this.get("pack_selling_price")));
-  this.set("dozen_buying_price", Number(this.get("dozen_buying_price")));
-  this.set("dozen_selling_price", Number(this.get("dozen_selling_price")));
+    // Ensure all price fields are numbers
+    this.set("piece_buying_price", Number(this.get("piece_buying_price")));
+    this.set("piece_selling_price", Number(this.get("piece_selling_price")));
+    this.set("pack_buying_price", Number(this.get("pack_buying_price")));
+    this.set("pack_selling_price", Number(this.get("pack_selling_price")));
+    this.set("dozen_buying_price", Number(this.get("dozen_buying_price")));
+    this.set("dozen_selling_price", Number(this.get("dozen_selling_price")));
 
-  if (unit === "piece") {
-    // Set both buying and selling prices for piece
-    this.set("piece_buying_price", Number(buyingPrice));
-    this.set("piece_selling_price", Number(sellingPrice));
+    if (unit === "piece") {
+      // Set both buying and selling prices for piece
+      this.set("piece_buying_price", Number(buyingPrice));
+      this.set("piece_selling_price", Number(sellingPrice));
 
-    // Calculate pack prices (4 pieces, no discount)
-    this.set("pack_buying_price", Number((buyingPrice * 4).toFixed(2)));
-    this.set("pack_selling_price", Number((sellingPrice * 4).toFixed(2)));
+      // Calculate pack prices (4 pieces, no discount)
+      this.set("pack_buying_price", Number((buyingPrice * 4).toFixed(2)));
+      this.set("pack_selling_price", Number((sellingPrice * 4).toFixed(2)));
 
-    // Calculate dozen prices (12 pieces, no discount)
-    this.set("dozen_buying_price", Number((buyingPrice * 12).toFixed(2)));
-    this.set("dozen_selling_price", Number((sellingPrice * 12).toFixed(2)));
-  } else if (unit === "pack") {
-    // Set both buying and selling prices for pack
-    this.set("pack_buying_price", Number(buyingPrice));
-    this.set("pack_selling_price", Number(sellingPrice));
+      // Calculate dozen prices (12 pieces, no discount)
+      this.set("dozen_buying_price", Number((buyingPrice * 12).toFixed(2)));
+      this.set("dozen_selling_price", Number((sellingPrice * 12).toFixed(2)));
+    } else if (unit === "pack") {
+      // Set both buying and selling prices for pack
+      this.set("pack_buying_price", Number(buyingPrice));
+      this.set("pack_selling_price", Number(sellingPrice));
 
-    // Calculate piece prices (pack price divided by 4 pieces)
-    this.set("piece_buying_price", Number((buyingPrice / 4).toFixed(2)));
-    this.set("piece_selling_price", Number((sellingPrice / 4).toFixed(2)));
+      // Calculate piece prices (pack price divided by 4 pieces)
+      this.set("piece_buying_price", Number((buyingPrice / 4).toFixed(2)));
+      this.set("piece_selling_price", Number((sellingPrice / 4).toFixed(2)));
 
-    // Calculate dozen prices (12 pieces)
-    this.set(
-      "dozen_buying_price",
-      Number((Number(this.get("piece_buying_price")) * 12).toFixed(2)),
-    );
-    this.set(
-      "dozen_selling_price",
-      Number((Number(this.get("piece_selling_price")) * 12).toFixed(2)),
-    );
-  } else if (unit === "dozen") {
-    // Set both buying and selling prices for dozen
-    this.set("dozen_buying_price", Number(buyingPrice));
-    this.set("dozen_selling_price", Number(sellingPrice));
+      // Calculate dozen prices (12 pieces)
+      this.set(
+        "dozen_buying_price",
+        Number((Number(this.get("piece_buying_price")) * 12).toFixed(2)),
+      );
+      this.set(
+        "dozen_selling_price",
+        Number((Number(this.get("piece_selling_price")) * 12).toFixed(2)),
+      );
+    } else if (unit === "dozen") {
+      // Set both buying and selling prices for dozen
+      this.set("dozen_buying_price", Number(buyingPrice));
+      this.set("dozen_selling_price", Number(sellingPrice));
 
-    // Calculate piece prices (dozen price divided by 12 pieces)
-    this.set("piece_buying_price", Number((buyingPrice / 12).toFixed(2)));
-    this.set("piece_selling_price", Number((sellingPrice / 12).toFixed(2)));
+      // Calculate piece prices (dozen price divided by 12 pieces)
+      this.set("piece_buying_price", Number((buyingPrice / 12).toFixed(2)));
+      this.set("piece_selling_price", Number((sellingPrice / 12).toFixed(2)));
 
-    // Calculate pack prices (4 pieces)
-    this.set("pack_buying_price", Number((Number(this.get("piece_buying_price")) * 4).toFixed(2)));
-    this.set(
-      "pack_selling_price",
-      Number((Number(this.get("piece_selling_price")) * 4).toFixed(2)),
-    );
-  }
+      // Calculate pack prices (4 pieces)
+      this.set("pack_buying_price", Number((Number(this.get("piece_buying_price")) * 4).toFixed(2)));
+      this.set(
+        "pack_selling_price",
+        Number((Number(this.get("piece_selling_price")) * 4).toFixed(2)),
+      );
+    }
 
-  await this.save();
-};
+    await this.save();
+  };
 
 export default Product;

@@ -9,6 +9,11 @@ import SaleItem from "../models/SaleItem.js";
 import PurchaseOrderItem from "../models/PurchaseOrderItem.js";
 import ProductSupplier from "../models/ProductSupplier.js";
 
+// Helper function to round prices to 2 decimal places
+const roundPrice = (price: number): number => {
+  return Math.round((price + Number.EPSILON) * 100) / 100;
+};
+
 export const getProducts = catchAsync(async (req: Request, res: Response) => {
   const where: Record<string, unknown> = {};
   if (req.user?.role !== "super_admin") {
@@ -104,12 +109,12 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
     sku,
     barcode: req.body.barcode || "",
     category_id: Number(req.body.category_id),
-    piece_buying_price: Number(req.body.piece_buying_price),
-    piece_selling_price: Number(req.body.piece_selling_price),
-    pack_buying_price: Number(req.body.pack_buying_price),
-    pack_selling_price: Number(req.body.pack_selling_price),
-    dozen_buying_price: Number(req.body.dozen_buying_price),
-    dozen_selling_price: Number(req.body.dozen_selling_price),
+    piece_buying_price: roundPrice(Number(req.body.piece_buying_price)),
+    piece_selling_price: roundPrice(Number(req.body.piece_selling_price)),
+    pack_buying_price: roundPrice(Number(req.body.pack_buying_price)),
+    pack_selling_price: roundPrice(Number(req.body.pack_selling_price)),
+    dozen_buying_price: roundPrice(Number(req.body.dozen_buying_price)),
+    dozen_selling_price: roundPrice(Number(req.body.dozen_selling_price)),
     quantity: Number(req.body.quantity),
     min_quantity: Number(req.body.min_quantity),
     image_url: req.body.image_url || null,
@@ -295,6 +300,11 @@ export const updateProduct = catchAsync(async (req: Request, res: Response) => {
           "pack_selling_price",
           "dozen_buying_price",
           "dozen_selling_price",
+        ].includes(field)
+      ) {
+        value = roundPrice(Number(value));
+      } else if (
+        [
           "quantity",
           "min_quantity",
           "category_id",
