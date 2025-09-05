@@ -93,6 +93,44 @@ export const createSale = async (req: Request, res: Response) => {
 
     console.log("Sale items created successfully");
 
+    // Update inventory - reduce product quantities
+    console.log("Updating inventory...");
+    for (const item of items as SaleItemInput[]) {
+      const product = await Product.findByPk(item.product_id, { transaction: t });
+      if (product) {
+        // Convert sale quantity to base units (pieces) based on unit_type
+        let quantityToReduce = item.quantity;
+
+        if (item.unit_type === "pack") {
+          // 1 pack = 3 pieces
+          quantityToReduce = item.quantity * 3;
+        } else if (item.unit_type === "dozen") {
+          // Assuming 1 dozen = 12 pieces
+          quantityToReduce = item.quantity * 12;
+        }
+        // For "piece" unit_type, quantityToReduce remains as item.quantity
+
+        // Check if there's enough stock
+        if (product.quantity < quantityToReduce) {
+          await t.rollback();
+          return res.status(400).json({
+            message: `Insufficient stock for ${product.name}. Available: ${product.quantity}, Required: ${quantityToReduce}`
+          });
+        }
+
+        // Reduce the quantity
+        product.quantity -= quantityToReduce;
+        await product.save({ transaction: t });
+
+        console.log(`Reduced ${product.name} quantity by ${quantityToReduce} (${item.quantity} ${item.unit_type})`);
+      } else {
+        await t.rollback();
+        return res.status(404).json({ message: `Product with ID ${item.product_id} not found` });
+      }
+    }
+
+    console.log("Inventory updated successfully");
+
     // Commit transaction
     await t.commit();
     t = undefined;
