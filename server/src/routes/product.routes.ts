@@ -18,7 +18,7 @@ import { requireStoreContext } from "../middleware/store-context.middleware.js";
 const router = Router();
 
 // Search products endpoint
-router.get("/search", async (req, res) => {
+router.get("/search", requireAuth, requireStoreContext, async (req, res) => {
   try {
     const query = req.query.q as string;
     // Determine store filter
