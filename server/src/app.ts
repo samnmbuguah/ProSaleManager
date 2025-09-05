@@ -28,6 +28,8 @@ app.use(
           "data:",
           "http://localhost:5000",
           "http://127.0.0.1:5000",
+          "https://byccollections.com",
+          "https://www.byccollections.com",
           "https://images.unsplash.com",
           "https://res.cloudinary.com",
           "https://images.pexels.com",
@@ -49,6 +51,8 @@ const allowedOrigins = [
   "http://127.0.0.1:5000",
   "https://eltee.store",
   "https://www.eltee.store", // Allow both root and www subdomain
+  "https://byccollections.com",
+  "https://www.byccollections.com", // Allow both root and www subdomain
 ];
 
 // Helper to allow *.local:5173 in dev
@@ -57,6 +61,8 @@ function isAllowedOrigin(origin: string) {
   if (allowedOrigins.includes(origin)) return true;
   // Allow any subdomain of eltee.store (http or https)
   if (/^https?:\/\/([a-z0-9-]+\.)*eltee\.store$/.test(origin)) return true;
+  // Allow any subdomain of byccollections.com (http or https)
+  if (/^https?:\/\/([a-z0-9-]+\.)*byccollections\.com$/.test(origin)) return true;
   // Allow any subdomain of .local:5173 in dev
   if (/^http:\/\/[a-z0-9-]+\.local:5173$/.test(origin)) return true;
   return false;

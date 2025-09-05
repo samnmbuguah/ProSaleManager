@@ -140,10 +140,10 @@ export default function MainNav() {
           <div className="flex items-center">
             <Link href={`${storePrefix}` || "/"}>
               <Button variant="ghost" className="flex items-center gap-2 px-2">
-                <div className="w-6 h-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">E</span>
+                <div className="w-6 h-6 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">B</span>
                 </div>
-                <span className="hidden sm:inline font-semibold">Eltee Store</span>
+                <span className="hidden sm:inline font-semibold">BYC Collections</span>
               </Button>
             </Link>
           </div>
