@@ -73,6 +73,24 @@ function App() {
 
         <Route path="/" component={HomePage} />
 
+        <Route path="/pos">
+          <ProtectedRoute
+            component={POSPage}
+            roles={["admin", "sales", "super_admin", "manager"]}
+          />
+        </Route>
+
+        <Route path="/inventory">
+          <ProtectedRoute
+            component={InventoryPage}
+            roles={["admin", "sales", "super_admin", "manager"]}
+          />
+        </Route>
+
+        <Route path="/users">
+          <ProtectedRoute component={UserManagementPage} roles={["super_admin"]} />
+        </Route>
+
         <Route path="/:store/pos">
           <ProtectedRoute
             component={POSPage}
