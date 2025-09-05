@@ -279,7 +279,7 @@ export default function HomePage() {
                         </span>
                       </Button>
                     </Link>
-                    <Link href={`/${currentStore?.name || ""}/orders`}>
+                    <Link href={currentStore?.name ? `/${currentStore.name}/orders` : "/orders"}>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -289,7 +289,7 @@ export default function HomePage() {
                         <span className="text-sm">My Orders</span>
                       </Button>
                     </Link>
-                    <Link href={`/${currentStore?.name || ""}/favorites`}>
+                    <Link href={currentStore?.name ? `/${currentStore.name}/favorites` : "/favorites"}>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -338,7 +338,7 @@ export default function HomePage() {
                               Profile
                             </Button>
                           </Link>
-                          <Link href={`/${currentStore?.name || ""}/orders`}>
+                          <Link href={currentStore?.name ? `/${currentStore.name}/orders` : "/orders"}>
                             <Button
                               variant="ghost"
                               className="w-full justify-start"
@@ -348,7 +348,7 @@ export default function HomePage() {
                               My Orders
                             </Button>
                           </Link>
-                          <Link href={`/${currentStore?.name || ""}/favorites`}>
+                          <Link href={currentStore?.name ? `/${currentStore.name}/favorites` : "/favorites"}>
                             <Button
                               variant="ghost"
                               className="w-full justify-start"
