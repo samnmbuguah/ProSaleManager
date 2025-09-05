@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/carousel";
 import { useFavoriteStatus, useToggleFavorite } from "@/hooks/use-favorites";
 import { useAuth } from "@/hooks/use-auth";
+import { getImageUrl } from "@/lib/api-endpoints";
 import type { Product } from "@/types/product";
 
 interface ProductCardProps {
@@ -127,9 +128,9 @@ export default function ProductCard({
 
   if (viewMode === "list") {
     return (
-      <Card className="flex flex-col sm:flex-row gap-4 p-4 hover:shadow-lg transition-shadow">
+      <Card className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4 hover:shadow-lg transition-shadow">
         {/* Product Image */}
-        <div className="w-full sm:w-48 h-48 sm:h-32 flex-shrink-0">
+        <div className="w-32 sm:w-40 md:w-48 h-32 sm:h-32 md:h-36 flex-shrink-0">
           {!imageError ? (
             product.images && product.images.length > 1 ? (
               <Carousel className="w-full h-full">
@@ -137,7 +138,7 @@ export default function ProductCard({
                   {product.images.map((img, idx) => (
                     <CarouselItem key={idx}>
                       <img
-                        src={img}
+                        src={getImageUrl(img)}
                         alt={product.name}
                         className="w-full h-full object-cover rounded-lg"
                         onError={() => onImageError(product.id)}
@@ -150,7 +151,7 @@ export default function ProductCard({
               </Carousel>
             ) : (
               <img
-                src={product.images?.[0] || product.image_url || "/placeholder-product.jpg"}
+                src={getImageUrl(product.images?.[0] || product.image_url || "/placeholder-product.jpg")}
                 alt={product.name}
                 className="w-full h-full object-cover rounded-lg"
                 onError={() => onImageError(product.id)}
@@ -164,27 +165,27 @@ export default function ProductCard({
         </div>
 
         {/* Product Info */}
-        <div className="flex-1 flex flex-col justify-between">
+        <div className="flex-1 flex flex-col justify-between min-w-0">
           <div>
-            <h3 className="font-semibold text-lg mb-2 line-clamp-2">{product.name}</h3>
-            <p className="text-gray-600 text-sm mb-2 line-clamp-2">{product.description}</p>
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="secondary" className="text-xs">
+            <h3 className="font-semibold text-base sm:text-lg mb-1 sm:mb-2 line-clamp-2">{product.name}</h3>
+            <p className="text-gray-600 text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2">{product.description}</p>
+            <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+              <Badge variant="secondary" className="text-xs px-1 py-0">
                 {product.Category?.name || "Uncategorized"}
               </Badge>
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs px-1 py-0">
                 SKU: {product.sku}
               </Badge>
             </div>
           </div>
 
           {/* Price and Controls */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-green-600">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <span className="text-lg sm:text-xl md:text-2xl font-bold text-green-600">
                 KSh {currentPrice.toLocaleString()}
               </span>
-              <span className="text-sm text-gray-500">{getUnitLabel(selectedUnit)}</span>
+              <span className="text-xs sm:text-sm text-gray-500">{getUnitLabel(selectedUnit)}</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -243,9 +244,8 @@ export default function ProductCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  className={`flex items-center gap-2 ${
-                    favoriteStatus?.isFavorite ? "text-red-500 border-red-500" : ""
-                  }`}
+                  className={`flex items-center gap-2 ${favoriteStatus?.isFavorite ? "text-red-500 border-red-500" : ""
+                    }`}
                   onClick={handleToggleFavorite}
                   disabled={toggleFavorite.isPending}
                 >
@@ -285,7 +285,7 @@ export default function ProductCard({
                   {product.images.map((img, idx) => (
                     <CarouselItem key={idx}>
                       <img
-                        src={img}
+                        src={getImageUrl(img)}
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={() => onImageError(product.id)}
@@ -298,7 +298,7 @@ export default function ProductCard({
               </Carousel>
             ) : (
               <img
-                src={product.images?.[0] || product.image_url || "/placeholder-product.jpg"}
+                src={getImageUrl(product.images?.[0] || product.image_url || "/placeholder-product.jpg")}
                 alt={product.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 onError={() => onImageError(product.id)}
@@ -315,9 +315,8 @@ export default function ProductCard({
         <Button
           variant="ghost"
           size="sm"
-          className={`absolute top-1 right-1 sm:top-2 sm:right-2 bg-white/80 hover:bg-white h-6 w-6 sm:h-8 sm:w-8 p-0 ${
-            favoriteStatus?.isFavorite ? "text-red-500" : "text-gray-600"
-          }`}
+          className={`absolute top-1 right-1 sm:top-2 sm:right-2 bg-white/80 hover:bg-white h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 p-0 ${favoriteStatus?.isFavorite ? "text-red-500" : "text-gray-600"
+            }`}
           onClick={handleToggleFavorite}
           disabled={toggleFavorite.isPending}
         >
@@ -326,28 +325,28 @@ export default function ProductCard({
 
         {/* Stock Badge */}
         {product.quantity <= product.min_quantity && (
-          <Badge variant="destructive" className="absolute top-1 left-1 sm:top-2 sm:left-2 text-xs">
+          <Badge variant="destructive" className="absolute top-1 left-1 sm:top-2 sm:left-2 text-xs px-1 py-0">
             Low Stock
           </Badge>
         )}
       </div>
 
-      <CardContent className="p-3 sm:p-4">
+      <CardContent className="p-2 sm:p-3 md:p-4">
         {/* Product Info */}
-        <div className="mb-3">
-          <h3 className="font-semibold text-base sm:text-lg mb-1 line-clamp-2">{product.name}</h3>
-          <p className="text-gray-600 text-xs sm:text-sm mb-2 line-clamp-2">{product.description}</p>
-          <div className="flex items-center gap-2 mb-2">
-            <Badge variant="secondary" className="text-xs">
+        <div className="mb-2 sm:mb-3">
+          <h3 className="font-semibold text-sm sm:text-base md:text-lg mb-1 line-clamp-2">{product.name}</h3>
+          <p className="text-gray-600 text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2">{product.description}</p>
+          <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+            <Badge variant="secondary" className="text-xs px-1 py-0">
               {product.Category?.name || "Uncategorized"}
             </Badge>
           </div>
         </div>
 
         {/* Price */}
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-lg sm:text-2xl font-bold text-green-600">
+        <div className="mb-2 sm:mb-4">
+          <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+            <span className="text-sm sm:text-lg md:text-2xl font-bold text-green-600">
               KSh {currentPrice.toLocaleString()}
             </span>
             <span className="text-xs sm:text-sm text-gray-500">{getUnitLabel(selectedUnit)}</span>
@@ -382,17 +381,17 @@ export default function ProductCard({
         </div>
 
         {/* Quantity and Add to Cart */}
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {/* Quantity Controls */}
           <div className="flex items-center justify-between">
-            <span className="text-xs sm:text-sm font-medium">Quantity:</span>
+            <span className="text-xs sm:text-sm font-medium">Qty:</span>
             <div className="flex items-center border rounded-lg">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={decrementQuantity}
                 disabled={quantity <= 1}
-                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 p-0"
               >
                 <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
               </Button>
@@ -400,7 +399,7 @@ export default function ProductCard({
                 type="number"
                 value={quantity}
                 onChange={(e) => handleQuantityChange(e.target.value)}
-                className="w-12 sm:w-16 h-7 sm:h-8 text-center border-0 focus:ring-0 text-xs sm:text-sm"
+                className="w-10 sm:w-12 md:w-16 h-6 sm:h-7 md:h-8 text-center border-0 focus:ring-0 text-xs sm:text-sm"
                 min="1"
                 max="99"
               />
@@ -409,7 +408,7 @@ export default function ProductCard({
                 size="sm"
                 onClick={incrementQuantity}
                 disabled={quantity >= 99}
-                className="h-7 w-7 sm:h-8 sm:w-8 p-0"
+                className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 p-0"
               >
                 <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
               </Button>
@@ -421,10 +420,11 @@ export default function ProductCard({
             id={`add-to-cart-${product.id}`}
             onClick={handleAddToCart}
             disabled={isAddingToCart}
-            className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm h-8 sm:h-10"
+            className="w-full flex items-center gap-1 sm:gap-2 bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm h-7 sm:h-8 md:h-10"
           >
             <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
-            {isAddingToCart ? "Adding..." : "Add to Cart"}
+            <span className="hidden xs:inline">{isAddingToCart ? "Adding..." : "Add to Cart"}</span>
+            <span className="xs:hidden">{isAddingToCart ? "..." : "Add"}</span>
           </Button>
         </div>
       </CardContent>
