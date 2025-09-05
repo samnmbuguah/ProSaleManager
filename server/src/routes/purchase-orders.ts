@@ -161,7 +161,19 @@ router.put(
         for (const item of items) {
           const product = await Product.findByPk(item.product_id);
           if (product) {
-            product.quantity += item.quantity;
+            // Convert purchase quantity to base units (pieces) based on unit_type
+            let quantityToAdd = item.quantity;
+
+            if (item.unit_type === "pack") {
+              // 1 pack = 3 pieces
+              quantityToAdd = item.quantity * 3;
+            } else if (item.unit_type === "dozen") {
+              // 1 dozen = 12 pieces
+              quantityToAdd = item.quantity * 12;
+            }
+            // For "piece" unit_type, quantityToAdd remains as item.quantity
+
+            product.quantity += quantityToAdd;
             // Only update the relevant unit's buying price
             if (item.unit_type && item.unit_price !== undefined) {
               (product as unknown as Record<string, unknown>)[`${item.unit_type}_buying_price`] = Number(item.unit_price);
