@@ -99,6 +99,9 @@ export const createOrder = async (req: Request, res: Response) => {
         ),
       ),
     );
+
+    // Note: Inventory is not reduced for new orders - only when they are marked as completed via updateOrder
+
     await t.commit();
     res.status(201).json({ message: "Order created", orderId: sale.id });
   } catch {
@@ -107,8 +110,96 @@ export const createOrder = async (req: Request, res: Response) => {
   }
 };
 
-export const updateOrder = (req: Request, res: Response) => {
-  res.json({ message: "updateOrder stub" });
+export const updateOrder = async (req: Request, res: Response) => {
+  const t = await sequelize.transaction();
+  try {
+    const { id } = req.params;
+    const { status, payment_status } = req.body;
+
+    const order = await Sale.findByPk(id, {
+      include: [{ model: SaleItem, as: "items" }],
+      transaction: t
+    });
+
+    if (!order) {
+      await t.rollback();
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const oldStatus = order.status;
+
+    // Update order status
+    if (status) order.status = status;
+    if (payment_status) order.payment_status = payment_status;
+
+    // If order is being marked as completed, reduce inventory
+    if (status === "completed" && oldStatus !== "completed") {
+      for (const item of (order as any).items) {
+        const product = await Product.findByPk(item.product_id, { transaction: t });
+        if (product) {
+          // Convert sale quantity to base units (pieces) based on unit_type
+          let quantityToReduce = item.quantity;
+
+          if (item.unit_type === "pack") {
+            // 1 pack = 3 pieces
+            quantityToReduce = item.quantity * 3;
+          } else if (item.unit_type === "dozen") {
+            // Assuming 1 dozen = 12 pieces
+            quantityToReduce = item.quantity * 12;
+          }
+          // For "piece" unit_type, quantityToReduce remains as item.quantity
+
+          // Check if there's enough stock
+          if (product.quantity < quantityToReduce) {
+            await t.rollback();
+            return res.status(400).json({
+              message: `Insufficient stock for ${product.name}. Available: ${product.quantity}, Required: ${quantityToReduce}`
+            });
+          }
+
+          // Reduce the quantity
+          product.quantity -= quantityToReduce;
+          await product.save({ transaction: t });
+        } else {
+          await t.rollback();
+          return res.status(404).json({ message: `Product with ID ${item.product_id} not found` });
+        }
+      }
+    }
+
+    // If order is being cancelled or rejected, restore inventory (if it was previously completed)
+    if ((status === "cancelled" || status === "rejected") && oldStatus === "completed") {
+      for (const item of (order as any).items) {
+        const product = await Product.findByPk(item.product_id, { transaction: t });
+        if (product) {
+          // Convert sale quantity to base units (pieces) based on unit_type
+          let quantityToRestore = item.quantity;
+
+          if (item.unit_type === "pack") {
+            // 1 pack = 3 pieces
+            quantityToRestore = item.quantity * 3;
+          } else if (item.unit_type === "dozen") {
+            // Assuming 1 dozen = 12 pieces
+            quantityToRestore = item.quantity * 12;
+          }
+          // For "piece" unit_type, quantityToRestore remains as item.quantity
+
+          // Restore the quantity
+          product.quantity += quantityToRestore;
+          await product.save({ transaction: t });
+        }
+      }
+    }
+
+    await order.save({ transaction: t });
+    await t.commit();
+
+    res.json({ message: "Order updated successfully", order });
+  } catch (error) {
+    await t.rollback();
+    console.error("Error updating order:", error);
+    res.status(500).json({ message: "Failed to update order" });
+  }
 };
 
 export const deleteOrder = (req: Request, res: Response) => {
