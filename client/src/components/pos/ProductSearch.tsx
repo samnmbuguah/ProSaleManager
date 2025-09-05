@@ -4,20 +4,82 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Package, ShoppingCart } from "lucide-react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselPrevious,
-  CarouselNext,
-} from "@/components/ui/carousel";
+import { Search, Package, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
+import { getImageUrl } from "@/lib/api-endpoints";
 
 interface ProductSearchProps {
   products: Product[];
   onSelect: (product: Product) => void;
   searchProducts: (query: string) => Promise<void>;
+  isLoading?: boolean;
 }
+
+// Custom Product Image Carousel Component
+const ProductImageCarousel: React.FC<{
+  images: string[];
+  productName: string;
+  onImageClick?: (e: React.MouseEvent) => void;
+}> = ({ images, productName, onImageClick }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const goToPrevious = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const goToNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  if (images.length === 0) {
+    return (
+      <img
+        src={getImageUrl("https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=80&q=80")}
+        alt={productName}
+        className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-cover rounded-md border"
+        onClick={onImageClick}
+      />
+    );
+  }
+
+  return (
+    <div className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32">
+      <img
+        src={getImageUrl(images[currentIndex])}
+        alt={`${productName} - Image ${currentIndex + 1}`}
+        className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-cover rounded-md border mx-auto"
+        onClick={onImageClick}
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.src = getImageUrl("https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=80&q=80");
+        }}
+      />
+      {images.length > 1 && (
+        <>
+          <button
+            className="absolute -left-2 top-1/2 -translate-y-1/2 h-6 w-6 bg-white/90 hover:bg-white border shadow-md rounded-full flex items-center justify-center z-20"
+            onClick={goToPrevious}
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            className="absolute -right-2 top-1/2 -translate-y-1/2 h-6 w-6 bg-white/90 hover:bg-white border shadow-md rounded-full flex items-center justify-center z-20"
+            onClick={goToNext}
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </>
+      )}
+    </div>
+  );
+};
 
 export const ProductSearch: React.FC<ProductSearchProps> = ({
   products,
@@ -79,8 +141,13 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
       </div>
 
       {/* Products Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {paginatedProducts.length === 0 ? (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        {false ? (
+          <div className="col-span-full text-center py-8 text-gray-500">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-2"></div>
+            <p>Searching products...</p>
+          </div>
+        ) : paginatedProducts.length === 0 ? (
           <div className="col-span-full text-center py-8 text-gray-500">
             <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p>No products found</p>
@@ -97,31 +164,11 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                 <div className="space-y-2">
                   {/* Product Image Carousel */}
                   <div className="w-full flex justify-center items-center pb-2">
-                    {product.images && product.images.length > 0 ? (
-                      <Carousel className="w-32">
-                        <CarouselContent>
-                          {product.images.map((img, idx) => (
-                            <CarouselItem key={idx}>
-                              <img
-                                src={img}
-                                alt={product.name}
-                                className="w-28 h-28 object-cover rounded-md border mx-auto"
-                              />
-                            </CarouselItem>
-                          ))}
-                        </CarouselContent>
-                        <CarouselPrevious className="left-0 top-1/2 -translate-y-1/2" />
-                        <CarouselNext className="right-0 top-1/2 -translate-y-1/2" />
-                      </Carousel>
-                    ) : (
-                      <img
-                        src={
-                          "https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=80&q=80"
-                        }
-                        alt={product.name}
-                        className="w-28 h-28 object-cover rounded-md border"
-                      />
-                    )}
+                    <ProductImageCarousel
+                      images={product.images || []}
+                      productName={product.name}
+                      onImageClick={(e) => e.stopPropagation()}
+                    />
                   </div>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
