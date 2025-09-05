@@ -170,9 +170,9 @@ const Product = sequelize.define<ProductInstance>(
       this.set("piece_buying_price", Number(buyingPrice));
       this.set("piece_selling_price", Number(sellingPrice));
 
-      // Calculate pack prices (4 pieces, no discount)
-      this.set("pack_buying_price", Number((buyingPrice * 4).toFixed(2)));
-      this.set("pack_selling_price", Number((sellingPrice * 4).toFixed(2)));
+      // Calculate pack prices (3 pieces, no discount)
+      this.set("pack_buying_price", Number((buyingPrice * 3).toFixed(2)));
+      this.set("pack_selling_price", Number((sellingPrice * 3).toFixed(2)));
 
       // Calculate dozen prices (12 pieces, no discount)
       this.set("dozen_buying_price", Number((buyingPrice * 12).toFixed(2)));
@@ -182,9 +182,9 @@ const Product = sequelize.define<ProductInstance>(
       this.set("pack_buying_price", Number(buyingPrice));
       this.set("pack_selling_price", Number(sellingPrice));
 
-      // Calculate piece prices (pack price divided by 4 pieces)
-      this.set("piece_buying_price", Number((buyingPrice / 4).toFixed(2)));
-      this.set("piece_selling_price", Number((sellingPrice / 4).toFixed(2)));
+      // Calculate piece prices (pack price divided by 3 pieces)
+      this.set("piece_buying_price", Number((buyingPrice / 3).toFixed(2)));
+      this.set("piece_selling_price", Number((sellingPrice / 3).toFixed(2)));
 
       // Calculate dozen prices (12 pieces)
       this.set(
@@ -204,11 +204,11 @@ const Product = sequelize.define<ProductInstance>(
       this.set("piece_buying_price", Number((buyingPrice / 12).toFixed(2)));
       this.set("piece_selling_price", Number((sellingPrice / 12).toFixed(2)));
 
-      // Calculate pack prices (4 pieces)
-      this.set("pack_buying_price", Number((Number(this.get("piece_buying_price")) * 4).toFixed(2)));
+      // Calculate pack prices (3 pieces)
+      this.set("pack_buying_price", Number((Number(this.get("piece_buying_price")) * 3).toFixed(2)));
       this.set(
         "pack_selling_price",
-        Number((Number(this.get("piece_selling_price")) * 4).toFixed(2)),
+        Number((Number(this.get("piece_selling_price")) * 3).toFixed(2)),
       );
     }
 
