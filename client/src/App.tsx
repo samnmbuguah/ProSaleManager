@@ -155,6 +155,20 @@ function App() {
           />
         </Route>
 
+        <Route path="/favorites">
+          <ProtectedRoute
+            component={FavoritesPage}
+            roles={["admin", "sales", "user", "super_admin", "manager", "client"]}
+          />
+        </Route>
+
+        <Route path="/orders">
+          <ProtectedRoute
+            component={OrdersPage}
+            roles={["admin", "sales", "user", "super_admin", "manager", "client"]}
+          />
+        </Route>
+
         <Route path="/:store/users">
           <ProtectedRoute component={UserManagementPage} roles={["super_admin"]} />
         </Route>
