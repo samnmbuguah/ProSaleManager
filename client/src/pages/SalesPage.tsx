@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { ReceiptSettings } from "@/components/pos/ReceiptSettings";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { api } from "@/lib/api";
 import {
   Table,
   TableBody,
@@ -27,7 +28,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sale } from "@/types/sale";
-import { api } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
@@ -51,13 +51,11 @@ function OrderDetailsDialog({
   order,
   open,
   onClose,
-  onMarkShipped,
   onMarkFulfilled,
 }: {
   order: Order;
   open: boolean;
   onClose: () => void;
-  onMarkShipped: () => void;
   onMarkFulfilled: () => void;
 }) {
   if (!order) return null;
@@ -89,20 +87,14 @@ function OrderDetailsDialog({
             </div>
           </div>
           <div className="flex gap-4 justify-end">
-            <Button
-              variant="outline"
-              onClick={onMarkShipped}
-              disabled={order.status === "shipped" || order.status === "fulfilled"}
-            >
-              Mark as Shipped
-            </Button>
-            <Button
-              variant="default"
-              onClick={onMarkFulfilled}
-              disabled={order.status === "fulfilled"}
-            >
-              Mark as Fulfilled
-            </Button>
+            {order.status !== "completed" && order.status !== "fulfilled" && (
+              <Button
+                variant="default"
+                onClick={onMarkFulfilled}
+              >
+                Mark as Fulfilled
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>
@@ -164,8 +156,8 @@ export function SalesPage() {
         ) {
           setOrdersError(
             (error as { response?: { data?: { message?: string } } }).response?.data?.message ||
-              (error as { message?: string }).message ||
-              "Failed to load orders."
+            (error as { message?: string }).message ||
+            "Failed to load orders."
           );
         } else if (error instanceof Error) {
           setOrdersError(error.message);
@@ -203,18 +195,31 @@ export function SalesPage() {
   };
 
   // Handlers for order actions
-  const handleMarkShipped = useCallback(() => {
-    if (!selectedOrder) return;
-    // TODO: Implement API call to mark as shipped
-    alert("Order marked as shipped (implement API call)");
-    setSelectedOrder({ ...selectedOrder, status: "shipped" });
-  }, [selectedOrder]);
 
-  const handleMarkFulfilled = useCallback(() => {
+  const handleMarkFulfilled = useCallback(async () => {
     if (!selectedOrder) return;
-    // TODO: Implement API call to mark as fulfilled
-    alert("Order marked as fulfilled (implement API call)");
-    setSelectedOrder({ ...selectedOrder, status: "fulfilled" });
+
+    try {
+      // Call the API to update order status to "completed"
+      await api.put(`/orders/${selectedOrder.id}`, {
+        status: "completed"
+      });
+
+      // Update local state
+      setSelectedOrder({ ...selectedOrder, status: "completed" });
+
+      // Show success message
+      alert("Order marked as fulfilled and inventory updated!");
+
+      // Close the dialog
+      setSelectedOrder(null);
+
+      // Refetch orders data
+      window.location.reload(); // Simple refresh for now
+    } catch (error) {
+      console.error("Error marking order as fulfilled:", error);
+      alert("Failed to mark order as fulfilled. Please try again.");
+    }
   }, [selectedOrder]);
 
   return (
@@ -370,7 +375,6 @@ export function SalesPage() {
             order={selectedOrder!}
             open={!!selectedOrder}
             onClose={() => setSelectedOrder(null)}
-            onMarkShipped={handleMarkShipped}
             onMarkFulfilled={handleMarkFulfilled}
           />
         </TabsContent>
