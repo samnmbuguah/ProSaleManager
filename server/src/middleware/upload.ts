@@ -9,16 +9,16 @@ const useCloudinary = !!process.env.CLOUDINARY_URL;
 const storage = useCloudinary
   ? multer.memoryStorage()
   : multer.diskStorage({
-      destination: (req, file, cb) => {
-        const uploadPath = path.join(process.cwd(), "uploads", "products");
-        fs.mkdirSync(uploadPath, { recursive: true });
-        cb(null, uploadPath);
-      },
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-        cb(null, uniqueSuffix + "-" + file.originalname.replace(/\s+/g, "_"));
-      },
-    });
+    destination: (req, file, cb) => {
+      const uploadPath = path.join(process.cwd(), "uploads", "products");
+      fs.mkdirSync(uploadPath, { recursive: true });
+      cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      cb(null, uniqueSuffix + "-" + file.originalname.replace(/\s+/g, "_"));
+    },
+  });
 
 // File filter to accept only images
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
@@ -37,6 +37,7 @@ const upload = multer({
   fileFilter: fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB max file size
+    files: 10, // Allow up to 10 images per product
   },
 });
 
