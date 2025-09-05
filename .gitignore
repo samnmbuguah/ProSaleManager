@@ -83,3 +83,4 @@ server/src/database/seeders/20250728122816-initial-data.js
 # Ignore SQLite databases
 *.sqlite
 **/*.sqlite
+server/uploads
