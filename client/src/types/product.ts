@@ -22,6 +22,7 @@ export const productSchema = z.object({
   quantity: z.number(),
   min_quantity: z.number(),
   image_url: z.string().optional(),
+  images: z.array(z.string()).optional(),
   is_active: z.boolean(),
   stock_unit: z.enum(["piece", "pack", "dozen"]),
 });
@@ -42,6 +43,7 @@ export type ProductFormData = {
   quantity?: number;
   min_quantity?: number;
   image_url?: string;
+  images?: string[];
   is_active: boolean;
   stock_unit: StockUnitType;
   [key: string]: string | number | boolean | string[] | undefined;
