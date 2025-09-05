@@ -214,7 +214,7 @@ router.put("/bulk-price-update", requireAuth, requireRole(["admin", "manager"]),
 
 
 // Create a new product
-router.post("/", requireAuth, requireRole(["admin", "manager"]), upload.single("image"), async (req, res) => {
+router.post("/", requireAuth, requireRole(["admin", "manager"]), upload.array("images", 10), async (req, res) => {
   try {
     const productData = req.body;
 
@@ -249,12 +249,27 @@ router.post("/", requireAuth, requireRole(["admin", "manager"]), upload.single("
     // Log the cleaned and coerced data
     console.log("[ProductRoute] Cleaned product data:", cleanProduct);
 
-    // Upload image if provided
-    let image_url = null;
-    if (req.file) {
-      if (process.env.CLOUDINARY_URL) {
+    // Upload images if provided
+    let image_url: string | null = null;
+    let images: string[] = [];
+
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+      // Handle multiple images
+      for (const file of req.files) {
         try {
-          image_url = await uploadToCloudinary(req.file);
+          let imageUrl;
+          if (process.env.CLOUDINARY_URL) {
+            imageUrl = await uploadToCloudinary(file);
+          } else {
+            imageUrl = getImageUrl(file);
+          }
+          if (imageUrl) {
+            images.push(imageUrl);
+            // Set the first image as the main image_url for backward compatibility
+            if (!image_url) {
+              image_url = imageUrl;
+            }
+          }
         } catch (cloudErr) {
           return res.status(400).json({
             success: false,
@@ -262,12 +277,29 @@ router.post("/", requireAuth, requireRole(["admin", "manager"]), upload.single("
             error: cloudErr instanceof Error ? cloudErr.message : cloudErr,
           });
         }
-      } else {
-        image_url = getImageUrl(req.file);
+      }
+    } else if (req.file) {
+      // Handle single image (backward compatibility)
+      try {
+        if (process.env.CLOUDINARY_URL) {
+          image_url = await uploadToCloudinary(req.file);
+        } else {
+          image_url = getImageUrl(req.file);
+        }
+        if (image_url) {
+          images = [image_url];
+        }
+      } catch (cloudErr) {
+        return res.status(400).json({
+          success: false,
+          message: "Image upload failed",
+          error: cloudErr instanceof Error ? cloudErr.message : cloudErr,
+        });
       }
     }
-    (cleanProduct as Record<string, string | number | boolean | null | undefined>).image_url =
-      image_url;
+
+    (cleanProduct as Record<string, string | number | boolean | null | undefined | string[]>).image_url = image_url;
+    (cleanProduct as Record<string, string | number | boolean | null | undefined | string[]>).images = images;
 
     // Validate required fields
     if (!cleanProduct.name || !cleanProduct.sku || !cleanProduct.category_id) {
@@ -367,7 +399,7 @@ router.post("/", requireAuth, requireRole(["admin", "manager"]), upload.single("
 });
 
 // Update a product
-router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.single("image"), async (req, res) => {
+router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.array("images", 10), async (req, res) => {
   try {
     const productData = req.body;
     const product = await Product.findByPk(req.params.id);
@@ -388,12 +420,27 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.single
       });
     }
 
-    // Upload new image if provided
-    if (req.file) {
-      if (process.env.CLOUDINARY_URL) {
+    // Upload new images if provided
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+      // Handle multiple images
+      const images: string[] = [];
+      let image_url: string | null = null;
+
+      for (const file of req.files) {
         try {
-          const image_url = await uploadToCloudinary(req.file);
-          productData.image_url = image_url;
+          let imageUrl;
+          if (process.env.CLOUDINARY_URL) {
+            imageUrl = await uploadToCloudinary(file);
+          } else {
+            imageUrl = getImageUrl(file);
+          }
+          if (imageUrl) {
+            images.push(imageUrl);
+            // Set the first image as the main image_url for backward compatibility
+            if (!image_url) {
+              image_url = imageUrl;
+            }
+          }
         } catch (cloudErr) {
           return res.status(400).json({
             success: false,
@@ -401,8 +448,27 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.single
             error: cloudErr instanceof Error ? cloudErr.message : cloudErr,
           });
         }
-      } else {
-        productData.image_url = getImageUrl(req.file);
+      }
+
+      productData.image_url = image_url;
+      productData.images = images;
+    } else if (req.file) {
+      // Handle single image (backward compatibility)
+      try {
+        let image_url;
+        if (process.env.CLOUDINARY_URL) {
+          image_url = await uploadToCloudinary(req.file);
+        } else {
+          image_url = getImageUrl(req.file);
+        }
+        productData.image_url = image_url;
+        productData.images = image_url ? [image_url] : [];
+      } catch (cloudErr) {
+        return res.status(400).json({
+          success: false,
+          message: "Image upload failed",
+          error: cloudErr instanceof Error ? cloudErr.message : cloudErr,
+        });
       }
     }
 
