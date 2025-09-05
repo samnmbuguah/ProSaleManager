@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -76,6 +76,7 @@ export default function HomePage() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -263,112 +264,143 @@ export default function HomePage() {
               <CartDrawer onCheckout={() => setShowAuthDialog(true)} />
 
               {isAuthenticated ? (
-                <div className="hidden sm:flex items-center gap-3">
-                  <Link href="/profile">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full hover:bg-gray-200"
-                    >
-                      <User className="w-4 h-4 text-gray-600" />
-                      <span className="text-sm text-gray-700">
-                        {(user?.name || "").split(" ")[0] || user?.name}
-                      </span>
-                    </Button>
-                  </Link>
-                  <Link href={`/${currentStore?.name || ""}/orders`}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex items-center gap-2"
-                    >
-                      <Package className="h-4 w-4" />
-                      <span className="text-sm">My Orders</span>
-                    </Button>
-                  </Link>
-                  <Link href={`/${currentStore?.name || ""}/favorites`}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="flex items-center gap-2"
-                    >
-                      <Heart className="h-4 w-4" />
-                      <span className="text-sm">Favorites</span>
-                    </Button>
-                  </Link>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={async () => {
-                      try {
-                        await api.post("/auth/logout");
-                        window.location.href = "/";
-                      } catch {
-                        // Ignore logout errors
-                      }
-                    }}
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowAuthDialog(true)}
-                  className="hidden sm:flex"
-                >
-                  Login / Sign Up
-                </Button>
-              )}
-
-              {/* Mobile Menu Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowMobileFilters(!showMobileFilters)}
-                className="sm:hidden"
-              >
-                <Menu className="w-4 h-4" />
-              </Button>
-              {/* Mobile quick actions for client: Orders, Favorites and Logout */}
-              {isAuthenticated && (
                 <>
-                  <Link href={`/${currentStore?.name || ""}/orders`}>
+                  {/* Desktop Navigation */}
+                  <div className="hidden sm:flex items-center gap-3">
+                    <Link href="/profile">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full hover:bg-gray-200"
+                      >
+                        <User className="w-4 h-4 text-gray-600" />
+                        <span className="text-sm text-gray-700">
+                          {(user?.name || "").split(" ")[0] || user?.name}
+                        </span>
+                      </Button>
+                    </Link>
+                    <Link href={`/${currentStore?.name || ""}/orders`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        <Package className="h-4 w-4" />
+                        <span className="text-sm">My Orders</span>
+                      </Button>
+                    </Link>
+                    <Link href={`/${currentStore?.name || ""}/favorites`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        <Heart className="h-4 w-4" />
+                        <span className="text-sm">Favorites</span>
+                      </Button>
+                    </Link>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="sm:hidden"
+                      onClick={async () => {
+                        try {
+                          await api.post("/auth/logout");
+                          window.location.href = "/";
+                        } catch {
+                          // Ignore logout errors
+                        }
+                      }}
                     >
-                      Orders
+                      <LogOut className="h-4 w-4" />
                     </Button>
-                  </Link>
-                  <Link href={`/${currentStore?.name || ""}/favorites`}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="sm:hidden"
-                    >
-                      Favorites
-                    </Button>
-                  </Link>
+                  </div>
+
+                  {/* Mobile Menu Button */}
+                  <div className="sm:hidden">
+                    <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
+                      <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <Menu className="h-5 w-5" />
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent side="right">
+                        <SheetHeader>
+                          <SheetTitle>Account Menu</SheetTitle>
+                        </SheetHeader>
+                        <div className="flex flex-col space-y-2 mt-4">
+                          <Link href="/profile">
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start"
+                              onClick={() => setShowMobileMenu(false)}
+                            >
+                              <User className="w-4 h-4 mr-2" />
+                              Profile
+                            </Button>
+                          </Link>
+                          <Link href={`/${currentStore?.name || ""}/orders`}>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start"
+                              onClick={() => setShowMobileMenu(false)}
+                            >
+                              <Package className="w-4 h-4 mr-2" />
+                              My Orders
+                            </Button>
+                          </Link>
+                          <Link href={`/${currentStore?.name || ""}/favorites`}>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start"
+                              onClick={() => setShowMobileMenu(false)}
+                            >
+                              <Heart className="w-4 h-4 mr-2" />
+                              Favorites
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start"
+                            onClick={async () => {
+                              try {
+                                await api.post("/auth/logout");
+                                window.location.href = "/";
+                              } catch {
+                                // Ignore logout errors
+                              }
+                            }}
+                          >
+                            <LogOut className="w-4 h-4 mr-2" />
+                            Logout
+                          </Button>
+                        </div>
+                      </SheetContent>
+                    </Sheet>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Desktop Login Button */}
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="sm:hidden"
-                    onClick={async () => {
-                      try {
-                        await api.post("/auth/logout");
-                        window.location.href = "/";
-                      } catch {
-                        // Ignore logout errors
-                      }
-                    }}
+                    onClick={() => setShowAuthDialog(true)}
+                    className="hidden sm:flex"
                   >
-                    Logout
+                    Login / Sign Up
+                  </Button>
+                  {/* Mobile Login Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAuthDialog(true)}
+                    className="sm:hidden"
+                  >
+                    Login
                   </Button>
                 </>
               )}
+
             </div>
           </div>
 
@@ -389,18 +421,18 @@ export default function HomePage() {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8 pb-24 sm:pb-8">
         {/* Hero Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 mb-8 text-white">
-          <h2 className="text-4xl font-bold mb-4">Discover Amazing Products</h2>
-          <p className="text-xl opacity-90 mb-6">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 text-white">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4">Discover Amazing Products</h2>
+          <p className="text-sm sm:text-lg md:text-xl opacity-90 mb-4 sm:mb-6">
             Shop the latest trends and find exactly what you're looking for
           </p>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-              <span className="font-semibold">4.8/5 Rating</span>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-yellow-400 text-yellow-400" />
+              <span className="font-semibold text-sm sm:text-base">4.8/5 Rating</span>
             </div>
-            <div className="w-px h-6 bg-white opacity-30"></div>
-            <span className="opacity-90">{products.length}+ Products</span>
+            <div className="w-px h-4 sm:h-6 bg-white opacity-30"></div>
+            <span className="opacity-90 text-sm sm:text-base">{products.length}+ Products</span>
           </div>
         </div>
 
@@ -408,7 +440,7 @@ export default function HomePage() {
         <Sheet open={showMobileFilters} onOpenChange={setShowMobileFilters}>
           <SheetContent side="left" className="w-80">
             <SheetHeader>
-              <SheetTitle>Filters & Categories</SheetTitle>
+              <SheetTitle>Filters & Sort</SheetTitle>
             </SheetHeader>
             <div className="mt-6 space-y-6">
               <CategoryFilter
@@ -434,7 +466,10 @@ export default function HomePage() {
                   <Button
                     variant={viewMode === "grid" ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setViewMode("grid")}
+                    onClick={() => {
+                      setViewMode("grid");
+                      setShowMobileFilters(false);
+                    }}
                     className="flex-1"
                   >
                     <Grid className="w-4 h-4 mr-2" />
@@ -443,7 +478,10 @@ export default function HomePage() {
                   <Button
                     variant={viewMode === "list" ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setViewMode("list")}
+                    onClick={() => {
+                      setViewMode("list");
+                      setShowMobileFilters(false);
+                    }}
                     className="flex-1"
                   >
                     <List className="w-4 h-4 mr-2" />
@@ -454,6 +492,49 @@ export default function HomePage() {
             </div>
           </SheetContent>
         </Sheet>
+
+        {/* Mobile Filters and Sort - Compact Row */}
+        <div className="flex sm:hidden items-center justify-between gap-2 mb-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowMobileFilters(true)}
+              className="flex items-center gap-1 px-2 py-1"
+            >
+              <Filter className="w-3 h-3" />
+              <span className="text-xs">Filters</span>
+            </Button>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-24 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Name</SelectItem>
+                <SelectItem value="price-low">Price ↑</SelectItem>
+                <SelectItem value="price-high">Price ↓</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant={viewMode === "grid" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              className="h-8 w-8 p-0"
+            >
+              <Grid className="w-3 h-3" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+              className="h-8 w-8 p-0"
+            >
+              <List className="w-3 h-3" />
+            </Button>
+          </div>
+        </div>
 
         {/* Desktop Filters and Sort */}
         <div className="hidden sm:flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
@@ -509,8 +590,8 @@ export default function HomePage() {
         )}
 
         {/* Results Count */}
-        <div className="mb-6">
-          <p className="text-gray-600">
+        <div className="mb-4 sm:mb-6">
+          <p className="text-gray-600 text-sm sm:text-base">
             Showing {paginatedProducts.length} of {sortedProducts.length} products
             {searchTerm && ` for "${searchTerm}"`}
           </p>
@@ -518,8 +599,8 @@ export default function HomePage() {
 
         {/* Products Grid */}
         <div
-          className={`grid gap-6 mb-8 ${viewMode === "grid"
-            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          className={`grid gap-3 sm:gap-4 md:gap-6 mb-8 ${viewMode === "grid"
+            ? "grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
             : "grid-cols-1"
             }`}
         >
