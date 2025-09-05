@@ -97,8 +97,12 @@ export const createProduct = catchAsync(async (req: Request, res: Response) => {
   // If files are uploaded (e.g., via multipart), add their URLs
   if (req.files && Array.isArray(req.files)) {
     for (const file of req.files) {
-      if (file.path) {
-        images.push(file.path);
+      // Use the proper image URL handling from upload middleware
+      const imageUrl = process.env.CLOUDINARY_URL ?
+        (file as { cloudinaryUrl?: string }).cloudinaryUrl || file.path :
+        file.path;
+      if (imageUrl) {
+        images.push(imageUrl);
       }
     }
   }
