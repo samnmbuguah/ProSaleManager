@@ -25,7 +25,7 @@ interface ProductFormDialogProps {
   onOpenChange: (open: boolean) => void;
   formData: z.infer<typeof productSchema>;
   setFormData: React.Dispatch<React.SetStateAction<z.infer<typeof productSchema>>>;
-  onSubmit: (e: React.FormEvent, localImageFile?: File) => void;
+  onSubmit: (e: React.FormEvent, localImageFiles?: File[]) => void;
   selectedProduct: Product | null;
 }
 
@@ -166,6 +166,23 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
     setImagePreviews(files.map((file) => URL.createObjectURL(file)));
   };
 
+  const removeImage = (index: number) => {
+    // Revoke the object URL to prevent memory leaks
+    URL.revokeObjectURL(imagePreviews[index]);
+
+    const newFiles = imageFiles.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    setImageFiles(newFiles);
+    setImagePreviews(newPreviews);
+  };
+
+  // Cleanup object URLs when component unmounts
+  React.useEffect(() => {
+    return () => {
+      imagePreviews.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [imagePreviews]);
+
   // Helper to build the payload for submission, converting numbers
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,12 +198,12 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
       Object.entries(payload).forEach(([key, value]) => {
         formDataToSend.append(key, String(value));
       });
-      // Only send the first image since server expects single image upload
-      if (imageFiles.length > 0) {
-        formDataToSend.append("image", imageFiles[0]);
-      }
+      // Send all selected images
+      imageFiles.forEach((file) => {
+        formDataToSend.append("images", file);
+      });
       try {
-        await onSubmit(e, imageFiles[0]); // Pass first file for legacy support
+        await onSubmit(e, imageFiles); // Pass all files for multiple image support
       } catch (err: unknown) {
         // Error handling is now done in the parent component (InventoryPage)
         // This catch block is kept for any additional cleanup if needed
@@ -251,12 +268,20 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
             {imagePreviews.length > 0 && (
               <div className="mt-2 flex gap-2 flex-wrap">
                 {imagePreviews.map((url, idx) => (
-                  <img
-                    key={idx}
-                    src={url}
-                    alt={`Product Preview ${idx + 1}`}
-                    className="w-24 h-24 object-cover rounded-md"
-                  />
+                  <div key={idx} className="relative">
+                    <img
+                      src={url}
+                      alt={`Product Preview ${idx + 1}`}
+                      className="w-24 h-24 object-cover rounded-md border"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(idx)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                    >
+                      ×
+                    </button>
+                  </div>
                 ))}
               </div>
             )}
