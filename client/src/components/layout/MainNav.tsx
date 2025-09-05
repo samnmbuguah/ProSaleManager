@@ -111,18 +111,24 @@ export default function MainNav() {
 
   const NavLinks = () => (
     <>
-      {routes.map(({ path, label, icon: Icon }: Route) => (
-        <Link key={path} href={`${storePrefix}/${path}`.replace(/\/$/, "")}>
-          <Button
-            variant={location === `${storePrefix}/${path}`.replace(/\/$/, "") ? "default" : "ghost"}
-            className="flex items-center space-x-2"
-            onClick={() => setIsOpen(false)}
-          >
-            <Icon className="h-4 w-4" />
-            <span>{label}</span>
-          </Button>
-        </Link>
-      ))}
+      {routes.map(({ path, label, icon: Icon }: Route) => {
+        // Use direct routes when no store is selected, otherwise use store-prefixed routes
+        const href = currentStore?.name ? `${storePrefix}/${path}`.replace(/\/$/, "") : `/${path}`;
+        const isActive = location === href;
+
+        return (
+          <Link key={path} href={href}>
+            <Button
+              variant={isActive ? "default" : "ghost"}
+              className="flex items-center space-x-2"
+              onClick={() => setIsOpen(false)}
+            >
+              <Icon className="h-4 w-4" />
+              <span>{label}</span>
+            </Button>
+          </Link>
+        );
+      })}
     </>
   );
 
