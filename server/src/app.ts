@@ -26,6 +26,8 @@ app.use(
         imgSrc: [
           "'self'",
           "data:",
+          "http://localhost:5000",
+          "http://127.0.0.1:5000",
           "https://images.unsplash.com",
           "https://res.cloudinary.com",
           "https://images.pexels.com",
@@ -33,6 +35,7 @@ app.use(
         // ...other directives as needed
       },
     },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
   }),
 );
 
@@ -98,6 +101,21 @@ app.get("/health", (req, res) => {
 
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(process.cwd(), "public")));
+
+// Serve uploads directory for local file storage (including subdirectories)
+// Add CORS headers for static file serving
+app.use("/uploads", (req, res, next) => {
+  // Add CORS headers for static files
+  const origin = req.headers.origin;
+  if (origin && isAllowedOrigin(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  next();
+}, express.static(path.join(process.cwd(), "uploads"), {
+  dotfiles: 'ignore',
+  index: false
+}));
 
 // SPA fallback: serve index.html for any non-API route
 app.get(/^\/(?!api).*/, (req, res) => {
