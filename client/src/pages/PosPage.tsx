@@ -23,7 +23,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const PosPage: React.FC = () => {
-  const { products, refetch, error } = useProducts();
+  const { products: allProducts, refetch, error } = useProducts();
+  const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
   const {
     cart,
     addToCart,
@@ -52,6 +53,14 @@ const PosPage: React.FC = () => {
     refetch();
     fetchCustomers();
   }, [refetch, fetchCustomers]);
+
+  // Initialize displayed products when allProducts changes
+  useEffect(() => {
+    if (allProducts && allProducts.length > 0) {
+      console.log('Initializing displayed products:', allProducts.length, 'products');
+      setDisplayedProducts(allProducts);
+    }
+  }, [allProducts]);
 
   // Set Walk-in Customer as default when customers are loaded
   useEffect(() => {
@@ -227,10 +236,16 @@ const PosPage: React.FC = () => {
 
               <div className="flex-1 min-h-0 overflow-y-auto">
                 <ProductSearch
-                  products={(products || []).filter((product) => product?.sku !== "SRV001")}
+                  products={(displayedProducts || []).filter((product) => product?.sku !== "SRV001")}
                   onSelect={handleAddToCart}
                   searchProducts={async (query: string) => {
                     try {
+                      if (!query.trim()) {
+                        // If query is empty, show all products
+                        setDisplayedProducts(allProducts || []);
+                        return;
+                      }
+
                       const response = await fetch(
                         `${import.meta.env.VITE_API_URL}/products/search?q=${query}`,
                         {
@@ -248,7 +263,12 @@ const PosPage: React.FC = () => {
                       if (data.message === "getProducts stub") {
                         throw new Error("Stub response received - API not properly configured");
                       }
-                      // setProducts(data.data || []) // This line is removed as per the edit hint
+
+                      // Update displayed products with search results
+                      // Handle both {success: true, data: [...]} and [...] formats
+                      const searchResults = data.data || data || [];
+                      console.log('Search results:', searchResults.length, 'products found');
+                      setDisplayedProducts(searchResults);
                     } catch (error) {
                       console.error("Error:", error);
                       toast({
@@ -256,6 +276,10 @@ const PosPage: React.FC = () => {
                         description: "Failed to search products",
                         variant: "destructive",
                       });
+                      // On error, show all products
+                      setDisplayedProducts(allProducts || []);
+                    } finally {
+                      // Search completed
                     }
                   }}
                 />

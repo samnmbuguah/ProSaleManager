@@ -7,10 +7,14 @@ import { API_ENDPOINTS } from "@/lib/api-endpoints";
 
 export const fetchProducts = createAsyncThunk(
   "products/fetchProducts",
-  async (_, { rejectWithValue }) => {
+  async (params: { page?: number; limit?: number } = {}, { rejectWithValue }) => {
     try {
-      const response = await api.get(API_ENDPOINTS.products.list);
-      return response.data.data;
+      const { page = 1, limit = 10 } = params;
+      const response = await api.get(`${API_ENDPOINTS.products.list}?page=${page}&limit=${limit}`);
+      return {
+        products: response.data.data,
+        pagination: response.data.pagination
+      };
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : "Failed to fetch products");
     }
@@ -37,7 +41,7 @@ export const updateProduct = createAsyncThunk(
   ) => {
     try {
       const response = await api.put(API_ENDPOINTS.products.update(id), data);
-      await dispatch(fetchProducts());
+      await dispatch(fetchProducts({ page: 1, limit: 10 }));
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : "Failed to update product");
@@ -75,6 +79,12 @@ interface ProductsState {
   activeTab: string;
   imagePreview: string | null;
   formData: z.infer<typeof productSchema>;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 const initialState: ProductsState = {
@@ -88,6 +98,12 @@ const initialState: ProductsState = {
   activeTab: "products",
   imagePreview: null,
   formData: initialFormData,
+  pagination: {
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  },
 };
 
 const productsSlice = createSlice({
@@ -122,6 +138,9 @@ const productsSlice = createSlice({
     resetFormData: (state) => {
       state.formData = initialFormData;
     },
+    setPage: (state, action) => {
+      state.pagination.page = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -131,7 +150,8 @@ const productsSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.items = action.payload;
+        state.items = action.payload.products;
+        state.pagination = action.payload.pagination;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.status = "failed";
@@ -172,6 +192,7 @@ export const {
   setImagePreview,
   setFormData,
   resetFormData,
+  setPage,
 } = productsSlice.actions;
 
 export default productsSlice.reducer;
