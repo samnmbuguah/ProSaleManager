@@ -22,9 +22,6 @@ app.use(attachStoreIdToUser);
 // Routes
 app.use("/api", routes);
 
-// Serve uploads directory for local file storage
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-
 // 404 handler - must be after all routes
 app.use((req, res, next) => {
   next(new ApiError(404, `Route not found: ${req.method} ${req.originalUrl}`));
