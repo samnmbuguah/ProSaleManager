@@ -16,6 +16,7 @@ import {
   setActiveTab,
   setFormData,
   searchProducts,
+  setPage,
 } from "@/store/productsSlice";
 import ProductList from "@/components/inventory/ProductList";
 import ProductFormDialog from "@/components/inventory/ProductFormDialog";
@@ -36,6 +37,7 @@ const InventoryPage: React.FC = () => {
   const searchQuery = useSelector((state: RootState) => state.products.searchQuery);
   const activeTab = useSelector((state: RootState) => state.products.activeTab);
   const formData = useSelector((state: RootState) => state.products.formData);
+  const pagination = useSelector((state: RootState) => state.products.pagination);
   const { toast } = useToast();
 
   const [uploading, setUploading] = React.useState(false);
@@ -68,17 +70,17 @@ const InventoryPage: React.FC = () => {
 
   useEffect(() => {
     if (productsStatus === "idle") {
-      dispatch(fetchProducts());
+      dispatch(fetchProducts({ page: pagination.page, limit: pagination.limit }));
     }
-  }, [dispatch, productsStatus]);
+  }, [dispatch, productsStatus, pagination.page, pagination.limit]);
 
-  const handleSubmit = async (_unused: unknown, localImageFile?: File) => {
+  const handleSubmit = async (_unused: unknown, localImageFiles?: File[]) => {
     try {
       setUploading(true);
       setUploadProgress(null);
       let response;
-      if (localImageFile) {
-        // Use FormData if uploading an image
+      if (localImageFiles && localImageFiles.length > 0) {
+        // Use FormData if uploading images
         const formDataToSend = new FormData();
         Object.entries(formData).forEach(([key, value]) => {
           if (typeof value === "number" || typeof value === "boolean") {
@@ -87,7 +89,10 @@ const InventoryPage: React.FC = () => {
             formDataToSend.append(key, Array.isArray(value) ? value.join(",") : (value ?? ""));
           }
         });
-        formDataToSend.append("image", localImageFile);
+        // Append all image files
+        localImageFiles.forEach((file) => {
+          formDataToSend.append("images", file);
+        });
         if (selectedProduct) {
           response = await api.put(
             API_ENDPOINTS.products.update(selectedProduct.id),
@@ -140,24 +145,24 @@ const InventoryPage: React.FC = () => {
       dispatch(setFormData(initialFormData));
       dispatch(setIsAddDialogOpen(false));
       dispatch(setIsEditDialogOpen(false));
-      dispatch(fetchProducts());
+      dispatch(fetchProducts({ page: pagination.page, limit: pagination.limit }));
     } catch (error: unknown) {
       console.error("Error:", error);
-      
+
       // Handle specific error cases
       let errorMessage = `Failed to ${selectedProduct ? "update" : "create"} product`;
       let errorTitle = "Error";
-      
+
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { data?: { message?: string; error?: string } } };
         const serverMessage = axiosError.response?.data?.message;
         const serverError = axiosError.response?.data?.error;
-        
+
         if (serverMessage) {
           if (serverMessage.includes("SKU") && serverMessage.includes("already exists")) {
             errorTitle = "SKU Already Exists";
             errorMessage = "A product with this SKU already exists. Please use a unique SKU.";
-            
+
             // Generate a suggested unique SKU
             const currentSku = formData.sku;
             if (currentSku) {
@@ -180,12 +185,12 @@ const InventoryPage: React.FC = () => {
       } else if (error instanceof Error) {
         errorMessage = error.message;
       }
-      
+
       // For SKU errors, show a more detailed toast with action
       if (errorTitle === "SKU Already Exists" && formData.sku) {
         const timestamp = Date.now().toString().slice(-4);
         const suggestedSku = `${formData.sku}-${timestamp}`;
-        
+
         toast({
           title: errorTitle,
           description: "A product with this SKU already exists. Click 'Use Suggested SKU' to automatically update the form.",
@@ -260,7 +265,7 @@ const InventoryPage: React.FC = () => {
         title: "Success",
         description: "Product deleted successfully",
       });
-      dispatch(fetchProducts());
+      dispatch(fetchProducts({ page: pagination.page, limit: pagination.limit }));
     } catch (error: unknown) {
       // Show SweetAlert2 error dialog for backend error
       let message = "Failed to delete product";
@@ -327,7 +332,44 @@ const InventoryPage: React.FC = () => {
         )}
       </div>
       {activeTab === "products" && (
-        <ProductList products={products} onEdit={handleEdit} onDelete={handleDelete} />
+        <>
+          <ProductList products={products} onEdit={handleEdit} onDelete={handleDelete} />
+          {/* Pagination Controls */}
+          {pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6">
+              <div className="text-sm text-gray-600">
+                Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} products
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    dispatch(setPage(pagination.page - 1));
+                    dispatch(fetchProducts({ page: pagination.page - 1, limit: pagination.limit }));
+                  }}
+                  disabled={pagination.page <= 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm">
+                  Page {pagination.page} of {pagination.totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    dispatch(setPage(pagination.page + 1));
+                    dispatch(fetchProducts({ page: pagination.page + 1, limit: pagination.limit }));
+                  }}
+                  disabled={pagination.page >= pagination.totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
       <ProductFormDialog
         open={isAddDialogOpen || isEditDialogOpen}
