@@ -78,6 +78,7 @@ server/.env.test
 
 # Ignore local seed user files
 server/src/seed/users.ts
+server/src/seed/eltee-store.ts
 server/src/database/seeders/20250728122816-initial-data.js
 
 # Ignore SQLite databases
