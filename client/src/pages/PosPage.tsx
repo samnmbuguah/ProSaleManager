@@ -3,7 +3,7 @@ import type { Product } from "@/types/product";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, RefreshCcw, User, ShoppingCart } from "lucide-react";
+import { AlertCircle, RefreshCcw, User, ShoppingCart, History } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { ProductSearch } from "@/components/pos/ProductSearch";
 import { Cart } from "@/components/pos/Cart";
@@ -21,6 +21,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const PosPage: React.FC = () => {
   const { products: allProducts, refetch, error } = useProducts();
@@ -35,6 +38,7 @@ const PosPage: React.FC = () => {
     clearCart,
   } = useCart();
   const { toast } = useToast();
+  const { user } = useAuthContext();
   const [selectedCustomer, setSelectedCustomer] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "mpesa">("cash");
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
@@ -45,6 +49,7 @@ const PosPage: React.FC = () => {
     checkout: false,
   });
   const [deliveryFee, setDeliveryFee] = useState(200);
+  const [isHistoricalMode, setIsHistoricalMode] = useState(false);
 
   // Load products and customers on component mount
   // Note: In development mode with React.StrictMode, this may run twice
@@ -90,7 +95,7 @@ const PosPage: React.FC = () => {
     });
   };
 
-  const handleCheckout = async (amountTendered: number, change: number) => {
+  const handleCheckout = async (amountTendered: number, change: number, historicalDate?: string) => {
     try {
       setIsLoading((prev) => ({ ...prev, checkout: true }));
 
@@ -131,6 +136,7 @@ const PosPage: React.FC = () => {
         payment_status: "paid",
         amount_paid: amountTendered,
         change_amount: change,
+        ...(historicalDate && { created_at: historicalDate }),
       };
 
       // Use the configured API instance
@@ -186,6 +192,20 @@ const PosPage: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold">Point of Sale</h1>
           <div className="flex items-center gap-4">
+            {/* Historical Sales Toggle - Only for admin and super_admin */}
+            {(user?.role === "admin" || user?.role === "super_admin") && (
+              <div className="flex items-center gap-2">
+                <History className="h-5 w-5 text-gray-500" />
+                <Label htmlFor="historical-mode" className="text-sm text-gray-600">
+                  Historical Sales
+                </Label>
+                <Switch
+                  id="historical-mode"
+                  checked={isHistoricalMode}
+                  onCheckedChange={setIsHistoricalMode}
+                />
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <User className="h-5 w-5 text-gray-500" />
               <span className="text-sm text-gray-600">Customer:</span>
@@ -319,6 +339,7 @@ const PosPage: React.FC = () => {
         setSelectedCustomer={setSelectedCustomer}
         onCheckout={handleCheckout}
         isLoadingCheckout={isLoading.checkout}
+        isHistoricalMode={isHistoricalMode}
       />
 
       {/* Receipt Dialog */}

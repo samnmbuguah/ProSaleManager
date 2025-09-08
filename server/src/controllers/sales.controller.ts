@@ -21,6 +21,7 @@ export const createSale = async (req: Request, res: Response) => {
       amount_paid,
       customer_id,
       delivery_fee,
+      created_at,
     } = req.body;
 
     // Get the user_id from the authenticated session
@@ -44,21 +45,26 @@ export const createSale = async (req: Request, res: Response) => {
     console.log("Creating sale record...");
     // Create the sale with customer_id (null for walk-in customers)
     // Ensure we use the client's status value or default to 'completed' for paid sales
-    const sale = await Sale.create(
-      {
-        user_id,
-        customer_id: customer_id || null,
-        total_amount: total,
-        payment_method: payment_method || "cash",
-        amount_paid: amount_paid || total,
-        status: status || "completed", // Default to completed instead of pending
-        payment_status: payment_status || "paid", // Explicitly track payment status
-        delivery_fee: delivery_fee || 0,
-        store_id:
-          req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id,
-      },
-      { transaction: t },
-    );
+    const saleData: any = {
+      user_id,
+      customer_id: customer_id || null,
+      total_amount: total,
+      payment_method: payment_method || "cash",
+      amount_paid: amount_paid || total,
+      status: status || "completed", // Default to completed instead of pending
+      payment_status: payment_status || "paid", // Explicitly track payment status
+      delivery_fee: delivery_fee || 0,
+      store_id:
+        req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id,
+    };
+
+    // If created_at is provided (for historical sales), use it
+    if (created_at) {
+      saleData.createdAt = new Date(created_at);
+      saleData.updatedAt = new Date(created_at);
+    }
+
+    const sale = await Sale.create(saleData, { transaction: t });
 
     console.log("Sale created with ID:", sale.id);
 
@@ -74,21 +80,26 @@ export const createSale = async (req: Request, res: Response) => {
     console.log("Creating sale items...");
     // Create sale items
     await Promise.all(
-      (items as SaleItemInput[]).map((item) =>
-        SaleItem.create(
-          {
-            sale_id: sale.id,
-            product_id: item.product_id,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            total: item.total,
-            unit_type: item.unit_type,
-            store_id:
-              req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id,
-          },
-          { transaction: t },
-        ),
-      ),
+      (items as SaleItemInput[]).map((item) => {
+        const saleItemData: any = {
+          sale_id: sale.id,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total: item.total,
+          unit_type: item.unit_type,
+          store_id:
+            req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id,
+        };
+
+        // If created_at is provided (for historical sales), use it for sale items too
+        if (created_at) {
+          saleItemData.createdAt = new Date(created_at);
+          saleItemData.updatedAt = new Date(created_at);
+        }
+
+        return SaleItem.create(saleItemData, { transaction: t });
+      }),
     );
 
     console.log("Sale items created successfully");
