@@ -175,24 +175,48 @@ export default function HomePage() {
       });
       clearCart();
     } catch (e: unknown) {
+      let title = "Order Failed";
       let message = "Failed to place order. Please try again.";
+
       if (
         typeof e === "object" &&
         e !== null &&
         "response" in e &&
         (e as { response?: { data?: { message?: string } } }).response
       ) {
-        message =
-          (e as { response?: { data?: { message?: string } } }).response?.data?.message ||
-          (e as { message?: string }).message ||
-          message;
+        const responseData = (e as { response?: { data?: { message?: string } } }).response?.data;
+
+        if (responseData?.message) {
+          // Check if it's an insufficient stock error
+          if (responseData.message.includes("Insufficient stock")) {
+            title = "Insufficient Stock";
+
+            // Extract product name and stock details from the error message
+            const stockMatch = responseData.message.match(/Insufficient stock for (.+?)\. Available: (\d+), Required: (\d+)/);
+            if (stockMatch) {
+              const [, productName, available, required] = stockMatch;
+              const shortage = parseInt(required) - parseInt(available);
+
+              message = `${productName} has insufficient stock.\n\nAvailable: ${available} units\nRequired: ${required} units\nShortage: ${shortage} units\n\nPlease reduce the quantity or remove this item from your order.`;
+            } else {
+              message = responseData.message;
+            }
+          } else {
+            message = responseData.message;
+          }
+        }
       } else if (e instanceof Error) {
         message = e.message;
       }
+
       Swal.fire({
         icon: "error",
-        title: "Order failed",
+        title: title,
         text: message,
+        confirmButtonText: "OK",
+        customClass: {
+          popup: 'swal-wide'
+        }
       });
     } finally {
       setIsSubmitting(false);
