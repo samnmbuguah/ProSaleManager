@@ -2,6 +2,8 @@ import { Router } from "express";
 import Product from "../models/Product.js";
 import Sale from "../models/Sale.js";
 import SaleItem from "../models/SaleItem.js";
+import Category from "../models/Category.js";
+import Store from "../models/Store.js";
 import { Op } from "sequelize";
 import { storeScope } from "../utils/helpers.js";
 import { requireStoreContext } from "../middleware/store-context.middleware.js";
@@ -396,6 +398,104 @@ router.get(
       res.status(500).json({
         success: false,
         message: "Failed to fetch expenses summary report",
+      });
+    }
+  },
+);
+
+// Export inventory to CSV
+router.get(
+  "/inventory/export",
+  requireAuth,
+  attachStoreIdToUser,
+  requireStoreContext,
+  async (req, res) => {
+    try {
+      // Get all products with categories and store information
+      const products = await Product.findAll({
+        where: storeScope(req.user!),
+        include: [
+          {
+            model: Category,
+            as: "Category",
+            attributes: ["name"],
+          },
+          {
+            model: Store,
+            as: "Store",
+            attributes: ["name"],
+          },
+        ],
+        order: [["name", "ASC"]],
+      });
+
+      // Create CSV header
+      const headers = [
+        "ID",
+        "Product Name",
+        "SKU",
+        "Description",
+        "Piece Selling Price",
+        "Piece Buying Price",
+        "Pack Selling Price",
+        "Pack Buying Price",
+        "Dozen Selling Price",
+        "Dozen Buying Price",
+        "Current Quantity",
+        "Min Quantity",
+        "Stock Unit",
+        "Image URL",
+        "Is Active",
+        "Category",
+        "Store",
+        "Created At",
+        "Updated At"
+      ];
+
+      // Create CSV content
+      let csvContent = headers.join(",") + "\n";
+
+      products.forEach((product: any) => {
+        const csvRow = [
+          product.id,
+          `"${(product.name || "").replace(/"/g, '""')}"`, // Escape quotes
+          `"${(product.sku || "").replace(/"/g, '""')}"`,
+          `"${(product.description || "").replace(/"/g, '""')}"`,
+          product.piece_selling_price || 0,
+          product.piece_buying_price || 0,
+          product.pack_selling_price || 0,
+          product.pack_buying_price || 0,
+          product.dozen_selling_price || 0,
+          product.dozen_buying_price || 0,
+          product.quantity || 0,
+          product.min_quantity || 0,
+          `"${(product.stock_unit || "").replace(/"/g, '""')}"`,
+          `"${(product.image_url || "").replace(/"/g, '""')}"`,
+          product.is_active ? "Yes" : "No",
+          `"${(product.Category?.name || "").replace(/"/g, '""')}"`,
+          `"${(product.Store?.name || "").replace(/"/g, '""')}"`,
+          product.createdAt || "",
+          product.updatedAt || ""
+        ];
+        csvContent += csvRow.join(",") + "\n";
+      });
+
+      // Set response headers for CSV download
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      const filename = `inventory-export-${timestamp}.csv`;
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("Cache-Control", "no-cache");
+
+      // Send CSV content
+      res.send(csvContent);
+
+    } catch (error) {
+      console.error("Error exporting inventory to CSV:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to export inventory to CSV",
       });
     }
   },
