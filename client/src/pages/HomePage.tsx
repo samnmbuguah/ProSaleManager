@@ -271,17 +271,16 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-lg sticky top-0 z-40">
+      <header className="shadow-lg sticky top-0 z-40" style={{ background: 'linear-gradient(to right, #c8cbc8, white)' }}>
         <div className="container mx-auto px-4 py-4">
           {/* Top Header */}
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">E</span>
-              </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Eltee Store
-              </h1>
+              <img
+                src="/logo.png"
+                alt="Eltee Store Logo"
+                className="w-16 h-16 object-contain"
+              />
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
               {/* Cart Drawer */}
