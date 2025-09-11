@@ -9,7 +9,11 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Download, FileSpreadsheet } from "lucide-react";
 import { useState } from "react";
+import { api } from "@/lib/api";
+import { toast } from "@/components/ui/use-toast";
 
 interface InventoryStatusProps {
   products: Product[];
@@ -23,6 +27,7 @@ export default function InventoryStatus({ products, onSearch }: InventoryStatusP
   // Sorting state
   const [sortColumn, setSortColumn] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -30,6 +35,53 @@ export default function InventoryStatus({ products, onSearch }: InventoryStatusP
     } else {
       setSortColumn(column);
       setSortDirection("asc");
+    }
+  };
+
+  const handleDownloadCSV = async () => {
+    try {
+      setIsDownloading(true);
+
+      const response = await api.get("/reports/inventory/export", {
+        responseType: "blob", // Important for file downloads
+      });
+
+      // Create blob link to download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+
+      // Extract filename from response headers or create default
+      const contentDisposition = response.headers["content-disposition"];
+      let filename = "inventory-export.csv";
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download Complete",
+        description: `Inventory CSV exported successfully with ${safeProducts.length} products`,
+        variant: "default",
+      });
+
+    } catch (error) {
+      console.error("Error downloading CSV:", error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to export inventory to CSV. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -90,6 +142,24 @@ export default function InventoryStatus({ products, onSearch }: InventoryStatusP
         <div className="flex-1">
           <Input placeholder="Search products..." onChange={(e) => onSearch(e.target.value)} />
         </div>
+        <Button
+          onClick={handleDownloadCSV}
+          disabled={isDownloading || safeProducts.length === 0}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          {isDownloading ? (
+            <>
+              <Download className="h-4 w-4 animate-spin" />
+              Exporting...
+            </>
+          ) : (
+            <>
+              <FileSpreadsheet className="h-4 w-4" />
+              Download CSV
+            </>
+          )}
+        </Button>
       </div>
 
       <Table>
