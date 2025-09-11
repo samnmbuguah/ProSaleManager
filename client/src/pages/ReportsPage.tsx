@@ -172,14 +172,8 @@ export default function ReportsPage() {
             <InventoryStatus
               products={
                 searchResults !== null
-                  ? searchResults.map((p: Product) => ({
-                      ...p,
-                      price: p.piece_selling_price,
-                    }))
-                  : (inventoryData?.products || []).map((p: Product) => ({
-                      ...p,
-                      price: p.piece_selling_price,
-                    }))
+                  ? searchResults
+                  : (inventoryData?.products || [])
               }
               onSearch={handleSearch}
             />
