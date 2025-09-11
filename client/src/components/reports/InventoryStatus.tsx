@@ -1,4 +1,4 @@
-import type { Product } from "@/types/schema";
+import type { Product } from "@/types/product";
 import {
   Table,
   TableBody,
@@ -88,10 +88,10 @@ export default function InventoryStatus({ products, onSearch }: InventoryStatusP
   const sortedProducts = [...safeProducts].sort((a, b) => {
     let aValue = a[sortColumn as keyof typeof a];
     let bValue = b[sortColumn as keyof typeof b];
-    // For value column, calculate price * quantity
+    // For value column, calculate buying price * quantity
     if (sortColumn === "value") {
-      aValue = (a.price || 0) * (a.quantity || 0);
-      bValue = (b.price || 0) * (b.quantity || 0);
+      aValue = (a.piece_buying_price || 0) * (a.quantity || 0);
+      bValue = (b.piece_buying_price || 0) * (b.quantity || 0);
     }
     // Numeric sort for numbers
     if (typeof aValue === "number" && typeof bValue === "number") {
@@ -115,7 +115,7 @@ export default function InventoryStatus({ products, onSearch }: InventoryStatusP
   };
 
   const totalValue = safeProducts.reduce(
-    (sum, product) => sum + (product.price || 0) * (product.quantity || 0),
+    (sum, product) => sum + (product.piece_buying_price || 0) * (product.quantity || 0),
     0
   );
 
@@ -204,12 +204,12 @@ export default function InventoryStatus({ products, onSearch }: InventoryStatusP
           ) : (
             sortedProducts.map((product) => {
               const status = getStockStatus(product.quantity || 0);
-              const value = (product.price || 0) * (product.quantity || 0);
+              const value = (product.piece_buying_price || 0) * (product.quantity || 0);
               return (
                 <TableRow key={product.id}>
                   <TableCell>{product.name}</TableCell>
                   <TableCell>{product.sku}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(product.price)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(product.piece_selling_price)}</TableCell>
                   <TableCell className="text-right">{product.quantity || 0}</TableCell>
                   <TableCell>
                     <Badge

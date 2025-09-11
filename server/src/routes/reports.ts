@@ -111,6 +111,7 @@ router.get(
         sku: product.sku,
         category_id: product.category_id,
         piece_selling_price: product.piece_selling_price,
+        piece_buying_price: product.piece_buying_price,
         pack_selling_price: product.pack_selling_price,
         dozen_selling_price: product.dozen_selling_price,
         quantity: product.quantity,
@@ -121,7 +122,7 @@ router.get(
       }));
 
       const totalValue = inventoryData.reduce((sum, product) => {
-        return sum + (product.piece_selling_price || 0) * (product.quantity || 0);
+        return sum + (product.piece_buying_price || 0) * (product.quantity || 0);
       }, 0);
 
       res.json({
