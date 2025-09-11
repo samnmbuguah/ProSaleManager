@@ -23,6 +23,7 @@
     "seed:generate": "sequelize-cli seed:generate --name",
     "seed:undo": "sequelize-cli db:seed:undo",
     "seed:legacy": "tsx scripts/db.ts seed",
+    "seed:eltee": "tsx src/seed/eltee-store.ts",
     "generate:migration": "sequelize-cli migration:generate --name",
     "test": "jest",
     "test:watch": "jest --watch",
