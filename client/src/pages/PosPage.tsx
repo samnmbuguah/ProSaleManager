@@ -48,7 +48,7 @@ const PosPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState({
     checkout: false,
   });
-  const [deliveryFee, setDeliveryFee] = useState(200);
+  const [deliveryFee, setDeliveryFee] = useState(0);
   const [isHistoricalMode, setIsHistoricalMode] = useState(false);
 
   // Load products and customers on component mount

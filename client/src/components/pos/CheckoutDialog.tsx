@@ -203,7 +203,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               onChange={(e) => setDeliveryFee(Number(e.target.value))}
               min={0}
               step={0.01}
-              placeholder="200"
+              placeholder="0"
             />
           </div>
           <div className="pt-4 space-y-2">
