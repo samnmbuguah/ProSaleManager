@@ -23,11 +23,20 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
+        connectSrc: [
+          "'self'",
+          "http://localhost:5000",
+          "http://127.0.0.1:5000",
+          "http://34.131.30.62:5000", // Allow external server
+          "https://eltee.store",
+          "https://www.eltee.store",
+        ],
         imgSrc: [
           "'self'",
           "data:",
           "http://localhost:5000",
           "http://127.0.0.1:5000",
+          "http://34.131.30.62:5000", // Allow external server
           "https://images.unsplash.com",
           "https://res.cloudinary.com",
           "https://images.pexels.com",
@@ -47,6 +56,7 @@ const allowedOrigins = [
   "http://127.0.0.1:3000",
   "http://localhost:5000",
   "http://127.0.0.1:5000",
+  "http://34.131.30.62:5000", // Allow external server
   "https://eltee.store",
   "https://www.eltee.store", // Allow both root and www subdomain
 ];
