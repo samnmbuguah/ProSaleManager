@@ -43,7 +43,7 @@ export default function ProductCard({
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const { isAuthenticated } = useAuth();
-  const { data: favoriteStatus } = useFavoriteStatus(product.id);
+  const { data: favoriteStatus } = useFavoriteStatus(product.id, isAuthenticated);
   const toggleFavorite = useToggleFavorite();
 
   const handleToggleFavorite = () => {
