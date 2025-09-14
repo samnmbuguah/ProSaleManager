@@ -40,7 +40,9 @@ interface PotentialCartItemData {
   product?: {
     id?: unknown;
     name?: unknown;
-    selling_price?: unknown;
+    piece_selling_price?: unknown;
+    pack_selling_price?: unknown;
+    dozen_selling_price?: unknown;
     stock_unit?: unknown;
     sku?: unknown;
     [key: string]: unknown;
@@ -249,7 +251,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                   typeof item.product === "object" &&
                   "id" in item.product &&
                   "name" in item.product &&
-                  "selling_price" in item.product &&
+                  ("piece_selling_price" in item.product || "pack_selling_price" in item.product || "dozen_selling_price" in item.product) &&
                   "stock_unit" in item.product &&
                   "quantity" in item && // Check for quantity on the cart item
                   "unit_price" in item && // Check for unit_price on the cart item
