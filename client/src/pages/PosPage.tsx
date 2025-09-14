@@ -170,7 +170,9 @@ const PosPage: React.FC = () => {
       // Open the receipt dialog immediately
       setIsReceiptDialogOpen(true);
     } catch (error: unknown) {
-      // Handle different types of errors with specific messages
+      console.error("Checkout error:", error);
+
+      // Handle checkout errors
       let errorTitle = "Checkout Error";
       let errorDescription = "Failed to complete checkout. Please try again.";
 
@@ -179,54 +181,7 @@ const PosPage: React.FC = () => {
         const responseData = axiosError.response?.data;
 
         if (responseData?.message) {
-          // Check if it's an insufficient stock error
-          if (responseData.message.includes("Insufficient stock")) {
-            errorTitle = "Insufficient Stock";
-
-            // Extract product name and stock details from the error message
-            const stockMatch = responseData.message.match(/Insufficient stock for (.+?)\. Available: (\d+), Required: (\d+)/);
-            if (stockMatch) {
-              const [, productName, available, required] = stockMatch;
-              const availableNum = parseInt(available);
-              const requiredNum = parseInt(required);
-              const shortage = requiredNum - availableNum;
-
-              // Find the product in cart to get its ID for auto-adjustment
-              const cartItem = cart.items.find(item =>
-                item.product && item.product.name === productName
-              );
-
-              // Create a detailed error message
-              errorDescription = `${productName} has insufficient stock.\n\nAvailable: ${available} units\nRequired: ${required} units\nShortage: ${shortage} units\n\nSolutions:\n• Reduce quantity to ${available} units\n• Remove this item from cart\n• Add ${shortage} more units to inventory`;
-
-              // Show a detailed toast with auto-fix option
-              toast({
-                title: "Insufficient Stock",
-                description: `${productName} - Available: ${available}, Required: ${required}`,
-                variant: "destructive",
-                duration: 10000,
-                action: cartItem && availableNum > 0 ? (
-                  <button
-                    onClick={() => {
-                      updateQuantity(cartItem.id, availableNum);
-                      toast({
-                        title: "Cart Updated",
-                        description: `${productName} quantity adjusted to ${available} units`,
-                        variant: "default",
-                      });
-                    }}
-                    className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
-                  >
-                    Fix ({available})
-                  </button>
-                ) : undefined,
-              });
-            } else {
-              errorDescription = responseData.message;
-            }
-          } else {
-            errorDescription = responseData.message;
-          }
+          errorDescription = responseData.message;
         }
       } else if (error instanceof Error) {
         errorDescription = error.message;
@@ -236,7 +191,7 @@ const PosPage: React.FC = () => {
         title: errorTitle,
         description: errorDescription,
         variant: "destructive",
-        duration: 8000, // Show longer for stock errors
+        duration: 8000,
       });
     } finally {
       setIsLoading((prev) => ({ ...prev, checkout: false }));
