@@ -3,6 +3,7 @@ import { ReceiptSettings } from "@/components/pos/ReceiptSettings";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { api } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
 import {
   Table,
   TableBody,
@@ -18,7 +19,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Receipt, Loader2 } from "lucide-react";
+import { Receipt, Loader2, Edit, Trash2 } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -28,7 +29,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sale } from "@/types/sale";
-import { API_ENDPOINTS } from "@/lib/api-endpoints";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface OrderItem {
@@ -107,7 +109,10 @@ export function SalesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const pageSize = 10;
+  const { user } = useAuthContext();
+  const { toast } = useToast();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
 
@@ -191,6 +196,50 @@ export function SalesPage() {
         return "bg-red-500";
       default:
         return "bg-gray-500";
+    }
+  };
+
+  // Check if user has admin privileges
+  const isAdmin = user && ["admin", "manager", "super_admin"].includes(user.role);
+
+  // Delete sale function
+  const handleDeleteSale = async (saleId: number) => {
+    if (!isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to delete sales",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this sale? This action cannot be undone and will restore inventory."
+    );
+
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+    try {
+      await api.delete(API_ENDPOINTS.sales.delete(saleId));
+      toast({
+        title: "Sale Deleted",
+        description: "The sale has been successfully deleted and inventory restored.",
+        variant: "default",
+      });
+
+      // Close the dialog and refresh the sales list
+      setSelectedSale(null);
+      // The query will automatically refetch due to React Query's cache invalidation
+    } catch (error: any) {
+      console.error("Error deleting sale:", error);
+      toast({
+        title: "Delete Failed",
+        description: error.response?.data?.message || "Failed to delete sale",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -472,6 +521,38 @@ export function SalesPage() {
                   </Table>
                 </div>
               </div>
+
+              {/* Admin Actions */}
+              {isAdmin && selectedSale && (
+                <div className="flex gap-3 justify-end pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // TODO: Implement edit functionality
+                      toast({
+                        title: "Edit Sale",
+                        description: "Edit functionality will be implemented in the next update.",
+                        variant: "default",
+                      });
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit Sale
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteSale(selectedSale.id)}
+                    disabled={isDeleting}
+                    className="flex items-center gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {isDeleting ? "Deleting..." : "Delete Sale"}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
