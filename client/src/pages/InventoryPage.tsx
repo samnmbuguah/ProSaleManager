@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { z } from "zod";
 import { Product, productSchema } from "@/types/product";
 import Suppliers from "@/components/inventory/Suppliers";
@@ -17,6 +18,7 @@ import {
   setFormData,
   searchProducts,
   setPage,
+  setLimit,
 } from "@/store/productsSlice";
 import ProductList from "@/components/inventory/ProductList";
 import ProductFormDialog from "@/components/inventory/ProductFormDialog";
@@ -335,11 +337,35 @@ const InventoryPage: React.FC = () => {
         <>
           <ProductList products={products} onEdit={handleEdit} onDelete={handleDelete} />
           {/* Pagination Controls */}
-          {pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
+          <div className="flex items-center justify-between mt-6">
+            <div className="flex items-center space-x-4">
               <div className="text-sm text-gray-600">
                 Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} products
               </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600">Show:</span>
+                <Select
+                  value={pagination.limit.toString()}
+                  onValueChange={(value) => {
+                    const newLimit = parseInt(value);
+                    dispatch(setLimit(newLimit));
+                    dispatch(fetchProducts({ page: 1, limit: newLimit }));
+                  }}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                    <SelectItem value="500">500</SelectItem>
+                    <SelectItem value="1000">1000</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {pagination.totalPages > 1 && (
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
@@ -367,8 +393,8 @@ const InventoryPage: React.FC = () => {
                   Next
                 </Button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </>
       )}
       <ProductFormDialog
