@@ -26,14 +26,12 @@ import { Calendar } from "@/components/ui/calendar";
 import type { Expense } from "@/types/expense";
 
 const expenseCategories = [
-  "Inventory",
-  "Utilities",
-  "Rent",
-  "Salaries",
+  "Lunch",
+  "Delivery",
   "Marketing",
-  "Equipment",
-  "Maintenance",
-  "Other",
+  "New Stock",
+  "Transport",
+  "Salary",
 ] as const;
 
 const paymentMethods = ["Cash", "Card", "Mobile Money", "Other"] as const;
