@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Package, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Package, ShoppingCart, ChevronLeft, ChevronRight, Grid3X3, List } from "lucide-react";
 import { getImageUrl } from "@/lib/api-endpoints";
 
 interface ProductSearchProps {
@@ -88,11 +89,12 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
 }) => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const PRODUCTS_PER_PAGE = 12;
-  const totalPages = Math.ceil(products.length / PRODUCTS_PER_PAGE);
+  const [productsPerPage, setProductsPerPage] = useState(100);
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const totalPages = Math.ceil(products.length / productsPerPage);
   const paginatedProducts = products.slice(
-    (page - 1) * PRODUCTS_PER_PAGE,
-    page * PRODUCTS_PER_PAGE
+    (page - 1) * productsPerPage,
+    page * productsPerPage
   );
 
   // Debounce search
@@ -116,6 +118,12 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     }
   };
 
+  const handleProductsPerPageChange = (value: string) => {
+    const newLimit = parseInt(value);
+    setProductsPerPage(newLimit);
+    setPage(1); // Reset to first page when changing limit
+  };
+
   const formatPrice = (price: number) => {
     return `KSh ${price.toLocaleString("en-KE", {
       minimumFractionDigits: 2,
@@ -123,10 +131,76 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     })}`;
   };
 
+  // List view component for products
+  const ProductListView = ({ product }: { product: Product }) => (
+    <Card
+      key={product.id}
+      className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-blue-300"
+      onClick={() => onSelect(product)}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-center space-x-4">
+          {/* Product Image */}
+          <div className="flex-shrink-0">
+            <ProductImageCarousel
+              images={product.images || []}
+              productName={product.name}
+              onImageClick={(e) => e.stopPropagation()}
+            />
+          </div>
+
+          {/* Product Details */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="font-semibold text-sm line-clamp-1">{product.name}</h3>
+                <p className="text-xs text-gray-500">{product.sku}</p>
+              </div>
+              <Badge variant="outline" className="text-xs ml-2">
+                {product.Category?.name || "No Category"}
+              </Badge>
+            </div>
+
+            <div className="flex items-center justify-between mt-2">
+              <div className="flex space-x-4 text-xs">
+                <div>
+                  <span className="text-gray-600">Piece:</span>
+                  <span className="font-medium ml-1">{formatPrice(product.piece_selling_price)}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Pack:</span>
+                  <span className="font-medium ml-1">{formatPrice(product.pack_selling_price)}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Dozen:</span>
+                  <span className="font-medium ml-1">{formatPrice(product.dozen_selling_price)}</span>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs text-gray-500">Stock: {product.quantity}</span>
+                <Button
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelect(product);
+                  }}
+                >
+                  <ShoppingCart className="h-3 w-3 mr-1" />
+                  Add
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-4">
-      {/* Search Bar */}
-      <div className="flex gap-2">
+      {/* Search Bar and Controls */}
+      <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
@@ -137,24 +211,74 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
             className="pl-10"
           />
         </div>
-        {/* Removed Search button */}
+
+        {/* View Toggle and Pagination Controls */}
+        <div className="flex items-center gap-2">
+          {/* View Toggle */}
+          <div className="flex border rounded-md">
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+              className="rounded-r-none"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "grid" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("grid")}
+              className="rounded-l-none"
+            >
+              <Grid3X3 className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Pagination Limit Dropdown */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600">Show:</span>
+            <Select
+              value={productsPerPage.toString()}
+              onValueChange={handleProductsPerPageChange}
+            >
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+                <SelectItem value="500">500</SelectItem>
+                <SelectItem value="1000">1000</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
-      {/* Products Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-        {false ? (
-          <div className="col-span-full text-center py-8 text-gray-500">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-2"></div>
-            <p>Searching products...</p>
-          </div>
-        ) : paginatedProducts.length === 0 ? (
-          <div className="col-span-full text-center py-8 text-gray-500">
-            <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>No products found</p>
-            <p className="text-sm">Try searching for a product</p>
-          </div>
-        ) : (
-          paginatedProducts.map((product) => (
+      {/* Products Display */}
+      {false ? (
+        <div className="text-center py-8 text-gray-500">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-2"></div>
+          <p>Searching products...</p>
+        </div>
+      ) : paginatedProducts.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
+          <p>No products found</p>
+          <p className="text-sm">Try searching for a product</p>
+        </div>
+      ) : viewMode === "list" ? (
+        /* List View */
+        <div className="space-y-2">
+          {paginatedProducts.map((product) => (
+            <ProductListView key={product.id} product={product} />
+          ))}
+        </div>
+      ) : (
+        /* Grid View */
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          {paginatedProducts.map((product) => (
             <Card
               key={product.id}
               className="cursor-pointer hover:shadow-md transition-shadow border-2 hover:border-blue-300"
@@ -216,34 +340,39 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
-      </div>
-
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-4">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setPage(page - 1)}
-            disabled={page === 1}
-          >
-            Previous
-          </Button>
-          <span className="text-sm">
-            Page {page} of {totalPages}
-          </span>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setPage(page + 1)}
-            disabled={page === totalPages}
-          >
-            Next
-          </Button>
+          ))}
         </div>
       )}
+
+      {/* Pagination Controls */}
+      <div className="flex items-center justify-between mt-4">
+        <div className="text-sm text-gray-600">
+          Showing {((page - 1) * productsPerPage) + 1} to {Math.min(page * productsPerPage, products.length)} of {products.length} products
+        </div>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPage(page - 1)}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm">
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPage(page + 1)}
+              disabled={page === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
