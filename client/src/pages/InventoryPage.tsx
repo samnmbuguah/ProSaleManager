@@ -44,6 +44,29 @@ const InventoryPage: React.FC = () => {
 
   const [uploading, setUploading] = React.useState(false);
   const [uploadProgress, setUploadProgress] = React.useState<number | null>(null);
+  const [uploadError, setUploadError] = React.useState<string | null>(null);
+
+  // File validation function
+  const validateImageFiles = (files: File[]): string | null => {
+    const maxFileSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const maxFiles = 10;
+
+    if (files.length > maxFiles) {
+      return `Maximum ${maxFiles} files allowed`;
+    }
+
+    for (const file of files) {
+      if (file.size > maxFileSize) {
+        return `File "${file.name}" is too large. Maximum size is 5MB`;
+      }
+      if (!allowedTypes.includes(file.type)) {
+        return `File "${file.name}" has an unsupported format. Please use JPEG, PNG, or WebP`;
+      }
+    }
+
+    return null;
+  };
   // Remove local state and manual fetching for purchase orders
   // const [purchaseOrders, setPurchaseOrders] = React.useState([])
   // const [purchaseOrdersLoading, setPurchaseOrdersLoading] = React.useState(false)
@@ -79,9 +102,22 @@ const InventoryPage: React.FC = () => {
   const handleSubmit = async (_unused: unknown, localImageFiles?: File[]) => {
     try {
       setUploading(true);
-      setUploadProgress(null);
+      setUploadProgress(0);
       let response;
       if (localImageFiles && localImageFiles.length > 0) {
+        // Validate files before upload
+        const validationError = validateImageFiles(localImageFiles);
+        if (validationError) {
+          setUploading(false);
+          setUploadProgress(null);
+          toast({
+            title: "Invalid Files",
+            description: validationError,
+            variant: "destructive",
+          });
+          return;
+        }
+
         // Use FormData if uploading images
         const formDataToSend = new FormData();
         Object.entries(formData).forEach(([key, value]) => {
@@ -95,16 +131,25 @@ const InventoryPage: React.FC = () => {
         localImageFiles.forEach((file) => {
           formDataToSend.append("images", file);
         });
+
+        const config = {
+          headers: { "Content-Type": "multipart/form-data" },
+          onUploadProgress: (progressEvent: any) => {
+            if (progressEvent.total) {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              setUploadProgress(percentCompleted);
+            }
+          },
+        };
+
         if (selectedProduct) {
           response = await api.put(
             API_ENDPOINTS.products.update(selectedProduct.id),
             formDataToSend,
-            { headers: { "Content-Type": "multipart/form-data" } }
+            config
           );
         } else {
-          response = await api.post(API_ENDPOINTS.products.create, formDataToSend, {
-            headers: { "Content-Type": "multipart/form-data" },
-          });
+          response = await api.post(API_ENDPOINTS.products.create, formDataToSend, config);
         }
       } else {
         // Only include the correct fields for the backend
@@ -150,15 +195,23 @@ const InventoryPage: React.FC = () => {
       dispatch(fetchProducts({ page: pagination.page, limit: pagination.limit }));
     } catch (error: unknown) {
       console.error("Error:", error);
+      setUploadError("Upload failed");
 
       // Handle specific error cases
       let errorMessage = `Failed to ${selectedProduct ? "update" : "create"} product`;
       let errorTitle = "Error";
+      let isRetryable = false;
 
       if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { data?: { message?: string; error?: string } } };
+        const axiosError = error as { response?: { data?: { message?: string; error?: string }; status?: number } };
         const serverMessage = axiosError.response?.data?.message;
         const serverError = axiosError.response?.data?.error;
+        const status = axiosError.response?.status;
+
+        // Check if error is retryable (network issues, server errors)
+        if (status && (status >= 500 || status === 408 || status === 429)) {
+          isRetryable = true;
+        }
 
         if (serverMessage) {
           if (serverMessage.includes("SKU") && serverMessage.includes("already exists")) {
@@ -178,6 +231,10 @@ const InventoryPage: React.FC = () => {
           } else if (serverMessage.includes("required") || serverMessage.includes("missing")) {
             errorTitle = "Missing Required Fields";
             errorMessage = serverMessage;
+          } else if (serverMessage.includes("Image upload failed")) {
+            errorTitle = "Image Upload Failed";
+            errorMessage = "Failed to upload images. Please check your internet connection and try again.";
+            isRetryable = true;
           } else {
             errorMessage = serverMessage;
           }
@@ -186,6 +243,12 @@ const InventoryPage: React.FC = () => {
         }
       } else if (error instanceof Error) {
         errorMessage = error.message;
+        // Check for network errors
+        if (error.message.includes("Network Error") || error.message.includes("timeout")) {
+          isRetryable = true;
+          errorTitle = "Network Error";
+          errorMessage = "Connection failed. Please check your internet connection and try again.";
+        }
       }
 
       // For SKU errors, show a more detailed toast with action
@@ -218,11 +281,24 @@ const InventoryPage: React.FC = () => {
           title: errorTitle,
           description: errorMessage,
           variant: "destructive",
+          action: isRetryable ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setUploadError(null);
+                handleSubmit(_unused, localImageFiles);
+              }}
+            >
+              Retry
+            </Button>
+          ) : undefined,
         });
       }
     } finally {
       setUploading(false);
       setUploadProgress(null);
+      setUploadError(null);
     }
   };
 
@@ -413,17 +489,66 @@ const InventoryPage: React.FC = () => {
         selectedProduct={selectedProduct}
       />
       {uploading && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-          <div className="bg-white p-6 rounded shadow flex flex-col items-center">
-            <div className="mb-2">Uploading product...</div>
-            <div className="w-48 h-2 bg-gray-200 rounded">
-              <div
-                className="h-2 bg-blue-500 rounded"
-                style={{
-                  width: uploadProgress !== null ? `${uploadProgress}%` : "100%",
-                }}
-              />
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-8 rounded-lg shadow-xl flex flex-col items-center min-w-[400px]">
+            <div className="flex items-center mb-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mr-3"></div>
+              <div className="text-lg font-medium">
+                {uploadError ? "Upload Failed" : "Uploading product..."}
+              </div>
             </div>
+
+            {!uploadError && (
+              <>
+                <div className="w-full mb-2">
+                  <div className="flex justify-between text-sm text-gray-600 mb-1">
+                    <span>Progress</span>
+                    <span>{uploadProgress !== null ? `${uploadProgress}%` : "0%"}</span>
+                  </div>
+                  <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300 ease-out"
+                      style={{
+                        width: uploadProgress !== null ? `${uploadProgress}%` : "0%",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {uploadProgress !== null && uploadProgress > 0 && (
+                  <div className="text-sm text-gray-500 mt-2">
+                    {uploadProgress < 100 ? "Uploading images..." : "Processing..."}
+                  </div>
+                )}
+              </>
+            )}
+
+            {uploadError && (
+              <div className="text-center">
+                <div className="text-red-600 mb-4">{uploadError}</div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setUploadError(null);
+                      setUploading(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setUploadError(null);
+                      handleSubmit(undefined, undefined);
+                    }}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
