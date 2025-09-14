@@ -159,9 +159,41 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   // Multiple image upload state
   const [imageFiles, setImageFiles] = React.useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = React.useState<string[]>([]);
+  const [fileValidationError, setFileValidationError] = React.useState<string | null>(null);
+
+  // File validation function
+  const validateImageFiles = (files: File[]): string | null => {
+    const maxFileSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const maxFiles = 10;
+
+    if (files.length > maxFiles) {
+      return `Maximum ${maxFiles} files allowed`;
+    }
+
+    for (const file of files) {
+      if (file.size > maxFileSize) {
+        return `File "${file.name}" is too large. Maximum size is 5MB`;
+      }
+      if (!allowedTypes.includes(file.type)) {
+        return `File "${file.name}" has an unsupported format. Please use JPEG, PNG, or WebP`;
+      }
+    }
+
+    return null;
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+
+    // Validate files
+    const validationError = validateImageFiles(files);
+    if (validationError) {
+      setFileValidationError(validationError);
+      return;
+    }
+
+    setFileValidationError(null);
     setImageFiles(files);
     setImagePreviews(files.map((file) => URL.createObjectURL(file)));
   };
@@ -265,6 +297,14 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
               onChange={handleImageChange}
               className="mt-1"
             />
+            {fileValidationError && (
+              <div className="text-red-600 text-sm mt-1 p-2 bg-red-50 border border-red-200 rounded">
+                {fileValidationError}
+              </div>
+            )}
+            <div className="text-xs text-gray-500 mt-1">
+              Supported formats: JPEG, PNG, WebP. Max size: 5MB per file. Max files: 10.
+            </div>
             {imagePreviews.length > 0 && (
               <div className="mt-2 flex gap-2 flex-wrap">
                 {imagePreviews.map((url, idx) => (
