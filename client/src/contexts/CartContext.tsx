@@ -18,9 +18,9 @@ interface CartContextType {
 // Define action types
 type CartAction =
   | {
-      type: "ADD_ITEM";
-      payload: { product: Product; unitType: string; unitPrice: number };
-    }
+    type: "ADD_ITEM";
+    payload: { product: Product; unitType: string; unitPrice: number };
+  }
   | { type: "REMOVE_ITEM"; payload: { itemId: number } }
   | { type: "UPDATE_QUANTITY"; payload: { itemId: number; quantity: number } }
   | { type: "UPDATE_UNIT_PRICE"; payload: { itemId: number; price: number } }
@@ -223,32 +223,44 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem(STORAGE_KEY);
+      console.log("🔍 Loading cart from localStorage:", savedCart ? "Found" : "Not found");
+
       // Check for timestamp to verify data freshness
       const timestamp = localStorage.getItem(`${STORAGE_KEY}_timestamp`);
       const now = Date.now();
       const cartAge = timestamp ? now - parseInt(timestamp) : Infinity;
+      console.log("🕒 Cart age:", cartAge < 24 * 60 * 60 * 1000 ? "Fresh" : "Stale");
 
       // Only load cart if it exists and is less than 24 hours old
       // (prevents loading very stale data)
       if (savedCart && cartAge < 24 * 60 * 60 * 1000) {
         const parsedCart = JSON.parse(savedCart);
+        console.log("📦 Parsed cart:", parsedCart);
 
         if (parsedCart && parsedCart.items && Array.isArray(parsedCart.items)) {
+          console.log("📋 Cart items count:", parsedCart.items.length);
+
           // Validate all cart items have the necessary properties and correct types
           const validItems = parsedCart.items
             .filter(
-              (item: PotentialCartItemData) =>
-                item &&
-                item.product &&
-                typeof item.product === "object" &&
-                "id" in item.product &&
-                "name" in item.product &&
-                "selling_price" in item.product &&
-                "stock_unit" in item.product &&
-                "quantity" in item && // Check for quantity on the cart item
-                "unit_price" in item && // Check for unit_price on the cart item
-                "total" in item && // Check for total on the cart item
-                "unit_type" in item // Check for unit_type on the cart item
+              (item: PotentialCartItemData) => {
+                const isValid = item &&
+                  item.product &&
+                  typeof item.product === "object" &&
+                  "id" in item.product &&
+                  "name" in item.product &&
+                  "selling_price" in item.product &&
+                  "stock_unit" in item.product &&
+                  "quantity" in item && // Check for quantity on the cart item
+                  "unit_price" in item && // Check for unit_price on the cart item
+                  "total" in item && // Check for total on the cart item
+                  "unit_type" in item; // Check for unit_type on the cart item
+
+                if (!isValid) {
+                  console.log("❌ Invalid cart item filtered out:", item);
+                }
+                return isValid;
+              }
             )
             .map((item: PotentialCartItemData) => ({
               id: item.id,
@@ -259,6 +271,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               unit_type: item.unit_type, // Ensure unit_type is a string
             }));
 
+          console.log("✅ Valid items after filtering:", validItems.length);
+
           // Only load if we have valid items
           if (validItems.length > 0) {
             // Recalculate total to ensure it's correct
@@ -267,9 +281,16 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               total: validItems.reduce((sum: number, item: CartItem) => sum + item.total, 0),
             };
 
+            console.log("🛒 Loading valid cart:", validCart);
             dispatch({ type: "LOAD_CART", payload: { cart: validCart } });
+          } else {
+            console.log("⚠️ No valid items found, cart not loaded");
           }
+        } else {
+          console.log("❌ Invalid cart structure:", parsedCart);
         }
+      } else {
+        console.log("⏰ Cart not loaded - either not found or too old");
       }
     } catch (error) {
       console.error("Failed to load cart from localStorage:", error);
@@ -282,8 +303,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Save cart to localStorage whenever it changes
   useEffect(() => {
     try {
+      console.log("💾 Saving cart to localStorage:", cart);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
       localStorage.setItem(`${STORAGE_KEY}_timestamp`, Date.now().toString());
+      console.log("✅ Cart saved successfully");
     } catch (error) {
       console.error("Failed to save cart to localStorage:", error);
     }

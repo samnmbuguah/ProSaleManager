@@ -28,6 +28,7 @@ app.use(
           "http://localhost:5000",
           "http://127.0.0.1:5000",
           "http://34.131.30.62:5000", // Allow external server
+          "https://34.131.30.62:5000", // Allow HTTPS external server
           "https://eltee.store",
           "https://www.eltee.store",
         ],
@@ -37,6 +38,7 @@ app.use(
           "http://localhost:5000",
           "http://127.0.0.1:5000",
           "http://34.131.30.62:5000", // Allow external server
+          "https://34.131.30.62:5000", // Allow HTTPS external server
           "https://images.unsplash.com",
           "https://res.cloudinary.com",
           "https://images.pexels.com",
@@ -57,6 +59,7 @@ const allowedOrigins = [
   "http://localhost:5000",
   "http://127.0.0.1:5000",
   "http://34.131.30.62:5000", // Allow external server
+  "https://34.131.30.62:5000", // Allow HTTPS external server
   "https://eltee.store",
   "https://www.eltee.store", // Allow both root and www subdomain
 ];
