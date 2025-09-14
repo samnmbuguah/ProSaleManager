@@ -6,6 +6,8 @@ import {
   getSales,
   getSaleItems,
   getSaleById,
+  updateSale,
+  deleteSale,
 } from "../controllers/sales.controller.js";
 import { ReceiptService } from "../services/receipt.service.js";
 
@@ -26,6 +28,12 @@ router.get("/:id/items", getSaleItems);
 
 // Get a specific sale by ID
 router.get("/:id", getSaleById);
+
+// Update a sale (admin only)
+router.put("/:id", updateSale);
+
+// Delete a sale (admin only)
+router.delete("/:id", deleteSale);
 
 // Protected receipt text endpoint (requires authentication)
 router.get("/:id/receipt/text", async (req, res) => {

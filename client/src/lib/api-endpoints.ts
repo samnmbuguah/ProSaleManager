@@ -75,6 +75,8 @@ export const API_ENDPOINTS = {
     list: `${API_BASE_URL}/sales`,
     create: `${API_BASE_URL}/sales`,
     getById: (id: number) => `${API_BASE_URL}/sales/${id}`,
+    update: (id: number) => `${API_BASE_URL}/sales/${id}`,
+    delete: (id: number) => `${API_BASE_URL}/sales/${id}`,
     getItems: (id: number) => `${API_BASE_URL}/sales/${id}/items`,
     sendWhatsAppReceipt: (id: number) => `${API_BASE_URL}/sales/${id}/receipt/whatsapp`,
     sendSMSReceipt: (id: number) => `${API_BASE_URL}/sales/${id}/receipt/sms`,
