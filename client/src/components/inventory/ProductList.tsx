@@ -2,13 +2,14 @@ import React from "react";
 import { Product } from "../../types/product";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
-import { 
-  ResponsiveTable, 
-  createTextColumn, 
-  createCurrencyColumn, 
+import {
+  ResponsiveTable,
+  createTextColumn,
+  createCurrencyColumn,
   createActionsColumn,
-  ResponsiveTableColumn 
+  ResponsiveTableColumn
 } from "@/components/ui/responsive-table";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface ProductListProps {
   products: Product[];
@@ -17,6 +18,11 @@ interface ProductListProps {
 }
 
 const ProductList: React.FC<ProductListProps> = ({ products, onEdit, onDelete }) => {
+  const { user } = useAuthContext();
+
+  // Check if user is sales/cashier (should not see edit/delete buttons)
+  const isSalesOrCashier = user?.role === "sales";
+
   const columns: ResponsiveTableColumn<Product>[] = [
     createTextColumn(
       "name",
@@ -54,24 +60,30 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, onDelete })
       (product) => product.quantity.toString(),
       { priority: 6 }
     ),
-    createActionsColumn(
-      "actions",
-      "Actions",
-      (product) => (
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => onEdit(product)}>
-            <Edit className="h-4 w-4 mr-1" />
-            Edit
-          </Button>
-          <Button variant="destructive" size="sm" onClick={() => onDelete(product.id)}>
-            <Trash2 className="h-4 w-4 mr-1" />
-            Delete
-          </Button>
-        </div>
-      ),
-      { priority: 7 }
-    ),
   ];
+
+  // Only add actions column for non-sales users
+  if (!isSalesOrCashier) {
+    columns.push(
+      createActionsColumn(
+        "actions",
+        "Actions",
+        (product) => (
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => onEdit(product)}>
+              <Edit className="h-4 w-4 mr-1" />
+              Edit
+            </Button>
+            <Button variant="destructive" size="sm" onClick={() => onDelete(product.id)}>
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete
+            </Button>
+          </div>
+        ),
+        { priority: 7 }
+      )
+    );
+  }
 
   return (
     <ResponsiveTable
@@ -87,4 +99,4 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, onDelete })
 
 export default ProductList;
 
-export {};
+export { };

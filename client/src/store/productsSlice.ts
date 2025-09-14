@@ -9,7 +9,7 @@ export const fetchProducts = createAsyncThunk(
   "products/fetchProducts",
   async (params: { page?: number; limit?: number } = {}, { rejectWithValue }) => {
     try {
-      const { page = 1, limit = 10 } = params;
+      const { page = 1, limit = 100 } = params;
       const response = await api.get(`${API_ENDPOINTS.products.list}?page=${page}&limit=${limit}`);
       return {
         products: response.data.data,
@@ -41,7 +41,7 @@ export const updateProduct = createAsyncThunk(
   ) => {
     try {
       const response = await api.put(API_ENDPOINTS.products.update(id), data);
-      await dispatch(fetchProducts({ page: 1, limit: 10 }));
+      await dispatch(fetchProducts({ page: 1, limit: 100 }));
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : "Failed to update product");
@@ -100,7 +100,7 @@ const initialState: ProductsState = {
   formData: initialFormData,
   pagination: {
     page: 1,
-    limit: 10,
+    limit: 100,
     total: 0,
     totalPages: 0,
   },
@@ -140,6 +140,10 @@ const productsSlice = createSlice({
     },
     setPage: (state, action) => {
       state.pagination.page = action.payload;
+    },
+    setLimit: (state, action) => {
+      state.pagination.limit = action.payload;
+      state.pagination.page = 1; // Reset to first page when changing limit
     },
   },
   extraReducers: (builder) => {
@@ -193,6 +197,7 @@ export const {
   setFormData,
   resetFormData,
   setPage,
+  setLimit,
 } = productsSlice.actions;
 
 export default productsSlice.reducer;
