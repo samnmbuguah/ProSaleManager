@@ -68,6 +68,21 @@ const initialFormData: z.infer<typeof productSchema> = {
   stock_unit: "piece",
 };
 
+interface ProductFilters {
+  categoryId: number | null;
+  stockStatus: 'all' | 'in-stock' | 'low-stock' | 'out-of-stock';
+  priceRange: {
+    min: number | null;
+    max: number | null;
+  };
+  quantityRange: {
+    min: number | null;
+    max: number | null;
+  };
+  isActive: boolean | null;
+  stockUnit: 'all' | 'piece' | 'pack' | 'dozen';
+}
+
 interface ProductsState {
   items: Product[];
   status: "idle" | "loading" | "succeeded" | "failed";
@@ -79,6 +94,7 @@ interface ProductsState {
   activeTab: string;
   imagePreview: string | null;
   formData: z.infer<typeof productSchema>;
+  filters: ProductFilters;
   pagination: {
     page: number;
     limit: number;
@@ -86,6 +102,21 @@ interface ProductsState {
     totalPages: number;
   };
 }
+
+const initialFilters: ProductFilters = {
+  categoryId: null,
+  stockStatus: 'all',
+  priceRange: {
+    min: null,
+    max: null,
+  },
+  quantityRange: {
+    min: null,
+    max: null,
+  },
+  isActive: null,
+  stockUnit: 'all',
+};
 
 const initialState: ProductsState = {
   items: [],
@@ -98,6 +129,7 @@ const initialState: ProductsState = {
   activeTab: "products",
   imagePreview: null,
   formData: initialFormData,
+  filters: initialFilters,
   pagination: {
     page: 1,
     limit: 100,
@@ -144,6 +176,38 @@ const productsSlice = createSlice({
     setLimit: (state, action) => {
       state.pagination.limit = action.payload;
       state.pagination.page = 1; // Reset to first page when changing limit
+    },
+    setFilters: (state, action) => {
+      state.filters = { ...state.filters, ...action.payload };
+      state.pagination.page = 1; // Reset to first page when filters change
+    },
+    clearFilters: (state) => {
+      state.filters = initialFilters;
+      state.pagination.page = 1;
+    },
+    setCategoryFilter: (state, action) => {
+      state.filters.categoryId = action.payload;
+      state.pagination.page = 1;
+    },
+    setStockStatusFilter: (state, action) => {
+      state.filters.stockStatus = action.payload;
+      state.pagination.page = 1;
+    },
+    setPriceRangeFilter: (state, action) => {
+      state.filters.priceRange = action.payload;
+      state.pagination.page = 1;
+    },
+    setQuantityRangeFilter: (state, action) => {
+      state.filters.quantityRange = action.payload;
+      state.pagination.page = 1;
+    },
+    setIsActiveFilter: (state, action) => {
+      state.filters.isActive = action.payload;
+      state.pagination.page = 1;
+    },
+    setStockUnitFilter: (state, action) => {
+      state.filters.stockUnit = action.payload;
+      state.pagination.page = 1;
     },
   },
   extraReducers: (builder) => {
@@ -198,6 +262,14 @@ export const {
   resetFormData,
   setPage,
   setLimit,
+  setFilters,
+  clearFilters,
+  setCategoryFilter,
+  setStockStatusFilter,
+  setPriceRangeFilter,
+  setQuantityRangeFilter,
+  setIsActiveFilter,
+  setStockUnitFilter,
 } = productsSlice.actions;
 
 export default productsSlice.reducer;

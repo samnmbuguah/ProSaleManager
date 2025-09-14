@@ -19,11 +19,15 @@ import {
   searchProducts,
   setPage,
   setLimit,
+  setFilters,
+  clearFilters,
 } from "@/store/productsSlice";
 import ProductList from "@/components/inventory/ProductList";
 import ProductFormDialog from "@/components/inventory/ProductFormDialog";
 import ProductSearchBar from "@/components/inventory/ProductSearchBar";
 import TabsNav from "@/components/inventory/TabsNav";
+import ProductFilters from "@/components/inventory/ProductFilters";
+import { filterProducts } from "@/utils/productFilters";
 import { api } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
 import Swal from "sweetalert2";
@@ -40,7 +44,11 @@ const InventoryPage: React.FC = () => {
   const activeTab = useSelector((state: RootState) => state.products.activeTab);
   const formData = useSelector((state: RootState) => state.products.formData);
   const pagination = useSelector((state: RootState) => state.products.pagination);
+  const filters = useSelector((state: RootState) => state.products.filters);
   const { toast } = useToast();
+
+  // Filter state
+  const [showFilters, setShowFilters] = React.useState(false);
 
   const [uploading, setUploading] = React.useState(false);
   const [uploadProgress, setUploadProgress] = React.useState<number | null>(null);
@@ -73,6 +81,24 @@ const InventoryPage: React.FC = () => {
 
   // Use React Query hook for purchase orders
   const { purchaseOrders, isLoading: purchaseOrdersLoading } = usePurchaseOrders();
+
+  // Filter products based on current filters
+  const filteredProducts = React.useMemo(() => {
+    if (searchQuery) {
+      // If searching, don't apply filters (search results are already filtered)
+      return products;
+    }
+    return filterProducts(products, filters);
+  }, [products, filters, searchQuery]);
+
+  // Filter handlers
+  const handleFiltersChange = (newFilters: any) => {
+    dispatch(setFilters(newFilters));
+  };
+
+  const handleClearFilters = () => {
+    dispatch(clearFilters());
+  };
 
   const initialFormData: z.infer<typeof productSchema> = {
     name: "",
@@ -392,11 +418,23 @@ const InventoryPage: React.FC = () => {
       <div className="flex justify-between items-center mb-4">
         {activeTab === "products" && (
           <>
-            <ProductSearchBar
-              searchQuery={searchQuery}
-              setSearchQuery={(q) => dispatch(setSearchQuery(q))}
-              onSearch={handleSearch}
-            />
+            <div className="flex items-center gap-4">
+              <ProductSearchBar
+                searchQuery={searchQuery}
+                setSearchQuery={(q) => dispatch(setSearchQuery(q))}
+                onSearch={handleSearch}
+              />
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                Filters
+              </Button>
+            </div>
             <Button
               onClick={() => {
                 dispatch(setFormData(initialFormData));
@@ -411,7 +449,28 @@ const InventoryPage: React.FC = () => {
       </div>
       {activeTab === "products" && (
         <>
-          <ProductList products={products} onEdit={handleEdit} onDelete={handleDelete} />
+          {/* Filter Panel */}
+          {showFilters && (
+            <div className="mb-6">
+              <ProductFilters
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+                onClearFilters={handleClearFilters}
+                onClose={() => setShowFilters(false)}
+              />
+            </div>
+          )}
+
+          {/* Results Summary */}
+          <div className="mb-4 text-sm text-gray-600">
+            {searchQuery ? (
+              <span>Search results for "{searchQuery}" ({products.length} products)</span>
+            ) : (
+              <span>Showing {filteredProducts.length} of {products.length} products</span>
+            )}
+          </div>
+
+          <ProductList products={filteredProducts} onEdit={handleEdit} onDelete={handleDelete} />
           {/* Pagination Controls */}
           <div className="flex items-center justify-between mt-6">
             <div className="flex items-center space-x-4">
