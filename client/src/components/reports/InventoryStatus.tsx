@@ -8,19 +8,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet } from "lucide-react";
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { toast } from "@/components/ui/use-toast";
+import { ReportFilters, InventoryFilters } from "./ReportFilters";
 
 interface InventoryStatusProps {
   products: Product[];
-  onSearch: (query: string) => void;
+  onFiltersChange: (filters: InventoryFilters) => void;
 }
 
-export default function InventoryStatus({ products, onSearch }: InventoryStatusProps) {
+export default function InventoryStatus({ products, onFiltersChange }: InventoryStatusProps) {
   // Ensure products is always an array
   const safeProducts = Array.isArray(products) ? products : [];
 
@@ -28,6 +28,32 @@ export default function InventoryStatus({ products, onSearch }: InventoryStatusP
   const [sortColumn, setSortColumn] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [isDownloading, setIsDownloading] = useState(false);
+
+  // Filter state
+  const [filters, setFilters] = useState<InventoryFilters>({
+    search: "",
+    category: "all",
+    stockStatus: "all",
+    priceRange: { min: null, max: null },
+    dateRange: { start: null, end: null },
+  });
+
+  const handleFiltersChange = (newFilters: InventoryFilters) => {
+    setFilters(newFilters);
+    onFiltersChange(newFilters);
+  };
+
+  const handleClearFilters = () => {
+    const clearedFilters: InventoryFilters = {
+      search: "",
+      category: "all",
+      stockStatus: "all",
+      priceRange: { min: null, max: null },
+      dateRange: { start: null, end: null },
+    };
+    setFilters(clearedFilters);
+    onFiltersChange(clearedFilters);
+  };
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -137,10 +163,13 @@ export default function InventoryStatus({ products, onSearch }: InventoryStatusP
         </div>
       </div>
 
-      <div className="flex gap-4">
-        <div className="flex-1">
-          <Input placeholder="Search products..." onChange={(e) => onSearch(e.target.value)} />
-        </div>
+      <div className="flex justify-between items-center">
+        <ReportFilters
+          type="inventory"
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          onClearFilters={handleClearFilters}
+        />
         <Button
           onClick={handleDownloadCSV}
           disabled={isDownloading || safeProducts.length === 0}
