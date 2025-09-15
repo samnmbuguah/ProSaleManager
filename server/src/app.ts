@@ -35,6 +35,7 @@ app.use(
         imgSrc: [
           "'self'",
           "data:",
+          "blob:",
           "http://localhost:5000",
           "http://127.0.0.1:5000",
           "http://34.131.30.62:5000", // Allow external server
