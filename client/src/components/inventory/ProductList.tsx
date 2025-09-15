@@ -1,17 +1,17 @@
 import React from "react";
 import { Product } from "../../types/product";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Edit, Trash2 } from "lucide-react";
 import {
   ResponsiveTable,
   createTextColumn,
   createCurrencyColumn,
   createActionsColumn,
-  ResponsiveTableColumn
+  createBadgeColumn,
+  ResponsiveTableColumn,
 } from "@/components/ui/responsive-table";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { getStockStatus, getStockStatusColor, getStockStatusText } from "@/utils/productFilters";
+import { getStockStatus, getStockStatusText } from "@/utils/productFilters";
 
 interface ProductListProps {
   products: Product[];
@@ -26,36 +26,28 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, onDelete })
   const isSalesOrCashier = user?.role === "sales";
 
   const columns: ResponsiveTableColumn<Product>[] = [
-    createTextColumn(
-      "name",
-      "Product Name",
-      (product) => product.name,
-      { priority: 1 }
-    ),
-    createTextColumn(
-      "sku",
-      "SKU",
-      (product) => product.sku,
-      { hideOnMobile: true, priority: 2 }
-    ),
-    createTextColumn(
-      "category",
-      "Category",
-      (product) => product.Category?.name || "N/A",
-      { hideOnMobile: true, priority: 3 }
-    ),
-    createTextColumn(
+    createTextColumn("name", "Product Name", (product) => product.name, { priority: 1 }),
+    createTextColumn("sku", "SKU", (product) => product.sku, { hideOnMobile: true, priority: 2 }),
+    createTextColumn("category", "Category", (product) => product.Category?.name || "N/A", {
+      hideOnMobile: true,
+      priority: 3,
+    }),
+    createBadgeColumn(
       "stock_status",
       "Stock Status",
+      (product) => getStockStatusText(getStockStatus(product)),
       (product) => {
         const status = getStockStatus(product);
-        const colorClass = getStockStatusColor(status);
-        const statusText = getStockStatusText(status);
-        return (
-          <Badge className={`${colorClass} border-0`}>
-            {statusText}
-          </Badge>
-        );
+        switch (status) {
+          case "in-stock":
+            return "default";
+          case "low-stock":
+            return "secondary";
+          case "out-of-stock":
+            return "destructive";
+          default:
+            return "outline";
+        }
       },
       { priority: 4 }
     ),
@@ -65,24 +57,17 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, onDelete })
       (product) => `${product.quantity} ${product.stock_unit}`,
       { priority: 5 }
     ),
-    createCurrencyColumn(
-      "piece_price",
-      "Piece Price",
-      (product) => product.piece_selling_price,
-      { priority: 6 }
-    ),
-    createCurrencyColumn(
-      "pack_price",
-      "Pack Price",
-      (product) => product.pack_selling_price,
-      { hideOnMobile: true, priority: 7 }
-    ),
-    createCurrencyColumn(
-      "dozen_price",
-      "Dozen Price",
-      (product) => product.dozen_selling_price,
-      { hideOnMobile: true, priority: 8 }
-    ),
+    createCurrencyColumn("piece_price", "Piece Price", (product) => product.piece_selling_price, {
+      priority: 6,
+    }),
+    createCurrencyColumn("pack_price", "Pack Price", (product) => product.pack_selling_price, {
+      hideOnMobile: true,
+      priority: 7,
+    }),
+    createCurrencyColumn("dozen_price", "Dozen Price", (product) => product.dozen_selling_price, {
+      hideOnMobile: true,
+      priority: 8,
+    }),
   ];
 
   // Only add actions column for non-sales users

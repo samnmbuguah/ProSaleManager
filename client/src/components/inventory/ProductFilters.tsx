@@ -2,16 +2,22 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { X, Filter, RotateCcw } from "lucide-react";
 import { useCategories } from "@/hooks/use-categories";
-import type { ProductFilters } from "@/store/productsSlice";
+import type { ProductFilters as ProductFiltersType } from "@/store/productsSlice";
 
 interface ProductFiltersProps {
-    filters: ProductFilters;
-    onFiltersChange: (filters: Partial<ProductFilters>) => void;
+    filters: ProductFiltersType;
+    onFiltersChange: (filters: Partial<ProductFiltersType>) => void;
     onClearFilters: () => void;
     onClose?: () => void;
 }
@@ -32,13 +38,13 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
 
     const handleStockStatusChange = (value: string) => {
         onFiltersChange({
-            stockStatus: value as ProductFilters['stockStatus'],
+            stockStatus: value as ProductFiltersType["stockStatus"],
         });
     };
 
     const handleStockUnitChange = (value: string) => {
         onFiltersChange({
-            stockUnit: value as ProductFilters['stockUnit'],
+            stockUnit: value as ProductFiltersType["stockUnit"],
         });
     };
 
@@ -48,7 +54,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
         });
     };
 
-    const handlePriceRangeChange = (field: 'min' | 'max', value: string) => {
+    const handlePriceRangeChange = (field: "min" | "max", value: string) => {
         const numValue = value === "" ? null : parseFloat(value);
         onFiltersChange({
             priceRange: {
@@ -58,7 +64,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
         });
     };
 
-    const handleQuantityRangeChange = (field: 'min' | 'max', value: string) => {
+    const handleQuantityRangeChange = (field: "min" | "max", value: string) => {
         const numValue = value === "" ? null : parseInt(value);
         onFiltersChange({
             quantityRange: {
@@ -71,8 +77,8 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     const getActiveFiltersCount = () => {
         let count = 0;
         if (filters.categoryId !== null) count++;
-        if (filters.stockStatus !== 'all') count++;
-        if (filters.stockUnit !== 'all') count++;
+        if (filters.stockStatus !== "all") count++;
+        if (filters.stockUnit !== "all") count++;
         if (filters.isActive !== null) count++;
         if (filters.priceRange.min !== null || filters.priceRange.max !== null) count++;
         if (filters.quantityRange.min !== null || filters.quantityRange.max !== null) count++;
@@ -96,23 +102,13 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                     </CardTitle>
                     <div className="flex items-center gap-2">
                         {activeFiltersCount > 0 && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={onClearFilters}
-                                className="text-xs"
-                            >
+                            <Button variant="outline" size="sm" onClick={onClearFilters} className="text-xs">
                                 <RotateCcw className="w-3 h-3 mr-1" />
                                 Clear
                             </Button>
                         )}
                         {onClose && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={onClose}
-                                className="h-8 w-8 p-0"
-                            >
+                            <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
                                 <X className="w-4 h-4" />
                             </Button>
                         )}
@@ -144,10 +140,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                 {/* Stock Status Filter */}
                 <div className="space-y-2">
                     <Label htmlFor="stock-status-filter">Stock Status</Label>
-                    <Select
-                        value={filters.stockStatus}
-                        onValueChange={handleStockStatusChange}
-                    >
+                    <Select value={filters.stockStatus} onValueChange={handleStockStatusChange}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select stock status" />
                         </SelectTrigger>
@@ -163,10 +156,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                 {/* Stock Unit Filter */}
                 <div className="space-y-2">
                     <Label htmlFor="stock-unit-filter">Stock Unit</Label>
-                    <Select
-                        value={filters.stockUnit}
-                        onValueChange={handleStockUnitChange}
-                    >
+                    <Select value={filters.stockUnit} onValueChange={handleStockUnitChange}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select stock unit" />
                         </SelectTrigger>
@@ -210,7 +200,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                                 type="number"
                                 placeholder="0.00"
                                 value={filters.priceRange.min || ""}
-                                onChange={(e) => handlePriceRangeChange('min', e.target.value)}
+                                onChange={(e) => handlePriceRangeChange("min", e.target.value)}
                                 className="text-sm"
                             />
                         </div>
@@ -223,7 +213,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                                 type="number"
                                 placeholder="999.99"
                                 value={filters.priceRange.max || ""}
-                                onChange={(e) => handlePriceRangeChange('max', e.target.value)}
+                                onChange={(e) => handlePriceRangeChange("max", e.target.value)}
                                 className="text-sm"
                             />
                         </div>
@@ -243,7 +233,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                                 type="number"
                                 placeholder="0"
                                 value={filters.quantityRange.min || ""}
-                                onChange={(e) => handleQuantityRangeChange('min', e.target.value)}
+                                onChange={(e) => handleQuantityRangeChange("min", e.target.value)}
                                 className="text-sm"
                             />
                         </div>
@@ -256,7 +246,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                                 type="number"
                                 placeholder="999"
                                 value={filters.quantityRange.max || ""}
-                                onChange={(e) => handleQuantityRangeChange('max', e.target.value)}
+                                onChange={(e) => handleQuantityRangeChange("max", e.target.value)}
                                 className="text-sm"
                             />
                         </div>

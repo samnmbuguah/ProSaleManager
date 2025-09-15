@@ -1,9 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ReceiptSettings } from "@/components/pos/ReceiptSettings";
-import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { api } from "@/lib/api";
-import { API_ENDPOINTS } from "@/lib/api-endpoints";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchSales, fetchOrders, deleteSale } from "@/store/salesSlice";
+import type { RootState, AppDispatch } from "@/store";
 import {
   Table,
   TableBody,
@@ -90,10 +91,7 @@ function OrderDetailsDialog({
           </div>
           <div className="flex gap-4 justify-end">
             {order.status !== "completed" && order.status !== "fulfilled" && (
-              <Button
-                variant="default"
-                onClick={onMarkFulfilled}
-              >
+              <Button variant="default" onClick={onMarkFulfilled}>
                 Mark as Fulfilled
               </Button>
             )}
@@ -105,10 +103,11 @@ function OrderDetailsDialog({
 }
 
 export function SalesPage() {
+  const dispatch = useDispatch<AppDispatch>();
   const [tab, setTab] = useState("sales");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
-  const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [ordersError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const pageSize = 10;
   const { user } = useAuthContext();
@@ -116,66 +115,22 @@ export function SalesPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
 
-  const { data: salesData } = useQuery<{
-    sales: Sale[];
-    total: number;
-  }>({
-    queryKey: ["sales", currentPage],
-    queryFn: async () => {
-      const response = await api.get(`/sales?page=${currentPage}&pageSize=${pageSize}`);
-      return response.data;
-    },
-  });
+  // Redux state
+  const { sales, orders, status, pagination } = useSelector(
+    (state: RootState) => state.sales
+  );
 
-  // Only run orders query if user is authenticated (TODO: add real auth check if needed)
-  const { data: ordersData, isLoading: isLoadingOrders } = useQuery({
-    queryKey: ["orders", currentPage],
-    queryFn: async () => {
-      try {
-        const response = await api.get(
-          API_ENDPOINTS.orders.list + `?page=${currentPage}&pageSize=${pageSize}`
-        );
-        setOrdersError(null);
-        return response.data;
-      } catch (error: unknown) {
-        if (
-          typeof error === "object" &&
-          error !== null &&
-          "response" in error &&
-          (
-            error as {
-              response?: {
-                status?: number;
-                headers?: { [key: string]: string };
-              };
-            }
-          ).response &&
-          (error as { response: { status: number } }).response.status === 429
-        ) {
-          setOrdersError("You are not authorized to view orders. Please log in.");
-        } else if (
-          typeof error === "object" &&
-          error !== null &&
-          "response" in error &&
-          (error as { response?: { data?: { message?: string } } }).response
-        ) {
-          setOrdersError(
-            (error as { response?: { data?: { message?: string } } }).response?.data?.message ||
-            (error as { message?: string }).message ||
-            "Failed to load orders."
-          );
-        } else if (error instanceof Error) {
-          setOrdersError(error.message);
-        } else {
-          setOrdersError("Failed to load orders.");
-        }
-        throw error;
-      }
-    },
-    enabled: tab === "orders",
-  });
+  // Fetch data when component mounts or page changes
+  useEffect(() => {
+    if (tab === "sales") {
+      dispatch(fetchSales({ page: currentPage, pageSize }));
+    } else if (tab === "orders") {
+      dispatch(fetchOrders({ page: currentPage, pageSize }));
+    }
+  }, [dispatch, tab, currentPage, pageSize]);
 
-  const totalPages = salesData ? Math.ceil(salesData.total / pageSize) : 1;
+  const totalPages = pagination.totalPages;
+  const isLoadingOrders = status === "loading" && tab === "orders";
 
   const formatCurrency = (amount: string | number) => {
     return `KSh ${Number(amount).toLocaleString("en-KE", {
@@ -221,21 +176,33 @@ export function SalesPage() {
 
     setIsDeleting(true);
     try {
-      await api.delete(API_ENDPOINTS.sales.delete(saleId));
+      await dispatch(deleteSale(saleId)).unwrap();
       toast({
         title: "Sale Deleted",
         description: "The sale has been successfully deleted and inventory restored.",
         variant: "default",
       });
 
-      // Close the dialog and refresh the sales list
+      // Close the dialog - Redux state is automatically updated
       setSelectedSale(null);
-      // The query will automatically refetch due to React Query's cache invalidation
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting sale:", error);
+      const errorMessage =
+        error &&
+          typeof error === "object" &&
+          "response" in error &&
+          error.response &&
+          typeof error.response === "object" &&
+          "data" in error.response &&
+          error.response.data &&
+          typeof error.response.data === "object" &&
+          "message" in error.response.data
+          ? (error.response.data as { message: string }).message
+          : "Failed to delete sale";
+
       toast({
         title: "Delete Failed",
-        description: error.response?.data?.message || "Failed to delete sale",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -251,7 +218,7 @@ export function SalesPage() {
     try {
       // Call the API to update order status to "completed"
       await api.put(`/orders/${selectedOrder.id}`, {
-        status: "completed"
+        status: "completed",
       });
 
       // Update local state
@@ -311,7 +278,7 @@ export function SalesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {salesData?.sales.map((sale) => (
+                {sales?.map((sale) => (
                   <TableRow key={sale.id}>
                     <TableCell>{format(new Date(sale.createdAt), "PPp")}</TableCell>
                     <TableCell>{sale.Customer?.name || "Walk-in Customer"}</TableCell>
@@ -403,7 +370,7 @@ export function SalesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {ordersData?.orders?.map((order: Order) => (
+                  {orders?.map((order: Order) => (
                     <TableRow key={order.id}>
                       <TableCell>{format(new Date(order.createdAt), "PPp")}</TableCell>
                       <TableCell>{order.status}</TableCell>

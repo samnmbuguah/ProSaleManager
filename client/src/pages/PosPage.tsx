@@ -12,7 +12,6 @@ import type { CartItem } from "@/types/pos";
 import { ReceiptDialog } from "@/components/pos/ReceiptDialog";
 import { useProducts } from "@/hooks/use-products";
 import { useCustomers } from "@/hooks/useCustomers";
-import { api } from "@/lib/api";
 import {
   Select,
   SelectContent,
@@ -24,8 +23,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { useDispatch } from "react-redux";
+import { createSale } from "@/store/salesSlice";
+import type { AppDispatch } from "@/store";
 
 const PosPage: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
   const { products: allProducts, refetch, error } = useProducts();
   const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
   const {
@@ -62,7 +65,7 @@ const PosPage: React.FC = () => {
   // Initialize displayed products when allProducts changes
   useEffect(() => {
     if (allProducts && allProducts.length > 0) {
-      console.log('Initializing displayed products:', allProducts.length, 'products');
+      console.log("Initializing displayed products:", allProducts.length, "products");
       setDisplayedProducts(allProducts);
     }
   }, [allProducts]);
@@ -95,7 +98,11 @@ const PosPage: React.FC = () => {
     });
   };
 
-  const handleCheckout = async (amountTendered: number, change: number, historicalDate?: string) => {
+  const handleCheckout = async (
+    amountTendered: number,
+    change: number,
+    historicalDate?: string
+  ) => {
     try {
       setIsLoading((prev) => ({ ...prev, checkout: true }));
 
@@ -139,45 +146,47 @@ const PosPage: React.FC = () => {
         ...(historicalDate && { created_at: historicalDate }),
       };
 
-      // Use the configured API instance
-      const response = await api.post("/sales", saleData);
+      // Use Redux to create the sale
+      const resultAction = await dispatch(createSale(saleData));
 
-      // Verify response format and extract sale ID
-      let saleId;
-      if (response.data && response.data.data && response.data.data.id) {
-        saleId = response.data.data.id;
-      } else if (response.data && response.data.id) {
-        saleId = response.data.id;
+      if (createSale.fulfilled.match(resultAction)) {
+        const saleId = resultAction.payload.id;
+
+        // Success - show toast and clear cart
+        toast({
+          title: "Success",
+          description: "Checkout successful!",
+        });
+
+        // ONLY clear the cart after successful checkout using the context function
+        clearCart();
+
+        // Close the checkout dialog immediately
+        setIsCheckoutDialogOpen(false);
+
+        // Set the sale ID for the receipt dialog
+        setCurrentSaleId(saleId);
+
+        // Open the receipt dialog immediately
+        setIsReceiptDialogOpen(true);
       } else {
-        throw new Error("Invalid server response format");
+        // Handle Redux action rejection
+        const errorMessage = resultAction.payload as string || "Failed to create sale";
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
       }
-
-      // Success - show toast and clear cart
-      toast({
-        title: "Success",
-        description: "Checkout successful!",
-      });
-
-      // ONLY clear the cart after successful checkout using the context function
-      clearCart();
-
-      // Close the checkout dialog immediately
-      setIsCheckoutDialogOpen(false);
-
-      // Set the sale ID for the receipt dialog
-      setCurrentSaleId(saleId);
-
-      // Open the receipt dialog immediately
-      setIsReceiptDialogOpen(true);
     } catch (error: unknown) {
       console.error("Checkout error:", error);
 
       // Handle checkout errors
-      let errorTitle = "Checkout Error";
+      const errorTitle = "Checkout Error";
       let errorDescription = "Failed to complete checkout. Please try again.";
 
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as any;
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as { response?: { data?: { message?: string } } };
         const responseData = axiosError.response?.data;
 
         if (responseData?.message) {
@@ -271,7 +280,9 @@ const PosPage: React.FC = () => {
 
               <div className="flex-1 min-h-0 overflow-y-auto">
                 <ProductSearch
-                  products={(displayedProducts || []).filter((product) => product?.sku !== "SRV001")}
+                  products={(displayedProducts || []).filter(
+                    (product) => product?.sku !== "SRV001"
+                  )}
                   onSelect={handleAddToCart}
                   searchProducts={async (query: string) => {
                     try {
@@ -302,7 +313,7 @@ const PosPage: React.FC = () => {
                       // Update displayed products with search results
                       // Handle both {success: true, data: [...]} and [...] formats
                       const searchResults = data.data || data || [];
-                      console.log('Search results:', searchResults.length, 'products found');
+                      console.log("Search results:", searchResults.length, "products found");
                       setDisplayedProducts(searchResults);
                     } catch (error) {
                       console.error("Error:", error);

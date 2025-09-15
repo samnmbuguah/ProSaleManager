@@ -13,7 +13,7 @@ export const fetchProducts = createAsyncThunk(
       const response = await api.get(`${API_ENDPOINTS.products.list}?page=${page}&limit=${limit}`);
       return {
         products: response.data.data,
-        pagination: response.data.pagination
+        pagination: response.data.pagination,
       };
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : "Failed to fetch products");
@@ -68,9 +68,9 @@ const initialFormData: z.infer<typeof productSchema> = {
   stock_unit: "piece",
 };
 
-interface ProductFilters {
+export interface ProductFilters {
   categoryId: number | null;
-  stockStatus: 'all' | 'in-stock' | 'low-stock' | 'out-of-stock';
+  stockStatus: "all" | "in-stock" | "low-stock" | "out-of-stock";
   priceRange: {
     min: number | null;
     max: number | null;
@@ -80,7 +80,7 @@ interface ProductFilters {
     max: number | null;
   };
   isActive: boolean | null;
-  stockUnit: 'all' | 'piece' | 'pack' | 'dozen';
+  stockUnit: "all" | "piece" | "pack" | "dozen";
 }
 
 interface ProductsState {
@@ -105,7 +105,7 @@ interface ProductsState {
 
 const initialFilters: ProductFilters = {
   categoryId: null,
-  stockStatus: 'all',
+  stockStatus: "all",
   priceRange: {
     min: null,
     max: null,
@@ -115,7 +115,7 @@ const initialFilters: ProductFilters = {
     max: null,
   },
   isActive: null,
-  stockUnit: 'all',
+  stockUnit: "all",
 };
 
 const initialState: ProductsState = {
