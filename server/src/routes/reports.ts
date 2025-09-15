@@ -10,6 +10,7 @@ import { storeScope } from "../utils/helpers.js";
 import { requireStoreContext } from "../middleware/store-context.middleware.js";
 import { requireAuth, attachStoreIdToUser } from "../middleware/auth.middleware.js";
 import Expense from "../models/Expense.js";
+import * as XLSX from 'xlsx';
 
 const router = Router();
 
@@ -827,6 +828,199 @@ router.post(
       res.status(500).json({
         success: false,
         message: "Failed to process stock take import",
+      });
+    }
+  },
+);
+
+// Enhanced export endpoint with multiple formats
+router.get(
+  "/export/:type/:format",
+  requireAuth,
+  attachStoreIdToUser,
+  requireStoreContext,
+  async (req, res) => {
+    try {
+      const { type, format } = req.params;
+      const { 
+        search, 
+        category, 
+        stockStatus, 
+        minPrice, 
+        maxPrice, 
+        startDate, 
+        endDate 
+      } = req.query;
+
+      // Build where clause for filtering
+      const where: Record<string, any> = storeScope(req.user!, { is_active: true });
+
+      if (category && category !== "all") {
+        where.category_id = category;
+      }
+
+      if (minPrice || maxPrice) {
+        where.piece_selling_price = {};
+        if (minPrice) where.piece_selling_price[Op.gte] = parseFloat(minPrice as string);
+        if (maxPrice) where.piece_selling_price[Op.lte] = parseFloat(maxPrice as string);
+      }
+
+      if (startDate && endDate) {
+        where.createdAt = {
+          [Op.between]: [new Date(startDate as string), new Date(endDate as string)],
+        };
+      }
+
+      const products = await Product.findAll({
+        where,
+        include: [
+          {
+            model: Category,
+            as: "Category",
+            attributes: ["name"],
+          },
+        ],
+        order: [["name", "ASC"]],
+      });
+
+      let filteredProducts = products.map((product: any) => ({
+        id: product.id,
+        name: product.name,
+        sku: product.sku,
+        category: product.Category?.name || "Unknown",
+        piece_selling_price: product.piece_selling_price,
+        piece_buying_price: product.piece_buying_price,
+        quantity: product.quantity,
+        min_quantity: product.min_quantity,
+        is_active: product.is_active,
+        created_at: product.createdAt,
+      }));
+
+      // Apply additional filters
+      if (search) {
+        const searchTerm = (search as string).toLowerCase();
+        filteredProducts = filteredProducts.filter(
+          (product) =>
+            product.name.toLowerCase().includes(searchTerm) ||
+            product.sku.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      if (stockStatus && stockStatus !== "all") {
+        switch (stockStatus) {
+          case "instock":
+            filteredProducts = filteredProducts.filter((p) => (p.quantity || 0) >= (p.min_quantity || 10));
+            break;
+          case "lowstock":
+            filteredProducts = filteredProducts.filter((p) => (p.quantity || 0) > 0 && (p.quantity || 0) < (p.min_quantity || 10));
+            break;
+          case "outofstock":
+            filteredProducts = filteredProducts.filter((p) => (p.quantity || 0) <= 0);
+            break;
+        }
+      }
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      
+      if (format === 'excel') {
+        // Create Excel workbook
+        const workbook = XLSX.utils.book_new();
+        
+        if (type === 'inventory') {
+          const worksheetData = filteredProducts.map(product => ({
+            'Product Name': product.name,
+            'SKU': product.sku,
+            'Category': product.category,
+            'Selling Price': product.piece_selling_price || 0,
+            'Buying Price': product.piece_buying_price || 0,
+            'Current Quantity': product.quantity || 0,
+            'Min Quantity': product.min_quantity || 0,
+            'Status': product.is_active ? 'Active' : 'Inactive',
+            'Created Date': new Date(product.created_at).toLocaleDateString()
+          }));
+          
+          const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+          XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
+        } else if (type === 'stock-take') {
+          const worksheetData = filteredProducts.map(product => ({
+            'Product Name': product.name,
+            'SKU': product.sku,
+            'Category': product.category,
+            'Current Quantity': product.quantity || 0,
+            'New Quantity': '',
+            'Variance': '',
+            'Notes': ''
+          }));
+          
+          const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+          XLSX.utils.book_append_sheet(workbook, worksheet, 'Stock Take');
+        }
+
+        const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", `attachment; filename="${type}-export-${timestamp}.xlsx"`);
+        res.send(excelBuffer);
+        
+      } else if (format === 'pdf') {
+        // For PDF, we'll return a simple text-based response
+        // In a real implementation, you'd use a PDF library like puppeteer or jsPDF
+        const pdfContent = `
+INVENTORY REPORT
+Generated: ${new Date().toLocaleString()}
+Total Products: ${filteredProducts.length}
+
+${filteredProducts.map(product => 
+  `${product.name} (${product.sku}) - Qty: ${product.quantity} - Price: KSh ${product.piece_selling_price || 0}`
+).join('\n')}
+        `;
+        
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename="${type}-export-${timestamp}.pdf"`);
+        res.send(pdfContent);
+        
+      } else {
+        // Default to CSV
+        const headers = type === 'inventory' 
+          ? ["Product Name", "SKU", "Category", "Selling Price", "Buying Price", "Current Quantity", "Min Quantity", "Status"]
+          : ["Product Name", "SKU", "Category", "Current Quantity", "New Quantity", "Variance", "Notes"];
+        
+        let csvContent = headers.join(",") + "\n";
+        
+        filteredProducts.forEach((product) => {
+          const csvRow = type === 'inventory' 
+            ? [
+                `"${product.name.replace(/"/g, '""')}"`,
+                `"${product.sku.replace(/"/g, '""')}"`,
+                `"${product.category.replace(/"/g, '""')}"`,
+                product.piece_selling_price || 0,
+                product.piece_buying_price || 0,
+                product.quantity || 0,
+                product.min_quantity || 0,
+                product.is_active ? "Active" : "Inactive"
+              ]
+            : [
+                `"${product.name.replace(/"/g, '""')}"`,
+                `"${product.sku.replace(/"/g, '""')}"`,
+                `"${product.category.replace(/"/g, '""')}"`,
+                product.quantity || 0,
+                "",
+                "",
+                ""
+              ];
+          csvContent += csvRow.join(",") + "\n";
+        });
+
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename="${type}-export-${timestamp}.csv"`);
+        res.send(csvContent);
+      }
+
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to export data",
       });
     }
   },

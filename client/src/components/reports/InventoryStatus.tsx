@@ -9,10 +9,9 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, FileSpreadsheet, BarChart3 } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { useState } from "react";
 import { api } from "@/lib/api";
-import { toast } from "@/components/ui/use-toast";
 import { ReportFilters, InventoryFilters } from "./ReportFilters";
 import {
   Select,
@@ -29,6 +28,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { FilterPresets } from "./FilterPresets";
+import { ExportOptions } from "./ExportOptions";
 
 interface InventoryStatusProps {
   products: Product[];
@@ -42,7 +43,6 @@ export default function InventoryStatus({ products, onFiltersChange }: Inventory
   // Sorting state
   const [sortColumn, setSortColumn] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [isDownloading, setIsDownloading] = useState(false);
   const [csvExportType, setCsvExportType] = useState<"inventory" | "stock-take">("inventory");
 
   // Filter state
@@ -80,16 +80,24 @@ export default function InventoryStatus({ products, onFiltersChange }: Inventory
     }
   };
 
-  const handleDownloadCSV = async () => {
+  const handleExport = async (format: 'csv' | 'excel' | 'pdf' | 'image') => {
     try {
-      setIsDownloading(true);
 
-      const endpoint = csvExportType === "inventory" 
-        ? "/reports/inventory/export" 
-        : "/reports/stock-take/export";
+      // Build query parameters from current filters
+      const params: Record<string, string> = {};
+      if (filters.search) params.search = filters.search;
+      if (filters.category && filters.category !== "all") params.category = filters.category;
+      if (filters.stockStatus && filters.stockStatus !== "all") params.stockStatus = filters.stockStatus;
+      if (filters.priceRange?.min) params.minPrice = filters.priceRange.min.toString();
+      if (filters.priceRange?.max) params.maxPrice = filters.priceRange.max.toString();
+      if (filters.dateRange?.start) params.startDate = filters.dateRange.start.toISOString();
+      if (filters.dateRange?.end) params.endDate = filters.dateRange.end.toISOString();
+
+      const endpoint = `/reports/export/${csvExportType}/${format}`;
 
       const response = await api.get(endpoint, {
-        responseType: "blob", // Important for file downloads
+        params,
+        responseType: "blob",
       });
 
       // Create blob link to download
@@ -97,9 +105,9 @@ export default function InventoryStatus({ products, onFiltersChange }: Inventory
       const link = document.createElement("a");
       link.href = url;
 
-      // Extract filename from response headers or create default
+      // Extract filename from response headers
       const contentDisposition = response.headers["content-disposition"];
-      let filename = csvExportType === "inventory" ? "inventory-export.csv" : "stock-take.csv";
+      let filename = `${csvExportType}-export.${format}`;
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="(.+)"/);
         if (filenameMatch) {
@@ -113,22 +121,9 @@ export default function InventoryStatus({ products, onFiltersChange }: Inventory
       link.remove();
       window.URL.revokeObjectURL(url);
 
-      const exportTypeName = csvExportType === "inventory" ? "Inventory" : "Stock Take";
-      toast({
-        title: "Download Complete",
-        description: `${exportTypeName} CSV exported successfully with ${safeProducts.length} products`,
-        variant: "default",
-      });
     } catch (error) {
-      console.error("Error downloading CSV:", error);
-      const exportTypeName = csvExportType === "inventory" ? "inventory" : "stock take";
-      toast({
-        title: "Download Failed",
-        description: `Failed to export ${exportTypeName} to CSV. Please try again.`,
-        variant: "destructive",
-      });
-    } finally {
-      setIsDownloading(false);
+      console.error("Error exporting:", error);
+      throw error; // Re-throw to be handled by ExportOptions component
     }
   };
 
@@ -185,55 +180,52 @@ export default function InventoryStatus({ products, onFiltersChange }: Inventory
         </div>
       </div>
 
-      <div className="flex justify-between items-center">
-        <ReportFilters
+      <div className="space-y-4">
+        {/* Filter Presets */}
+        <FilterPresets
           type="inventory"
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          onClearFilters={handleClearFilters}
+          onApplyPreset={handleFiltersChange}
+          currentFilters={filters}
         />
-        <div className="flex items-center gap-2">
-          <Select value={csvExportType} onValueChange={(value: "inventory" | "stock-take") => setCsvExportType(value)}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Select export type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="inventory">Inventory Export</SelectItem>
-              <SelectItem value="stock-take">Stock Take Template</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button
-            onClick={handleDownloadCSV}
-            disabled={isDownloading || safeProducts.length === 0}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            {isDownloading ? (
-              <>
-                <Download className="h-4 w-4 animate-spin" />
-                Exporting...
-              </>
-            ) : (
-              <>
-                <FileSpreadsheet className="h-4 w-4" />
-                Download CSV
-              </>
-            )}
-          </Button>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Variance Analysis
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Stock Take Variance Analysis</DialogTitle>
-              </DialogHeader>
-              <VarianceAnalysis onClose={() => {}} />
-            </DialogContent>
-          </Dialog>
+        
+        {/* Main Filters and Export Controls */}
+        <div className="flex justify-between items-center">
+          <ReportFilters
+            type="inventory"
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            onClearFilters={handleClearFilters}
+          />
+          <div className="flex items-center gap-2">
+            <Select value={csvExportType} onValueChange={(value: "inventory" | "stock-take") => setCsvExportType(value)}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Select export type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="inventory">Inventory Export</SelectItem>
+                <SelectItem value="stock-take">Stock Take Template</SelectItem>
+              </SelectContent>
+            </Select>
+            <ExportOptions
+              onExport={handleExport}
+              disabled={safeProducts.length === 0}
+              exportType={csvExportType}
+            />
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Variance Analysis
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Stock Take Variance Analysis</DialogTitle>
+                </DialogHeader>
+                <VarianceAnalysis onClose={() => {}} />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </div>
 
