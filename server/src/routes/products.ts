@@ -520,6 +520,29 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.array(
       }
     }
 
+    // Handle removed images
+    if (productData.removedImages) {
+      try {
+        const removedImages = JSON.parse(productData.removedImages);
+        if (Array.isArray(removedImages) && removedImages.length > 0) {
+          // Get current images and filter out removed ones
+          const currentImages = product.images || [];
+          const updatedImages = currentImages.filter((img: string) => !removedImages.includes(img));
+
+          // Update the images array
+          productData.images = updatedImages;
+
+          // Update the main image_url if it was removed
+          if (removedImages.includes(product.image_url)) {
+            productData.image_url = updatedImages.length > 0 ? updatedImages[0] : null;
+          }
+        }
+      } catch (parseErr) {
+        console.error("Error parsing removedImages:", parseErr);
+        // Continue without removing images if parsing fails
+      }
+    }
+
     // Validate data
     if (productData.piece_selling_price !== undefined) {
       const price = Number(productData.piece_selling_price);

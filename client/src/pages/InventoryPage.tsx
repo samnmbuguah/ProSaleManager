@@ -1,7 +1,13 @@
 import React, { useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { z } from "zod";
 import { Product, productSchema } from "@/types/product";
 import Suppliers from "@/components/inventory/Suppliers";
@@ -21,12 +27,13 @@ import {
   setLimit,
   setFilters,
   clearFilters,
+  type ProductFilters,
 } from "@/store/productsSlice";
 import ProductList from "@/components/inventory/ProductList";
 import ProductFormDialog from "@/components/inventory/ProductFormDialog";
 import ProductSearchBar from "@/components/inventory/ProductSearchBar";
 import TabsNav from "@/components/inventory/TabsNav";
-import ProductFilters from "@/components/inventory/ProductFilters";
+import ProductFiltersComponent from "@/components/inventory/ProductFilters";
 import { filterProducts } from "@/utils/productFilters";
 import { api } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
@@ -50,14 +57,10 @@ const InventoryPage: React.FC = () => {
   // Filter state
   const [showFilters, setShowFilters] = React.useState(false);
 
-  const [uploading, setUploading] = React.useState(false);
-  const [uploadProgress, setUploadProgress] = React.useState<number | null>(null);
-  const [uploadError, setUploadError] = React.useState<string | null>(null);
-
   // File validation function
   const validateImageFiles = (files: File[]): string | null => {
     const maxFileSize = 5 * 1024 * 1024; // 5MB
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     const maxFiles = 10;
 
     if (files.length > maxFiles) {
@@ -92,7 +95,7 @@ const InventoryPage: React.FC = () => {
   }, [products, filters, searchQuery]);
 
   // Filter handlers
-  const handleFiltersChange = (newFilters: any) => {
+  const handleFiltersChange = (newFilters: Partial<ProductFilters>) => {
     dispatch(setFilters(newFilters));
   };
 
@@ -125,17 +128,13 @@ const InventoryPage: React.FC = () => {
     }
   }, [dispatch, productsStatus, pagination.page, pagination.limit]);
 
-  const handleSubmit = async (_unused: unknown, localImageFiles?: File[]) => {
+  const handleSubmit = async (_unused: unknown, localImageFiles?: File[], onProgress?: (progress: number) => void, removedImages?: string[]) => {
     try {
-      setUploading(true);
-      setUploadProgress(0);
       let response;
       if (localImageFiles && localImageFiles.length > 0) {
         // Validate files before upload
         const validationError = validateImageFiles(localImageFiles);
         if (validationError) {
-          setUploading(false);
-          setUploadProgress(null);
           toast({
             title: "Invalid Files",
             description: validationError,
@@ -158,12 +157,19 @@ const InventoryPage: React.FC = () => {
           formDataToSend.append("images", file);
         });
 
+        // Append removed images if any
+        if (removedImages && removedImages.length > 0) {
+          formDataToSend.append("removedImages", JSON.stringify(removedImages));
+        }
+
         const config = {
           headers: { "Content-Type": "multipart/form-data" },
-          onUploadProgress: (progressEvent: any) => {
-            if (progressEvent.total) {
-              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              setUploadProgress(percentCompleted);
+          onUploadProgress: (progressEvent: { loaded: number; total?: number }) => {
+            if (progressEvent.total && onProgress) {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total
+              );
+              onProgress(percentCompleted);
             }
           },
         };
@@ -176,6 +182,23 @@ const InventoryPage: React.FC = () => {
           );
         } else {
           response = await api.post(API_ENDPOINTS.products.create, formDataToSend, config);
+        }
+      } else if (removedImages && removedImages.length > 0) {
+        // No new files but there are removed images - still need to send update
+        const formDataToSend = new FormData();
+        Object.entries(formData).forEach(([key, value]) => {
+          if (typeof value === "number" || typeof value === "boolean") {
+            formDataToSend.append(key, value.toString());
+          } else {
+            formDataToSend.append(key, Array.isArray(value) ? value.join(",") : (value ?? ""));
+          }
+        });
+        formDataToSend.append("removedImages", JSON.stringify(removedImages));
+
+        if (selectedProduct) {
+          response = await api.put(API_ENDPOINTS.products.update(selectedProduct.id), formDataToSend, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
         }
       } else {
         // Only include the correct fields for the backend
@@ -221,15 +244,16 @@ const InventoryPage: React.FC = () => {
       dispatch(fetchProducts({ page: pagination.page, limit: pagination.limit }));
     } catch (error: unknown) {
       console.error("Error:", error);
-      setUploadError("Upload failed");
 
       // Handle specific error cases
       let errorMessage = `Failed to ${selectedProduct ? "update" : "create"} product`;
       let errorTitle = "Error";
       let isRetryable = false;
 
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { data?: { message?: string; error?: string }; status?: number } };
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as {
+          response?: { data?: { message?: string; error?: string }; status?: number };
+        };
         const serverMessage = axiosError.response?.data?.message;
         const serverError = axiosError.response?.data?.error;
         const status = axiosError.response?.status;
@@ -259,7 +283,8 @@ const InventoryPage: React.FC = () => {
             errorMessage = serverMessage;
           } else if (serverMessage.includes("Image upload failed")) {
             errorTitle = "Image Upload Failed";
-            errorMessage = "Failed to upload images. Please check your internet connection and try again.";
+            errorMessage =
+              "Failed to upload images. Please check your internet connection and try again.";
             isRetryable = true;
           } else {
             errorMessage = serverMessage;
@@ -284,7 +309,8 @@ const InventoryPage: React.FC = () => {
 
         toast({
           title: errorTitle,
-          description: "A product with this SKU already exists. Click 'Use Suggested SKU' to automatically update the form.",
+          description:
+            "A product with this SKU already exists. Click 'Use Suggested SKU' to automatically update the form.",
           variant: "destructive",
           action: (
             <Button
@@ -312,7 +338,6 @@ const InventoryPage: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={() => {
-                setUploadError(null);
                 handleSubmit(_unused, localImageFiles);
               }}
             >
@@ -321,10 +346,6 @@ const InventoryPage: React.FC = () => {
           ) : undefined,
         });
       }
-    } finally {
-      setUploading(false);
-      setUploadProgress(null);
-      setUploadError(null);
     }
   };
 
@@ -424,16 +445,41 @@ const InventoryPage: React.FC = () => {
                 setSearchQuery={(q) => dispatch(setSearchQuery(q))}
                 onSearch={handleSearch}
               />
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  Showing {filteredProducts.length} of {products.length} products
+                </span>
+                {filteredProducts.length !== products.length && (
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                    Filtered
+                  </span>
+                )}
+              </div>
               <Button
                 variant="outline"
                 onClick={() => setShowFilters(!showFilters)}
                 className="flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                  />
                 </svg>
                 Filters
               </Button>
+              {filteredProducts.length !== products.length && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearFilters}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  Clear Filters
+                </Button>
+              )}
             </div>
             <Button
               onClick={() => {
@@ -452,7 +498,7 @@ const InventoryPage: React.FC = () => {
           {/* Filter Panel */}
           {showFilters && (
             <div className="mb-6">
-              <ProductFilters
+              <ProductFiltersComponent
                 filters={filters}
                 onFiltersChange={handleFiltersChange}
                 onClearFilters={handleClearFilters}
@@ -464,9 +510,13 @@ const InventoryPage: React.FC = () => {
           {/* Results Summary */}
           <div className="mb-4 text-sm text-gray-600">
             {searchQuery ? (
-              <span>Search results for "{searchQuery}" ({products.length} products)</span>
+              <span>
+                Search results for "{searchQuery}" ({products.length} products)
+              </span>
             ) : (
-              <span>Showing {filteredProducts.length} of {products.length} products</span>
+              <span>
+                Showing {filteredProducts.length} of {products.length} products
+              </span>
             )}
           </div>
 
@@ -475,7 +525,9 @@ const InventoryPage: React.FC = () => {
           <div className="flex items-center justify-between mt-6">
             <div className="flex items-center space-x-4">
               <div className="text-sm text-gray-600">
-                Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} products
+                Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
+                {pagination.total} products
               </div>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">Show:</span>
@@ -547,70 +599,6 @@ const InventoryPage: React.FC = () => {
         onSubmit={handleSubmit}
         selectedProduct={selectedProduct}
       />
-      {uploading && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-8 rounded-lg shadow-xl flex flex-col items-center min-w-[400px]">
-            <div className="flex items-center mb-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mr-3"></div>
-              <div className="text-lg font-medium">
-                {uploadError ? "Upload Failed" : "Uploading product..."}
-              </div>
-            </div>
-
-            {!uploadError && (
-              <>
-                <div className="w-full mb-2">
-                  <div className="flex justify-between text-sm text-gray-600 mb-1">
-                    <span>Progress</span>
-                    <span>{uploadProgress !== null ? `${uploadProgress}%` : "0%"}</span>
-                  </div>
-                  <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300 ease-out"
-                      style={{
-                        width: uploadProgress !== null ? `${uploadProgress}%` : "0%",
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {uploadProgress !== null && uploadProgress > 0 && (
-                  <div className="text-sm text-gray-500 mt-2">
-                    {uploadProgress < 100 ? "Uploading images..." : "Processing..."}
-                  </div>
-                )}
-              </>
-            )}
-
-            {uploadError && (
-              <div className="text-center">
-                <div className="text-red-600 mb-4">{uploadError}</div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setUploadError(null);
-                      setUploading(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setUploadError(null);
-                      handleSubmit(undefined, undefined);
-                    }}
-                  >
-                    Retry
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
       {activeTab === "suppliers" && <Suppliers />}
       {activeTab === "purchase-orders" && (
         <PurchaseOrders purchaseOrders={purchaseOrders || []} loading={purchaseOrdersLoading} />
