@@ -4,7 +4,13 @@ import type { SupplierFormData, Supplier } from "@/types/supplier";
 import type { ProductSupplierFormData, ProductSupplier } from "@/types/product-supplier";
 import { useSuppliers } from "../../hooks/use-suppliers";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,

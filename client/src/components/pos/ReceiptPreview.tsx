@@ -47,6 +47,20 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
       </div>
       <Card ref={printRef} className="w-full max-w-md mx-auto">
         <CardHeader>
+          <div className="flex justify-center mb-4">
+            <img
+              src="/logo.png"
+              alt="Business Logo"
+              className="h-16 w-auto object-contain"
+              onError={(e) => {
+                // Fallback to JPEG if PNG fails
+                const target = e.target as HTMLImageElement;
+                if (target.src.endsWith(".png")) {
+                  target.src = "/logo.jpeg";
+                }
+              }}
+            />
+          </div>
           <CardTitle className="text-center">{settings.businessName}</CardTitle>
           {settings.address && (
             <div className="text-center text-muted-foreground">

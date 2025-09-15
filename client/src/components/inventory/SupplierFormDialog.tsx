@@ -1,5 +1,11 @@
 import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -33,10 +39,9 @@ const SupplierFormDialog: React.FC<SupplierFormDialogProps> = ({
         <DialogHeader>
           <DialogTitle>{selectedSupplier ? "Edit Supplier" : "Add New Supplier"}</DialogTitle>
           <DialogDescription>
-            {selectedSupplier 
+            {selectedSupplier
               ? "Update the supplier information below. All fields marked with * are required."
-              : "Fill in the supplier information below to add a new supplier to your system."
-            }
+              : "Fill in the supplier information below to add a new supplier to your system."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">

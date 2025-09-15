@@ -12,6 +12,7 @@ interface StoreContextType {
   setCurrentStore: (store: Store | null) => void;
   stores: Store[];
   setStores: (stores: Store[]) => void;
+  isLoading: boolean;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -19,11 +20,13 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentStore, setCurrentStore] = useState<Store | null>(null);
   const [stores, setStores] = useState<Store[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Load stores for super admin (fetch from API if user is super admin)
   useEffect(() => {
     // Only fetch if not already loaded
     if (stores.length === 0 && window.location.pathname !== "/auth") {
+      setIsLoading(true);
       fetch("/api/stores")
         .then((res) => res.json())
         .then((data) => {
@@ -35,7 +38,12 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
           }
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else {
+      setIsLoading(false);
     }
   }, [stores.length, currentStore]);
 
@@ -59,7 +67,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   return (
-    <StoreContext.Provider value={{ currentStore, setCurrentStore, stores, setStores }}>
+    <StoreContext.Provider value={{ currentStore, setCurrentStore, stores, setStores, isLoading }}>
       {children}
     </StoreContext.Provider>
   );

@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useFavorites } from "@/hooks/use-favorites";
+import { useAuth } from "@/hooks/use-auth";
 import type { Product } from "@/types/product";
 import ProductCard from "@/components/shop/ProductCard";
 import { Button } from "@/components/ui/button";
 
 export default function FavoritesPage() {
-  const { data: favorites = [], isLoading, isError } = useFavorites();
+  const { isAuthenticated } = useAuth();
+  const { data: favorites = [], isLoading, isError } = useFavorites(isAuthenticated);
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 

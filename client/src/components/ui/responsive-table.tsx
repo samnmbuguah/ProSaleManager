@@ -12,7 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 
 // Types for responsive table configuration
-export interface ResponsiveTableColumn<T = any> {
+export interface ResponsiveTableColumn<T = unknown> {
   key: string;
   label: string;
   render: (item: T) => React.ReactNode;
@@ -22,7 +22,7 @@ export interface ResponsiveTableColumn<T = any> {
   priority?: number; // Higher priority = more important, shown first on mobile
 }
 
-export interface ResponsiveTableProps<T = any> {
+export interface ResponsiveTableProps<T = unknown> {
   data: T[];
   columns: ResponsiveTableColumn<T>[];
   keyExtractor: (item: T) => string | number;
@@ -33,7 +33,7 @@ export interface ResponsiveTableProps<T = any> {
   cardClassName?: string;
 }
 
-export function ResponsiveTable<T = any>({
+export function ResponsiveTable<T = unknown>({
   data,
   columns,
   keyExtractor,
@@ -47,7 +47,7 @@ export function ResponsiveTable<T = any>({
   const sortedColumns = [...columns].sort((a, b) => (b.priority || 0) - (a.priority || 0));
 
   // Get columns visible on mobile (not hidden and highest priority)
-  const mobileColumns = sortedColumns.filter(col => !col.hideOnMobile);
+  const mobileColumns = sortedColumns.filter((col) => !col.hideOnMobile);
 
   if (data.length === 0) {
     return (
@@ -59,9 +59,7 @@ export function ResponsiveTable<T = any>({
           </CardHeader>
         )}
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            {emptyMessage}
-          </div>
+          <div className="text-center py-8 text-muted-foreground">{emptyMessage}</div>
         </CardContent>
       </Card>
     );
@@ -225,7 +223,7 @@ export const createDateColumn = <T,>(
     const value = getValue(item);
     const date = new Date(value);
     const format = options?.format || "date";
-    
+
     let formattedDate: string;
     switch (format) {
       case "datetime":
@@ -237,7 +235,7 @@ export const createDateColumn = <T,>(
       default:
         formattedDate = date.toLocaleDateString();
     }
-    
+
     return <span className="text-sm">{formattedDate}</span>;
   },
 });
@@ -261,6 +259,10 @@ export const createCurrencyColumn = <T,>(
   render: (item) => {
     const value = getValue(item);
     const currency = options?.currency || "KSh";
-    return <span className="font-medium">{currency} {value.toLocaleString()}</span>;
+    return (
+      <span className="font-medium">
+        {currency} {value.toLocaleString()}
+      </span>
+    );
   },
 });

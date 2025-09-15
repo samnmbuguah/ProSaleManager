@@ -4,7 +4,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { useAuth } from "@/hooks/use-auth";
 import { RoleBasedRoute } from "@/components/auth/RoleBasedRoute";
 import MainNav from "@/components/layout/MainNav";
-
 // Import your pages
 import AuthPage from "@/pages/AuthPage";
 import InventoryPage from "@/pages/InventoryPage";
@@ -19,6 +18,7 @@ import UserManagementPage from "@/pages/UserManagementPage";
 import FavoritesPage from "@/pages/FavoritesPage";
 import OrdersPage from "@/pages/OrdersPage";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useStoreContext } from "@/contexts/StoreContext";
 import { useLocation } from "wouter";
 
 type AppRole = "admin" | "manager" | "user" | "super_admin" | "sales" | "client";
@@ -43,19 +43,28 @@ function ProtectedRoute({ component: Component, roles }: ProtectedRouteProps) {
 
 function RootRedirect() {
   const { user } = useAuthContext();
+  const { currentStore } = useStoreContext();
   const [, setLocation] = useLocation();
+
   useEffect(() => {
-    if (user?.role === "super_admin") {
-      setLocation("/users");
-    } else if (user?.role === "admin" || user?.role === "sales") {
-      setLocation("/pos");
-    } else if (user?.role === "manager") {
-      setLocation("/pos");
-    } else {
-      // For client users or unauthenticated users, stay on home page (shop)
-      // No redirect needed as HomePage handles both cases
+    if (user && currentStore) {
+      if (user.role === "super_admin") {
+        setLocation(`/${encodeURIComponent(currentStore.name)}/users`);
+      } else if (user.role === "admin" || user.role === "sales" || user.role === "manager") {
+        setLocation(`/${encodeURIComponent(currentStore.name)}/pos`);
+      } else if (user.role === "client") {
+        setLocation("/");
+      }
+    } else if (user && !currentStore) {
+      // If user is logged in but no store context, redirect to direct routes
+      if (user.role === "super_admin") {
+        setLocation("/users");
+      } else if (user.role === "admin" || user.role === "sales" || user.role === "manager") {
+        setLocation("/pos");
+      }
     }
-  }, [user, setLocation]);
+  }, [user, currentStore, setLocation]);
+
   return null;
 }
 

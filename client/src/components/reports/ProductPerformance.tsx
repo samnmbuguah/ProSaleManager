@@ -7,15 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ReportFilters, PerformanceFilters } from "./ReportFilters";
 
 interface ProductPerformanceData {
   productId: number;
@@ -41,32 +33,46 @@ interface ProductPerformanceSummary {
 interface ProductPerformanceProps {
   products: ProductPerformanceData[];
   summary?: ProductPerformanceSummary;
-  onDateRangeChange: (startDate: Date, endDate: Date) => void;
-  onSortChange: (sortBy: string) => void;
+  onFiltersChange: (filters: PerformanceFilters) => void;
 }
 
 export default function ProductPerformance({
   products,
   summary,
-  onDateRangeChange,
-  onSortChange,
+  onFiltersChange,
 }: ProductPerformanceProps) {
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
-
   // Ensure products is always an array
   const safeProducts = Array.isArray(products) ? products : [];
+
+  // Filter state
+  const [filters, setFilters] = useState<PerformanceFilters>({
+    search: "",
+    category: "all",
+    paymentMethod: "all",
+    priceRange: { min: null, max: null },
+    dateRange: { start: null, end: null },
+  });
+
+  const handleFiltersChange = (newFilters: PerformanceFilters) => {
+    setFilters(newFilters);
+    onFiltersChange(newFilters);
+  };
+
+  const handleClearFilters = () => {
+    const clearedFilters: PerformanceFilters = {
+      search: "",
+      category: "all",
+      paymentMethod: "all",
+      priceRange: { min: null, max: null },
+      dateRange: { start: null, end: null },
+    };
+    setFilters(clearedFilters);
+    onFiltersChange(clearedFilters);
+  };
 
   if (!Array.isArray(products)) {
     return <div className="text-center text-red-500 py-12">Failed to load products data.</div>;
   }
-
-  const handleDateRangeSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (startDate && endDate) {
-      onDateRangeChange(new Date(startDate), new Date(endDate));
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -96,45 +102,12 @@ export default function ProductPerformance({
         </div>
       </div>
 
-      <div className="flex gap-4 items-end">
-        <form onSubmit={handleDateRangeSubmit} className="flex gap-4 items-end">
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <label htmlFor="startDate">Start Date</label>
-            <Input
-              type="date"
-              id="startDate"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-          </div>
-          <div className="grid w-full max-w-sm items-center gap-1.5">
-            <label htmlFor="endDate">End Date</label>
-            <Input
-              type="date"
-              id="endDate"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
-          </div>
-          <Button type="submit">Filter</Button>
-        </form>
-
-        {/* Sort dropdown moved outside the form */}
-        <div className="grid w-full max-w-sm items-center gap-1.5">
-          <label htmlFor="sortBy">Sort By</label>
-          <Select onValueChange={onSortChange}>
-            <SelectTrigger id="sortBy">
-              <SelectValue placeholder="Select sort order" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="revenue">Revenue</SelectItem>
-              <SelectItem value="profit">Profit</SelectItem>
-              <SelectItem value="quantity">Quantity</SelectItem>
-              <SelectItem value="lastSold">Last Sold</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <ReportFilters
+        type="performance"
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onClearFilters={handleClearFilters}
+      />
 
       <Table>
         <TableHeader>

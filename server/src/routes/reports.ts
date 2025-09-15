@@ -2,11 +2,15 @@ import { Router } from "express";
 import Product from "../models/Product.js";
 import Sale from "../models/Sale.js";
 import SaleItem from "../models/SaleItem.js";
+import Category from "../models/Category.js";
+import Store from "../models/Store.js";
+import User from "../models/User.js";
 import { Op } from "sequelize";
 import { storeScope } from "../utils/helpers.js";
 import { requireStoreContext } from "../middleware/store-context.middleware.js";
 import { requireAuth, attachStoreIdToUser } from "../middleware/auth.middleware.js";
 import Expense from "../models/Expense.js";
+import * as XLSX from 'xlsx';
 
 const router = Router();
 
@@ -97,18 +101,57 @@ router.get(
   requireStoreContext,
   async (req, res) => {
     try {
-      const where = storeScope(req.user!, { is_active: true });
+      const {
+        search,
+        category,
+        stockStatus,
+        minPrice,
+        maxPrice,
+        startDate,
+        endDate
+      } = req.query;
+
+      // Build base where clause
+      const where: Record<string, any> = storeScope(req.user!, { is_active: true });
+
+      // Add category filter
+      if (category && category !== "all") {
+        where.category_id = category;
+      }
+
+      // Add price range filter
+      if (minPrice || maxPrice) {
+        where.piece_selling_price = {};
+        if (minPrice) where.piece_selling_price[Op.gte] = parseFloat(minPrice as string);
+        if (maxPrice) where.piece_selling_price[Op.lte] = parseFloat(maxPrice as string);
+      }
+
+      // Add date range filter
+      if (startDate && endDate) {
+        where.createdAt = {
+          [Op.between]: [new Date(startDate as string), new Date(endDate as string)],
+        };
+      }
+
       const products = await Product.findAll({
         where,
+        include: [
+          {
+            model: Category,
+            attributes: ["id", "name"],
+          },
+        ],
         order: [["name", "ASC"]],
       });
 
-      const inventoryData = products.map((product) => ({
+      let inventoryData = products.map((product) => ({
         id: product.id,
         name: product.name,
         sku: product.sku,
         category_id: product.category_id,
+        category_name: (product as any).Category?.name || "Unknown",
         piece_selling_price: product.piece_selling_price,
+        piece_buying_price: product.piece_buying_price,
         pack_selling_price: product.pack_selling_price,
         dozen_selling_price: product.dozen_selling_price,
         quantity: product.quantity,
@@ -118,8 +161,33 @@ router.get(
         updated_at: product.updatedAt,
       }));
 
+      // Apply search filter (client-side for now, could be moved to database)
+      if (search) {
+        const searchTerm = (search as string).toLowerCase();
+        inventoryData = inventoryData.filter(
+          (product) =>
+            product.name.toLowerCase().includes(searchTerm) ||
+            product.sku.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      // Apply stock status filter
+      if (stockStatus && stockStatus !== "all") {
+        switch (stockStatus) {
+          case "instock":
+            inventoryData = inventoryData.filter((p) => (p.quantity || 0) >= (p.min_quantity || 10));
+            break;
+          case "lowstock":
+            inventoryData = inventoryData.filter((p) => (p.quantity || 0) > 0 && (p.quantity || 0) < (p.min_quantity || 10));
+            break;
+          case "outofstock":
+            inventoryData = inventoryData.filter((p) => (p.quantity || 0) <= 0);
+            break;
+        }
+      }
+
       const totalValue = inventoryData.reduce((sum, product) => {
-        return sum + (product.piece_selling_price || 0) * (product.quantity || 0);
+        return sum + (product.piece_buying_price || 0) * (product.quantity || 0);
       }, 0);
 
       res.json({
@@ -151,7 +219,15 @@ router.get(
   requireStoreContext,
   async (req, res) => {
     try {
-      const { startDate, endDate, sortBy } = req.query;
+      const {
+        startDate,
+        endDate,
+        sortBy,
+        category,
+        paymentMethod,
+        minPrice,
+        maxPrice
+      } = req.query;
 
       // Build date filter
       const dateFilter: Record<string, unknown> = {};
@@ -161,11 +237,18 @@ router.get(
         };
       }
 
+      // Build payment method filter
+      const paymentFilter: Record<string, unknown> = {};
+      if (paymentMethod && paymentMethod !== "all") {
+        paymentFilter.payment_method = paymentMethod;
+      }
+
       // Get sales with items and products
       const sales = (await Sale.findAll({
         where: storeScope(req.user!, {
           status: "completed",
           ...dateFilter,
+          ...paymentFilter,
         }),
         include: [
           {
@@ -174,6 +257,12 @@ router.get(
             include: [
               {
                 model: Product,
+                include: [
+                  {
+                    model: Category,
+                    attributes: ["id", "name"],
+                  },
+                ],
               },
             ],
           },
@@ -181,7 +270,13 @@ router.get(
         order: [["createdAt", "DESC"]],
       })) as Array<
         Sale & {
-          items?: Array<SaleItem & { Product?: { name?: string; sku?: string } }>;
+          items?: Array<SaleItem & {
+            Product?: {
+              name?: string;
+              sku?: string;
+              Category?: { id?: number; name?: string };
+            }
+          }>;
         }
       >;
 
@@ -190,6 +285,8 @@ router.get(
         productId: number;
         productName: string;
         productSku: string;
+        categoryId: number | null;
+        categoryName: string;
         quantity: number;
         revenue: number;
         profit: number;
@@ -203,11 +300,21 @@ router.get(
           const productId = item.product_id;
           const product = item.Product;
 
+          // Apply category filter
+          if (category && category !== "all") {
+            const categoryId = (product as any)?.Category?.id;
+            if (!categoryId || categoryId.toString() !== category) {
+              return;
+            }
+          }
+
           if (!productPerformanceMap.has(productId)) {
             productPerformanceMap.set(productId, {
               productId,
               productName: product?.name || "Unknown Product",
               productSku: product?.sku || "N/A",
+              categoryId: (product as any)?.Category?.id || null,
+              categoryName: (product as any)?.Category?.name || "Unknown",
               quantity: 0,
               revenue: 0,
               profit: 0,
@@ -240,10 +347,12 @@ router.get(
         });
       });
 
-      const productPerformance = Array.from(productPerformanceMap.values()) as Array<{
+      let productPerformance = Array.from(productPerformanceMap.values()) as Array<{
         productId: number;
         productName: string;
         productSku: string;
+        categoryId: number | null;
+        categoryName: string;
         quantity: number;
         revenue: number;
         profit: number;
@@ -251,6 +360,17 @@ router.get(
         averagePrice: number;
         totalSales: number;
       }>;
+
+      // Apply price range filter
+      if (minPrice || maxPrice) {
+        productPerformance = productPerformance.filter((product) => {
+          const price = product.averagePrice;
+          if (minPrice && price < parseFloat(minPrice as string)) return false;
+          if (maxPrice && price > parseFloat(maxPrice as string)) return false;
+          return true;
+        });
+      }
+
       // Sorting logic
       if (sortBy === "profit") {
         productPerformance.sort((a, b) => b.profit - a.profit);
@@ -374,21 +494,78 @@ router.get(
   requireStoreContext,
   async (req, res) => {
     try {
-      const { startDate, endDate } = req.query;
+      const {
+        startDate,
+        endDate,
+        category,
+        paymentMethod
+      } = req.query;
+
       const dateFilter: Record<string, unknown> = {};
       if (startDate && endDate) {
         dateFilter.date = {
           [Op.between]: [new Date(startDate as string), new Date(endDate as string)],
         };
       }
-      const where = storeScope(req.user!, { ...dateFilter });
-      const expenses = await Expense.findAll({ where });
+
+      const where: Record<string, any> = storeScope(req.user!, { ...dateFilter });
+
+      // Add category filter
+      if (category && category !== "all") {
+        where.category = category;
+      }
+
+      // Add payment method filter
+      if (paymentMethod && paymentMethod !== "all") {
+        where.payment_method = paymentMethod;
+      }
+
+      const expenses = await Expense.findAll({
+        where,
+        include: [
+          {
+            model: User,
+            as: "user",
+            attributes: ["id", "name"],
+          },
+        ],
+        order: [["date", "DESC"]],
+      });
+
       const totalExpenses = expenses.reduce((sum, exp) => sum + parseFloat(String(exp.amount || 0)), 0);
+
+      // Calculate category breakdown
+      const categoryMap = new Map<string, { amount: number; count: number }>();
+      expenses.forEach((expense) => {
+        const existing = categoryMap.get(expense.category) || { amount: 0, count: 0 };
+        categoryMap.set(expense.category, {
+          amount: existing.amount + parseFloat(String(expense.amount || 0)),
+          count: existing.count + 1,
+        });
+      });
+
+      const categoryBreakdown = Array.from(categoryMap.entries()).map(([category, data]) => ({
+        category,
+        amount: data.amount,
+        count: data.count,
+        percentage: totalExpenses > 0 ? (data.amount / totalExpenses) * 100 : 0,
+      })).sort((a, b) => b.amount - a.amount);
+
       res.json({
         success: true,
         data: {
+          expenses: expenses.map(expense => ({
+            id: expense.id,
+            description: expense.description,
+            amount: parseFloat(String(expense.amount || 0)),
+            category: expense.category,
+            date: expense.date,
+            payment_method: expense.payment_method,
+            user: (expense as any).user,
+          })),
           totalExpenses,
           count: expenses.length,
+          categoryBreakdown,
         },
       });
     } catch (error) {
@@ -396,6 +573,454 @@ router.get(
       res.status(500).json({
         success: false,
         message: "Failed to fetch expenses summary report",
+      });
+    }
+  },
+);
+
+// Export inventory to CSV
+router.get(
+  "/inventory/export",
+  requireAuth,
+  attachStoreIdToUser,
+  requireStoreContext,
+  async (req, res) => {
+    try {
+      // Get all products with categories and store information
+      const products = await Product.findAll({
+        where: storeScope(req.user!),
+        include: [
+          {
+            model: Category,
+            as: "Category",
+            attributes: ["name"],
+          },
+          {
+            model: Store,
+            as: "Store",
+            attributes: ["name"],
+          },
+        ],
+        order: [["name", "ASC"]],
+      });
+
+      // Create CSV header
+      const headers = [
+        "ID",
+        "Product Name",
+        "SKU",
+        "Description",
+        "Piece Selling Price",
+        "Piece Buying Price",
+        "Pack Selling Price",
+        "Pack Buying Price",
+        "Dozen Selling Price",
+        "Dozen Buying Price",
+        "Current Quantity",
+        "Min Quantity",
+        "Stock Unit",
+        "Image URL",
+        "Is Active",
+        "Category",
+        "Store",
+        "Created At",
+        "Updated At"
+      ];
+
+      // Create CSV content
+      let csvContent = headers.join(",") + "\n";
+
+      products.forEach((product: any) => {
+        const csvRow = [
+          product.id,
+          `"${(product.name || "").replace(/"/g, '""')}"`, // Escape quotes
+          `"${(product.sku || "").replace(/"/g, '""')}"`,
+          `"${(product.description || "").replace(/"/g, '""')}"`,
+          product.piece_selling_price || 0,
+          product.piece_buying_price || 0,
+          product.pack_selling_price || 0,
+          product.pack_buying_price || 0,
+          product.dozen_selling_price || 0,
+          product.dozen_buying_price || 0,
+          product.quantity || 0,
+          product.min_quantity || 0,
+          `"${(product.stock_unit || "").replace(/"/g, '""')}"`,
+          `"${(product.image_url || "").replace(/"/g, '""')}"`,
+          product.is_active ? "Yes" : "No",
+          `"${(product.Category?.name || "").replace(/"/g, '""')}"`,
+          `"${(product.Store?.name || "").replace(/"/g, '""')}"`,
+          product.createdAt || "",
+          product.updatedAt || ""
+        ];
+        csvContent += csvRow.join(",") + "\n";
+      });
+
+      // Set response headers for CSV download
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      const filename = `inventory-export-${timestamp}.csv`;
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("Cache-Control", "no-cache");
+
+      // Send CSV content
+      res.send(csvContent);
+
+    } catch (error) {
+      console.error("Error exporting inventory to CSV:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to export inventory to CSV",
+      });
+    }
+  },
+);
+
+// Export stock take CSV
+router.get(
+  "/stock-take/export",
+  requireAuth,
+  attachStoreIdToUser,
+  requireStoreContext,
+  async (req, res) => {
+    try {
+      // Get all products with categories and store information
+      const products = await Product.findAll({
+        where: storeScope(req.user!, { is_active: true }),
+        include: [
+          {
+            model: Category,
+            as: "Category",
+            attributes: ["name"],
+          },
+        ],
+        order: [["name", "ASC"]],
+      });
+
+      // Create CSV header for stock take
+      const headers = [
+        "Product Name",
+        "SKU",
+        "Category",
+        "Current Quantity",
+        "New Quantity",
+        "Variance",
+        "Notes"
+      ];
+
+      // Create CSV content
+      let csvContent = headers.join(",") + "\n";
+
+      products.forEach((product: any) => {
+        const csvRow = [
+          `"${(product.name || "").replace(/"/g, '""')}"`, // Escape quotes
+          `"${(product.sku || "").replace(/"/g, '""')}"`,
+          `"${(product.Category?.name || "").replace(/"/g, '""')}"`,
+          product.quantity || 0,
+          "", // Empty for user to fill in
+          "", // Will be calculated as New Quantity - Current Quantity
+          "" // Empty for user notes
+        ];
+        csvContent += csvRow.join(",") + "\n";
+      });
+
+      // Set response headers for CSV download
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      const filename = `stock-take-${timestamp}.csv`;
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("Cache-Control", "no-cache");
+
+      // Send CSV content
+      res.send(csvContent);
+
+    } catch (error) {
+      console.error("Error exporting stock take to CSV:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to export stock take to CSV",
+      });
+    }
+  },
+);
+
+// Import stock take CSV and calculate variance
+router.post(
+  "/stock-take/import",
+  requireAuth,
+  attachStoreIdToUser,
+  requireStoreContext,
+  async (req, res) => {
+    try {
+      const { stockTakeData } = req.body; // Array of {sku, newQuantity, notes}
+
+      if (!Array.isArray(stockTakeData)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid stock take data format",
+        });
+      }
+
+      const varianceResults = [];
+      const products = await Product.findAll({
+        where: storeScope(req.user!, { is_active: true }),
+        include: [
+          {
+            model: Category,
+            as: "Category",
+            attributes: ["name"],
+          },
+        ],
+      });
+
+      // Create a map for quick product lookup
+      const productMap = new Map();
+      products.forEach((product: any) => {
+        productMap.set(product.sku, product);
+      });
+
+      for (const item of stockTakeData) {
+        const { sku, newQuantity, notes } = item;
+        const product = productMap.get(sku);
+
+        if (product) {
+          const currentQuantity = product.quantity || 0;
+          const variance = (newQuantity || 0) - currentQuantity;
+          
+          varianceResults.push({
+            productId: product.id,
+            productName: product.name,
+            sku: product.sku,
+            category: product.Category?.name || "Unknown",
+            currentQuantity,
+            newQuantity: newQuantity || 0,
+            variance,
+            notes: notes || "",
+            variancePercentage: currentQuantity > 0 ? ((variance / currentQuantity) * 100).toFixed(2) : 0
+          });
+        }
+      }
+
+      // Calculate summary statistics
+      const totalVariance = varianceResults.reduce((sum, item) => sum + item.variance, 0);
+      const positiveVariance = varianceResults.filter(item => item.variance > 0).length;
+      const negativeVariance = varianceResults.filter(item => item.variance < 0).length;
+      const noVariance = varianceResults.filter(item => item.variance === 0).length;
+
+      res.json({
+        success: true,
+        data: {
+          varianceResults,
+          summary: {
+            totalProducts: varianceResults.length,
+            totalVariance,
+            positiveVariance,
+            negativeVariance,
+            noVariance,
+            averageVariance: varianceResults.length > 0 ? (totalVariance / varianceResults.length).toFixed(2) : 0
+          }
+        },
+      });
+
+    } catch (error) {
+      console.error("Error processing stock take import:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to process stock take import",
+      });
+    }
+  },
+);
+
+// Enhanced export endpoint with multiple formats
+router.get(
+  "/export/:type/:format",
+  requireAuth,
+  attachStoreIdToUser,
+  requireStoreContext,
+  async (req, res) => {
+    try {
+      const { type, format } = req.params;
+      const { 
+        search, 
+        category, 
+        stockStatus, 
+        minPrice, 
+        maxPrice, 
+        startDate, 
+        endDate 
+      } = req.query;
+
+      // Build where clause for filtering
+      const where: Record<string, any> = storeScope(req.user!, { is_active: true });
+
+      if (category && category !== "all") {
+        where.category_id = category;
+      }
+
+      if (minPrice || maxPrice) {
+        where.piece_selling_price = {};
+        if (minPrice) where.piece_selling_price[Op.gte] = parseFloat(minPrice as string);
+        if (maxPrice) where.piece_selling_price[Op.lte] = parseFloat(maxPrice as string);
+      }
+
+      if (startDate && endDate) {
+        where.createdAt = {
+          [Op.between]: [new Date(startDate as string), new Date(endDate as string)],
+        };
+      }
+
+      const products = await Product.findAll({
+        where,
+        include: [
+          {
+            model: Category,
+            as: "Category",
+            attributes: ["name"],
+          },
+        ],
+        order: [["name", "ASC"]],
+      });
+
+      let filteredProducts = products.map((product: any) => ({
+        id: product.id,
+        name: product.name,
+        sku: product.sku,
+        category: product.Category?.name || "Unknown",
+        piece_selling_price: product.piece_selling_price,
+        piece_buying_price: product.piece_buying_price,
+        quantity: product.quantity,
+        min_quantity: product.min_quantity,
+        is_active: product.is_active,
+        created_at: product.createdAt,
+      }));
+
+      // Apply additional filters
+      if (search) {
+        const searchTerm = (search as string).toLowerCase();
+        filteredProducts = filteredProducts.filter(
+          (product) =>
+            product.name.toLowerCase().includes(searchTerm) ||
+            product.sku.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      if (stockStatus && stockStatus !== "all") {
+        switch (stockStatus) {
+          case "instock":
+            filteredProducts = filteredProducts.filter((p) => (p.quantity || 0) >= (p.min_quantity || 10));
+            break;
+          case "lowstock":
+            filteredProducts = filteredProducts.filter((p) => (p.quantity || 0) > 0 && (p.quantity || 0) < (p.min_quantity || 10));
+            break;
+          case "outofstock":
+            filteredProducts = filteredProducts.filter((p) => (p.quantity || 0) <= 0);
+            break;
+        }
+      }
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      
+      if (format === 'excel') {
+        // Create Excel workbook
+        const workbook = XLSX.utils.book_new();
+        
+        if (type === 'inventory') {
+          const worksheetData = filteredProducts.map(product => ({
+            'Product Name': product.name,
+            'SKU': product.sku,
+            'Category': product.category,
+            'Selling Price': product.piece_selling_price || 0,
+            'Buying Price': product.piece_buying_price || 0,
+            'Current Quantity': product.quantity || 0,
+            'Min Quantity': product.min_quantity || 0,
+            'Status': product.is_active ? 'Active' : 'Inactive',
+            'Created Date': new Date(product.created_at).toLocaleDateString()
+          }));
+          
+          const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+          XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
+        } else if (type === 'stock-take') {
+          const worksheetData = filteredProducts.map(product => ({
+            'Product Name': product.name,
+            'SKU': product.sku,
+            'Category': product.category,
+            'Current Quantity': product.quantity || 0,
+            'New Quantity': '',
+            'Variance': '',
+            'Notes': ''
+          }));
+          
+          const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+          XLSX.utils.book_append_sheet(workbook, worksheet, 'Stock Take');
+        }
+
+        const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", `attachment; filename="${type}-export-${timestamp}.xlsx"`);
+        res.send(excelBuffer);
+        
+      } else if (format === 'pdf') {
+        // For PDF, we'll return a simple text-based response
+        // In a real implementation, you'd use a PDF library like puppeteer or jsPDF
+        const pdfContent = `
+INVENTORY REPORT
+Generated: ${new Date().toLocaleString()}
+Total Products: ${filteredProducts.length}
+
+${filteredProducts.map(product => 
+  `${product.name} (${product.sku}) - Qty: ${product.quantity} - Price: KSh ${product.piece_selling_price || 0}`
+).join('\n')}
+        `;
+        
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename="${type}-export-${timestamp}.pdf"`);
+        res.send(pdfContent);
+        
+      } else {
+        // Default to CSV
+        const headers = type === 'inventory' 
+          ? ["Product Name", "SKU", "Category", "Selling Price", "Buying Price", "Current Quantity", "Min Quantity", "Status"]
+          : ["Product Name", "SKU", "Category", "Current Quantity", "New Quantity", "Variance", "Notes"];
+        
+        let csvContent = headers.join(",") + "\n";
+        
+        filteredProducts.forEach((product) => {
+          const csvRow = type === 'inventory' 
+            ? [
+                `"${product.name.replace(/"/g, '""')}"`,
+                `"${product.sku.replace(/"/g, '""')}"`,
+                `"${product.category.replace(/"/g, '""')}"`,
+                product.piece_selling_price || 0,
+                product.piece_buying_price || 0,
+                product.quantity || 0,
+                product.min_quantity || 0,
+                product.is_active ? "Active" : "Inactive"
+              ]
+            : [
+                `"${product.name.replace(/"/g, '""')}"`,
+                `"${product.sku.replace(/"/g, '""')}"`,
+                `"${product.category.replace(/"/g, '""')}"`,
+                product.quantity || 0,
+                "",
+                "",
+                ""
+              ];
+          csvContent += csvRow.join(",") + "\n";
+        });
+
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename="${type}-export-${timestamp}.csv"`);
+        res.send(csvContent);
+      }
+
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to export data",
       });
     }
   },

@@ -1,4 +1,4 @@
-import type { Product } from "@/types/schema";
+import type { Product } from "@/types/product";
 import {
   Table,
   TableBody,
@@ -8,21 +8,68 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { BarChart3 } from "lucide-react";
 import { useState } from "react";
+import { api } from "@/lib/api";
+import { ReportFilters, InventoryFilters } from "./ReportFilters";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import VarianceAnalysis from "./VarianceAnalysis";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { FilterPresets } from "./FilterPresets";
+import { ExportOptions } from "./ExportOptions";
 
 interface InventoryStatusProps {
   products: Product[];
-  onSearch: (query: string) => void;
+  onFiltersChange: (filters: InventoryFilters) => void;
 }
 
-export default function InventoryStatus({ products, onSearch }: InventoryStatusProps) {
+export default function InventoryStatus({ products, onFiltersChange }: InventoryStatusProps) {
   // Ensure products is always an array
   const safeProducts = Array.isArray(products) ? products : [];
 
   // Sorting state
   const [sortColumn, setSortColumn] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [csvExportType, setCsvExportType] = useState<"inventory" | "stock-take">("inventory");
+
+  // Filter state
+  const [filters, setFilters] = useState<InventoryFilters>({
+    search: "",
+    category: "all",
+    stockStatus: "all",
+    priceRange: { min: null, max: null },
+    dateRange: { start: null, end: null },
+  });
+
+  const handleFiltersChange = (newFilters: InventoryFilters) => {
+    setFilters(newFilters);
+    onFiltersChange(newFilters);
+  };
+
+  const handleClearFilters = () => {
+    const clearedFilters: InventoryFilters = {
+      search: "",
+      category: "all",
+      stockStatus: "all",
+      priceRange: { min: null, max: null },
+      dateRange: { start: null, end: null },
+    };
+    setFilters(clearedFilters);
+    onFiltersChange(clearedFilters);
+  };
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -33,13 +80,60 @@ export default function InventoryStatus({ products, onSearch }: InventoryStatusP
     }
   };
 
+  const handleExport = async (format: 'csv' | 'excel' | 'pdf' | 'image') => {
+    try {
+
+      // Build query parameters from current filters
+      const params: Record<string, string> = {};
+      if (filters.search) params.search = filters.search;
+      if (filters.category && filters.category !== "all") params.category = filters.category;
+      if (filters.stockStatus && filters.stockStatus !== "all") params.stockStatus = filters.stockStatus;
+      if (filters.priceRange?.min) params.minPrice = filters.priceRange.min.toString();
+      if (filters.priceRange?.max) params.maxPrice = filters.priceRange.max.toString();
+      if (filters.dateRange?.start) params.startDate = filters.dateRange.start.toISOString();
+      if (filters.dateRange?.end) params.endDate = filters.dateRange.end.toISOString();
+
+      const endpoint = `/reports/export/${csvExportType}/${format}`;
+
+      const response = await api.get(endpoint, {
+        params,
+        responseType: "blob",
+      });
+
+      // Create blob link to download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+
+      // Extract filename from response headers
+      const contentDisposition = response.headers["content-disposition"];
+      let filename = `${csvExportType}-export.${format}`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error("Error exporting:", error);
+      throw error; // Re-throw to be handled by ExportOptions component
+    }
+  };
+
   const sortedProducts = [...safeProducts].sort((a, b) => {
     let aValue = a[sortColumn as keyof typeof a];
     let bValue = b[sortColumn as keyof typeof b];
-    // For value column, calculate price * quantity
+    // For value column, calculate buying price * quantity
     if (sortColumn === "value") {
-      aValue = (a.price || 0) * (a.quantity || 0);
-      bValue = (b.price || 0) * (b.quantity || 0);
+      aValue = (a.piece_buying_price || 0) * (a.quantity || 0);
+      bValue = (b.piece_buying_price || 0) * (b.quantity || 0);
     }
     // Numeric sort for numbers
     if (typeof aValue === "number" && typeof bValue === "number") {
@@ -63,7 +157,7 @@ export default function InventoryStatus({ products, onSearch }: InventoryStatusP
   };
 
   const totalValue = safeProducts.reduce(
-    (sum, product) => sum + (product.price || 0) * (product.quantity || 0),
+    (sum, product) => sum + (product.piece_buying_price || 0) * (product.quantity || 0),
     0
   );
 
@@ -86,9 +180,52 @@ export default function InventoryStatus({ products, onSearch }: InventoryStatusP
         </div>
       </div>
 
-      <div className="flex gap-4">
-        <div className="flex-1">
-          <Input placeholder="Search products..." onChange={(e) => onSearch(e.target.value)} />
+      <div className="space-y-4">
+        {/* Filter Presets */}
+        <FilterPresets
+          type="inventory"
+          onApplyPreset={handleFiltersChange}
+          currentFilters={filters}
+        />
+        
+        {/* Main Filters and Export Controls */}
+        <div className="flex justify-between items-center">
+          <ReportFilters
+            type="inventory"
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            onClearFilters={handleClearFilters}
+          />
+          <div className="flex items-center gap-2">
+            <Select value={csvExportType} onValueChange={(value: "inventory" | "stock-take") => setCsvExportType(value)}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Select export type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="inventory">Inventory Export</SelectItem>
+                <SelectItem value="stock-take">Stock Take Template</SelectItem>
+              </SelectContent>
+            </Select>
+            <ExportOptions
+              onExport={handleExport}
+              disabled={safeProducts.length === 0}
+              exportType={csvExportType}
+            />
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Variance Analysis
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Stock Take Variance Analysis</DialogTitle>
+                </DialogHeader>
+                <VarianceAnalysis onClose={() => {}} />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </div>
 
@@ -134,12 +271,14 @@ export default function InventoryStatus({ products, onSearch }: InventoryStatusP
           ) : (
             sortedProducts.map((product) => {
               const status = getStockStatus(product.quantity || 0);
-              const value = (product.price || 0) * (product.quantity || 0);
+              const value = (product.piece_buying_price || 0) * (product.quantity || 0);
               return (
                 <TableRow key={product.id}>
                   <TableCell>{product.name}</TableCell>
                   <TableCell>{product.sku}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(product.price)}</TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(product.piece_selling_price)}
+                  </TableCell>
                   <TableCell className="text-right">{product.quantity || 0}</TableCell>
                   <TableCell>
                     <Badge

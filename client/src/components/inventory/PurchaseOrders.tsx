@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
+import type { Product } from "@/types/product";
 import { useInventory } from "@/hooks/use-inventory";
 import type {
   PurchaseOrder,
@@ -160,6 +161,31 @@ export function PurchaseOrders({
     };
     setFormData((prev) => ({ ...prev, items: [...prev.items, newItem] }));
     setProductDropdownOpen((prev) => [...prev, false]);
+  };
+
+  const handleAutoFillLowStock = (products: Product[]) => {
+    const newItems: PurchaseOrderItem[] = products.map((product) => ({
+      quantity: 1, // Default quantity, user can adjust
+      product_id: product.id,
+      product_name: product.name,
+      buying_price: product.piece_buying_price,
+      selling_price: product.piece_selling_price,
+      unit_type: "piece", // Default to piece, user can change
+    }));
+
+    // Add new items to existing items
+    setFormData((prev) => ({
+      ...prev,
+      items: [...prev.items, ...newItems],
+    }));
+
+    // Update dropdown state for new items
+    setProductDropdownOpen((prev) => [...prev, ...new Array(products.length).fill(false)]);
+
+    toast({
+      title: "Success",
+      description: `Added ${products.length} low stock products to the order.`,
+    });
   };
 
   // Helper to check if form is valid
@@ -594,6 +620,7 @@ export function PurchaseOrders({
                 })
               }
               onAddItem={addItem}
+              onAutoFillLowStock={handleAutoFillLowStock}
               formErrors={formErrors}
               isSubmitting={isSubmitting}
               isFormValid={isFormValid}

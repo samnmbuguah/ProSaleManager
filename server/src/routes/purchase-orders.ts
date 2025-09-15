@@ -6,6 +6,7 @@ import Product from "../models/Product.js";
 import { generateOrderNumber } from "../utils/helpers.js";
 import { requireAuth, requireRole } from "../middleware/auth.middleware.js";
 import { requireStoreContext } from "../middleware/store-context.middleware.js";
+import { calculateWeightedAveragePricesForAllUnits } from "../utils/priceCalculations.js";
 
 const router = Router();
 
@@ -153,7 +154,7 @@ router.put(
         });
       }
 
-      // If marking as received, increment product quantities
+      // If marking as received, increment product quantities and update buying prices
       if (status === "received") {
         const items = await PurchaseOrderItem.findAll({
           where: { purchase_order_id: order.id },
@@ -173,11 +174,24 @@ router.put(
             }
             // For "piece" unit_type, quantityToAdd remains as item.quantity
 
-            product.quantity += quantityToAdd;
-            // Only update the relevant unit's buying price
+            // Calculate weighted average buying prices for all unit types
             if (item.unit_type && item.unit_price !== undefined) {
-              (product as unknown as Record<string, unknown>)[`${item.unit_type}_buying_price`] = Number(item.unit_price);
+              const newPrices = calculateWeightedAveragePricesForAllUnits(
+                product,
+                item.quantity,
+                Number(item.unit_price),
+                item.unit_type as 'piece' | 'pack' | 'dozen'
+              );
+
+              // Update all buying prices with weighted averages
+              product.piece_buying_price = newPrices.piece_buying_price;
+              product.pack_buying_price = newPrices.pack_buying_price;
+              product.dozen_buying_price = newPrices.dozen_buying_price;
             }
+
+            // Update quantity
+            product.quantity += quantityToAdd;
+
             // Only update selling price if present on the item
             if (item.unit_type && item.selling_price !== undefined) {
               (product as unknown as Record<string, unknown>)[`${item.unit_type}_selling_price`] = Number(item.selling_price);
