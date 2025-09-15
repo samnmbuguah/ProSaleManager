@@ -675,4 +675,161 @@ router.get(
   },
 );
 
+// Export stock take CSV
+router.get(
+  "/stock-take/export",
+  requireAuth,
+  attachStoreIdToUser,
+  requireStoreContext,
+  async (req, res) => {
+    try {
+      // Get all products with categories and store information
+      const products = await Product.findAll({
+        where: storeScope(req.user!, { is_active: true }),
+        include: [
+          {
+            model: Category,
+            as: "Category",
+            attributes: ["name"],
+          },
+        ],
+        order: [["name", "ASC"]],
+      });
+
+      // Create CSV header for stock take
+      const headers = [
+        "Product Name",
+        "SKU",
+        "Category",
+        "Current Quantity",
+        "New Quantity",
+        "Variance",
+        "Notes"
+      ];
+
+      // Create CSV content
+      let csvContent = headers.join(",") + "\n";
+
+      products.forEach((product: any) => {
+        const csvRow = [
+          `"${(product.name || "").replace(/"/g, '""')}"`, // Escape quotes
+          `"${(product.sku || "").replace(/"/g, '""')}"`,
+          `"${(product.Category?.name || "").replace(/"/g, '""')}"`,
+          product.quantity || 0,
+          "", // Empty for user to fill in
+          "", // Will be calculated as New Quantity - Current Quantity
+          "" // Empty for user notes
+        ];
+        csvContent += csvRow.join(",") + "\n";
+      });
+
+      // Set response headers for CSV download
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      const filename = `stock-take-${timestamp}.csv`;
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.setHeader("Cache-Control", "no-cache");
+
+      // Send CSV content
+      res.send(csvContent);
+
+    } catch (error) {
+      console.error("Error exporting stock take to CSV:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to export stock take to CSV",
+      });
+    }
+  },
+);
+
+// Import stock take CSV and calculate variance
+router.post(
+  "/stock-take/import",
+  requireAuth,
+  attachStoreIdToUser,
+  requireStoreContext,
+  async (req, res) => {
+    try {
+      const { stockTakeData } = req.body; // Array of {sku, newQuantity, notes}
+
+      if (!Array.isArray(stockTakeData)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid stock take data format",
+        });
+      }
+
+      const varianceResults = [];
+      const products = await Product.findAll({
+        where: storeScope(req.user!, { is_active: true }),
+        include: [
+          {
+            model: Category,
+            as: "Category",
+            attributes: ["name"],
+          },
+        ],
+      });
+
+      // Create a map for quick product lookup
+      const productMap = new Map();
+      products.forEach((product: any) => {
+        productMap.set(product.sku, product);
+      });
+
+      for (const item of stockTakeData) {
+        const { sku, newQuantity, notes } = item;
+        const product = productMap.get(sku);
+
+        if (product) {
+          const currentQuantity = product.quantity || 0;
+          const variance = (newQuantity || 0) - currentQuantity;
+          
+          varianceResults.push({
+            productId: product.id,
+            productName: product.name,
+            sku: product.sku,
+            category: product.Category?.name || "Unknown",
+            currentQuantity,
+            newQuantity: newQuantity || 0,
+            variance,
+            notes: notes || "",
+            variancePercentage: currentQuantity > 0 ? ((variance / currentQuantity) * 100).toFixed(2) : 0
+          });
+        }
+      }
+
+      // Calculate summary statistics
+      const totalVariance = varianceResults.reduce((sum, item) => sum + item.variance, 0);
+      const positiveVariance = varianceResults.filter(item => item.variance > 0).length;
+      const negativeVariance = varianceResults.filter(item => item.variance < 0).length;
+      const noVariance = varianceResults.filter(item => item.variance === 0).length;
+
+      res.json({
+        success: true,
+        data: {
+          varianceResults,
+          summary: {
+            totalProducts: varianceResults.length,
+            totalVariance,
+            positiveVariance,
+            negativeVariance,
+            noVariance,
+            averageVariance: varianceResults.length > 0 ? (totalVariance / varianceResults.length).toFixed(2) : 0
+          }
+        },
+      });
+
+    } catch (error) {
+      console.error("Error processing stock take import:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to process stock take import",
+      });
+    }
+  },
+);
+
 export default router;

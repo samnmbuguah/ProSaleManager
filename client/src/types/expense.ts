@@ -4,7 +4,8 @@ export type ExpenseCategory =
   | "Marketing"
   | "New Stock"
   | "Transport"
-  | "Salary";
+  | "Salary"
+  | "Other";
 
 export interface Expense {
   id: number;
