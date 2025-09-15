@@ -4,14 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
 import { useLocation } from "wouter";
-import {
-  Loader2,
-  Plus,
-  Search,
-  Store,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+import { Loader2, Plus, Search, Store, Eye, EyeOff } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -317,7 +310,6 @@ export default function UserManagementPage() {
     setEditingUser(user);
     setIsDeleteDialogOpen(true);
   };
-
 
   if (authLoading || !isAuthenticated) {
     return (

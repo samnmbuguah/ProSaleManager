@@ -26,13 +26,12 @@ import { Calendar } from "@/components/ui/calendar";
 import type { Expense } from "@/types/expense";
 
 const expenseCategories = [
-  "Inventory",
-  "Utilities",
-  "Rent",
-  "Salaries",
+  "Lunch",
+  "Delivery",
   "Marketing",
-  "Equipment",
-  "Maintenance",
+  "New Stock",
+  "Transport",
+  "Salary",
   "Other",
 ] as const;
 
@@ -67,9 +66,9 @@ export default function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
     defaultValues: {
       description: "",
       amount: 0,
-      category: "Other",
+      category: "Other" as const,
       date: new Date(),
-      payment_method: "Cash",
+      payment_method: "Cash" as const,
     },
   });
 
@@ -81,9 +80,9 @@ export default function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
     form.reset({
       description: "",
       amount: 0,
-      category: "Other",
+      category: "Other" as const,
       date: new Date(),
-      payment_method: "Cash",
+      payment_method: "Cash" as const,
     });
   };
 

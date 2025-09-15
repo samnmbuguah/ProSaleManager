@@ -1,8 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ReceiptSettings } from "@/components/pos/ReceiptSettings";
-import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { api } from "@/lib/api";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchSales, fetchOrders, deleteSale } from "@/store/salesSlice";
+import type { RootState, AppDispatch } from "@/store";
 import {
   Table,
   TableBody,
@@ -18,7 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Receipt, Loader2 } from "lucide-react";
+import { Receipt, Loader2, Edit, Trash2 } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -28,7 +30,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sale } from "@/types/sale";
-import { API_ENDPOINTS } from "@/lib/api-endpoints";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface OrderItem {
@@ -88,10 +91,7 @@ function OrderDetailsDialog({
           </div>
           <div className="flex gap-4 justify-end">
             {order.status !== "completed" && order.status !== "fulfilled" && (
-              <Button
-                variant="default"
-                onClick={onMarkFulfilled}
-              >
+              <Button variant="default" onClick={onMarkFulfilled}>
                 Mark as Fulfilled
               </Button>
             )}
@@ -103,74 +103,34 @@ function OrderDetailsDialog({
 }
 
 export function SalesPage() {
+  const dispatch = useDispatch<AppDispatch>();
   const [tab, setTab] = useState("sales");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
-  const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [ordersError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const pageSize = 10;
+  const { user } = useAuthContext();
+  const { toast } = useToast();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
 
-  const { data: salesData } = useQuery<{
-    sales: Sale[];
-    total: number;
-  }>({
-    queryKey: ["sales", currentPage],
-    queryFn: async () => {
-      const response = await api.get(`/sales?page=${currentPage}&pageSize=${pageSize}`);
-      return response.data;
-    },
-  });
+  // Redux state
+  const { sales, orders, status, pagination } = useSelector(
+    (state: RootState) => state.sales
+  );
 
-  // Only run orders query if user is authenticated (TODO: add real auth check if needed)
-  const { data: ordersData, isLoading: isLoadingOrders } = useQuery({
-    queryKey: ["orders", currentPage],
-    queryFn: async () => {
-      try {
-        const response = await api.get(
-          API_ENDPOINTS.orders.list + `?page=${currentPage}&pageSize=${pageSize}`
-        );
-        setOrdersError(null);
-        return response.data;
-      } catch (error: unknown) {
-        if (
-          typeof error === "object" &&
-          error !== null &&
-          "response" in error &&
-          (
-            error as {
-              response?: {
-                status?: number;
-                headers?: { [key: string]: string };
-              };
-            }
-          ).response &&
-          (error as { response: { status: number } }).response.status === 429
-        ) {
-          setOrdersError("You are not authorized to view orders. Please log in.");
-        } else if (
-          typeof error === "object" &&
-          error !== null &&
-          "response" in error &&
-          (error as { response?: { data?: { message?: string } } }).response
-        ) {
-          setOrdersError(
-            (error as { response?: { data?: { message?: string } } }).response?.data?.message ||
-            (error as { message?: string }).message ||
-            "Failed to load orders."
-          );
-        } else if (error instanceof Error) {
-          setOrdersError(error.message);
-        } else {
-          setOrdersError("Failed to load orders.");
-        }
-        throw error;
-      }
-    },
-    enabled: tab === "orders",
-  });
+  // Fetch data when component mounts or page changes
+  useEffect(() => {
+    if (tab === "sales") {
+      dispatch(fetchSales({ page: currentPage, pageSize }));
+    } else if (tab === "orders") {
+      dispatch(fetchOrders({ page: currentPage, pageSize }));
+    }
+  }, [dispatch, tab, currentPage, pageSize]);
 
-  const totalPages = salesData ? Math.ceil(salesData.total / pageSize) : 1;
+  const totalPages = pagination.totalPages;
+  const isLoadingOrders = status === "loading" && tab === "orders";
 
   const formatCurrency = (amount: string | number) => {
     return `KSh ${Number(amount).toLocaleString("en-KE", {
@@ -194,6 +154,62 @@ export function SalesPage() {
     }
   };
 
+  // Check if user has admin privileges
+  const isAdmin = user && ["admin", "manager", "super_admin"].includes(user.role);
+
+  // Delete sale function
+  const handleDeleteSale = async (saleId: number) => {
+    if (!isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to delete sales",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this sale? This action cannot be undone and will restore inventory."
+    );
+
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+    try {
+      await dispatch(deleteSale(saleId)).unwrap();
+      toast({
+        title: "Sale Deleted",
+        description: "The sale has been successfully deleted and inventory restored.",
+        variant: "default",
+      });
+
+      // Close the dialog - Redux state is automatically updated
+      setSelectedSale(null);
+    } catch (error: unknown) {
+      console.error("Error deleting sale:", error);
+      const errorMessage =
+        error &&
+          typeof error === "object" &&
+          "response" in error &&
+          error.response &&
+          typeof error.response === "object" &&
+          "data" in error.response &&
+          error.response.data &&
+          typeof error.response.data === "object" &&
+          "message" in error.response.data
+          ? (error.response.data as { message: string }).message
+          : "Failed to delete sale";
+
+      toast({
+        title: "Delete Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Handlers for order actions
 
   const handleMarkFulfilled = useCallback(async () => {
@@ -202,7 +218,7 @@ export function SalesPage() {
     try {
       // Call the API to update order status to "completed"
       await api.put(`/orders/${selectedOrder.id}`, {
-        status: "completed"
+        status: "completed",
       });
 
       // Update local state
@@ -262,7 +278,7 @@ export function SalesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {salesData?.sales.map((sale) => (
+                {sales?.map((sale) => (
                   <TableRow key={sale.id}>
                     <TableCell>{format(new Date(sale.createdAt), "PPp")}</TableCell>
                     <TableCell>{sale.Customer?.name || "Walk-in Customer"}</TableCell>
@@ -354,7 +370,7 @@ export function SalesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {ordersData?.orders?.map((order: Order) => (
+                  {orders?.map((order: Order) => (
                     <TableRow key={order.id}>
                       <TableCell>{format(new Date(order.createdAt), "PPp")}</TableCell>
                       <TableCell>{order.status}</TableCell>
@@ -472,6 +488,38 @@ export function SalesPage() {
                   </Table>
                 </div>
               </div>
+
+              {/* Admin Actions */}
+              {isAdmin && selectedSale && (
+                <div className="flex gap-3 justify-end pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // TODO: Implement edit functionality
+                      toast({
+                        title: "Edit Sale",
+                        description: "Edit functionality will be implemented in the next update.",
+                        variant: "default",
+                      });
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit Sale
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteSale(selectedSale.id)}
+                    disabled={isDeleting}
+                    className="flex items-center gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {isDeleting ? "Deleting..." : "Delete Sale"}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

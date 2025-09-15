@@ -1,9 +1,10 @@
 export type ExpenseCategory =
-  | "Food"
-  | "Transportation"
-  | "Housing"
-  | "Utilities"
-  | "Entertainment"
+  | "Lunch"
+  | "Delivery"
+  | "Marketing"
+  | "New Stock"
+  | "Transport"
+  | "Salary"
   | "Other";
 
 export interface Expense {

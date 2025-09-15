@@ -2,15 +2,18 @@ import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ProductPerformance from "../components/reports/ProductPerformance";
 import InventoryStatus from "../components/reports/InventoryStatus";
+import ExpensesSummary from "../components/reports/ExpensesSummary";
 import {
   useInventoryReport,
   useProductPerformanceReport,
   useSalesSummary,
   useExpensesSummary,
 } from "@/hooks/use-reports";
-import { Product } from "@/types/product";
 import { SalesChart } from "../components/reports/SalesChart";
-import { api } from "@/lib/api";
+import { InventoryFilters, PerformanceFilters, ExpenseFilters } from "@/components/reports/ReportFilters";
+import DashboardOverview from "../components/reports/DashboardOverview";
+import { SalesTrendChart } from "../components/reports/SalesTrendChart";
+import { CategoryPerformanceChart } from "../components/reports/CategoryPerformanceChart";
 
 // ErrorBoundary component
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
@@ -40,50 +43,81 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 export default function ReportsPage() {
-  const { data: inventoryData, isLoading: inventoryLoading } = useInventoryReport();
-  const [performanceStartDate, setPerformanceStartDate] = useState<Date | undefined>(undefined);
-  const [performanceEndDate, setPerformanceEndDate] = useState<Date | undefined>(undefined);
-  const [performanceSortBy, setPerformanceSortBy] = useState<string | undefined>("revenue");
-  const { data: performanceData, isLoading: performanceLoading } = useProductPerformanceReport(
-    performanceStartDate,
-    performanceEndDate,
-    performanceSortBy
-  );
+  // Filter states
+  const [inventoryFilters, setInventoryFilters] = useState<InventoryFilters>({
+    search: "",
+    category: "all",
+    stockStatus: "all",
+    priceRange: { min: null, max: null },
+    dateRange: { start: null, end: null },
+  });
+
+  const [performanceFilters, setPerformanceFilters] = useState<PerformanceFilters>({
+    search: "",
+    category: "all",
+    paymentMethod: "all",
+    priceRange: { min: null, max: null },
+    dateRange: { start: null, end: null },
+  });
+
+  const [expenseFilters, setExpenseFilters] = useState<ExpenseFilters>({
+    category: "all",
+    paymentMethod: "all",
+    dateRange: { start: null, end: null },
+  });
+
+  // Data fetching with filters
+  const { data: inventoryData, isLoading: inventoryLoading } = useInventoryReport(inventoryFilters);
+  const { data: performanceData, isLoading: performanceLoading } = useProductPerformanceReport(performanceFilters);
+  const { data: expensesData } = useExpensesSummary(expenseFilters);
+
   const [period, setPeriod] = useState<
     "today" | "this_week" | "last_week" | "this_month" | "last_month"
   >("this_week");
   const { data: salesSummary, isLoading: salesSummaryLoading } = useSalesSummary(period);
   const { data: expensesSummary, isLoading: expensesSummaryLoading } = useExpensesSummary();
-  const [tab, setTab] = useState("inventory");
-  const [searchResults, setSearchResults] = useState<Product[] | null>(null);
-
-  const handleDateRangeChange = (start: Date, end: Date) => {
-    setPerformanceStartDate(start);
-    setPerformanceEndDate(end);
-  };
-
-  const handleSortChange = (sortBy: string) => {
-    setPerformanceSortBy(sortBy);
-  };
-
-  const handleSearch = async (query: string) => {
-    if (!query || query.trim() === "") {
-      setSearchResults(null);
-      return;
-    }
-    try {
-      const res = await api.get("/products/search", { params: { q: query } });
-      setSearchResults(res.data.data || []);
-    } catch {
-      setSearchResults([]);
-    }
-  };
+  const [tab, setTab] = useState("dashboard");
 
   // Top sellers (top 3 by revenue)
   const topSellers = (performanceData?.products || [])
     .slice()
     .sort((a: { revenue: number }, b: { revenue: number }) => b.revenue - a.revenue)
     .slice(0, 3) as Array<{ productId: number; productName: string; revenue: number }>;
+
+  // Calculate dashboard metrics
+  const dashboardMetrics = {
+    totalRevenue: performanceData?.summary?.totalRevenue || 0,
+    totalProfit: performanceData?.summary?.totalProfit || 0,
+    totalSales: performanceData?.summary?.totalQuantity || 0,
+    totalProducts: inventoryData?.totalProducts || 0,
+    lowStockProducts: inventoryData?.lowStockProducts || 0,
+    outOfStockProducts: inventoryData?.outOfStockProducts || 0,
+    totalCustomers: 0, // This would need to be fetched from a customers endpoint
+    averageOrderValue: performanceData?.summary?.totalRevenue / (performanceData?.summary?.totalQuantity || 1) || 0,
+    revenueGrowth: 0, // This would need comparison data
+    profitGrowth: 0, // This would need comparison data
+    salesGrowth: 0, // This would need comparison data
+    topCategory: topSellers[0]?.productName || "N/A",
+    topCategoryRevenue: topSellers[0]?.revenue || 0,
+  };
+
+  // Mock sales trend data (in a real app, this would come from the API)
+  const salesTrendData = [
+    { date: "2024-01-01", revenue: 15000, profit: 3000, sales: 45, orders: 12 },
+    { date: "2024-01-02", revenue: 18000, profit: 3600, sales: 52, orders: 15 },
+    { date: "2024-01-03", revenue: 12000, profit: 2400, sales: 38, orders: 10 },
+    { date: "2024-01-04", revenue: 22000, profit: 4400, sales: 65, orders: 18 },
+    { date: "2024-01-05", revenue: 19000, profit: 3800, sales: 48, orders: 14 },
+  ];
+
+  // Mock category performance data
+  const categoryPerformanceData = [
+    { category: "Shoes", revenue: 25000, profit: 5000, quantity: 120, products: 15 },
+    { category: "Boxers", revenue: 18000, profit: 3600, quantity: 200, products: 8 },
+    { category: "Panties", revenue: 15000, profit: 3000, quantity: 150, products: 12 },
+    { category: "Bras", revenue: 12000, profit: 2400, quantity: 80, products: 6 },
+    { category: "Oil", revenue: 8000, profit: 1600, quantity: 60, products: 4 },
+  ];
 
   if (inventoryLoading || performanceLoading || salesSummaryLoading || expensesSummaryLoading) {
     return (
@@ -162,26 +196,35 @@ export default function ReportsPage() {
             )}
           </div>
         </div>
-        <Tabs value={tab} onValueChange={setTab} defaultValue="inventory">
+        <Tabs value={tab} onValueChange={setTab} defaultValue="dashboard">
           <TabsList>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="inventory">Inventory Status</TabsTrigger>
             <TabsTrigger value="performance">Product Performance</TabsTrigger>
+            <TabsTrigger value="expenses">Expenses Summary</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-6">
+            <DashboardOverview 
+              metrics={dashboardMetrics} 
+              period={period}
+              isLoading={inventoryLoading || performanceLoading}
+            />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white p-6 rounded-lg border">
+                <SalesTrendChart data={salesTrendData} title="Sales Trend (Last 5 Days)" />
+              </div>
+              <div className="bg-white p-6 rounded-lg border">
+                <CategoryPerformanceChart data={categoryPerformanceData} title="Category Performance" />
+              </div>
+            </div>
+          </TabsContent>
 
           <TabsContent value="inventory">
             <InventoryStatus
-              products={
-                searchResults !== null
-                  ? searchResults.map((p: Product) => ({
-                      ...p,
-                      price: p.piece_selling_price,
-                    }))
-                  : (inventoryData?.products || []).map((p: Product) => ({
-                      ...p,
-                      price: p.piece_selling_price,
-                    }))
-              }
-              onSearch={handleSearch}
+              products={inventoryData?.products || []}
+              onFiltersChange={setInventoryFilters}
             />
           </TabsContent>
 
@@ -189,8 +232,14 @@ export default function ReportsPage() {
             <ProductPerformance
               products={performanceData?.products || []}
               summary={performanceData?.summary}
-              onDateRangeChange={handleDateRangeChange}
-              onSortChange={handleSortChange}
+              onFiltersChange={setPerformanceFilters}
+            />
+          </TabsContent>
+
+          <TabsContent value="expenses">
+            <ExpensesSummary
+              expenses={expensesData?.expenses || []}
+              onFiltersChange={setExpenseFilters}
             />
           </TabsContent>
         </Tabs>

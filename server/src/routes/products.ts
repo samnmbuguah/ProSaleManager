@@ -141,6 +141,54 @@ router.get("/search", async (req, res) => {
   }
 });
 
+// Get low stock products with custom threshold
+router.get("/low-stock", async (req, res) => {
+  try {
+    const { threshold } = req.query;
+
+    if (!threshold || isNaN(Number(threshold))) {
+      return res.status(400).json({
+        success: false,
+        message: "Threshold parameter is required and must be a number"
+      });
+    }
+
+    const thresholdValue = Number(threshold);
+    const where: Record<string, unknown> = {
+      quantity: { [Op.lte]: thresholdValue }
+    };
+
+    // Add store filtering for non-super-admin users
+    if (req.user && req.user.role !== 'super_admin' && req.user.store_id) {
+      where.store_id = req.user.store_id;
+    }
+
+    const products = await Product.findAll({
+      where,
+      include: [
+        {
+          model: Category,
+          as: "Category",
+          attributes: ["id", "name"]
+        }
+      ],
+      order: [["name", "ASC"]],
+    });
+
+    res.json({
+      success: true,
+      data: products
+    });
+  } catch (error) {
+    console.error("Error fetching low stock products:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching low stock products",
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+});
+
 // Bulk price update - must come before /:id routes
 router.put("/bulk-price-update", requireAuth, requireRole(["admin", "manager"]), async (req, res) => {
   try {
@@ -469,6 +517,29 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.array(
           message: "Image upload failed",
           error: cloudErr instanceof Error ? cloudErr.message : cloudErr,
         });
+      }
+    }
+
+    // Handle removed images
+    if (productData.removedImages) {
+      try {
+        const removedImages = JSON.parse(productData.removedImages);
+        if (Array.isArray(removedImages) && removedImages.length > 0) {
+          // Get current images and filter out removed ones
+          const currentImages = product.images || [];
+          const updatedImages = currentImages.filter((img: string) => !removedImages.includes(img));
+
+          // Update the images array
+          productData.images = updatedImages;
+
+          // Update the main image_url if it was removed
+          if (removedImages.includes(product.image_url)) {
+            productData.image_url = updatedImages.length > 0 ? updatedImages[0] : null;
+          }
+        }
+      } catch (parseErr) {
+        console.error("Error parsing removedImages:", parseErr);
+        // Continue without removing images if parsing fails
       }
     }
 

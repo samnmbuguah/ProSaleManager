@@ -73,7 +73,7 @@ const ROLE_ROUTES: Record<AppRole, Route[]> = {
   ],
   client: [
     { path: "orders", label: "My Orders", icon: Package },
-    { path: "favorites", label: "Favorites", icon: Heart }
+    { path: "favorites", label: "Favorites", icon: Heart },
   ],
 };
 
@@ -84,9 +84,28 @@ export default function MainNav() {
   const [isOpen, setIsOpen] = useState(false);
   const { cart } = useCart();
   const [cartOpen, setCartOpen] = useState(false);
-  const { currentStore, setCurrentStore, stores } = useStoreContext();
+  const { currentStore, setCurrentStore, stores, isLoading } = useStoreContext();
 
   if (!user) return null;
+
+  // Don't render navigation until store context is loaded
+  if (isLoading) {
+    return (
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b shadow-sm bg-gradient-to-r from-[#c8cbc8] to-white">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="h-6 w-24 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   const routes = ROLE_ROUTES[user.role as AppRole] || ROLE_ROUTES.user;
 
@@ -112,8 +131,11 @@ export default function MainNav() {
   const NavLinks = () => (
     <>
       {routes.map(({ path, label, icon: Icon }: Route) => {
-        // Use direct routes when no store is selected, otherwise use store-prefixed routes
-        const href = currentStore?.name ? `${storePrefix}/${path}`.replace(/\/$/, "") : `/${path}`;
+        // Always use store-prefixed routes when store is available
+        // Fallback to direct routes only when no store context
+        const href = currentStore?.name
+          ? `/${encodeURIComponent(currentStore.name)}/${path}`.replace(/\/$/, "")
+          : `/${path}`;
         const isActive = location === href;
 
         return (
@@ -133,7 +155,10 @@ export default function MainNav() {
   );
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b shadow-sm">
+    <nav
+      className="fixed top-0 left-0 right-0 z-50 border-b shadow-sm"
+      style={{ background: "linear-gradient(to right, #c8cbc8, white)" }}
+    >
       <div className="max-w-7xl mx-auto w-full px-6">
         <div className="h-16 min-h-16 flex items-center justify-between w-full">
           {/* Left logo linking to homepage */}

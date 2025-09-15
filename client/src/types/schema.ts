@@ -31,9 +31,19 @@ export interface Product {
   name: string;
   description?: string;
   sku: string;
-  price: number;
+  piece_selling_price?: number;
+  piece_buying_price?: number;
+  pack_selling_price?: number;
+  pack_buying_price?: number;
+  dozen_selling_price?: number;
+  dozen_buying_price?: number;
   quantity: number;
+  min_quantity?: number;
+  category_id?: number;
   category?: string;
+  is_active?: boolean;
+  created_at?: Date;
+  updated_at?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

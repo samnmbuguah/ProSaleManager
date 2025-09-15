@@ -71,10 +71,10 @@ function mapSaleToReceiptPreview(sale: unknown): import("@/hooks/use-pos").Recei
     }),
     customer: s.Customer
       ? {
-        name: ((s.Customer as Record<string, unknown>).name as string) ?? "",
-        phone: ((s.Customer as Record<string, unknown>).phone as string) ?? "",
-        email: ((s.Customer as Record<string, unknown>).email as string) ?? "",
-      }
+          name: ((s.Customer as Record<string, unknown>).name as string) ?? "",
+          phone: ((s.Customer as Record<string, unknown>).phone as string) ?? "",
+          email: ((s.Customer as Record<string, unknown>).email as string) ?? "",
+        }
       : undefined,
     total: (s.total_amount as number) ?? 0,
     payment_method: (s.payment_method as string) ?? "",
@@ -141,7 +141,7 @@ export const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
         {receiptData && (
           <ReceiptPreview
             receipt={mapSaleToReceiptPreview(receiptData)}
-            onSend={async () => { }}
+            onSend={async () => {}}
             onClose={() => onOpenChange(false)}
           />
         )}

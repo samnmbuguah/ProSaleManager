@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import type { Customer } from "@/types/customer";
 
 interface CheckoutDialogProps {
@@ -30,8 +31,9 @@ interface CheckoutDialogProps {
   customers: Customer[];
   selectedCustomer: number | null;
   setSelectedCustomer: (id: number | null) => void;
-  onCheckout: (amountTendered: number, change: number) => void;
+  onCheckout: (amountTendered: number, change: number, historicalDate?: string) => void;
   isLoadingCheckout: boolean;
+  isHistoricalMode: boolean;
 }
 
 export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
@@ -47,6 +49,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   setSelectedCustomer,
   onCheckout,
   isLoadingCheckout,
+  isHistoricalMode,
 }) => {
   // Set Walk-in Customer as default when dialog opens
   useEffect(() => {
@@ -58,6 +61,10 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     }
   }, [open, customers, selectedCustomer, setSelectedCustomer]);
   const [amountTendered, setAmountTendered] = useState("");
+  const [isHistoricalSale, setIsHistoricalSale] = useState(false);
+  const [historicalDate, setHistoricalDate] = useState("");
+  const [historicalTime, setHistoricalTime] = useState("");
+
   const total = cartTotal + deliveryFee;
   const tendered = parseFloat(amountTendered);
   const balance = paymentMethod === "cash" && !isNaN(tendered) ? tendered - total : 0;
@@ -75,6 +82,24 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
     }
   }, [open, customers, selectedCustomer, setSelectedCustomer]);
 
+  // Reset historical sale state when dialog opens/closes
+  useEffect(() => {
+    if (open) {
+      setIsHistoricalSale(false);
+      setHistoricalDate("");
+      setHistoricalTime("");
+    }
+  }, [open]);
+
+  // Set default date/time when historical sale is enabled
+  useEffect(() => {
+    if (isHistoricalSale && !historicalDate) {
+      const now = new Date();
+      setHistoricalDate(now.toISOString().split("T")[0]);
+      setHistoricalTime(now.toTimeString().slice(0, 5));
+    }
+  }, [isHistoricalSale, historicalDate]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -83,6 +108,50 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
           <DialogDescription>Select payment method and customer details</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
+          {/* Historical Sale Toggle - Only show if historical mode is enabled */}
+          {isHistoricalMode && (
+            <div className="space-y-2 p-3 rounded bg-yellow-50 border border-yellow-200">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="historical-sale"
+                  checked={isHistoricalSale}
+                  onCheckedChange={setIsHistoricalSale}
+                />
+                <Label htmlFor="historical-sale" className="text-sm font-medium">
+                  Historical Sale
+                </Label>
+              </div>
+              {isHistoricalSale && (
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="historical-date" className="text-xs">
+                      Date
+                    </Label>
+                    <Input
+                      id="historical-date"
+                      type="date"
+                      value={historicalDate}
+                      onChange={(e) => setHistoricalDate(e.target.value)}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="historical-time" className="text-xs">
+                      Time
+                    </Label>
+                    <Input
+                      id="historical-time"
+                      type="time"
+                      value={historicalTime}
+                      onChange={(e) => setHistoricalTime(e.target.value)}
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label>Payment Method</Label>
             <Select value={paymentMethod} onValueChange={setPaymentMethod}>
@@ -138,7 +207,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               onChange={(e) => setDeliveryFee(Number(e.target.value))}
               min={0}
               step={0.01}
-              placeholder="200"
+              placeholder="0"
             />
           </div>
           <div className="pt-4 space-y-2">
@@ -180,8 +249,18 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
             Cancel
           </Button>
           <Button
-            onClick={() => onCheckout(tendered, balance)}
-            disabled={isLoadingCheckout || !canCheckout}
+            onClick={() => {
+              const historicalDateTime =
+                isHistoricalSale && historicalDate && historicalTime
+                  ? `${historicalDate}T${historicalTime}:00`
+                  : undefined;
+              onCheckout(tendered, balance, historicalDateTime);
+            }}
+            disabled={
+              isLoadingCheckout ||
+              !canCheckout ||
+              (isHistoricalSale && (!historicalDate || !historicalTime))
+            }
           >
             {isLoadingCheckout ? "Processing..." : "Complete Sale"}
           </Button>

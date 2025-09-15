@@ -25,7 +25,7 @@ interface ProductFormDialogProps {
   onOpenChange: (open: boolean) => void;
   formData: z.infer<typeof productSchema>;
   setFormData: React.Dispatch<React.SetStateAction<z.infer<typeof productSchema>>>;
-  onSubmit: (e: React.FormEvent, localImageFiles?: File[]) => void;
+  onSubmit: (e: React.FormEvent, localImageFiles?: File[], onProgress?: (progress: number) => void, removedImages?: string[]) => void;
   selectedProduct: Product | null;
 }
 
@@ -159,67 +159,144 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   // Multiple image upload state
   const [imageFiles, setImageFiles] = React.useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = React.useState<string[]>([]);
+  const [removedImages, setRemovedImages] = React.useState<string[]>([]);
+  const [fileValidationError, setFileValidationError] = React.useState<string | null>(null);
+  const [uploading, setUploading] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState<number | null>(null);
+  const [uploadError, setUploadError] = React.useState<string | null>(null);
+
+  // File validation function
+  const validateImageFiles = (files: File[]): string | null => {
+    const maxFileSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    const maxFiles = 10;
+
+    if (files.length > maxFiles) {
+      return `Maximum ${maxFiles} files allowed`;
+    }
+
+    for (const file of files) {
+      if (file.size > maxFileSize) {
+        return `File "${file.name}" is too large. Maximum size is 5MB`;
+      }
+      if (!allowedTypes.includes(file.type)) {
+        return `File "${file.name}" has an unsupported format. Please use JPEG, PNG, or WebP`;
+      }
+    }
+
+    return null;
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+
+    // Validate files
+    const validationError = validateImageFiles(files);
+    if (validationError) {
+      setFileValidationError(validationError);
+      return;
+    }
+
+    setFileValidationError(null);
     setImageFiles(files);
     setImagePreviews(files.map((file) => URL.createObjectURL(file)));
   };
 
   const removeImage = (index: number) => {
-    // Revoke the object URL to prevent memory leaks
-    URL.revokeObjectURL(imagePreviews[index]);
+    const imageToRemove = imagePreviews[index];
 
-    const newFiles = imageFiles.filter((_, i) => i !== index);
+    // Check if it's an existing image (from server) or a new image (blob URL)
+    if (imageToRemove.startsWith('blob:')) {
+      // It's a new image - revoke the object URL and remove from files
+      URL.revokeObjectURL(imageToRemove);
+      const newFiles = imageFiles.filter((_, i) => i !== index);
+      setImageFiles(newFiles);
+    } else {
+      // It's an existing image - add to removed images list
+      setRemovedImages(prev => [...prev, imageToRemove]);
+    }
+
+    // Remove from previews
     const newPreviews = imagePreviews.filter((_, i) => i !== index);
-    setImageFiles(newFiles);
     setImagePreviews(newPreviews);
   };
+
+  // Load existing images when editing a product
+  React.useEffect(() => {
+    if (selectedProduct && selectedProduct.images && selectedProduct.images.length > 0) {
+      setImagePreviews(selectedProduct.images);
+    } else if (!selectedProduct) {
+      // Clear images when adding new product
+      setImagePreviews([]);
+      setImageFiles([]);
+      setRemovedImages([]);
+    }
+  }, [selectedProduct]);
 
   // Cleanup object URLs when component unmounts
   React.useEffect(() => {
     return () => {
-      imagePreviews.forEach(url => URL.revokeObjectURL(url));
+      imagePreviews.forEach((url) => {
+        // Only revoke object URLs (not existing image URLs)
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
     };
   }, [imagePreviews]);
 
   // Helper to build the payload for submission, converting numbers
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (uploading) {
+      return; // Prevent multiple submissions
+    }
+
     const invalidField = validateForm();
     if (invalidField) {
       alert(`Please fill the required field: ${invalidField.replace(/_/g, " ")}`);
       return;
     }
-    const payload = buildProductPayload();
-    // Add images array if files selected
-    if (imageFiles.length > 0) {
-      const formDataToSend = new FormData();
-      Object.entries(payload).forEach(([key, value]) => {
-        formDataToSend.append(key, String(value));
-      });
-      // Send all selected images
-      imageFiles.forEach((file) => {
-        formDataToSend.append("images", file);
-      });
-      try {
-        await onSubmit(e, imageFiles); // Pass all files for multiple image support
-      } catch (err: unknown) {
-        // Error handling is now done in the parent component (InventoryPage)
-        // This catch block is kept for any additional cleanup if needed
-        console.error("ProductFormDialog error:", err);
-      }
-      return;
-    }
+
+    setUploading(true);
+    setUploadProgress(0);
+    setUploadError(null);
+
     try {
-      await onSubmit(e);
+      const payload = buildProductPayload();
+
+      // Add images array if files selected
+      if (imageFiles.length > 0) {
+        const formDataToSend = new FormData();
+        Object.entries(payload).forEach(([key, value]) => {
+          formDataToSend.append(key, String(value));
+        });
+        // Send all selected images
+        imageFiles.forEach((file) => {
+          formDataToSend.append("images", file);
+        });
+
+        await onSubmit(e, imageFiles, setUploadProgress, removedImages);
+      } else if (removedImages.length > 0) {
+        // No new files but there are removed images
+        await onSubmit(e, [], setUploadProgress, removedImages);
+      } else {
+        await onSubmit(e);
+      }
+
+      // Clear form data after successful submission
+      if (!selectedProduct) {
+        localStorage.removeItem(FORM_DRAFT_KEY);
+        setImageFiles([]);
+        setImagePreviews([]);
+      }
     } catch (err: unknown) {
-      // Error handling is now done in the parent component (InventoryPage)
-      // This catch block is kept for any additional cleanup if needed
       console.error("ProductFormDialog error:", err);
-    }
-    if (!selectedProduct) {
-      localStorage.removeItem(FORM_DRAFT_KEY);
+      setUploadError("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -265,6 +342,14 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
               onChange={handleImageChange}
               className="mt-1"
             />
+            {fileValidationError && (
+              <div className="text-red-600 text-sm mt-1 p-2 bg-red-50 border border-red-200 rounded">
+                {fileValidationError}
+              </div>
+            )}
+            <div className="text-xs text-gray-500 mt-1">
+              Supported formats: JPEG, PNG, WebP. Max size: 5MB per file. Max files: 10.
+            </div>
             {imagePreviews.length > 0 && (
               <div className="mt-2 flex gap-2 flex-wrap">
                 {imagePreviews.map((url, idx) => (
@@ -533,8 +618,49 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
               </SelectContent>
             </Select>
           </div>
-          <Button type="submit" className="w-full">
-            {selectedProduct ? "Update Product" : "Add Product"}
+          {/* Upload Progress Bar */}
+          {uploading && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">
+                  {uploadError ? "Upload Failed" : "Uploading..."}
+                </span>
+                <span className="text-gray-500">
+                  {uploadProgress !== null ? `${uploadProgress}%` : "0%"}
+                </span>
+              </div>
+              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-300 ease-out ${uploadError
+                    ? "bg-red-500"
+                    : "bg-gradient-to-r from-blue-500 to-blue-600"
+                    }`}
+                  style={{
+                    width: uploadProgress !== null ? `${uploadProgress}%` : "0%",
+                  }}
+                />
+              </div>
+              {uploadError && (
+                <div className="text-red-600 text-sm text-center">
+                  {uploadError}
+                </div>
+              )}
+            </div>
+          )}
+
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={uploading}
+          >
+            {uploading ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                {uploadError ? "Retry Upload" : "Uploading..."}
+              </div>
+            ) : (
+              selectedProduct ? "Update Product" : "Add Product"
+            )}
           </Button>
         </form>
       </DialogContent>

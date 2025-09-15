@@ -2,15 +2,18 @@
 const API_BASE_URL = typeof window !== "undefined" ? `${window.location.origin}/api` : "/api";
 
 // Backend server URL for static files (images, etc.)
-const BACKEND_URL = typeof window !== "undefined" ?
-  (window.location.origin.includes('5173') ? 'http://localhost:5000' : window.location.origin) :
-  'http://localhost:5000';
+const BACKEND_URL =
+  typeof window !== "undefined"
+    ? window.location.origin.includes("5173")
+      ? "http://localhost:5000"
+      : window.location.origin
+    : "http://localhost:5000";
 
 // Helper function to convert relative image URLs to absolute URLs
 export const getImageUrl = (imagePath: string): string => {
-  if (!imagePath) return '';
-  if (imagePath.startsWith('http')) return imagePath; // Already absolute
-  if (imagePath.startsWith('/')) return `${BACKEND_URL}${imagePath}`; // Relative to backend
+  if (!imagePath) return "";
+  if (imagePath.startsWith("http")) return imagePath; // Already absolute
+  if (imagePath.startsWith("/")) return `${BACKEND_URL}${imagePath}`; // Relative to backend
   return `${BACKEND_URL}/${imagePath}`; // Add leading slash if missing
 };
 
@@ -75,6 +78,8 @@ export const API_ENDPOINTS = {
     list: `${API_BASE_URL}/sales`,
     create: `${API_BASE_URL}/sales`,
     getById: (id: number) => `${API_BASE_URL}/sales/${id}`,
+    update: (id: number) => `${API_BASE_URL}/sales/${id}`,
+    delete: (id: number) => `${API_BASE_URL}/sales/${id}`,
     getItems: (id: number) => `${API_BASE_URL}/sales/${id}/items`,
     sendWhatsAppReceipt: (id: number) => `${API_BASE_URL}/sales/${id}/receipt/whatsapp`,
     sendSMSReceipt: (id: number) => `${API_BASE_URL}/sales/${id}/receipt/sms`,

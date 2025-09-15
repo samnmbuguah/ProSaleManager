@@ -4,26 +4,56 @@ import { api, API_ENDPOINTS } from "@/lib/api";
 import type { Product } from "@/types/product";
 
 // Get user's favorites
-export function useFavorites() {
+export function useFavorites(isAuthenticated: boolean = false) {
   return useQuery<Product[]>({
     queryKey: ["favorites"],
     queryFn: async () => {
       const response = await api.get(API_ENDPOINTS.favorites.list);
       return response.data.data;
     },
-    enabled: true, // Only run when user is authenticated
+    enabled: isAuthenticated,
+    retry: (failureCount, error: unknown) => {
+      // Don't retry on 401 (Unauthorized) errors
+      if (
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        error.response &&
+        typeof error.response === "object" &&
+        "status" in error.response &&
+        error.response.status === 401
+      ) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 }
 
 // Check if a product is in favorites
-export function useFavoriteStatus(productId: number) {
+export function useFavoriteStatus(productId: number, isAuthenticated: boolean = false) {
   return useQuery<{ isFavorite: boolean }>({
     queryKey: ["favorite-status", productId],
     queryFn: async () => {
       const response = await api.get(API_ENDPOINTS.favorites.check(productId));
       return response.data.data;
     },
-    enabled: !!productId,
+    enabled: !!productId && isAuthenticated,
+    retry: (failureCount, error: unknown) => {
+      // Don't retry on 401 (Unauthorized) errors
+      if (
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        error.response &&
+        typeof error.response === "object" &&
+        "status" in error.response &&
+        error.response.status === 401
+      ) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 }
 
