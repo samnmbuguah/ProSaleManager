@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
+import type { Product } from "@/types/product";
 import { useInventory } from "@/hooks/use-inventory";
 import type {
   PurchaseOrder,
@@ -175,7 +176,7 @@ export function PurchaseOrders({
     // Add new items to existing items
     setFormData((prev) => ({
       ...prev,
-      items: [...prev.items, ...newItems]
+      items: [...prev.items, ...newItems],
     }));
 
     // Update dropdown state for new items

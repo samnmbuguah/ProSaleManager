@@ -2,10 +2,10 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Store, Calendar, Users, Shield } from "lucide-react";
-import { 
-  ResponsiveTable, 
+import {
+  ResponsiveTable,
   createActionsColumn,
-  ResponsiveTableColumn 
+  ResponsiveTableColumn,
 } from "@/components/ui/responsive-table";
 
 interface User {
@@ -38,12 +38,12 @@ interface UserTableProps {
   isLoading?: boolean;
 }
 
-const UserTable: React.FC<UserTableProps> = ({ 
-  users, 
-  userRoles, 
-  onEdit, 
-  onDelete, 
-  isLoading = false 
+const UserTable: React.FC<UserTableProps> = ({
+  users,
+  userRoles,
+  onEdit,
+  onDelete,
+  isLoading = false,
 }) => {
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
@@ -111,7 +111,7 @@ const UserTable: React.FC<UserTableProps> = ({
       label: "Store",
       priority: 3,
       hideOnMobile: true,
-      render: (user) => (
+      render: (user) =>
         user.store ? (
           <div className="flex items-center gap-2">
             <Store className="h-4 w-4 text-muted-foreground" />
@@ -119,8 +119,7 @@ const UserTable: React.FC<UserTableProps> = ({
           </div>
         ) : (
           <span className="text-muted-foreground">Global</span>
-        )
-      ),
+        ),
     },
     {
       key: "status",
@@ -137,18 +136,15 @@ const UserTable: React.FC<UserTableProps> = ({
       label: "Last Login",
       priority: 5,
       hideOnMobile: true,
-      render: (user) => (
+      render: (user) =>
         user.last_login ? (
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">
-              {new Date(user.last_login).toLocaleDateString()}
-            </span>
+            <span className="text-sm">{new Date(user.last_login).toLocaleDateString()}</span>
           </div>
         ) : (
           <span className="text-muted-foreground text-sm">Never</span>
-        )
-      ),
+        ),
     },
     {
       key: "created",
@@ -170,11 +166,7 @@ const UserTable: React.FC<UserTableProps> = ({
             <Edit className="h-4 w-4" />
           </Button>
           {user.role !== "super_admin" && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onDelete(user)}
-            >
+            <Button variant="outline" size="sm" onClick={() => onDelete(user)}>
               <Trash2 className="h-4 w-4" />
             </Button>
           )}

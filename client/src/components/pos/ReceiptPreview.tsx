@@ -33,9 +33,9 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
   // Format date safely
   const formattedDate = receipt.timestamp
     ? new Date(receipt.timestamp).toLocaleString("en-KE", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    })
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
     : "Invalid Date";
 
   return (
@@ -55,8 +55,8 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
               onError={(e) => {
                 // Fallback to JPEG if PNG fails
                 const target = e.target as HTMLImageElement;
-                if (target.src.endsWith('.png')) {
-                  target.src = '/logo.jpeg';
+                if (target.src.endsWith(".png")) {
+                  target.src = "/logo.jpeg";
                 }
               }}
             />

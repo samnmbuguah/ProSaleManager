@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, User, ShoppingCart, AlertTriangle } from "lucide-react";
 import { CartItem } from "../../types/pos";
 import type { Customer } from "@/types/customer";
-import { api } from "@/lib/api";
 
 interface CartProps {
   items: CartItem[];
@@ -112,8 +111,8 @@ export const Cart: React.FC<CartProps> = ({
   }, [items]);
 
   // Check if there are any stock issues
-  const hasStockIssues = stockValidation.some(result => result.isInsufficient);
-  const stockIssues = stockValidation.filter(result => result.isInsufficient);
+  const hasStockIssues = stockValidation.some((result) => result.isInsufficient);
+  const stockIssues = stockValidation.filter((result) => result.isInsufficient);
 
   const handleUnitTypeChange = (itemId: number, unitType: string) => {
     const item = items.find((item) => item.id === itemId);
@@ -157,23 +156,27 @@ export const Cart: React.FC<CartProps> = ({
           ) : (
             <div className="space-y-3">
               {items.map((item) => {
-                const stockResult = stockValidation.find(result => result.productId === item.product.id);
+                const stockResult = stockValidation.find(
+                  (result) => result.productId === item.product.id
+                );
                 const hasStockIssue = stockResult?.isInsufficient || false;
 
                 return (
-                  <div key={item.id} className={`border rounded-lg p-3 ${hasStockIssue ? 'bg-red-50 border-red-200' : 'bg-white'}`}>
+                  <div
+                    key={item.id}
+                    className={`border rounded-lg p-3 ${hasStockIssue ? "bg-red-50 border-red-200" : "bg-white"}`}
+                  >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
                         <div className="font-semibold text-sm flex items-center gap-2">
                           {item.product.name}
-                          {hasStockIssue && (
-                            <AlertTriangle className="h-4 w-4 text-red-500" />
-                          )}
+                          {hasStockIssue && <AlertTriangle className="h-4 w-4 text-red-500" />}
                         </div>
                         <div className="text-xs text-gray-500">{item.product.sku}</div>
                         {hasStockIssue && stockResult && (
                           <div className="text-xs text-red-600 mt-1">
-                            Insufficient stock: Available {stockResult.available}, Required {stockResult.required}
+                            Insufficient stock: Available {stockResult.available}, Required{" "}
+                            {stockResult.required}
                           </div>
                         )}
                       </div>
@@ -278,7 +281,9 @@ export const Cart: React.FC<CartProps> = ({
             className="w-full"
             size="lg"
             onClick={onCheckout}
-            disabled={items.length === 0 || !selectedCustomer || hasStockIssues || isValidatingStock}
+            disabled={
+              items.length === 0 || !selectedCustomer || hasStockIssues || isValidatingStock
+            }
           >
             {isValidatingStock
               ? "Checking Stock..."
@@ -286,8 +291,7 @@ export const Cart: React.FC<CartProps> = ({
                 ? "Select Customer First"
                 : hasStockIssues
                   ? "Fix Stock Issues First"
-                  : "Proceed to Checkout"
-            }
+                  : "Proceed to Checkout"}
           </Button>
 
           {!selectedCustomer && (

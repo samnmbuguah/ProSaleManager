@@ -12,9 +12,17 @@ export function useFavorites(isAuthenticated: boolean = false) {
       return response.data.data;
     },
     enabled: isAuthenticated,
-    retry: (failureCount, error: any) => {
+    retry: (failureCount, error: unknown) => {
       // Don't retry on 401 (Unauthorized) errors
-      if (error?.response?.status === 401) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        error.response &&
+        typeof error.response === "object" &&
+        "status" in error.response &&
+        error.response.status === 401
+      ) {
         return false;
       }
       return failureCount < 3;
@@ -31,9 +39,17 @@ export function useFavoriteStatus(productId: number, isAuthenticated: boolean = 
       return response.data.data;
     },
     enabled: !!productId && isAuthenticated,
-    retry: (failureCount, error: any) => {
+    retry: (failureCount, error: unknown) => {
       // Don't retry on 401 (Unauthorized) errors
-      if (error?.response?.status === 401) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        error.response &&
+        typeof error.response === "object" &&
+        "status" in error.response &&
+        error.response.status === 401
+      ) {
         return false;
       }
       return failureCount < 3;

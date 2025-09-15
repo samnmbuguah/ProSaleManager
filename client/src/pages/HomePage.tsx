@@ -192,7 +192,9 @@ export default function HomePage() {
             title = "Insufficient Stock";
 
             // Extract product name and stock details from the error message
-            const stockMatch = responseData.message.match(/Insufficient stock for (.+?)\. Available: (\d+), Required: (\d+)/);
+            const stockMatch = responseData.message.match(
+              /Insufficient stock for (.+?)\. Available: (\d+), Required: (\d+)/
+            );
             if (stockMatch) {
               const [, productName, available, required] = stockMatch;
               const shortage = parseInt(required) - parseInt(available);
@@ -215,8 +217,8 @@ export default function HomePage() {
         text: message,
         confirmButtonText: "OK",
         customClass: {
-          popup: 'swal-wide'
-        }
+          popup: "swal-wide",
+        },
       });
     } finally {
       setIsSubmitting(false);
@@ -271,16 +273,15 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="shadow-lg sticky top-0 z-40" style={{ background: 'linear-gradient(to right, #c8cbc8, white)' }}>
+      <header
+        className="shadow-lg sticky top-0 z-40"
+        style={{ background: "linear-gradient(to right, #c8cbc8, white)" }}
+      >
         <div className="container mx-auto px-4 py-4">
           {/* Top Header */}
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center space-x-2">
-              <img
-                src="/logo.png"
-                alt="Eltee Store Logo"
-                className="w-16 h-16 object-contain"
-              />
+              <img src="/logo.png" alt="Eltee Store Logo" className="w-16 h-16 object-contain" />
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
               {/* Cart Drawer */}
@@ -303,21 +304,15 @@ export default function HomePage() {
                       </Button>
                     </Link>
                     <Link href={currentStore?.name ? `/${currentStore.name}/orders` : "/orders"}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center gap-2"
-                      >
+                      <Button variant="ghost" size="sm" className="flex items-center gap-2">
                         <Package className="h-4 w-4" />
                         <span className="text-sm">My Orders</span>
                       </Button>
                     </Link>
-                    <Link href={currentStore?.name ? `/${currentStore.name}/favorites` : "/favorites"}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center gap-2"
-                      >
+                    <Link
+                      href={currentStore?.name ? `/${currentStore.name}/favorites` : "/favorites"}
+                    >
+                      <Button variant="ghost" size="sm" className="flex items-center gap-2">
                         <Heart className="h-4 w-4" />
                         <span className="text-sm">Favorites</span>
                       </Button>
@@ -361,7 +356,9 @@ export default function HomePage() {
                               Profile
                             </Button>
                           </Link>
-                          <Link href={currentStore?.name ? `/${currentStore.name}/orders` : "/orders"}>
+                          <Link
+                            href={currentStore?.name ? `/${currentStore.name}/orders` : "/orders"}
+                          >
                             <Button
                               variant="ghost"
                               className="w-full justify-start"
@@ -371,7 +368,11 @@ export default function HomePage() {
                               My Orders
                             </Button>
                           </Link>
-                          <Link href={currentStore?.name ? `/${currentStore.name}/favorites` : "/favorites"}>
+                          <Link
+                            href={
+                              currentStore?.name ? `/${currentStore.name}/favorites` : "/favorites"
+                            }
+                          >
                             <Button
                               variant="ghost"
                               className="w-full justify-start"
@@ -423,7 +424,6 @@ export default function HomePage() {
                   </Button>
                 </>
               )}
-
             </div>
           </div>
 
@@ -445,7 +445,9 @@ export default function HomePage() {
       <div className="container mx-auto px-4 py-8 pb-24 sm:pb-8">
         {/* Hero Section */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 text-white">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4">Discover Amazing Products</h2>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4">
+            Discover Amazing Products
+          </h2>
           <p className="text-sm sm:text-lg md:text-xl opacity-90 mb-4 sm:mb-6">
             Shop the latest trends and find exactly what you're looking for
           </p>
@@ -622,10 +624,11 @@ export default function HomePage() {
 
         {/* Products Grid */}
         <div
-          className={`grid gap-3 sm:gap-4 md:gap-6 mb-8 ${viewMode === "grid"
-            ? "grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-            : "grid-cols-1"
-            }`}
+          className={`grid gap-3 sm:gap-4 md:gap-6 mb-8 ${
+            viewMode === "grid"
+              ? "grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+              : "grid-cols-1"
+          }`}
         >
           {paginatedProducts.map((product) => (
             <ProductCard
@@ -785,12 +788,12 @@ export default function HomePage() {
               {(isLogin
                 ? loginForm.formState.errors.email
                 : registerForm.formState.errors.email) && (
-                  <p className="text-sm text-red-600 mt-1">
-                    {isLogin
-                      ? loginForm.formState.errors.email?.message
-                      : registerForm.formState.errors.email?.message}
-                  </p>
-                )}
+                <p className="text-sm text-red-600 mt-1">
+                  {isLogin
+                    ? loginForm.formState.errors.email?.message
+                    : registerForm.formState.errors.email?.message}
+                </p>
+              )}
             </div>
 
             {!isLogin && (
@@ -820,12 +823,12 @@ export default function HomePage() {
               {(isLogin
                 ? loginForm.formState.errors.password
                 : registerForm.formState.errors.password) && (
-                  <p className="text-sm text-red-600 mt-1">
-                    {isLogin
-                      ? loginForm.formState.errors.password?.message
-                      : registerForm.formState.errors.password?.message}
-                  </p>
-                )}
+                <p className="text-sm text-red-600 mt-1">
+                  {isLogin
+                    ? loginForm.formState.errors.password?.message
+                    : registerForm.formState.errors.password?.message}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col gap-3 pt-4">

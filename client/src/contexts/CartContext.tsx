@@ -18,9 +18,9 @@ interface CartContextType {
 // Define action types
 type CartAction =
   | {
-    type: "ADD_ITEM";
-    payload: { product: Product; unitType: string; unitPrice: number };
-  }
+      type: "ADD_ITEM";
+      payload: { product: Product; unitType: string; unitPrice: number };
+    }
   | { type: "REMOVE_ITEM"; payload: { itemId: number } }
   | { type: "UPDATE_QUANTITY"; payload: { itemId: number; quantity: number } }
   | { type: "UPDATE_UNIT_PRICE"; payload: { itemId: number; price: number } }
@@ -244,26 +244,27 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
           // Validate all cart items have the necessary properties and correct types
           const validItems = parsedCart.items
-            .filter(
-              (item: PotentialCartItemData) => {
-                const isValid = item &&
-                  item.product &&
-                  typeof item.product === "object" &&
-                  "id" in item.product &&
-                  "name" in item.product &&
-                  ("piece_selling_price" in item.product || "pack_selling_price" in item.product || "dozen_selling_price" in item.product) &&
-                  "stock_unit" in item.product &&
-                  "quantity" in item && // Check for quantity on the cart item
-                  "unit_price" in item && // Check for unit_price on the cart item
-                  "total" in item && // Check for total on the cart item
-                  "unit_type" in item; // Check for unit_type on the cart item
+            .filter((item: PotentialCartItemData) => {
+              const isValid =
+                item &&
+                item.product &&
+                typeof item.product === "object" &&
+                "id" in item.product &&
+                "name" in item.product &&
+                ("piece_selling_price" in item.product ||
+                  "pack_selling_price" in item.product ||
+                  "dozen_selling_price" in item.product) &&
+                "stock_unit" in item.product &&
+                "quantity" in item && // Check for quantity on the cart item
+                "unit_price" in item && // Check for unit_price on the cart item
+                "total" in item && // Check for total on the cart item
+                "unit_type" in item; // Check for unit_type on the cart item
 
-                if (!isValid) {
-                  console.log("❌ Invalid cart item filtered out:", item);
-                }
-                return isValid;
+              if (!isValid) {
+                console.log("❌ Invalid cart item filtered out:", item);
               }
-            )
+              return isValid;
+            })
             .map((item: PotentialCartItemData) => ({
               id: item.id,
               product: item.product, // Product type is handled by the filter

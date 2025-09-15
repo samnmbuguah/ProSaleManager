@@ -95,7 +95,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   useEffect(() => {
     if (isHistoricalSale && !historicalDate) {
       const now = new Date();
-      setHistoricalDate(now.toISOString().split('T')[0]);
+      setHistoricalDate(now.toISOString().split("T")[0]);
       setHistoricalTime(now.toTimeString().slice(0, 5));
     }
   }, [isHistoricalSale, historicalDate]);
@@ -124,7 +124,9 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               {isHistoricalSale && (
                 <div className="grid grid-cols-2 gap-2 mt-2">
                   <div className="space-y-1">
-                    <Label htmlFor="historical-date" className="text-xs">Date</Label>
+                    <Label htmlFor="historical-date" className="text-xs">
+                      Date
+                    </Label>
                     <Input
                       id="historical-date"
                       type="date"
@@ -134,7 +136,9 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="historical-time" className="text-xs">Time</Label>
+                    <Label htmlFor="historical-time" className="text-xs">
+                      Time
+                    </Label>
                     <Input
                       id="historical-time"
                       type="time"
@@ -246,12 +250,17 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
           </Button>
           <Button
             onClick={() => {
-              const historicalDateTime = isHistoricalSale && historicalDate && historicalTime
-                ? `${historicalDate}T${historicalTime}:00`
-                : undefined;
+              const historicalDateTime =
+                isHistoricalSale && historicalDate && historicalTime
+                  ? `${historicalDate}T${historicalTime}:00`
+                  : undefined;
               onCheckout(tendered, balance, historicalDateTime);
             }}
-            disabled={isLoadingCheckout || !canCheckout || (isHistoricalSale && (!historicalDate || !historicalTime))}
+            disabled={
+              isLoadingCheckout ||
+              !canCheckout ||
+              (isHistoricalSale && (!historicalDate || !historicalTime))
+            }
           >
             {isLoadingCheckout ? "Processing..." : "Complete Sale"}
           </Button>

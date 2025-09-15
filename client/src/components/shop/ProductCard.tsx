@@ -151,7 +151,9 @@ export default function ProductCard({
               </Carousel>
             ) : (
               <img
-                src={getImageUrl(product.images?.[0] || product.image_url || "/placeholder-product.jpg")}
+                src={getImageUrl(
+                  product.images?.[0] || product.image_url || "/placeholder-product.jpg"
+                )}
                 alt={product.name}
                 className="w-full h-full object-cover rounded-lg"
                 onError={() => onImageError(product.id)}
@@ -167,8 +169,12 @@ export default function ProductCard({
         {/* Product Info */}
         <div className="flex-1 flex flex-col justify-between min-w-0">
           <div>
-            <h3 className="font-semibold text-base sm:text-lg mb-1 sm:mb-2 line-clamp-2">{product.name}</h3>
-            <p className="text-gray-600 text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2">{product.description}</p>
+            <h3 className="font-semibold text-base sm:text-lg mb-1 sm:mb-2 line-clamp-2">
+              {product.name}
+            </h3>
+            <p className="text-gray-600 text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2">
+              {product.description}
+            </p>
             <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
               <Badge variant="secondary" className="text-xs px-1 py-0">
                 {product.Category?.name || "Uncategorized"}
@@ -244,8 +250,9 @@ export default function ProductCard({
                 <Button
                   variant="outline"
                   size="sm"
-                  className={`flex items-center gap-2 ${favoriteStatus?.isFavorite ? "text-red-500 border-red-500" : ""
-                    }`}
+                  className={`flex items-center gap-2 ${
+                    favoriteStatus?.isFavorite ? "text-red-500 border-red-500" : ""
+                  }`}
                   onClick={handleToggleFavorite}
                   disabled={toggleFavorite.isPending}
                 >
@@ -298,7 +305,9 @@ export default function ProductCard({
               </Carousel>
             ) : (
               <img
-                src={getImageUrl(product.images?.[0] || product.image_url || "/placeholder-product.jpg")}
+                src={getImageUrl(
+                  product.images?.[0] || product.image_url || "/placeholder-product.jpg"
+                )}
                 alt={product.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 onError={() => onImageError(product.id)}
@@ -315,17 +324,23 @@ export default function ProductCard({
         <Button
           variant="ghost"
           size="sm"
-          className={`absolute top-1 right-1 sm:top-2 sm:right-2 bg-white/80 hover:bg-white h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 p-0 ${favoriteStatus?.isFavorite ? "text-red-500" : "text-gray-600"
-            }`}
+          className={`absolute top-1 right-1 sm:top-2 sm:right-2 bg-white/80 hover:bg-white h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 p-0 ${
+            favoriteStatus?.isFavorite ? "text-red-500" : "text-gray-600"
+          }`}
           onClick={handleToggleFavorite}
           disabled={toggleFavorite.isPending}
         >
-          <Heart className={`w-3 h-3 sm:w-4 sm:h-4 ${favoriteStatus?.isFavorite ? "fill-current" : ""}`} />
+          <Heart
+            className={`w-3 h-3 sm:w-4 sm:h-4 ${favoriteStatus?.isFavorite ? "fill-current" : ""}`}
+          />
         </Button>
 
         {/* Stock Badge */}
         {product.quantity <= product.min_quantity && (
-          <Badge variant="destructive" className="absolute top-1 left-1 sm:top-2 sm:left-2 text-xs px-1 py-0">
+          <Badge
+            variant="destructive"
+            className="absolute top-1 left-1 sm:top-2 sm:left-2 text-xs px-1 py-0"
+          >
             Low Stock
           </Badge>
         )}
@@ -334,8 +349,12 @@ export default function ProductCard({
       <CardContent className="p-2 sm:p-3 md:p-4">
         {/* Product Info */}
         <div className="mb-2 sm:mb-3">
-          <h3 className="font-semibold text-sm sm:text-base md:text-lg mb-1 line-clamp-2">{product.name}</h3>
-          <p className="text-gray-600 text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2">{product.description}</p>
+          <h3 className="font-semibold text-sm sm:text-base md:text-lg mb-1 line-clamp-2">
+            {product.name}
+          </h3>
+          <p className="text-gray-600 text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2">
+            {product.description}
+          </p>
           <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
             <Badge variant="secondary" className="text-xs px-1 py-0">
               {product.Category?.name || "Uncategorized"}
