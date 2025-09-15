@@ -9,11 +9,26 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, FileSpreadsheet } from "lucide-react";
+import { Download, FileSpreadsheet, BarChart3 } from "lucide-react";
 import { useState } from "react";
 import { api } from "@/lib/api";
 import { toast } from "@/components/ui/use-toast";
 import { ReportFilters, InventoryFilters } from "./ReportFilters";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import VarianceAnalysis from "./VarianceAnalysis";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface InventoryStatusProps {
   products: Product[];
@@ -28,6 +43,7 @@ export default function InventoryStatus({ products, onFiltersChange }: Inventory
   const [sortColumn, setSortColumn] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [isDownloading, setIsDownloading] = useState(false);
+  const [csvExportType, setCsvExportType] = useState<"inventory" | "stock-take">("inventory");
 
   // Filter state
   const [filters, setFilters] = useState<InventoryFilters>({
@@ -68,7 +84,11 @@ export default function InventoryStatus({ products, onFiltersChange }: Inventory
     try {
       setIsDownloading(true);
 
-      const response = await api.get("/reports/inventory/export", {
+      const endpoint = csvExportType === "inventory" 
+        ? "/reports/inventory/export" 
+        : "/reports/stock-take/export";
+
+      const response = await api.get(endpoint, {
         responseType: "blob", // Important for file downloads
       });
 
@@ -79,7 +99,7 @@ export default function InventoryStatus({ products, onFiltersChange }: Inventory
 
       // Extract filename from response headers or create default
       const contentDisposition = response.headers["content-disposition"];
-      let filename = "inventory-export.csv";
+      let filename = csvExportType === "inventory" ? "inventory-export.csv" : "stock-take.csv";
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="(.+)"/);
         if (filenameMatch) {
@@ -93,16 +113,18 @@ export default function InventoryStatus({ products, onFiltersChange }: Inventory
       link.remove();
       window.URL.revokeObjectURL(url);
 
+      const exportTypeName = csvExportType === "inventory" ? "Inventory" : "Stock Take";
       toast({
         title: "Download Complete",
-        description: `Inventory CSV exported successfully with ${safeProducts.length} products`,
+        description: `${exportTypeName} CSV exported successfully with ${safeProducts.length} products`,
         variant: "default",
       });
     } catch (error) {
       console.error("Error downloading CSV:", error);
+      const exportTypeName = csvExportType === "inventory" ? "inventory" : "stock take";
       toast({
         title: "Download Failed",
-        description: "Failed to export inventory to CSV. Please try again.",
+        description: `Failed to export ${exportTypeName} to CSV. Please try again.`,
         variant: "destructive",
       });
     } finally {
@@ -170,24 +192,49 @@ export default function InventoryStatus({ products, onFiltersChange }: Inventory
           onFiltersChange={handleFiltersChange}
           onClearFilters={handleClearFilters}
         />
-        <Button
-          onClick={handleDownloadCSV}
-          disabled={isDownloading || safeProducts.length === 0}
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          {isDownloading ? (
-            <>
-              <Download className="h-4 w-4 animate-spin" />
-              Exporting...
-            </>
-          ) : (
-            <>
-              <FileSpreadsheet className="h-4 w-4" />
-              Download CSV
-            </>
-          )}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Select value={csvExportType} onValueChange={(value: "inventory" | "stock-take") => setCsvExportType(value)}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Select export type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="inventory">Inventory Export</SelectItem>
+              <SelectItem value="stock-take">Stock Take Template</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            onClick={handleDownloadCSV}
+            disabled={isDownloading || safeProducts.length === 0}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            {isDownloading ? (
+              <>
+                <Download className="h-4 w-4 animate-spin" />
+                Exporting...
+              </>
+            ) : (
+              <>
+                <FileSpreadsheet className="h-4 w-4" />
+                Download CSV
+              </>
+            )}
+          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Variance Analysis
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Stock Take Variance Analysis</DialogTitle>
+              </DialogHeader>
+              <VarianceAnalysis onClose={() => {}} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Table>
