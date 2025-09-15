@@ -32,7 +32,7 @@ export const getProducts = catchAsync(async (req: Request, res: Response) => {
         attributes: ["id", "name"]
       }
     ],
-    order: [["name", "ASC"]],
+    order: [["createdAt", "DESC"]],
   });
   res.json({
     success: true,
