@@ -4,6 +4,7 @@ import Sale from "../models/Sale.js";
 import SaleItem from "../models/SaleItem.js";
 import Category from "../models/Category.js";
 import Store from "../models/Store.js";
+import User from "../models/User.js";
 import { Op } from "sequelize";
 import { storeScope } from "../utils/helpers.js";
 import { requireStoreContext } from "../middleware/store-context.middleware.js";
@@ -99,17 +100,55 @@ router.get(
   requireStoreContext,
   async (req, res) => {
     try {
-      const where = storeScope(req.user!, { is_active: true });
+      const {
+        search,
+        category,
+        stockStatus,
+        minPrice,
+        maxPrice,
+        startDate,
+        endDate
+      } = req.query;
+
+      // Build base where clause
+      const where: Record<string, any> = storeScope(req.user!, { is_active: true });
+
+      // Add category filter
+      if (category && category !== "all") {
+        where.category_id = category;
+      }
+
+      // Add price range filter
+      if (minPrice || maxPrice) {
+        where.piece_selling_price = {};
+        if (minPrice) where.piece_selling_price[Op.gte] = parseFloat(minPrice as string);
+        if (maxPrice) where.piece_selling_price[Op.lte] = parseFloat(maxPrice as string);
+      }
+
+      // Add date range filter
+      if (startDate && endDate) {
+        where.createdAt = {
+          [Op.between]: [new Date(startDate as string), new Date(endDate as string)],
+        };
+      }
+
       const products = await Product.findAll({
         where,
+        include: [
+          {
+            model: Category,
+            attributes: ["id", "name"],
+          },
+        ],
         order: [["name", "ASC"]],
       });
 
-      const inventoryData = products.map((product) => ({
+      let inventoryData = products.map((product) => ({
         id: product.id,
         name: product.name,
         sku: product.sku,
         category_id: product.category_id,
+        category_name: (product as any).Category?.name || "Unknown",
         piece_selling_price: product.piece_selling_price,
         piece_buying_price: product.piece_buying_price,
         pack_selling_price: product.pack_selling_price,
@@ -120,6 +159,31 @@ router.get(
         created_at: product.createdAt,
         updated_at: product.updatedAt,
       }));
+
+      // Apply search filter (client-side for now, could be moved to database)
+      if (search) {
+        const searchTerm = (search as string).toLowerCase();
+        inventoryData = inventoryData.filter(
+          (product) =>
+            product.name.toLowerCase().includes(searchTerm) ||
+            product.sku.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      // Apply stock status filter
+      if (stockStatus && stockStatus !== "all") {
+        switch (stockStatus) {
+          case "instock":
+            inventoryData = inventoryData.filter((p) => (p.quantity || 0) >= (p.min_quantity || 10));
+            break;
+          case "lowstock":
+            inventoryData = inventoryData.filter((p) => (p.quantity || 0) > 0 && (p.quantity || 0) < (p.min_quantity || 10));
+            break;
+          case "outofstock":
+            inventoryData = inventoryData.filter((p) => (p.quantity || 0) <= 0);
+            break;
+        }
+      }
 
       const totalValue = inventoryData.reduce((sum, product) => {
         return sum + (product.piece_buying_price || 0) * (product.quantity || 0);
@@ -154,7 +218,15 @@ router.get(
   requireStoreContext,
   async (req, res) => {
     try {
-      const { startDate, endDate, sortBy } = req.query;
+      const {
+        startDate,
+        endDate,
+        sortBy,
+        category,
+        paymentMethod,
+        minPrice,
+        maxPrice
+      } = req.query;
 
       // Build date filter
       const dateFilter: Record<string, unknown> = {};
@@ -164,11 +236,18 @@ router.get(
         };
       }
 
+      // Build payment method filter
+      const paymentFilter: Record<string, unknown> = {};
+      if (paymentMethod && paymentMethod !== "all") {
+        paymentFilter.payment_method = paymentMethod;
+      }
+
       // Get sales with items and products
       const sales = (await Sale.findAll({
         where: storeScope(req.user!, {
           status: "completed",
           ...dateFilter,
+          ...paymentFilter,
         }),
         include: [
           {
@@ -177,6 +256,12 @@ router.get(
             include: [
               {
                 model: Product,
+                include: [
+                  {
+                    model: Category,
+                    attributes: ["id", "name"],
+                  },
+                ],
               },
             ],
           },
@@ -184,7 +269,13 @@ router.get(
         order: [["createdAt", "DESC"]],
       })) as Array<
         Sale & {
-          items?: Array<SaleItem & { Product?: { name?: string; sku?: string } }>;
+          items?: Array<SaleItem & {
+            Product?: {
+              name?: string;
+              sku?: string;
+              Category?: { id?: number; name?: string };
+            }
+          }>;
         }
       >;
 
@@ -193,6 +284,8 @@ router.get(
         productId: number;
         productName: string;
         productSku: string;
+        categoryId: number | null;
+        categoryName: string;
         quantity: number;
         revenue: number;
         profit: number;
@@ -206,11 +299,21 @@ router.get(
           const productId = item.product_id;
           const product = item.Product;
 
+          // Apply category filter
+          if (category && category !== "all") {
+            const categoryId = (product as any)?.Category?.id;
+            if (!categoryId || categoryId.toString() !== category) {
+              return;
+            }
+          }
+
           if (!productPerformanceMap.has(productId)) {
             productPerformanceMap.set(productId, {
               productId,
               productName: product?.name || "Unknown Product",
               productSku: product?.sku || "N/A",
+              categoryId: (product as any)?.Category?.id || null,
+              categoryName: (product as any)?.Category?.name || "Unknown",
               quantity: 0,
               revenue: 0,
               profit: 0,
@@ -243,10 +346,12 @@ router.get(
         });
       });
 
-      const productPerformance = Array.from(productPerformanceMap.values()) as Array<{
+      let productPerformance = Array.from(productPerformanceMap.values()) as Array<{
         productId: number;
         productName: string;
         productSku: string;
+        categoryId: number | null;
+        categoryName: string;
         quantity: number;
         revenue: number;
         profit: number;
@@ -254,6 +359,17 @@ router.get(
         averagePrice: number;
         totalSales: number;
       }>;
+
+      // Apply price range filter
+      if (minPrice || maxPrice) {
+        productPerformance = productPerformance.filter((product) => {
+          const price = product.averagePrice;
+          if (minPrice && price < parseFloat(minPrice as string)) return false;
+          if (maxPrice && price > parseFloat(maxPrice as string)) return false;
+          return true;
+        });
+      }
+
       // Sorting logic
       if (sortBy === "profit") {
         productPerformance.sort((a, b) => b.profit - a.profit);
@@ -377,21 +493,78 @@ router.get(
   requireStoreContext,
   async (req, res) => {
     try {
-      const { startDate, endDate } = req.query;
+      const {
+        startDate,
+        endDate,
+        category,
+        paymentMethod
+      } = req.query;
+
       const dateFilter: Record<string, unknown> = {};
       if (startDate && endDate) {
         dateFilter.date = {
           [Op.between]: [new Date(startDate as string), new Date(endDate as string)],
         };
       }
-      const where = storeScope(req.user!, { ...dateFilter });
-      const expenses = await Expense.findAll({ where });
+
+      const where: Record<string, any> = storeScope(req.user!, { ...dateFilter });
+
+      // Add category filter
+      if (category && category !== "all") {
+        where.category = category;
+      }
+
+      // Add payment method filter
+      if (paymentMethod && paymentMethod !== "all") {
+        where.payment_method = paymentMethod;
+      }
+
+      const expenses = await Expense.findAll({
+        where,
+        include: [
+          {
+            model: User,
+            as: "user",
+            attributes: ["id", "name"],
+          },
+        ],
+        order: [["date", "DESC"]],
+      });
+
       const totalExpenses = expenses.reduce((sum, exp) => sum + parseFloat(String(exp.amount || 0)), 0);
+
+      // Calculate category breakdown
+      const categoryMap = new Map<string, { amount: number; count: number }>();
+      expenses.forEach((expense) => {
+        const existing = categoryMap.get(expense.category) || { amount: 0, count: 0 };
+        categoryMap.set(expense.category, {
+          amount: existing.amount + parseFloat(String(expense.amount || 0)),
+          count: existing.count + 1,
+        });
+      });
+
+      const categoryBreakdown = Array.from(categoryMap.entries()).map(([category, data]) => ({
+        category,
+        amount: data.amount,
+        count: data.count,
+        percentage: totalExpenses > 0 ? (data.amount / totalExpenses) * 100 : 0,
+      })).sort((a, b) => b.amount - a.amount);
+
       res.json({
         success: true,
         data: {
+          expenses: expenses.map(expense => ({
+            id: expense.id,
+            description: expense.description,
+            amount: parseFloat(String(expense.amount || 0)),
+            category: expense.category,
+            date: expense.date,
+            payment_method: expense.payment_method,
+            user: (expense as any).user,
+          })),
           totalExpenses,
           count: expenses.length,
+          categoryBreakdown,
         },
       });
     } catch (error) {
