@@ -1,11 +1,11 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
-import { 
-  ResponsiveTable, 
-  createTextColumn, 
+import {
+  ResponsiveTable,
+  createTextColumn,
   createActionsColumn,
-  ResponsiveTableColumn 
+  ResponsiveTableColumn,
 } from "@/components/ui/responsive-table";
 
 interface Supplier {
@@ -26,36 +26,22 @@ interface SupplierListProps {
 
 const SupplierList: React.FC<SupplierListProps> = ({ suppliers, onEdit, onDelete }) => {
   const columns: ResponsiveTableColumn<Supplier>[] = [
-    createTextColumn(
-      "name",
-      "Name",
-      (supplier) => supplier.name,
-      { priority: 1 }
-    ),
+    createTextColumn("name", "Name", (supplier) => supplier.name, { priority: 1 }),
     createTextColumn(
       "contact_person",
       "Contact Person",
       (supplier) => supplier.contact_person || "-",
       { hideOnMobile: true, priority: 2 }
     ),
-    createTextColumn(
-      "email",
-      "Email",
-      (supplier) => supplier.email,
-      { priority: 3 }
-    ),
-    createTextColumn(
-      "phone",
-      "Phone",
-      (supplier) => supplier.phone,
-      { hideOnMobile: true, priority: 4 }
-    ),
-    createTextColumn(
-      "address",
-      "Address",
-      (supplier) => supplier.address,
-      { hideOnMobile: true, priority: 5 }
-    ),
+    createTextColumn("email", "Email", (supplier) => supplier.email, { priority: 3 }),
+    createTextColumn("phone", "Phone", (supplier) => supplier.phone, {
+      hideOnMobile: true,
+      priority: 4,
+    }),
+    createTextColumn("address", "Address", (supplier) => supplier.address, {
+      hideOnMobile: true,
+      priority: 5,
+    }),
     createActionsColumn(
       "actions",
       "Actions",

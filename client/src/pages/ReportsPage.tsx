@@ -170,11 +170,7 @@ export default function ReportsPage() {
 
           <TabsContent value="inventory">
             <InventoryStatus
-              products={
-                searchResults !== null
-                  ? searchResults
-                  : (inventoryData?.products || [])
-              }
+              products={searchResults !== null ? searchResults : inventoryData?.products || []}
               onSearch={handleSearch}
             />
           </TabsContent>

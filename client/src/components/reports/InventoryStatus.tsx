@@ -72,7 +72,6 @@ export default function InventoryStatus({ products, onSearch }: InventoryStatusP
         description: `Inventory CSV exported successfully with ${safeProducts.length} products`,
         variant: "default",
       });
-
     } catch (error) {
       console.error("Error downloading CSV:", error);
       toast({
@@ -209,7 +208,9 @@ export default function InventoryStatus({ products, onSearch }: InventoryStatusP
                 <TableRow key={product.id}>
                   <TableCell>{product.name}</TableCell>
                   <TableCell>{product.sku}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(product.piece_selling_price)}</TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(product.piece_selling_price)}
+                  </TableCell>
                   <TableCell className="text-right">{product.quantity || 0}</TableCell>
                   <TableCell>
                     <Badge

@@ -73,7 +73,7 @@ const ROLE_ROUTES: Record<AppRole, Route[]> = {
   ],
   client: [
     { path: "orders", label: "My Orders", icon: Package },
-    { path: "favorites", label: "Favorites", icon: Heart }
+    { path: "favorites", label: "Favorites", icon: Heart },
   ],
 };
 
@@ -155,18 +155,17 @@ export default function MainNav() {
   );
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b shadow-sm" style={{ background: 'linear-gradient(to right, #c8cbc8, white)' }}>
+    <nav
+      className="fixed top-0 left-0 right-0 z-50 border-b shadow-sm"
+      style={{ background: "linear-gradient(to right, #c8cbc8, white)" }}
+    >
       <div className="max-w-7xl mx-auto w-full px-6">
         <div className="h-16 min-h-16 flex items-center justify-between w-full">
           {/* Left logo linking to homepage */}
           <div className="flex items-center">
             <Link href={`${storePrefix}` || "/"}>
               <Button variant="ghost" className="flex items-center gap-2 px-2">
-                <img
-                  src="/logo.png"
-                  alt="Eltee Store Logo"
-                  className="w-14 h-14 object-contain"
-                />
+                <img src="/logo.png" alt="Eltee Store Logo" className="w-14 h-14 object-contain" />
               </Button>
             </Link>
           </div>

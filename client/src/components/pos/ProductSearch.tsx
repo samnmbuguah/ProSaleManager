@@ -4,8 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Package, ShoppingCart, ChevronLeft, ChevronRight, Grid3X3, List } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Search,
+  Package,
+  ShoppingCart,
+  ChevronLeft,
+  ChevronRight,
+  Grid3X3,
+  List,
+} from "lucide-react";
 import { getImageUrl } from "@/lib/api-endpoints";
 
 interface ProductSearchProps {
@@ -38,7 +52,9 @@ const ProductImageCarousel: React.FC<{
   if (images.length === 0) {
     return (
       <img
-        src={getImageUrl("https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=80&q=80")}
+        src={getImageUrl(
+          "https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=80&q=80"
+        )}
         alt={productName}
         className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-cover rounded-md border"
         onClick={onImageClick}
@@ -55,7 +71,9 @@ const ProductImageCarousel: React.FC<{
         onClick={onImageClick}
         onError={(e) => {
           const target = e.target as HTMLImageElement;
-          target.src = getImageUrl("https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=80&q=80");
+          target.src = getImageUrl(
+            "https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=80&q=80"
+          );
         }}
       />
       {images.length > 1 && (
@@ -92,10 +110,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   const [productsPerPage, setProductsPerPage] = useState(100);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const totalPages = Math.ceil(products.length / productsPerPage);
-  const paginatedProducts = products.slice(
-    (page - 1) * productsPerPage,
-    page * productsPerPage
-  );
+  const paginatedProducts = products.slice((page - 1) * productsPerPage, page * productsPerPage);
 
   // Debounce search
   const debounceRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -165,15 +180,21 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
               <div className="flex space-x-4 text-xs">
                 <div>
                   <span className="text-gray-600">Piece:</span>
-                  <span className="font-medium ml-1">{formatPrice(product.piece_selling_price)}</span>
+                  <span className="font-medium ml-1">
+                    {formatPrice(product.piece_selling_price)}
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Pack:</span>
-                  <span className="font-medium ml-1">{formatPrice(product.pack_selling_price)}</span>
+                  <span className="font-medium ml-1">
+                    {formatPrice(product.pack_selling_price)}
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-600">Dozen:</span>
-                  <span className="font-medium ml-1">{formatPrice(product.dozen_selling_price)}</span>
+                  <span className="font-medium ml-1">
+                    {formatPrice(product.dozen_selling_price)}
+                  </span>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
@@ -237,10 +258,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
           {/* Pagination Limit Dropdown */}
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">Show:</span>
-            <Select
-              value={productsPerPage.toString()}
-              onValueChange={handleProductsPerPageChange}
-            >
+            <Select value={productsPerPage.toString()} onValueChange={handleProductsPerPageChange}>
               <SelectTrigger className="w-20">
                 <SelectValue />
               </SelectTrigger>
@@ -257,12 +275,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
       </div>
 
       {/* Products Display */}
-      {false ? (
-        <div className="text-center py-8 text-gray-500">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-2"></div>
-          <p>Searching products...</p>
-        </div>
-      ) : paginatedProducts.length === 0 ? (
+      {paginatedProducts.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
           <p>No products found</p>
@@ -347,7 +360,8 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
       {/* Pagination Controls */}
       <div className="flex items-center justify-between mt-4">
         <div className="text-sm text-gray-600">
-          Showing {((page - 1) * productsPerPage) + 1} to {Math.min(page * productsPerPage, products.length)} of {products.length} products
+          Showing {(page - 1) * productsPerPage + 1} to{" "}
+          {Math.min(page * productsPerPage, products.length)} of {products.length} products
         </div>
         {totalPages > 1 && (
           <div className="flex items-center gap-2">

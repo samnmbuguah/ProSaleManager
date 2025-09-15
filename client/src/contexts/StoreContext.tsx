@@ -38,7 +38,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
           }
         })
-        .catch(() => { })
+        .catch(() => {})
         .finally(() => {
           setIsLoading(false);
         });
