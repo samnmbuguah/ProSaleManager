@@ -281,7 +281,12 @@ export default function HomePage() {
           {/* Top Header */}
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center space-x-2">
-              <img src="/logo.png" alt="Eltee Store Logo" className="w-16 h-16 object-contain" />
+              <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">B</span>
+              </div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent">
+                BYC Collections
+              </h1>
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
               {/* Cart Drawer */}
