@@ -7,6 +7,8 @@ import { seedCustomers } from "../src/seed/customers.js";
 import { seedCategories } from "../src/seed/categories.js";
 import { seedProducts } from "../src/seed/products.js";
 import { seedSuppliers } from "../src/seed/suppliers.js";
+import { seedSales } from "../src/seed/sales.js";
+import { seedExpenses } from "../src/seed/expenses.js";
 
 const syncDatabase = async () => {
   try {
@@ -50,6 +52,10 @@ const seedAll = async () => {
     await seedSuppliers();
     // 7. Seed customers
     await seedCustomers();
+    // 8. Seed sales (last 2 months of data)
+    await seedSales();
+    // 9. Seed expenses (last 2 months of data)
+    await seedExpenses();
 
     console.log("All data seeded successfully!");
     process.exit(0);
@@ -96,11 +102,14 @@ const resetAll = async () => {
     console.log("Database synced successfully");
 
     // Seed data in order
+    await seedStoresAndSuperAdmin();
     await seedUsers();
     await seedCategories();
     await seedProducts();
-    await seedCustomers();
     await seedSuppliers();
+    await seedCustomers();
+    await seedSales();
+    await seedExpenses();
 
     console.log("Database reset completed successfully!");
     process.exit(0);

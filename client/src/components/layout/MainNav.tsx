@@ -165,7 +165,10 @@ export default function MainNav() {
           <div className="flex items-center">
             <Link href={`${storePrefix}` || "/"}>
               <Button variant="ghost" className="flex items-center gap-2 px-2">
-                <img src="/logo.png" alt="Eltee Store Logo" className="w-14 h-14 object-contain" />
+                <div className="w-6 h-6 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">B</span>
+                </div>
+                <span className="hidden sm:inline font-semibold">BYC Collections</span>
               </Button>
             </Link>
           </div>

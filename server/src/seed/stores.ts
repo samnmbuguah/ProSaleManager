@@ -7,8 +7,8 @@ export async function seedStoresAndSuperAdmin() {
 
   // Create initial stores
   await Store.create({
-    name: "eltee",
-    subdomain: "eltee",
+    name: "BYC Collections",
+    subdomain: "byccollections",
   });
   await Store.create({
     name: "Demo Store",
