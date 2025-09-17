@@ -119,7 +119,33 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
 
   // Helper to build the payload for submission, converting numbers
   const buildProductPayload = () => {
-    const payload = { ...formData };
+    // Only include allowed fields for the backend
+    const allowedFields = [
+      "name",
+      "description",
+      "sku",
+      "barcode",
+      "category_id",
+      "piece_buying_price",
+      "piece_selling_price",
+      "pack_buying_price",
+      "pack_selling_price",
+      "dozen_buying_price",
+      "dozen_selling_price",
+      "quantity",
+      "min_quantity",
+      "image_url",
+      "is_active",
+      "stock_unit",
+    ] as const;
+
+    const payload: Record<string, unknown> = {};
+    allowedFields.forEach((field) => {
+      if (formData[field] !== undefined) {
+        payload[field] = formData[field];
+      }
+    });
+
     return payload;
   };
 

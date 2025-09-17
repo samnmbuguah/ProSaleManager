@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
 import { Product } from "@/types/product";
+import { getImageUrl } from "@/lib/api-endpoints";
 
 interface ProductCardProps {
   product: Product;
@@ -28,11 +29,13 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
       {/* Product Image */}
       <div className="w-full flex justify-center items-center pt-4">
         <img
-          src={
-            product.image_url && product.image_url.trim() !== ""
-              ? product.image_url
-              : "https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=120&q=80"
-          }
+          src={getImageUrl(
+            product.images && product.images.length > 0 && product.images[0].trim() !== ""
+              ? product.images[0]
+              : product.image_url && product.image_url.trim() !== ""
+                ? product.image_url
+                : "https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=120&q=80"
+          )}
           alt={product.name}
           className="w-28 h-28 object-cover rounded-md border"
         />
