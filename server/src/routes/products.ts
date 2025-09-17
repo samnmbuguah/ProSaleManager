@@ -468,11 +468,34 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.array(
       });
     }
 
+    // Start with current images from the database
+    let finalImages: string[] = [...(product.images || [])];
+    let finalImageUrl: string | null = product.image_url || null;
+
+    // Handle removed images first
+    if (productData.removedImages) {
+      try {
+        const removedImages = JSON.parse(productData.removedImages);
+        if (Array.isArray(removedImages) && removedImages.length > 0) {
+          // Filter out removed images
+          finalImages = finalImages.filter((img: string) => !removedImages.includes(img));
+
+          // Update the main image_url if it was removed
+          if (removedImages.includes(product.image_url)) {
+            finalImageUrl = finalImages.length > 0 ? finalImages[0] : null;
+          }
+        }
+      } catch (parseErr) {
+        console.error("Error parsing removedImages:", parseErr);
+        // Continue without removing images if parsing fails
+      }
+    }
+
     // Upload new images if provided
     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
       // Handle multiple images
-      const images: string[] = [];
-      let image_url: string | null = null;
+      const newImages: string[] = [];
+      let newImageUrl: string | null = null;
 
       for (const file of req.files) {
         try {
@@ -483,10 +506,10 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.array(
             imageUrl = getImageUrl(file);
           }
           if (imageUrl) {
-            images.push(imageUrl);
-            // Set the first image as the main image_url for backward compatibility
-            if (!image_url) {
-              image_url = imageUrl;
+            newImages.push(imageUrl);
+            // Set the first new image as the main image_url if no current image_url
+            if (!newImageUrl) {
+              newImageUrl = imageUrl;
             }
           }
         } catch (cloudErr) {
@@ -498,19 +521,29 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.array(
         }
       }
 
-      productData.image_url = image_url;
-      productData.images = images;
+      // Combine existing images (after removal) with new images
+      finalImages = [...finalImages, ...newImages];
+
+      // Set new image_url if we have new images and no current image_url
+      if (newImageUrl && !finalImageUrl) {
+        finalImageUrl = newImageUrl;
+      }
     } else if (req.file) {
       // Handle single image (backward compatibility)
       try {
-        let image_url;
+        let imageUrl;
         if (process.env.CLOUDINARY_URL) {
-          image_url = await uploadToCloudinary(req.file);
+          imageUrl = await uploadToCloudinary(req.file);
         } else {
-          image_url = getImageUrl(req.file);
+          imageUrl = getImageUrl(req.file);
         }
-        productData.image_url = image_url;
-        productData.images = image_url ? [image_url] : [];
+        if (imageUrl) {
+          finalImages.push(imageUrl);
+          // Set as main image_url if no current image_url
+          if (!finalImageUrl) {
+            finalImageUrl = imageUrl;
+          }
+        }
       } catch (cloudErr) {
         return res.status(400).json({
           success: false,
@@ -520,28 +553,15 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.array(
       }
     }
 
-    // Handle removed images
-    if (productData.removedImages) {
-      try {
-        const removedImages = JSON.parse(productData.removedImages);
-        if (Array.isArray(removedImages) && removedImages.length > 0) {
-          // Get current images and filter out removed ones
-          const currentImages = product.images || [];
-          const updatedImages = currentImages.filter((img: string) => !removedImages.includes(img));
+    // Set the final images and image_url
+    productData.image_url = finalImageUrl;
+    productData.images = finalImages;
 
-          // Update the images array
-          productData.images = updatedImages;
-
-          // Update the main image_url if it was removed
-          if (removedImages.includes(product.image_url)) {
-            productData.image_url = updatedImages.length > 0 ? updatedImages[0] : null;
-          }
-        }
-      } catch (parseErr) {
-        console.error("Error parsing removedImages:", parseErr);
-        // Continue without removing images if parsing fails
-      }
-    }
+    // Remove invalid fields that shouldn't be in the request body
+    delete productData.id;
+    delete productData.createdAt;
+    delete productData.updatedAt;
+    delete productData.removedImages;
 
     // Validate data
     if (productData.piece_selling_price !== undefined) {
@@ -573,6 +593,8 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.array(
 
     // Log the data being sent to update
     console.log("Updating product with data:", productData);
+    console.log("Final images array:", finalImages);
+    console.log("Final image_url:", finalImageUrl);
     console.log(
       "Before update: product.stock_unit =",
       product.stock_unit,
@@ -591,14 +613,29 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.array(
       data: updatedProduct
     });
   } catch (error) {
+    console.error("Product update error:", error);
+
     let errorMsg = "Error updating product";
-    if (error instanceof Error && error.message.includes("image")) {
-      errorMsg = error.message;
+    let statusCode = 500;
+
+    if (error instanceof Error) {
+      // Handle validation errors
+      if (error.message.includes("Validation error") || error.message.includes("notNull Violation")) {
+        errorMsg = "Validation error: " + error.message;
+        statusCode = 400;
+      } else if (error.message.includes("image")) {
+        errorMsg = error.message;
+        statusCode = 400;
+      } else if (error.message.includes("unique")) {
+        errorMsg = "A product with this SKU or barcode already exists";
+        statusCode = 400;
+      }
     }
-    res.status(500).json({
+
+    res.status(statusCode).json({
       success: false,
       message: errorMsg,
-      error: error instanceof Error ? error.message : error,
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 });
