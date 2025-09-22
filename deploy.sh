@@ -7,9 +7,9 @@ rm -rf production
 
 # 2. Create database backup before deployment
 echo "Creating database backup..."
-BACKUP_DIR="/home/elteijae/byccollections.com/backups"
+BACKUP_DIR="/home/elteijae/eltee_store/backups"
 BACKUP_FILE="database-backup-$(date +%F-%H%M%S).sqlite"
-ssh -p 21098 elteijae@198.54.114.246 "mkdir -p $BACKUP_DIR && if [ -f /home/elteijae/byccollections.com/database.sqlite ]; then cp /home/elteijae/byccollections.com/database.sqlite $BACKUP_DIR/$BACKUP_FILE; echo 'Database backed up to: $BACKUP_DIR/$BACKUP_FILE'; else echo 'No existing database to backup'; fi"
+ssh -p 21098 elteijae@198.54.114.246 "mkdir -p $BACKUP_DIR && if [ -f /home/elteijae/eltee_store/database.sqlite ]; then cp /home/elteijae/eltee_store/database.sqlite $BACKUP_DIR/$BACKUP_FILE; echo 'Database backed up to: $BACKUP_DIR/$BACKUP_FILE'; else echo 'No existing database to backup'; fi"
 
 # 3. Build frontend
 echo "Building frontend..."
@@ -57,7 +57,7 @@ echo "📝 Database management: Handled manually to preserve production data"
 
 # 10. Upload to cPanel server (excluding database file)
 echo "Uploading to server using rsync (excluding database)..."
-rsync -avz -e "ssh -p 21098" --exclude='database.sqlite' production/server/ elteijae@198.54.114.246:/home/elteijae/byccollections.com/
+rsync -avz -e "ssh -p 21098" --exclude='database.sqlite' production/server/ elteijae@198.54.114.246:/home/elteijae/eltee_store/
 
 # 11. Deployment complete
 
@@ -73,6 +73,6 @@ echo "   📝 Database managed manually (not uploaded)"
 echo ""
 echo "🔗 Application should be available at your domain"
 echo "🔑 Login credentials:"
-echo "   Admin: admin@byccollections.com / admin123"
-echo "   Manager: manager@byccollections.com / manager123"
-echo "   Sales: sales@byccollections.com / sales123" 
+echo "   Admin: eltee.admin@prosale.com / elteeadmin123"
+echo "   Cashier: eltee.cashier@prosale.com / eltee123"
+echo "   Manager: eltee.manager@prosale.com / elteemgr123"

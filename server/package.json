@@ -37,7 +37,8 @@
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write .",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "print:test": "tsx scripts/print-receipt.ts"
   },
   "keywords": [],
   "author": "",

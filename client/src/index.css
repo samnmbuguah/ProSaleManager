@@ -55,3 +55,22 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
 }
+
+/* Mobile-first tweaks to reduce overflow and spacing */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+@media (max-width: 640px) {
+  :root {
+    /* Slightly smaller base text on small screens */
+    font-size: 15px;
+  }
+
+  /* Reduce default container paddings where used */
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}

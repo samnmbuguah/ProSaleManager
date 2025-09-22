@@ -15,6 +15,7 @@ import orderRoutes from "./order.routes.js";
 import storesRoutes from "./stores.js";
 import favoritesRoutes from "./favorites.js";
 import posRoutes from "./pos.routes.js";
+import printingRoutes from "./printing.routes.js";
 import { ApiError } from "../utils/api-error.js";
 
 const router = express.Router();
@@ -39,5 +40,6 @@ router.use("/orders", orderRoutes);
 router.use("/stores", storesRoutes);
 router.use("/favorites", favoritesRoutes);
 router.use("/pos", posRoutes);
+router.use("/printing", printingRoutes);
 
 export default router;

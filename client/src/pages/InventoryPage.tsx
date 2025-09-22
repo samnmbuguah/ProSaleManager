@@ -128,6 +128,37 @@ const InventoryPage: React.FC = () => {
     }
   }, [dispatch, productsStatus, pagination.page, pagination.limit]);
 
+  // Helper function to build clean payload (only allowed fields)
+  const buildCleanPayload = () => {
+    const allowedFields = [
+      "name",
+      "description",
+      "sku",
+      "barcode",
+      "category_id",
+      "piece_buying_price",
+      "piece_selling_price",
+      "pack_buying_price",
+      "pack_selling_price",
+      "dozen_buying_price",
+      "dozen_selling_price",
+      "quantity",
+      "min_quantity",
+      "image_url",
+      "is_active",
+      "stock_unit",
+    ] as const;
+
+    const cleanPayload: Record<string, unknown> = {};
+    allowedFields.forEach((field) => {
+      if (formData[field] !== undefined) {
+        cleanPayload[field] = formData[field];
+      }
+    });
+
+    return cleanPayload;
+  };
+
   const handleSubmit = async (_unused: unknown, localImageFiles?: File[], onProgress?: (progress: number) => void, removedImages?: string[]) => {
     try {
       let response;
@@ -145,11 +176,12 @@ const InventoryPage: React.FC = () => {
 
         // Use FormData if uploading images
         const formDataToSend = new FormData();
-        Object.entries(formData).forEach(([key, value]) => {
+        const cleanPayload = buildCleanPayload();
+        Object.entries(cleanPayload).forEach(([key, value]) => {
           if (typeof value === "number" || typeof value === "boolean") {
             formDataToSend.append(key, value.toString());
           } else {
-            formDataToSend.append(key, Array.isArray(value) ? value.join(",") : (value ?? ""));
+            formDataToSend.append(key, Array.isArray(value) ? value.join(",") : String(value ?? ""));
           }
         });
         // Append all image files
@@ -186,11 +218,12 @@ const InventoryPage: React.FC = () => {
       } else if (removedImages && removedImages.length > 0) {
         // No new files but there are removed images - still need to send update
         const formDataToSend = new FormData();
-        Object.entries(formData).forEach(([key, value]) => {
+        const cleanPayload = buildCleanPayload();
+        Object.entries(cleanPayload).forEach(([key, value]) => {
           if (typeof value === "number" || typeof value === "boolean") {
             formDataToSend.append(key, value.toString());
           } else {
-            formDataToSend.append(key, Array.isArray(value) ? value.join(",") : (value ?? ""));
+            formDataToSend.append(key, Array.isArray(value) ? value.join(",") : String(value ?? ""));
           }
         });
         formDataToSend.append("removedImages", JSON.stringify(removedImages));
