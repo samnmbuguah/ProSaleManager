@@ -349,6 +349,11 @@ router.post("/", requireAuth, requireRole(["admin", "manager"]), upload.array("i
     (cleanProduct as Record<string, string | number | boolean | null | undefined | string[]>).image_url = image_url;
     (cleanProduct as Record<string, string | number | boolean | null | undefined | string[]>).images = images;
 
+    // Handle empty barcode - set to null to avoid unique constraint issues
+    if (cleanProduct.barcode === "" || cleanProduct.barcode === undefined) {
+      cleanProduct.barcode = null;
+    }
+
     // Validate required fields
     if (!cleanProduct.name || !cleanProduct.sku || !cleanProduct.category_id) {
       return res.status(400).json({
@@ -469,20 +474,26 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.array(
     }
 
     // Start with current images from the database
+    console.log("Current product images:", product.images);
+    console.log("Current product image_url:", product.image_url);
     let finalImages: string[] = [...(product.images || [])];
     let finalImageUrl: string | null = product.image_url || null;
 
     // Handle removed images first
     if (productData.removedImages) {
       try {
+        console.log("Processing removedImages:", productData.removedImages);
         const removedImages = JSON.parse(productData.removedImages);
         if (Array.isArray(removedImages) && removedImages.length > 0) {
+          console.log("Removing images:", removedImages);
           // Filter out removed images
           finalImages = finalImages.filter((img: string) => !removedImages.includes(img));
+          console.log("Final images after removal:", finalImages);
 
           // Update the main image_url if it was removed
           if (removedImages.includes(product.image_url)) {
             finalImageUrl = finalImages.length > 0 ? finalImages[0] : null;
+            console.log("Updated image_url after removal:", finalImageUrl);
           }
         }
       } catch (parseErr) {
@@ -558,10 +569,18 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.array(
     productData.images = finalImages;
 
     // Remove invalid fields that shouldn't be in the request body
-    delete productData.id;
-    delete productData.createdAt;
-    delete productData.updatedAt;
-    delete productData.removedImages;
+    const invalidFields = ['id', 'createdAt', 'updatedAt', 'removedImages'];
+    invalidFields.forEach(field => {
+      if (productData[field] !== undefined) {
+        console.log(`Removing invalid field: ${field} = ${productData[field]}`);
+        delete productData[field];
+      }
+    });
+
+    // Handle empty barcode - set to null to avoid unique constraint issues
+    if (productData.barcode === "" || productData.barcode === undefined) {
+      productData.barcode = null;
+    }
 
     // Validate data
     if (productData.piece_selling_price !== undefined) {
@@ -592,7 +611,7 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.array(
     }
 
     // Log the data being sent to update
-    console.log("Updating product with data:", productData);
+    console.log("Updating product with data:", JSON.stringify(productData, null, 2));
     console.log("Final images array:", finalImages);
     console.log("Final image_url:", finalImageUrl);
     console.log(
@@ -601,7 +620,13 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.array(
       "productData.stock_unit =",
       productData.stock_unit,
     );
-    await product.update(productData);
+
+    try {
+      await product.update(productData);
+    } catch (updateError) {
+      console.error("Product update failed:", updateError);
+      throw updateError;
+    }
     await product.reload();
     console.log("After update: product.stock_unit =", product.stock_unit);
 

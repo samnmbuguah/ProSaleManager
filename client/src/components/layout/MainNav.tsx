@@ -159,16 +159,13 @@ export default function MainNav() {
       className="fixed top-0 left-0 right-0 z-50 border-b shadow-sm"
       style={{ background: "linear-gradient(to right, #c8cbc8, white)" }}
     >
-      <div className="max-w-7xl mx-auto w-full px-6">
-        <div className="h-16 min-h-16 flex items-center justify-between w-full">
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6">
+        <div className="h-14 sm:h-16 min-h-14 sm:min-h-16 flex items-center justify-between w-full">
           {/* Left logo linking to homepage */}
           <div className="flex items-center">
             <Link href={`${storePrefix}` || "/"}>
-              <Button variant="ghost" className="flex items-center gap-2 px-2">
-                <div className="w-6 h-6 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">B</span>
-                </div>
-                <span className="hidden sm:inline font-semibold">BYC Collections</span>
+              <Button variant="ghost" className="flex items-center gap-2 px-1 sm:px-2">
+                <img src="/logo.png" alt="Eltee Store Logo" className="w-10 h-10 sm:w-14 sm:h-14 object-contain" />
               </Button>
             </Link>
           </div>
@@ -196,12 +193,12 @@ export default function MainNav() {
 
           {/* Desktop Menu */}
           {(user.role as AppRole) !== "client" && (
-            <div className="hidden md:flex items-center gap-x-4">
+            <div className="hidden md:flex items-center gap-x-3">
               <NavLinks />
             </div>
           )}
 
-          <div className="flex items-center gap-x-2">
+          <div className="flex items-center gap-x-1.5 sm:gap-x-2">
             {/* Floating Cart Button */}
             <Button
               variant="ghost"
@@ -211,7 +208,7 @@ export default function MainNav() {
             >
               <ShoppingCart className="h-5 w-5" />
               {cart.items.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs px-1">
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] sm:text-xs px-1">
                   {cart.items.length}
                 </span>
               )}
@@ -222,10 +219,10 @@ export default function MainNav() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="flex items-center gap-x-2 hover:bg-accent"
+                  className="flex items-center gap-x-1.5 hover:bg-accent"
                 >
                   <User className="h-4 w-4" />
-                  <span className="truncate align-middle">{firstName}</span>
+                  <span className="truncate align-middle text-sm">{firstName}</span>
                 </Button>
               </Link>
             </div>

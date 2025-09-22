@@ -5,8 +5,9 @@ import { MessageSquare } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import type { ReceiptData } from "@/hooks/use-pos";
 import { useReceiptSettingsApi } from "@/lib/receipt-settings";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
+import { api } from "@/lib/api";
 
 interface ReceiptPreviewProps {
   receipt: ReceiptData;
@@ -23,19 +24,32 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
     documentTitle: `Receipt_${receipt?.transaction_id || ""}`,
   });
 
+  const [isPrinting, setIsPrinting] = useState(false);
+
+  const handleLanText = async () => {
+    try {
+      setIsPrinting(true);
+      await api.post("/printing/print-sale", { saleId: receipt.id });
+    } catch (e) {
+      console.error("LAN text print failed", e);
+      alert("LAN text print failed. Verify server LAN_PRINTER_IP and port 9100.");
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
   if (!receipt) {
     return null;
   }
   if (isLoading) return <div>Loading receipt settings...</div>;
-  if (isError)
-    return <div>Error loading receipt settings: {error?.message || "Unknown error"}</div>;
+  if (isError) return <div>Error loading receipt settings: {error?.message || "Unknown error"}</div>;
 
   // Format date safely
   const formattedDate = receipt.timestamp
     ? new Date(receipt.timestamp).toLocaleString("en-KE", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
+      dateStyle: "medium",
+      timeStyle: "short",
+    })
     : "Invalid Date";
 
   return (
@@ -45,13 +59,16 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
           Print / Save PDF
         </Button>
       </div>
-      <Card ref={printRef} className="w-full max-w-md mx-auto">
+      <Card
+        ref={printRef}
+        className="w-full max-w-md mx-auto print:w-[80mm] print:max-w-[80mm] print:mx-0 print:shadow-none print:border-0 print:text-[12px]"
+      >
         <CardHeader>
           <div className="flex justify-center mb-4">
             <img
               src="/logo.png"
               alt="Business Logo"
-              className="h-16 w-auto object-contain"
+              className="h-16 w-auto object-contain print:h-12"
               onError={(e) => {
                 // Fallback to JPEG if PNG fails
                 const target = e.target as HTMLImageElement;
@@ -61,24 +78,24 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
               }}
             />
           </div>
-          <CardTitle className="text-center">{settings.businessName}</CardTitle>
+          <CardTitle className="text-center print:text-base">{settings.businessName}</CardTitle>
           {settings.address && (
-            <div className="text-center text-muted-foreground">
+            <div className="text-center text-muted-foreground print:text-[11px]">
               <p>{settings.address}</p>
             </div>
           )}
           {(settings.phone || settings.email) && (
-            <div className="text-center text-muted-foreground">
+            <div className="text-center text-muted-foreground print:text-[11px]">
               {settings.phone && <p>Tel: {settings.phone}</p>}
               {settings.email && <p>Email: {settings.email}</p>}
             </div>
           )}
           {settings.website && (
-            <div className="text-center text-muted-foreground">
+            <div className="text-center text-muted-foreground print:text-[11px]">
               <p>{settings.website}</p>
             </div>
           )}
-          <div className="text-center text-muted-foreground mt-2">
+          <div className="text-center text-muted-foreground mt-2 print:text-[11px]">
             <p>Transaction ID: {receipt.transaction_id || "N/A"}</p>
             <p>{formattedDate}</p>
           </div>
@@ -86,9 +103,9 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
         <CardContent className="space-y-4">
           {receipt.customer && (
             <div className="border-b pb-2">
-              <p className="font-medium">{receipt.customer.name}</p>
-              {receipt.customer.phone && <p className="text-sm">{receipt.customer.phone}</p>}
-              {receipt.customer.email && <p className="text-sm">{receipt.customer.email}</p>}
+              <p className="font-medium print:text-[12px]">{receipt.customer.name}</p>
+              {receipt.customer.phone && <p className="text-sm print:text-[11px]">{receipt.customer.phone}</p>}
+              {receipt.customer.email && <p className="text-sm print:text-[11px]">{receipt.customer.email}</p>}
             </div>
           )}
 
@@ -104,7 +121,7 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
                 },
                 index: number
               ) => (
-                <div key={index} className="flex justify-between text-sm">
+                <div key={index} className="flex justify-between text-sm print:text-[11px]">
                   <div>
                     <span>{item.quantity}x </span>
                     <span>
@@ -121,21 +138,21 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
           </div>
 
           <div className="border-t pt-2">
-            <div className="flex justify-between font-medium">
+            <div className="flex justify-between font-medium print:text-[12px]">
               <span>Total</span>
               <span>{formatCurrency(receipt.total)}</span>
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground print:text-[11px]">
               Paid via {receipt.payment_method || "Unknown"}
               {receipt.payment_method === "cash" && (
                 <div className="mt-2">
                   {typeof receipt.cash_amount === "number" && (
                     <>
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-sm print:text-[11px]">
                         <span>Cash Tendered:</span>
                         <span>{formatCurrency(receipt.cash_amount)}</span>
                       </div>
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-sm print:text-[11px]">
                         <span>Change:</span>
                         <span>{formatCurrency(receipt.cash_amount - receipt.total)}</span>
                       </div>
@@ -146,10 +163,10 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
             </div>
           </div>
 
-          <div className="text-center mt-4 text-muted-foreground">{settings.thankYouMessage}</div>
+          <div className="text-center mt-4 text-muted-foreground print:text-[11px]">{settings.thankYouMessage}</div>
         </CardContent>
 
-        <CardFooter className="flex gap-2 justify-end">
+        <CardFooter className="flex gap-2 justify-end print:hidden">
           <Button variant="outline" size="sm" onClick={() => onSend("whatsapp")}>
             <FaWhatsapp className="w-4 h-4 mr-2" />
             WhatsApp
@@ -159,6 +176,9 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
             <MessageSquare className="w-4 h-4 mr-2" />
             SMS
             {receipt.receipt_status?.sms && <span className="ml-2 text-green-500">✓</span>}
+          </Button>
+          <Button variant="default" size="sm" onClick={handleLanText} disabled={isPrinting}>
+            {isPrinting ? "Printing..." : "Print to LAN (Text)"}
           </Button>
           <Button variant="outline" size="sm" onClick={onClose}>
             Close

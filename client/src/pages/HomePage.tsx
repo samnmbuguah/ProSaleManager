@@ -281,12 +281,7 @@ export default function HomePage() {
           {/* Top Header */}
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">B</span>
-              </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-yellow-500 to-yellow-600 bg-clip-text text-transparent">
-                BYC Collections
-              </h1>
+              <img src="/logo.png" alt="Eltee Store Logo" className="w-16 h-16 object-contain" />
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
               {/* Cart Drawer */}
@@ -629,11 +624,10 @@ export default function HomePage() {
 
         {/* Products Grid */}
         <div
-          className={`grid gap-3 sm:gap-4 md:gap-6 mb-8 ${
-            viewMode === "grid"
+          className={`grid gap-3 sm:gap-4 md:gap-6 mb-8 ${viewMode === "grid"
               ? "grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
               : "grid-cols-1"
-          }`}
+            }`}
         >
           {paginatedProducts.map((product) => (
             <ProductCard
@@ -793,12 +787,12 @@ export default function HomePage() {
               {(isLogin
                 ? loginForm.formState.errors.email
                 : registerForm.formState.errors.email) && (
-                <p className="text-sm text-red-600 mt-1">
-                  {isLogin
-                    ? loginForm.formState.errors.email?.message
-                    : registerForm.formState.errors.email?.message}
-                </p>
-              )}
+                  <p className="text-sm text-red-600 mt-1">
+                    {isLogin
+                      ? loginForm.formState.errors.email?.message
+                      : registerForm.formState.errors.email?.message}
+                  </p>
+                )}
             </div>
 
             {!isLogin && (
@@ -828,12 +822,12 @@ export default function HomePage() {
               {(isLogin
                 ? loginForm.formState.errors.password
                 : registerForm.formState.errors.password) && (
-                <p className="text-sm text-red-600 mt-1">
-                  {isLogin
-                    ? loginForm.formState.errors.password?.message
-                    : registerForm.formState.errors.password?.message}
-                </p>
-              )}
+                  <p className="text-sm text-red-600 mt-1">
+                    {isLogin
+                      ? loginForm.formState.errors.password?.message
+                      : registerForm.formState.errors.password?.message}
+                  </p>
+                )}
             </div>
 
             <div className="flex flex-col gap-3 pt-4">
