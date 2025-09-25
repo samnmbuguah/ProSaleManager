@@ -3,7 +3,6 @@ import os from "node:os";
 import path from "node:path";
 import { exec as _exec } from "node:child_process";
 import { promisify } from "node:util";
-import puppeteer from "puppeteer";
 import { ReceiptService } from "./receipt.service.js";
 
 const exec = promisify(_exec);
@@ -15,35 +14,20 @@ function formatCurrency(value: number) {
 export async function printSaleAsPdfToCups(saleId: number) {
     const printer = process.env.CUPS_PRINTER || "Thermal";
     const media = process.env.PDF_MEDIA || "Custom.80x200mm"; // or Custom.58x200mm
-    const pageWidthMm = media.includes("80") ? 80 : 58;
 
-    const html = await buildReceiptHtml(saleId, pageWidthMm);
+    // Fallback: print plain text receipt directly via CUPS (no puppeteer)
     const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "psm-receipt-"));
-    const htmlPath = path.join(tmpDir, "receipt.html");
-    const pdfPath = path.join(tmpDir, "receipt.pdf");
-    await fs.writeFile(htmlPath, html, "utf8");
+    const txtPath = path.join(tmpDir, "receipt.txt");
 
-    const browser = await puppeteer.launch({ args: ["--no-sandbox", "--font-render-hinting=none"] });
-    try {
-        const page = await browser.newPage();
-        await page.goto("file://" + htmlPath, { waitUntil: "networkidle0" });
-        await page.pdf({
-            path: pdfPath,
-            printBackground: true,
-            width: `${pageWidthMm}mm`,
-            margin: { top: "4mm", right: "0mm", bottom: "4mm", left: "0mm" },
-        });
-    } finally {
-        await browser.close();
-    }
+    const text = await ReceiptService.formatReceiptText(saleId);
+    await fs.writeFile(txtPath, text, "utf8");
 
-    // Send to CUPS
-    const cmd = `lp -d ${printer} -o media=${media} -o page-left=0 -o page-right=0 -o page-top=0 -o page-bottom=0 -o fit-to-page ${pdfPath}`;
+    // Send to CUPS as text. Note: formatting differs from PDF rendering.
+    const cmd = `lp -d ${printer} -o media=${media} -o page-left=0 -o page-right=0 -o page-top=0 -o page-bottom=0 ${txtPath}`;
     await exec(cmd);
 
     // cleanup
-    try { await fs.unlink(htmlPath); } catch { }
-    try { await fs.unlink(pdfPath); } catch { }
+    try { await fs.unlink(txtPath); } catch { }
     try { await fs.rmdir(tmpDir); } catch { }
 }
 
