@@ -787,7 +787,7 @@ router.post(
         if (product) {
           const currentQuantity = product.quantity || 0;
           const variance = (newQuantity || 0) - currentQuantity;
-          
+
           varianceResults.push({
             productId: product.id,
             productName: product.name,
@@ -842,14 +842,14 @@ router.get(
   async (req, res) => {
     try {
       const { type, format } = req.params;
-      const { 
-        search, 
-        category, 
-        stockStatus, 
-        minPrice, 
-        maxPrice, 
-        startDate, 
-        endDate 
+      const {
+        search,
+        category,
+        stockStatus,
+        minPrice,
+        maxPrice,
+        startDate,
+        endDate
       } = req.query;
 
       // Build where clause for filtering
@@ -921,11 +921,11 @@ router.get(
       }
 
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-      
+
       if (format === 'excel') {
         // Create Excel workbook
         const workbook = XLSX.utils.book_new();
-        
+
         if (type === 'inventory') {
           const worksheetData = filteredProducts.map(product => ({
             'Product Name': product.name,
@@ -938,7 +938,7 @@ router.get(
             'Status': product.is_active ? 'Active' : 'Inactive',
             'Created Date': new Date(product.created_at).toLocaleDateString()
           }));
-          
+
           const worksheet = XLSX.utils.json_to_sheet(worksheetData);
           XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
         } else if (type === 'stock-take') {
@@ -951,63 +951,63 @@ router.get(
             'Variance': '',
             'Notes': ''
           }));
-          
+
           const worksheet = XLSX.utils.json_to_sheet(worksheetData);
           XLSX.utils.book_append_sheet(workbook, worksheet, 'Stock Take');
         }
 
         const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-        
+
         res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         res.setHeader("Content-Disposition", `attachment; filename="${type}-export-${timestamp}.xlsx"`);
         res.send(excelBuffer);
-        
+
       } else if (format === 'pdf') {
         // For PDF, we'll return a simple text-based response
-        // In a real implementation, you'd use a PDF library like puppeteer or jsPDF
+        // In a real implementation, you might use a PDF library like jsPDF or pdfkit
         const pdfContent = `
 INVENTORY REPORT
 Generated: ${new Date().toLocaleString()}
 Total Products: ${filteredProducts.length}
 
-${filteredProducts.map(product => 
-  `${product.name} (${product.sku}) - Qty: ${product.quantity} - Price: KSh ${product.piece_selling_price || 0}`
-).join('\n')}
+${filteredProducts.map(product =>
+          `${product.name} (${product.sku}) - Qty: ${product.quantity} - Price: KSh ${product.piece_selling_price || 0}`
+        ).join('\n')}
         `;
-        
+
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", `attachment; filename="${type}-export-${timestamp}.pdf"`);
         res.send(pdfContent);
-        
+
       } else {
         // Default to CSV
-        const headers = type === 'inventory' 
+        const headers = type === 'inventory'
           ? ["Product Name", "SKU", "Category", "Selling Price", "Buying Price", "Current Quantity", "Min Quantity", "Status"]
           : ["Product Name", "SKU", "Category", "Current Quantity", "New Quantity", "Variance", "Notes"];
-        
+
         let csvContent = headers.join(",") + "\n";
-        
+
         filteredProducts.forEach((product) => {
-          const csvRow = type === 'inventory' 
+          const csvRow = type === 'inventory'
             ? [
-                `"${product.name.replace(/"/g, '""')}"`,
-                `"${product.sku.replace(/"/g, '""')}"`,
-                `"${product.category.replace(/"/g, '""')}"`,
-                product.piece_selling_price || 0,
-                product.piece_buying_price || 0,
-                product.quantity || 0,
-                product.min_quantity || 0,
-                product.is_active ? "Active" : "Inactive"
-              ]
+              `"${product.name.replace(/"/g, '""')}"`,
+              `"${product.sku.replace(/"/g, '""')}"`,
+              `"${product.category.replace(/"/g, '""')}"`,
+              product.piece_selling_price || 0,
+              product.piece_buying_price || 0,
+              product.quantity || 0,
+              product.min_quantity || 0,
+              product.is_active ? "Active" : "Inactive"
+            ]
             : [
-                `"${product.name.replace(/"/g, '""')}"`,
-                `"${product.sku.replace(/"/g, '""')}"`,
-                `"${product.category.replace(/"/g, '""')}"`,
-                product.quantity || 0,
-                "",
-                "",
-                ""
-              ];
+              `"${product.name.replace(/"/g, '""')}"`,
+              `"${product.sku.replace(/"/g, '""')}"`,
+              `"${product.category.replace(/"/g, '""')}"`,
+              product.quantity || 0,
+              "",
+              "",
+              ""
+            ];
           csvContent += csvRow.join(",") + "\n";
         });
 
