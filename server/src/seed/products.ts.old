@@ -1,0 +1,1532 @@
+import { Product, Category, Store } from "../models/index.js";
+import type { ProductAttributes } from "../models/Product.js";
+import fetch from "node-fetch";
+
+const PACK_DISCOUNT = 0.95; // 5% discount for pack
+const DOZEN_DISCOUNT = 0.9; // 10% discount for dozen
+
+const PEXELS_API_KEY = process.env.PEXELS_API_KEY;
+const PEXELS_API_URL = "https://api.pexels.com/v1/search";
+
+async function fetchPexelsImages(query: string, perPage = 3): Promise<string[]> {
+  const res = await fetch(
+    `${PEXELS_API_URL}?query=${encodeURIComponent(query)}&per_page=${perPage}`,
+    {
+      headers: {
+        Authorization: PEXELS_API_KEY!,
+      },
+    },
+  );
+  if (!res.ok) throw new Error(`Pexels API error: ${res.statusText}`);
+  const data = await res.json();
+  return data.photos.map((photo: Record<string, unknown>) => (photo.src as Record<string, unknown>).large as string);
+}
+
+interface ProductInput {
+  name: string;
+  sku: string;
+  category: string;
+  quantity: number;
+  piecePrice: number;
+  dozenPrice: number;
+  unitType: 'piece' | 'pack';
+  packSize?: number;
+}
+
+function createProduct(
+  product: ProductInput,
+  storeId: number,
+  categoryMap: Map<string, number>
+): ProductAttributes {
+  const { name, sku, category, quantity, piecePrice, dozenPrice, unitType, packSize = 1 } = product;
+  
+  // Calculate buying price (assuming 40% margin for retail)
+  const buyingPrice = Math.round(piecePrice * 0.6);
+  const buyingPricePerDozen = Math.round(dozenPrice * 0.6);
+  
+  // For pack items, calculate per-item price
+  const itemPrice = unitType === 'pack' ? piecePrice / (packSize || 1) : piecePrice;
+  const itemBuyingPrice = buyingPrice / (unitType === 'pack' ? (packSize || 1) : 1);
+  
+  // Calculate pack prices (3 items)
+  const packSizeActual = unitType === 'pack' ? (packSize || 3) : 3;
+  const packSellingPrice = Math.round(itemPrice * packSizeActual * PACK_DISCOUNT);
+  const packBuyingPrice = Math.round(itemBuyingPrice * packSizeActual * PACK_DISCOUNT);
+  
+  // Calculate dozen prices (12 items)
+  const dozenSellingPrice = dozenPrice;
+  const dozenBuyingPrice = buyingPricePerDozen;
+  
+  return {
+    name,
+    sku,
+    description: `${name} - ${category}`,
+    category_id: categoryMap.get(category) || 1,
+    piece_buying_price: Math.round(itemBuyingPrice),
+    piece_selling_price: Math.round(itemPrice),
+    pack_buying_price: packBuyingPrice,
+    pack_selling_price: packSellingPrice,
+    dozen_buying_price: dozenBuyingPrice,
+    dozen_selling_price: dozenSellingPrice,
+    quantity,
+    min_quantity: Math.max(1, Math.floor(quantity * 0.2)), // 20% of quantity or at least 1
+    is_active: quantity > 0,
+    images: [],
+    store_id: storeId,
+    stock_unit: unitType === 'pack' ? 'pack' : 'piece',
+    // Note: pack_size is not part of ProductAttributes, so we'll handle it separately if needed
+  };
+}
+
+function randomFrom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+function randomPrice(min: number, max: number): number {
+  return Math.round((Math.random() * (max - min) + min) * 100) / 100;
+}
+
+export const seedProducts = async (): Promise<void> => {
+  try {
+    console.log("\ud83d\ude80 Starting advanced product seeder...");
+
+    // Get all stores to seed products for
+    const elteeStore = await Store.findOne({ where: { name: "Eltee Store" } });
+    const elteeNairobiStore = await Store.findOne({ where: { name: "Eltee Store Nairobi" } });
+    const demoStore = await Store.findOne({ where: { name: "Demo Store" } });
+    
+    if (!elteeStore || !elteeNairobiStore || !demoStore) {
+      throw new Error("One or more stores not found");
+    }
+    
+    // We'll seed products for all stores
+    const stores = [elteeStore, elteeNairobiStore, demoStore];
+    
+    // Define base products for Eltee stores (Eltee Store and Eltee Store Nairobi)
+    const elteeProductsList = [
+      // Lingerie
+      { name: "Adult hotpants", sku: "ELT001", category: "Lingerie", quantity: 8, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Bikers", sku: "ELT002", category: "Lingerie", quantity: 10, piecePrice: 200, dozenPrice: 2400, unitType: 'piece' as const },
+      { name: "Bikers with lace", sku: "ELT003", category: "Lingerie", quantity: 6, piecePrice: 250, dozenPrice: 2400, unitType: 'piece' as const },
+      { name: "Boob tops", sku: "ELT004", category: "Lingerie", quantity: 21, piecePrice: 150, dozenPrice: 1800, unitType: 'piece' as const },
+      { name: "Boob tops cartoon", sku: "ELT005", category: "Lingerie", quantity: 18, piecePrice: 120, dozenPrice: 1200, unitType: 'piece' as const },
+      
+      // Bras
+      { name: "Bra cap A", sku: "ELT006", category: "Bras", quantity: 18, piecePrice: 400, dozenPrice: 4800, unitType: 'piece' as const },
+      { name: "Bra panty set", sku: "ELT007", category: "Bras", quantity: 11, piecePrice: 550, dozenPrice: 6600, unitType: 'piece' as const },
+      { name: "Cap B", sku: "ELT008", category: "Bras", quantity: 36, piecePrice: 400, dozenPrice: 4800, unitType: 'piece' as const },
+      { name: "Cap C", sku: "ELT009", category: "Bras", quantity: 42, piecePrice: 400, dozenPrice: 4800, unitType: 'piece' as const },
+      { name: "Cap D", sku: "ELT010", category: "Bras", quantity: 55, piecePrice: 450, dozenPrice: 5400, unitType: 'piece' as const },
+      { name: "Cap E", sku: "ELT011", category: "Bras", quantity: 0, piecePrice: 500, dozenPrice: 6000, unitType: 'piece' as const },
+      { name: "Cap F", sku: "ELT012", category: "Bras", quantity: 5, piecePrice: 550, dozenPrice: 6600, unitType: 'piece' as const },
+      { name: "Mtush bras", sku: "ELT061", category: "Bras", quantity: 0, piecePrice: 200, dozenPrice: 1800, unitType: 'piece' as const },
+      
+      // Accessories
+      { name: "Cartoon boxers 120", sku: "ELT017", category: "Accessories", quantity: 11, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Cartoon boxers 130", sku: "ELT018", category: "Accessories", quantity: 8, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Cartoon boxers 140", sku: "ELT019", category: "Accessories", quantity: 0, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Cartoon boxers 160", sku: "ELT020", category: "Accessories", quantity: 0, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Cartoon boxers 170", sku: "ELT021", category: "Accessories", quantity: 13, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Cartoon boxers 180", sku: "ELT022", category: "Accessories", quantity: 0, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Cartoon boxers L", sku: "ELT013", category: "Accessories", quantity: 36, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Cartoon boxers M", sku: "ELT014", category: "Accessories", quantity: 22, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Cartoon boxers S", sku: "ELT015", category: "Accessories", quantity: 22, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Cartoon boxers XL", sku: "ELT016", category: "Accessories", quantity: 18, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Handkerchiefs", sku: "ELT029", category: "Accessories", quantity: 108, piecePrice: 30, dozenPrice: 350, unitType: 'piece' as const },
+      { name: "School Socks", sku: "ELT062", category: "Accessories", quantity: 36, piecePrice: 100, dozenPrice: 1000, unitType: 'piece' as const },
+      
+      // Kids Wear
+      { name: "Checked boxers kids", sku: "ELT023", category: "Kids Wear", quantity: 39, piecePrice: 200, dozenPrice: 2200, unitType: 'pack' as const, packSize: 3 },
+      { name: "Kids 3 pack 13-15", sku: "ELT033", category: "Kids Wear", quantity: 0, piecePrice: 150, dozenPrice: 1600, unitType: 'pack' as const, packSize: 3 },
+      { name: "Kids 3 pack 2-3", sku: "ELT034", category: "Kids Wear", quantity: 36, piecePrice: 120, dozenPrice: 1200, unitType: 'pack' as const, packSize: 3 },
+      { name: "Kids 3 pack 3-4", sku: "ELT035", category: "Kids Wear", quantity: 36, piecePrice: 120, dozenPrice: 1200, unitType: 'pack' as const, packSize: 3 },
+      { name: "Kids 3 pack 5-6", sku: "ELT036", category: "Kids Wear", quantity: 21, piecePrice: 120, dozenPrice: 1200, unitType: 'pack' as const, packSize: 3 },
+      { name: "Kids 3 pack 7-8", sku: "ELT037", category: "Kids Wear", quantity: 45, piecePrice: 120, dozenPrice: 1200, unitType: 'pack' as const, packSize: 3 },
+      { name: "Kids 3 pack 9-10", sku: "ELT038", category: "Kids Wear", quantity: 21, piecePrice: 120, dozenPrice: 1200, unitType: 'pack' as const, packSize: 3 },
+      { name: "Kids 3 pack 11-12", sku: "ELT039", category: "Kids Wear", quantity: 12, piecePrice: 120, dozenPrice: 1200, unitType: 'pack' as const, packSize: 3 },
+      { name: "Kids bikers", sku: "ELT040", category: "Kids Wear", quantity: 11, piecePrice: 200, dozenPrice: 2200, unitType: 'piece' as const },
+      { name: "Kids hotpants 2XL", sku: "ELT041", category: "Kids Wear", quantity: 0, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Kids hotpants 3XL", sku: "ELT042", category: "Kids Wear", quantity: 0, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Kids hotpants 4XL", sku: "ELT043", category: "Kids Wear", quantity: 0, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Kids hotpants Dotted", sku: "ELT044", category: "Kids Wear", quantity: 0, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Kids hotpants L", sku: "ELT045", category: "Kids Wear", quantity: 0, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Kids hotpants S", sku: "ELT046", category: "Kids Wear", quantity: 0, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Kids plain boxers 2XL", sku: "ELT047", category: "Kids Wear", quantity: 0, piecePrice: 150, dozenPrice: 1800, unitType: 'piece' as const },
+      { name: "Kids plain boxers 3XL", sku: "ELT048", category: "Kids Wear", quantity: 0, piecePrice: 150, dozenPrice: 1800, unitType: 'piece' as const },
+      { name: "Kids plain boxers L", sku: "ELT049", category: "Kids Wear", quantity: 32, piecePrice: 150, dozenPrice: 1800, unitType: 'piece' as const },
+      { name: "Kids plain boxers M", sku: "ELT050", category: "Kids Wear", quantity: 13, piecePrice: 150, dozenPrice: 1800, unitType: 'piece' as const },
+      { name: "Kids plain boxers S", sku: "ELT051", category: "Kids Wear", quantity: 15, piecePrice: 150, dozenPrice: 1800, unitType: 'piece' as const },
+      { name: "Kids plain boxers XL", sku: "ELT052", category: "Kids Wear", quantity: 23, piecePrice: 150, dozenPrice: 1800, unitType: 'piece' as const },
+      { name: "Vests boys", sku: "ELT068", category: "Kids Wear", quantity: 54, piecePrice: 233, dozenPrice: 2400, unitType: 'pack' as const, packSize: 3 },
+      { name: "Vests girls", sku: "ELT069", category: "Kids Wear", quantity: 9, piecePrice: 233, dozenPrice: 2400, unitType: 'pack' as const, packSize: 3 },
+      
+      // Lingerie (continued)
+      { name: "Cotton", sku: "ELT025", category: "Lingerie", quantity: 96, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Cotton big", sku: "ELT026", category: "Lingerie", quantity: 360, piecePrice: 200, dozenPrice: 2200, unitType: 'piece' as const },
+      { name: "Cotton seamless", sku: "ELT027", category: "Lingerie", quantity: 138, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Cotton seamless big", sku: "ELT028", category: "Lingerie", quantity: 0, piecePrice: 200, dozenPrice: 2200, unitType: 'piece' as const },
+      { name: "High waist bikers", sku: "ELT030", category: "Lingerie", quantity: 0, piecePrice: 500, dozenPrice: 6000, unitType: 'piece' as const },
+      { name: "High waist lace", sku: "ELT031", category: "Lingerie", quantity: 0, piecePrice: 500, dozenPrice: 6000, unitType: 'piece' as const },
+      { name: "High waist seamless", sku: "ELT032", category: "Lingerie", quantity: 0, piecePrice: 400, dozenPrice: 4800, unitType: 'piece' as const },
+      { name: "Lace", sku: "ELT053", category: "Lingerie", quantity: 295, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Lace big", sku: "ELT054", category: "Lingerie", quantity: 0, piecePrice: 200, dozenPrice: 2200, unitType: 'piece' as const },
+      { name: "Seamless", sku: "ELT063", category: "Lingerie", quantity: 0, piecePrice: 200, dozenPrice: 1600, unitType: 'piece' as const },
+      { name: "Seamless big", sku: "ELT064", category: "Lingerie", quantity: 0, piecePrice: 200, dozenPrice: 2200, unitType: 'piece' as const },
+      { name: "Seamless bikers", sku: "ELT065", category: "Lingerie", quantity: 18, piecePrice: 250, dozenPrice: 2400, unitType: 'piece' as const },
+      { name: "Seamless high waist", sku: "ELT066", category: "Lingerie", quantity: 15, piecePrice: 450, dozenPrice: 5400, unitType: 'piece' as const },
+      { name: "Thong", sku: "ELT067", category: "Lingerie", quantity: 57, piecePrice: 150, dozenPrice: 1600, unitType: 'piece' as const },
+      
+      // Men's Underwear
+      { name: "Checked boxers men", sku: "ELT024", category: "Men's Underwear", quantity: 61, piecePrice: 233, dozenPrice: 2400, unitType: 'pack' as const, packSize: 3 },
+      { name: "Men boxers 2XL", sku: "ELT055", category: "Men's Underwear", quantity: 11, piecePrice: 250, dozenPrice: 2400, unitType: 'piece' as const },
+      { name: "Men boxers 3XL", sku: "ELT056", category: "Men's Underwear", quantity: 24, piecePrice: 250, dozenPrice: 2400, unitType: 'piece' as const },
+      { name: "Men boxers 4 XL", sku: "ELT057", category: "Men's Underwear", quantity: 36, piecePrice: 250, dozenPrice: 2400, unitType: 'piece' as const },
+      { name: "Men boxers 5 XL", sku: "ELT058", category: "Men's Underwear", quantity: 10, piecePrice: 250, dozenPrice: 2400, unitType: 'piece' as const },
+      { name: "Men boxers L", sku: "ELT059", category: "Men's Underwear", quantity: 0, piecePrice: 250, dozenPrice: 2400, unitType: 'piece' as const },
+      { name: "Men boxers XL", sku: "ELT060", category: "Men's Underwear", quantity: 19, piecePrice: 250, dozenPrice: 2400, unitType: 'piece' as const },
+      { name: "Vests men", sku: "ELT070", category: "Men's Underwear", quantity: 36, piecePrice: 250, dozenPrice: 2400, unitType: 'pack' as const, packSize: 3 }
+    ];
+
+    // Clear existing data
+    console.log("\ud83d\uddd1\ufe0f  Clearing existing products and categories...");
+    await Product.destroy({ where: {} });
+    await Category.destroy({ where: {} });
+    console.log("\u2705 Existing data cleared");
+
+    // Create categories and ensure IDs are returned
+    console.log("\ud83d\udcc2 Creating categories...");
+    const categories = await Category.bulkCreate(
+      [
+        { name: "Lingerie", description: "Women's lingerie and undergarments" },
+        { name: "Bras", description: "Women's bras and bralettes" },
+        { name: "Accessories", description: "Fashion accessories" },
+        { name: "Kids Wear", description: "Clothing for children" },
+        { name: "Men's Underwear", description: "Men's underwear and undergarments" },
+        // Keeping these categories for Demo Store
+        { name: "Shoes", description: "Footwear products" },
+        { name: "Boxers", description: "Men's underwear" },
+        { name: "Panties", description: "Women's underwear" },
+        { name: "Oil", description: "Beauty and wellness products" },
+        { name: "Service", description: "Service products" },
+      ],
+      { returning: true },
+    );
+    console.log(`\u2705 Created ${categories.length} categories`);
+
+    // Map category names to IDs for easy lookup
+    const categoryMap = new Map<string, number>();
+    categories.forEach((cat) => {
+      if (typeof cat.id === "number") {
+        categoryMap.set(String(cat.name), cat.id);
+      }
+    });
+
+    for (const store of stores) {
+      const storeId = store.id;
+      // Define base products (now with explicit prices)
+      // Base products for Eltee Store and Eltee Store Nairobi
+      const elteeProducts: ProductAttributes[] = [
+        // Lingerie
+        createProduct(
+          {
+            name: "Adult hotpants",
+            sku: "ELT001",
+            category: "Lingerie",
+            quantity: 8,
+            piecePrice: 200,
+            dozenPrice: 400,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Bikers",
+            sku: "ELT002",
+            category: "Lingerie",
+            quantity: 10,
+            piecePrice: 250,
+            dozenPrice: 450,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Bikers with lace",
+            sku: "ELT003",
+            category: "Lingerie",
+            quantity: 6,
+            piecePrice: 280,
+            dozenPrice: 500,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Boob tops",
+            sku: "ELT004",
+            category: "Lingerie",
+            quantity: 21,
+            piecePrice: 300,
+            dozenPrice: 550,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Boob tops cartoon",
+            sku: "ELT005",
+            category: "Lingerie",
+            quantity: 18,
+            piecePrice: 320,
+            dozenPrice: 580,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // Bras
+        createProduct(
+          {
+            name: "Bra cap A",
+            sku: "ELT006",
+            category: "Bras",
+            quantity: 18,
+            piecePrice: 350,
+            dozenPrice: 600,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Bra panty set",
+            sku: "ELT007",
+            category: "Bras",
+            quantity: 11,
+            piecePrice: 400,
+            dozenPrice: 700,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cap B",
+            sku: "ELT008",
+            category: "Bras",
+            quantity: 36,
+            piecePrice: 380,
+            dozenPrice: 650,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cap C",
+            sku: "ELT009",
+            category: "Bras",
+            quantity: 42,
+            piecePrice: 400,
+            dozenPrice: 700,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cap D",
+            sku: "ELT010",
+            category: "Bras",
+            quantity: 55,
+            piecePrice: 420,
+            dozenPrice: 750,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cap E",
+            sku: "ELT011",
+            category: "Bras",
+            quantity: 0,
+            piecePrice: 450,
+            dozenPrice: 800,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cap F",
+            sku: "ELT012",
+            category: "Bras",
+            quantity: 5,
+            piecePrice: 480,
+            dozenPrice: 850,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // Accessories - Cartoon Boxers
+        createProduct(
+          {
+            name: "Cartoon boxers L",
+            sku: "ELT013",
+            category: "Accessories",
+            quantity: 36,
+            piecePrice: 250,
+            dozenPrice: 450,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cartoon boxers M",
+            sku: "ELT014",
+            category: "Accessories",
+            quantity: 22,
+            piecePrice: 230,
+            dozenPrice: 420,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cartoon boxers S",
+            sku: "ELT015",
+            category: "Accessories",
+            quantity: 22,
+            piecePrice: 220,
+            dozenPrice: 400,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cartoon boxers XL",
+            sku: "ELT016",
+            category: "Accessories",
+            quantity: 18,
+            piecePrice: 270,
+            dozenPrice: 480,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cartoon boxers 120",
+            sku: "ELT017",
+            category: "Accessories",
+            quantity: 11,
+            piecePrice: 200,
+            dozenPrice: 380,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cartoon boxers 130",
+            sku: "ELT018",
+            category: "Accessories",
+            quantity: 8,
+            piecePrice: 210,
+            dozenPrice: 390,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cartoon boxers 140",
+            sku: "ELT019",
+            category: "Accessories",
+            quantity: 0,
+            piecePrice: 220,
+            dozenPrice: 400,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cartoon boxers 160",
+            sku: "ELT020",
+            category: "Accessories",
+            quantity: 0,
+            piecePrice: 240,
+            dozenPrice: 430,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cartoon boxers 170",
+            sku: "ELT021",
+            category: "Accessories",
+            quantity: 13,
+            piecePrice: 250,
+            dozenPrice: 450,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cartoon boxers 180",
+            sku: "ELT022",
+            category: "Accessories",
+            quantity: 0,
+            piecePrice: 260,
+            dozenPrice: 470,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // Kids Wear
+        createProduct(
+          {
+            name: "Checked boxers kids",
+            sku: "ELT023",
+            category: "Kids Wear",
+            quantity: 39,
+            piecePrice: 180,
+            dozenPrice: 350,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // Men's Underwear
+        createProduct(
+          {
+            name: "Checked boxers men",
+            sku: "ELT024",
+            category: "Men's Underwear",
+            quantity: 61,
+            piecePrice: 300,
+            dozenPrice: 550,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // Lingerie - Cotton
+        createProduct(
+          {
+            name: "Cotton",
+            sku: "ELT025",
+            category: "Lingerie",
+            quantity: 96,
+            piecePrice: 200,
+            dozenPrice: 400,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cotton big",
+            sku: "ELT026",
+            category: "Lingerie",
+            quantity: 360,
+            piecePrice: 220,
+            dozenPrice: 420,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cotton seamless",
+            sku: "ELT027",
+            category: "Lingerie",
+            quantity: 138,
+            piecePrice: 250,
+            dozenPrice: 450,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Cotton seamless big",
+            sku: "ELT028",
+            category: "Lingerie",
+            quantity: 0,
+            piecePrice: 270,
+            dozenPrice: 480,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // Accessories - Handkerchiefs
+        createProduct(
+          {
+            name: "Handkerchiefs",
+            sku: "ELT029",
+            category: "Accessories",
+            quantity: 108,
+            piecePrice: 50,
+            dozenPrice: 100,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // Lingerie - High Waist
+        createProduct(
+          {
+            name: "High waist bikers",
+            sku: "ELT030",
+            category: "Lingerie",
+            quantity: 0,
+            piecePrice: 280,
+            dozenPrice: 500,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "High waist lace",
+            sku: "ELT031",
+            category: "Lingerie",
+            quantity: 0,
+            piecePrice: 300,
+            dozenPrice: 550,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "High waist seamless",
+            sku: "ELT032",
+            category: "Lingerie",
+            quantity: 0,
+            piecePrice: 320,
+            dozenPrice: 580,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // Kids Wear - Packs
+        createProduct(
+          {
+            name: "Kids 3 pack 13-15",
+            sku: "ELT033",
+            category: "Kids Wear",
+            quantity: 0,
+            piecePrice: 500,
+            dozenPrice: 900,
+            unitType: 'pack',
+            packSize: 3
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids 3 pack 2-3",
+            sku: "ELT034",
+            category: "Kids Wear",
+            quantity: 36,
+            piecePrice: 400,
+            dozenPrice: 700,
+            unitType: 'pack',
+            packSize: 3
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids 3 pack 3-4",
+            sku: "ELT035",
+            category: "Kids Wear",
+            quantity: 36,
+            piecePrice: 420,
+            dozenPrice: 750,
+            unitType: 'pack',
+            packSize: 3
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids 3 pack 5-6",
+            sku: "ELT036",
+            category: "Kids Wear",
+            quantity: 21,
+            piecePrice: 450,
+            dozenPrice: 800,
+            unitType: 'pack',
+            packSize: 3
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids 3 pack 7-8",
+            sku: "ELT037",
+            category: "Kids Wear",
+            quantity: 45,
+            piecePrice: 480,
+            dozenPrice: 850,
+            unitType: 'pack',
+            packSize: 3
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids 3 pack 9-10",
+            sku: "ELT038",
+            category: "Kids Wear",
+            quantity: 21,
+            piecePrice: 500,
+            dozenPrice: 900,
+            unitType: 'pack',
+            packSize: 3
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids 3 pack 11-12",
+            sku: "ELT039",
+            category: "Kids Wear",
+            quantity: 12,
+            piecePrice: 520,
+            dozenPrice: 950,
+            unitType: 'pack',
+            packSize: 3
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // More Kids Wear
+        createProduct(
+          {
+            name: "Kids bikers",
+            sku: "ELT040",
+            category: "Kids Wear",
+            quantity: 11,
+            piecePrice: 220,
+            dozenPrice: 420,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids hotpants 2XL",
+            sku: "ELT041",
+            category: "Kids Wear",
+            quantity: 0,
+            piecePrice: 200,
+            dozenPrice: 380,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids hotpants 3XL",
+            sku: "ELT042",
+            category: "Kids Wear",
+            quantity: 0,
+            piecePrice: 210,
+            dozenPrice: 400,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids hotpants 4XL",
+            sku: "ELT043",
+            category: "Kids Wear",
+            quantity: 0,
+            piecePrice: 220,
+            dozenPrice: 420,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids hotpants Dotted",
+            sku: "ELT044",
+            category: "Kids Wear",
+            quantity: 0,
+            piecePrice: 230,
+            dozenPrice: 440,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids hotpants L",
+            sku: "ELT045",
+            category: "Kids Wear",
+            quantity: 0,
+            piecePrice: 200,
+            dozenPrice: 380,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids hotpants S",
+            sku: "ELT046",
+            category: "Kids Wear",
+            quantity: 0,
+            piecePrice: 180,
+            dozenPrice: 350,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // More Kids Wear - Plain Boxers
+        createProduct(
+          {
+            name: "Kids plain boxers 2XL",
+            sku: "ELT047",
+            category: "Kids Wear",
+            quantity: 0,
+            piecePrice: 220,
+            dozenPrice: 420,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids plain boxers 3XL",
+            sku: "ELT048",
+            category: "Kids Wear",
+            quantity: 0,
+            piecePrice: 230,
+            dozenPrice: 440,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids plain boxers L",
+            sku: "ELT049",
+            category: "Kids Wear",
+            quantity: 32,
+            piecePrice: 200,
+            dozenPrice: 380,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids plain boxers M",
+            sku: "ELT050",
+            category: "Kids Wear",
+            quantity: 13,
+            piecePrice: 180,
+            dozenPrice: 350,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids plain boxers S",
+            sku: "ELT051",
+            category: "Kids Wear",
+            quantity: 15,
+            piecePrice: 170,
+            dozenPrice: 330,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Kids plain boxers XL",
+            sku: "ELT052",
+            category: "Kids Wear",
+            quantity: 23,
+            piecePrice: 210,
+            dozenPrice: 400,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // Lingerie - Lace
+        createProduct(
+          {
+            name: "Lace",
+            sku: "ELT053",
+            category: "Lingerie",
+            quantity: 295,
+            piecePrice: 250,
+            dozenPrice: 480,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Lace big",
+            sku: "ELT054",
+            category: "Lingerie",
+            quantity: 0,
+            piecePrice: 280,
+            dozenPrice: 520,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // Men's Underwear - Boxers
+        createProduct(
+          {
+            name: "Men boxers 2XL",
+            sku: "ELT055",
+            category: "Men's Underwear",
+            quantity: 11,
+            piecePrice: 350,
+            dozenPrice: 650,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Men boxers 3XL",
+            sku: "ELT056",
+            category: "Men's Underwear",
+            quantity: 24,
+            piecePrice: 370,
+            dozenPrice: 680,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Men boxers 4 XL",
+            sku: "ELT057",
+            category: "Men's Underwear",
+            quantity: 36,
+            piecePrice: 400,
+            dozenPrice: 720,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Men boxers 5 XL",
+            sku: "ELT058",
+            category: "Men's Underwear",
+            quantity: 10,
+            piecePrice: 430,
+            dozenPrice: 780,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Men boxers L",
+            sku: "ELT059",
+            category: "Men's Underwear",
+            quantity: 0,
+            piecePrice: 320,
+            dozenPrice: 600,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Men boxers XL",
+            sku: "ELT060",
+            category: "Men's Underwear",
+            quantity: 19,
+            piecePrice: 340,
+            dozenPrice: 630,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // Bras - Mtush
+        createProduct(
+          {
+            name: "Mtush bras",
+            sku: "ELT061",
+            category: "Bras",
+            quantity: 0,
+            piecePrice: 400,
+            dozenPrice: 750,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // Accessories - School Socks
+        createProduct(
+          {
+            name: "School Socks",
+            sku: "ELT062",
+            category: "Accessories",
+            quantity: 36,
+            piecePrice: 80,
+            dozenPrice: 150,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // Lingerie - Seamless
+        createProduct(
+          {
+            name: "Seamless",
+            sku: "ELT063",
+            category: "Lingerie",
+            quantity: 0,
+            piecePrice: 280,
+            dozenPrice: 520,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Seamless big",
+            sku: "ELT064",
+            category: "Lingerie",
+            quantity: 0,
+            piecePrice: 300,
+            dozenPrice: 550,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Seamless bikers",
+            sku: "ELT065",
+            category: "Lingerie",
+            quantity: 18,
+            piecePrice: 320,
+            dozenPrice: 580,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Seamless high waist",
+            sku: "ELT066",
+            category: "Lingerie",
+            quantity: 15,
+            piecePrice: 340,
+            dozenPrice: 620,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // Lingerie - Thong
+        createProduct(
+          {
+            name: "Thong",
+            sku: "ELT067",
+            category: "Lingerie",
+            quantity: 57,
+            piecePrice: 220,
+            dozenPrice: 420,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        
+        // Vests
+        createProduct(
+          {
+            name: "Vests boys",
+            sku: "ELT068",
+            category: "Lingerie",
+            quantity: 54,
+            piecePrice: 180,
+            dozenPrice: 350,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Vests girls",
+            sku: "ELT069",
+            category: "Lingerie",
+            quantity: 9,
+            piecePrice: 180,
+            dozenPrice: 350,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        ),
+        createProduct(
+          {
+            name: "Vests men",
+            sku: "ELT070",
+            category: "Men's Underwear",
+            quantity: 36,
+            piecePrice: 200,
+            dozenPrice: 380,
+            unitType: 'piece'
+          },
+          storeId,
+          categoryMap
+        )
+      ];
+      
+      // Demo store products (original products)
+      const demoProducts: ProductAttributes[] = [
+        {
+          name: "Nike Air Max",
+          description: "Comfortable everyday sneakers",
+          sku: "SHOE001",
+          category_id: categoryMap.get("Shoes") ?? 1,
+          piece_buying_price: 1350.0,
+          piece_selling_price: 1800.0,
+          pack_buying_price: 1350.0 * 3 * PACK_DISCOUNT,
+          pack_selling_price: 1800.0 * 3 * PACK_DISCOUNT,
+          dozen_buying_price: 1350.0 * 12 * DOZEN_DISCOUNT,
+          dozen_selling_price: 1800.0 * 12 * DOZEN_DISCOUNT,
+          quantity: 20,
+          min_quantity: 5,
+          is_active: true,
+          images: [],
+          store_id: storeId,
+          stock_unit: "piece",
+        },
+        {
+          name: "Adidas Ultraboost",
+          description: "Premium running shoes",
+          sku: "SHOE002",
+          category_id: categoryMap.get("Shoes") ?? 1,
+          piece_buying_price: 1500.0,
+          piece_selling_price: 2000.0,
+          pack_buying_price: 1500.0 * 3 * PACK_DISCOUNT,
+          pack_selling_price: 2000.0 * 3 * PACK_DISCOUNT,
+          dozen_buying_price: 1500.0 * 12 * DOZEN_DISCOUNT,
+          dozen_selling_price: 2000.0 * 12 * DOZEN_DISCOUNT,
+          quantity: 15,
+          min_quantity: 5,
+          is_active: true,
+          images: [],
+          store_id: storeId,
+          stock_unit: "piece",
+        },
+        {
+          name: "Victoria Secret Pink Panty",
+          description: "Elegant lace panties",
+          sku: "PAN001",
+          category_id: categoryMap.get("Panties") ?? 1,
+          piece_buying_price: 180.0,
+          piece_selling_price: 315.0,
+          pack_buying_price: 180.0 * 3 * PACK_DISCOUNT,
+          pack_selling_price: 315.0 * 3 * PACK_DISCOUNT,
+          dozen_buying_price: 180.0 * 12 * DOZEN_DISCOUNT,
+          dozen_selling_price: 315.0 * 12 * DOZEN_DISCOUNT,
+          quantity: 10,
+          min_quantity: 3,
+          is_active: true,
+          images: [],
+          store_id: storeId,
+          stock_unit: "piece",
+        },
+        {
+          name: "Cotton Hipster Panty",
+          description: "Comfortable cotton panties",
+          sku: "PAN002",
+          category_id: categoryMap.get("Panties") ?? 1,
+          piece_buying_price: 150.0,
+          piece_selling_price: 250.0,
+          pack_buying_price: 150.0 * 3 * PACK_DISCOUNT,
+          pack_selling_price: 250.0 * 3 * PACK_DISCOUNT,
+          dozen_buying_price: 150.0 * 12 * DOZEN_DISCOUNT,
+          dozen_selling_price: 250.0 * 12 * DOZEN_DISCOUNT,
+          quantity: 12,
+          min_quantity: 3,
+          is_active: true,
+          images: [],
+          store_id: storeId,
+          stock_unit: "piece",
+        },
+        {
+          name: "Calvin Klein Boxer Brief",
+          description: "Premium cotton boxer briefs",
+          sku: "BOX001",
+          category_id: categoryMap.get("Boxers") ?? 1,
+          piece_buying_price: 280.0,
+          piece_selling_price: 450.0,
+          pack_buying_price: 280.0 * 3 * PACK_DISCOUNT,
+          pack_selling_price: 450.0 * 3 * PACK_DISCOUNT,
+          dozen_buying_price: 280.0 * 12 * DOZEN_DISCOUNT,
+          dozen_selling_price: 450.0 * 12 * DOZEN_DISCOUNT,
+          quantity: 8,
+          min_quantity: 2,
+          is_active: true,
+          images: [],
+          store_id: storeId,
+          stock_unit: "piece",
+        },
+        {
+          name: "Nike Dri-FIT Boxer",
+          description: "Sports performance boxers",
+          sku: "BOX002",
+          category_id: categoryMap.get("Boxers") ?? 1,
+          piece_buying_price: 250.0,
+          piece_selling_price: 400.0,
+          pack_buying_price: 250.0 * 3 * PACK_DISCOUNT,
+          pack_selling_price: 400.0 * 3 * PACK_DISCOUNT,
+          dozen_buying_price: 250.0 * 12 * DOZEN_DISCOUNT,
+          dozen_selling_price: 400.0 * 12 * DOZEN_DISCOUNT,
+          quantity: 10,
+          min_quantity: 2,
+          is_active: true,
+          images: [],
+          store_id: storeId,
+          stock_unit: "piece",
+        },
+        {
+          name: "Victoria Secret Push-Up Bra",
+          description: "Luxury push-up bra",
+          sku: "BRA001",
+          category_id: categoryMap.get("Bras") ?? 1,
+          piece_buying_price: 750.0,
+          piece_selling_price: 1200.0,
+          pack_buying_price: 750.0 * 3 * PACK_DISCOUNT,
+          pack_selling_price: 1200.0 * 3 * PACK_DISCOUNT,
+          dozen_buying_price: 750.0 * 12 * DOZEN_DISCOUNT,
+          dozen_selling_price: 1200.0 * 12 * DOZEN_DISCOUNT,
+          quantity: 6,
+          min_quantity: 2,
+          is_active: true,
+          images: [],
+          store_id: storeId,
+          stock_unit: "piece",
+        },
+        {
+          name: "Sports Bra",
+          description: "High-performance sports bra",
+          sku: "BRA002",
+          category_id: categoryMap.get("Bras") ?? 1,
+          piece_buying_price: 600.0,
+          piece_selling_price: 900.0,
+          pack_buying_price: 600.0 * 3 * PACK_DISCOUNT,
+          pack_selling_price: 900.0 * 3 * PACK_DISCOUNT,
+          dozen_buying_price: 600.0 * 12 * DOZEN_DISCOUNT,
+          dozen_selling_price: 900.0 * 12 * DOZEN_DISCOUNT,
+          quantity: 8,
+          min_quantity: 2,
+          is_active: true,
+          images: [],
+          store_id: storeId,
+          stock_unit: "piece",
+        },
+        {
+          name: "Coconut Oil",
+          description: "Pure organic coconut oil",
+          sku: "OIL001",
+          category_id: categoryMap.get("Oil") ?? 1,
+          piece_buying_price: 230.0,
+          piece_selling_price: 350.0,
+          pack_buying_price: 230.0 * 3 * PACK_DISCOUNT,
+          pack_selling_price: 350.0 * 3 * PACK_DISCOUNT,
+          dozen_buying_price: 230.0 * 12 * DOZEN_DISCOUNT,
+          dozen_selling_price: 350.0 * 12 * DOZEN_DISCOUNT,
+          quantity: 15,
+          min_quantity: 5,
+          is_active: true,
+          images: [],
+          store_id: storeId,
+          stock_unit: "piece",
+        },
+        {
+          name: "Olive Oil",
+          description: "Extra virgin olive oil",
+          sku: "OIL002",
+          category_id: categoryMap.get("Oil") ?? 1,
+          piece_buying_price: 280.0,
+          piece_selling_price: 400.0,
+          pack_buying_price: 280.0 * 3 * PACK_DISCOUNT,
+          pack_selling_price: 400.0 * 3 * PACK_DISCOUNT,
+          dozen_buying_price: 280.0 * 12 * DOZEN_DISCOUNT,
+          dozen_selling_price: 400.0 * 12 * DOZEN_DISCOUNT,
+          quantity: 12,
+          min_quantity: 5,
+          is_active: true,
+          images: [],
+          store_id: storeId,
+          stock_unit: "piece",
+        },
+        {
+          name: "Delivery Service",
+          description: "Product delivery service",
+          sku: "SRV001",
+          category_id: categoryMap.get("Service") ?? 1,
+          piece_buying_price: 100.0,
+          piece_selling_price: 150.0,
+          pack_buying_price: 100.0 * 3 * PACK_DISCOUNT,
+          pack_selling_price: 150.0 * 3 * PACK_DISCOUNT,
+          dozen_buying_price: 100.0 * 12 * DOZEN_DISCOUNT,
+          dozen_selling_price: 150.0 * 12 * DOZEN_DISCOUNT,
+          quantity: 999999,
+          min_quantity: 0,
+          is_active: true,
+          images: [],
+          store_id: storeId,
+          stock_unit: "piece",
+        },
+      ];
+
+      // Generate additional random products
+      const PRODUCT_ADJECTIVES = [
+        "Classic",
+        "Modern",
+        "Premium",
+        "Eco",
+        "Sport",
+        "Luxury",
+        "Basic",
+        "Smart",
+        "Pro",
+        "Ultra",
+      ];
+      const PRODUCT_TYPES = [
+        "Sneaker",
+        "Panty",
+        "Boxer",
+        "Bra",
+        "Oil",
+        "Service",
+        "Boot",
+        "Sandal",
+        "Shirt",
+        "Shorts",
+      ];
+      const BRANDS = [
+        "Nike",
+        "Adidas",
+        "Victoria",
+        "Calvin Klein",
+        "Puma",
+        "Reebok",
+        "Under Armour",
+        "Levi's",
+        "Hanes",
+        "Gucci",
+      ];
+      const randomProducts: ProductAttributes[] = Array.from({ length: 100 }, (_, i) => {
+        const brand = randomFrom(BRANDS);
+        const type = randomFrom(PRODUCT_TYPES);
+        const adj = randomFrom(PRODUCT_ADJECTIVES);
+        const name = `${brand} ${adj} ${type}`;
+        const sku = `${brand.slice(0, 3).toUpperCase()}${type.slice(0, 2).toUpperCase()}${i + 10}`;
+        const category = randomFrom(categories);
+        const piece_buying_price = randomPrice(100, 2000);
+        const piece_selling_price = piece_buying_price + randomPrice(50, 500);
+        const pack_buying_price = piece_buying_price * 3 * PACK_DISCOUNT;
+        const pack_selling_price = piece_selling_price * 3 * PACK_DISCOUNT;
+        const dozen_buying_price = piece_buying_price * 12 * DOZEN_DISCOUNT;
+        const dozen_selling_price = piece_selling_price * 12 * DOZEN_DISCOUNT;
+
+// Create products for Eltee stores
+if (store.name === 'Eltee Store' || store.name === 'Eltee Store Nairobi') {
+  try {
+    console.log(`\n\ud83d\udce6  Creating products for ${store.name}...`);
+    // Create products from the elteeProductsList
+    for (const product of elteeProductsList) {
+      const createdProduct = createProduct(
+        {
+          name: product.name,
+          sku: product.sku,
+          category: product.category,
+          quantity: product.quantity,
+          piecePrice: product.piecePrice,
+          dozenPrice: product.dozenPrice,
+          unitType: product.unitType,
+          packSize: product.packSize
+        },
+        store.id,
+        categoryMap
+      );
+      
+      productsToCreate.push(createdProduct);
+    }
+  } catch (error) {
+    console.error("❌ Error seeding products:", error);
+    throw error;
+  }
+};
+
+export const seedSuppliers = [
+  {
+    name: "Fashion Footwear Ltd",
+    email: "sales@fashionfootwear.com",
+    phone: "+254700000001",
+    address: "Industrial Area, Nairobi",
+  },
+  {
+    name: "Undergarments Wholesale Co",
+    email: "sales@ugwholesale.com",
+    phone: "+254700000002",
+    address: "Westlands, Nairobi",
+  },
+  {
+    name: "Beauty Products Distributors",
+    email: "info@beautydist.com",
+    phone: "+254700000003",
+    address: "Kilimani, Nairobi",
+  },
+  {
+    name: "Sports Gear Kenya",
+    email: "orders@sportsgear.co.ke",
+    phone: "+254700000004",
+    address: "Lavington, Nairobi",
+  },
+  {
+    name: "Luxury Lingerie Imports",
+    email: "sales@luxlingerie.com",
+    phone: "+254700000005",
+    address: "Karen, Nairobi",
+  },
+];
+
+export const seedProductSuppliers = [
+  {
+    product_number: "SHOE001",
+    supplier_email: "sales@fashionfootwear.com",
+    cost_price: "1400",
+    is_preferred: true,
+  },
+  {
+    product_number: "BOX001",
+    supplier_email: "sales@ugwholesale.com",
+    cost_price: "280",
+    is_preferred: true,
+  },
+  {
+    product_number: "PAN001",
+    supplier_email: "sales@ugwholesale.com",
+    cost_price: "180",
+    is_preferred: true,
+  },
+  {
+    product_number: "BRA001",
+    supplier_email: "sales@ugwholesale.com",
+    cost_price: "750",
+    is_preferred: true,
+  },
+  {
+    product_number: "OIL001",
+    supplier_email: "sales@beautydist.com",
+    cost_price: "230",
+    is_preferred: true,
+  },
+];
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seedProducts();
+}

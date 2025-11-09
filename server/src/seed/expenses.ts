@@ -93,14 +93,14 @@ const PAYMENT_METHODS = [
 function getRandomPaymentMethod(): string {
   const random = Math.random();
   let cumulative = 0;
-  
+
   for (const { method, weight } of PAYMENT_METHODS) {
     cumulative += weight;
     if (random <= cumulative) {
       return method;
     }
   }
-  
+
   return "mpesa"; // fallback
 }
 
@@ -117,7 +117,7 @@ function getExpenseAmount(category: typeof EXPENSE_CATEGORIES[0]): number {
 function shouldCreateExpenseOnDate(category: typeof EXPENSE_CATEGORIES[0], date: Date): boolean {
   const dayOfWeek = date.getDay();
   const dayOfMonth = date.getDate();
-  
+
   switch (category.frequency) {
     case "daily":
       // 30-50% chance on weekdays, 10-20% on weekends
@@ -126,7 +126,7 @@ function shouldCreateExpenseOnDate(category: typeof EXPENSE_CATEGORIES[0], date:
       } else {
         return Math.random() < 0.15; // 15% chance on weekends
       }
-      
+
     case "weekly":
       // 1-2 times per month, prefer weekdays
       if (dayOfWeek >= 1 && dayOfWeek <= 5) {
@@ -134,7 +134,7 @@ function shouldCreateExpenseOnDate(category: typeof EXPENSE_CATEGORIES[0], date:
       } else {
         return Math.random() < 0.05; // 5% chance on weekends
       }
-      
+
     case "monthly":
       // Once per month, prefer beginning or end of month
       if (dayOfMonth <= 5 || dayOfMonth >= 25) {
@@ -142,7 +142,7 @@ function shouldCreateExpenseOnDate(category: typeof EXPENSE_CATEGORIES[0], date:
       } else {
         return Math.random() < 0.05; // 5% chance in middle of month
       }
-      
+
     default:
       return Math.random() < 0.1;
   }
@@ -156,10 +156,12 @@ export async function seedExpenses(): Promise<void> {
     await Expense.destroy({ where: {} });
     console.log("🗑️ Cleared existing expenses data");
 
-    const stores = await Store.findAll();
-    if (!stores.length) {
-      throw new Error("No stores found. Please seed stores first.");
+    // Only seed expenses for Demo Store
+    const demoStore = await Store.findOne({ where: { name: "Demo Store" } });
+    if (!demoStore) {
+      throw new Error("Demo Store not found. Please seed stores first.");
     }
+    const stores = [demoStore];
 
     let totalExpensesCreated = 0;
 
@@ -168,7 +170,7 @@ export async function seedExpenses(): Promise<void> {
 
       // Get users (admins/managers) for this store who can create expenses
       const users = await User.findAll({
-        where: { 
+        where: {
           store_id: store.id,
           role: ["admin", "manager"]
         }
@@ -193,7 +195,7 @@ export async function seedExpenses(): Promise<void> {
             const description = faker.helpers.arrayElement(category.descriptions);
             const amount = getExpenseAmount(category);
             const paymentMethod = getRandomPaymentMethod();
-            
+
             // Add some randomness to the time within the day
             const expenseDate = new Date(date);
             expenseDate.setHours(
@@ -230,7 +232,7 @@ export async function seedExpenses(): Promise<void> {
     }
 
     console.log(`🎉 Expenses seeder completed! Total expenses created: ${totalExpensesCreated}`);
-    
+
     // Verify the data and show summary
     const totalExpensesInDb = await Expense.count();
     console.log(`📊 Verification: ${totalExpensesInDb} expenses in database`);

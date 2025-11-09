@@ -7,16 +7,16 @@ export async function seedStoresAndSuperAdmin() {
 
   // Create initial stores
   await Store.create({
-    name: "BYC Collections",
-    subdomain: "byccollections",
+    name: "Eltee Store",
+    subdomain: "eltee",
+  });
+  await Store.create({
+    name: "Eltee Store Nairobi",
+    subdomain: "eltee-nairobi",
   });
   await Store.create({
     name: "Demo Store",
     subdomain: "demo",
-  });
-  await Store.create({
-    name: "Branch Store",
-    subdomain: "branch",
   });
 
   // Seed a global super admin user (not tied to any store)
