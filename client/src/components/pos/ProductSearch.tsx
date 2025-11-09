@@ -21,6 +21,7 @@ import {
   List,
 } from "lucide-react";
 import { getImageUrl } from "@/lib/api-endpoints";
+import { parseProductImages } from "@/lib/utils";
 
 interface ProductSearchProps {
   products: Product[];
@@ -34,22 +35,28 @@ const ProductImageCarousel: React.FC<{
   images: string[];
   productName: string;
   onImageClick?: (e: React.MouseEvent) => void;
-}> = ({ images, productName, onImageClick }) => {
+  product?: Product; // Optional product for fallback to image_url
+}> = ({ images, productName, onImageClick, product }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  
+  // Use images array if available, otherwise fallback to image_url, then placeholder
+  const displayImages = images.length > 0 
+    ? images 
+    : (product?.image_url ? [product.image_url] : []);
 
   const goToPrevious = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    setCurrentIndex((prev) => (prev === 0 ? displayImages.length - 1 : prev - 1));
   };
 
   const goToNext = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    setCurrentIndex((prev) => (prev === displayImages.length - 1 ? 0 : prev + 1));
   };
 
-  if (images.length === 0) {
+  if (displayImages.length === 0) {
     return (
       <img
         src={getImageUrl(
@@ -65,7 +72,7 @@ const ProductImageCarousel: React.FC<{
   return (
     <div className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32">
       <img
-        src={getImageUrl(images[currentIndex])}
+        src={getImageUrl(displayImages[currentIndex])}
         alt={`${productName} - Image ${currentIndex + 1}`}
         className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-cover rounded-md border mx-auto"
         onClick={onImageClick}
@@ -76,7 +83,7 @@ const ProductImageCarousel: React.FC<{
           );
         }}
       />
-      {images.length > 1 && (
+      {displayImages.length > 1 && (
         <>
           <button
             className="absolute -left-2 top-1/2 -translate-y-1/2 h-6 w-6 bg-white/90 hover:bg-white border shadow-md rounded-full flex items-center justify-center z-20"
@@ -139,8 +146,9 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
     setPage(1); // Reset to first page when changing limit
   };
 
-  const formatPrice = (price: number) => {
-    return `KSh ${price.toLocaleString("en-KE", {
+  const formatPrice = (price: number | string | null | undefined) => {
+    const numPrice = typeof price === 'string' ? parseFloat(price) : Number(price) || 0;
+    return `KSh ${numPrice.toLocaleString("en-KE", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
@@ -158,8 +166,9 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
           {/* Product Image */}
           <div className="flex-shrink-0">
             <ProductImageCarousel
-              images={product.images || []}
+              images={parseProductImages(product.images)}
               productName={product.name}
+              product={product}
               onImageClick={(e) => e.stopPropagation()}
             />
           </div>
@@ -302,8 +311,9 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                   {/* Product Image Carousel */}
                   <div className="w-full flex justify-center items-center pb-2">
                     <ProductImageCarousel
-                      images={product.images || []}
+                      images={parseProductImages(product.images)}
                       productName={product.name}
+                      product={product}
                       onImageClick={(e) => e.stopPropagation()}
                     />
                   </div>

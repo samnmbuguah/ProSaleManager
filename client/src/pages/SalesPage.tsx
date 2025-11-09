@@ -55,11 +55,15 @@ function OrderDetailsDialog({
   open,
   onClose,
   onMarkFulfilled,
+  isAdmin,
+  isProcessing,
 }: {
   order: Order;
   open: boolean;
   onClose: () => void;
   onMarkFulfilled: () => void;
+  isAdmin: boolean;
+  isProcessing: boolean;
 }) {
   if (!order) return null;
   return (
@@ -90,9 +94,13 @@ function OrderDetailsDialog({
             </div>
           </div>
           <div className="flex gap-4 justify-end">
-            {order.status !== "completed" && order.status !== "fulfilled" && (
-              <Button variant="default" onClick={onMarkFulfilled}>
-                Mark as Fulfilled
+            {isAdmin && order.status !== "completed" && order.status !== "fulfilled" && (
+              <Button 
+                variant="default" 
+                onClick={onMarkFulfilled}
+                disabled={isProcessing}
+              >
+                {isProcessing ? "Processing..." : "Mark as Fulfilled"}
               </Button>
             )}
           </div>
@@ -114,6 +122,7 @@ export function SalesPage() {
   const { toast } = useToast();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
+  const [isProcessingOrder, setIsProcessingOrder] = useState(false);
 
   // Redux state
   const { sales, orders, status, pagination } = useSelector(
@@ -154,8 +163,8 @@ export function SalesPage() {
     }
   };
 
-  // Check if user has admin privileges
-  const isAdmin = user && ["admin", "manager", "super_admin"].includes(user.role);
+  // Check if user has admin or sales privileges
+  const isAdmin = user ? ["admin", "manager", "super_admin", "sales"].includes(user.role) : false;
 
   // Delete sale function
   const handleDeleteSale = async (saleId: number) => {
@@ -215,28 +224,50 @@ export function SalesPage() {
   const handleMarkFulfilled = useCallback(async () => {
     if (!selectedOrder) return;
 
+    setIsProcessingOrder(true);
     try {
       // Call the API to update order status to "completed"
       await api.put(`/orders/${selectedOrder.id}`, {
         status: "completed",
+        payment_status: "paid",
       });
 
-      // Update local state
-      setSelectedOrder({ ...selectedOrder, status: "completed" });
-
       // Show success message
-      alert("Order marked as fulfilled and inventory updated!");
+      toast({
+        title: "Order Fulfilled",
+        description: "Order has been marked as fulfilled and inventory has been updated.",
+        variant: "default",
+      });
 
       // Close the dialog
       setSelectedOrder(null);
 
       // Refetch orders data
-      window.location.reload(); // Simple refresh for now
-    } catch (error) {
+      dispatch(fetchOrders({ page: currentPage, pageSize }));
+    } catch (error: unknown) {
       console.error("Error marking order as fulfilled:", error);
-      alert("Failed to mark order as fulfilled. Please try again.");
+      const errorMessage =
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        error.response &&
+        typeof error.response === "object" &&
+        "data" in error.response &&
+        error.response.data &&
+        typeof error.response.data === "object" &&
+        "message" in error.response.data
+          ? (error.response.data as { message: string }).message
+          : "Failed to mark order as fulfilled. Please try again.";
+
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingOrder(false);
     }
-  }, [selectedOrder]);
+  }, [selectedOrder, dispatch, currentPage, pageSize, toast]);
 
   return (
     <div className="container mx-auto p-4 mt-16">
@@ -392,6 +423,8 @@ export function SalesPage() {
             open={!!selectedOrder}
             onClose={() => setSelectedOrder(null)}
             onMarkFulfilled={handleMarkFulfilled}
+            isAdmin={isAdmin}
+            isProcessing={isProcessingOrder}
           />
         </TabsContent>
       </Tabs>

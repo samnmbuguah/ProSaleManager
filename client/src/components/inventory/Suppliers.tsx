@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -61,13 +61,13 @@ const Suppliers = () => {
     }
   }, [dispatch, suppliersStatus]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-  };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,68 +153,60 @@ const Suppliers = () => {
     }
   };
 
-  const SupplierForm = () => (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="name">Name</Label>
-        <Input id="name" name="name" value={formData.name} onChange={handleInputChange} required />
-      </div>
+  // Reset form when dialog closes (but not when opening, to avoid interfering with typing)
+  const handleAddDialogClose = useCallback((open: boolean) => {
+    setIsAddDialogOpen(open);
+    if (!open) {
+      // Only reset when closing
+      setSelectedSupplier(null);
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        address: "",
+        contact_person: "",
+        status: "active" as const,
+      });
+    }
+  }, []);
 
-      <div>
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          value={formData.email}
-          onChange={handleInputChange}
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="phone">Phone</Label>
-        <Input
-          id="phone"
-          name="phone"
-          value={formData.phone}
-          onChange={handleInputChange}
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="address">Address</Label>
-        <Input
-          id="address"
-          name="address"
-          value={formData.address}
-          onChange={handleInputChange}
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="contact_person">Contact Person</Label>
-        <Input
-          id="contact_person"
-          name="contact_person"
-          value={formData.contact_person}
-          onChange={handleInputChange}
-        />
-      </div>
-
-      <DialogFooter>
-        <Button type="submit">{selectedSupplier ? "Update Supplier" : "Add Supplier"}</Button>
-      </DialogFooter>
-    </form>
-  );
+  const handleEditDialogClose = useCallback((open: boolean) => {
+    if (!open) {
+      // Only reset when closing
+      setSelectedSupplier(null);
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        address: "",
+        contact_person: "",
+        status: "active" as const,
+      });
+    }
+    setIsEditDialogOpen(open);
+  }, []);
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Suppliers</h2>
-        <Button onClick={() => setIsAddDialogOpen(true)}>Add Supplier</Button>
+        <Button 
+          onClick={() => {
+            // Reset form before opening dialog
+            setSelectedSupplier(null);
+            setFormData({
+              name: "",
+              email: "",
+              phone: "",
+              address: "",
+              contact_person: "",
+              status: "active" as const,
+            });
+            setIsAddDialogOpen(true);
+          }}
+        >
+          Add Supplier
+        </Button>
       </div>
 
       <div className="rounded-md border">
@@ -283,7 +275,7 @@ const Suppliers = () => {
         )}
       </div>
 
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+      <Dialog open={isAddDialogOpen} onOpenChange={handleAddDialogClose}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Supplier</DialogTitle>
@@ -291,11 +283,70 @@ const Suppliers = () => {
               Fill in the supplier information below to add a new supplier to your system.
             </DialogDescription>
           </DialogHeader>
-          <SupplierForm />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="add-name">Name</Label>
+              <Input 
+                id="add-name" 
+                name="name" 
+                value={formData.name} 
+                onChange={handleInputChange} 
+                required 
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="add-email">Email</Label>
+              <Input
+                id="add-email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="add-phone">Phone</Label>
+              <Input
+                id="add-phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="add-address">Address</Label>
+              <Input
+                id="add-address"
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="add-contact_person">Contact Person</Label>
+              <Input
+                id="add-contact_person"
+                name="contact_person"
+                value={formData.contact_person}
+                onChange={handleInputChange}
+              />
+            </div>
+
+            <DialogFooter>
+              <Button type="submit">Add Supplier</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={handleEditDialogClose}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Supplier</DialogTitle>
@@ -303,7 +354,66 @@ const Suppliers = () => {
               Update the supplier information below. All fields marked with * are required.
             </DialogDescription>
           </DialogHeader>
-          <SupplierForm />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="edit-name">Name</Label>
+              <Input 
+                id="edit-name" 
+                name="name" 
+                value={formData.name} 
+                onChange={handleInputChange} 
+                required 
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-phone">Phone</Label>
+              <Input
+                id="edit-phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-address">Address</Label>
+              <Input
+                id="edit-address"
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-contact_person">Contact Person</Label>
+              <Input
+                id="edit-contact_person"
+                name="contact_person"
+                value={formData.contact_person}
+                onChange={handleInputChange}
+              />
+            </div>
+
+            <DialogFooter>
+              <Button type="submit">Update Supplier</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

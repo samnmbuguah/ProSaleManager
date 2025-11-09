@@ -20,11 +20,12 @@ export interface PurchaseOrderItem {
 }
 
 // Define schema for PurchaseOrderItem used within the form
+// Coerce numeric strings coming from APIs or inputs into numbers
 const purchaseOrderItemSchema = z.object({
   product_id: z.union([z.number(), z.string()]),
-  quantity: z.number().int().positive("Quantity must be at least 1"),
-  buying_price: z.number().nonnegative("Buying price cannot be negative"),
-  selling_price: z.number().nonnegative("Selling price cannot be negative"),
+  quantity: z.coerce.number().int().positive("Quantity must be at least 1"),
+  buying_price: z.coerce.number().nonnegative("Buying price cannot be negative"),
+  selling_price: z.coerce.number().nonnegative("Selling price cannot be negative"),
   name: z.string().optional(),
   unit_type: z.string(),
 });

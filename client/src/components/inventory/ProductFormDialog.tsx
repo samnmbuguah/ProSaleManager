@@ -42,6 +42,14 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
 
   const { data: categories, isLoading, refetch } = useCategories();
 
+  // Ensure categories is always an array
+  const categoriesArray = React.useMemo(() => {
+    if (!categories) return [];
+    if (Array.isArray(categories)) return categories;
+    // If categories is not an array (unexpected format), return empty array
+    return [];
+  }, [categories]);
+
   // Refetch categories every time the dialog is opened
   React.useEffect(() => {
     if (open) {
@@ -51,14 +59,14 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
 
   // Load draft from localStorage on mount (only for add, not edit), and sanitize category_id
   React.useEffect(() => {
-    if (!selectedProduct && categories && categories.length > 0) {
+    if (!selectedProduct && categoriesArray.length > 0) {
       const draft = localStorage.getItem(FORM_DRAFT_KEY);
       if (draft) {
         try {
           const parsedDraft = JSON.parse(draft);
-          const validCategoryIds = categories.map((c) => c.id);
+          const validCategoryIds = categoriesArray.map((c) => c.id);
           if (!parsedDraft.category_id || !validCategoryIds.includes(parsedDraft.category_id)) {
-            parsedDraft.category_id = categories[0].id;
+            parsedDraft.category_id = categoriesArray[0].id;
           }
           setFormData({ ...formData, ...parsedDraft });
         } catch {
@@ -66,7 +74,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
         }
       }
     }
-  }, [selectedProduct, categories]);
+  }, [selectedProduct, categoriesArray]);
 
   // Save formData to localStorage on change (only for add, not edit)
   React.useEffect(() => {
@@ -229,15 +237,19 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   };
 
   const removeImage = (index: number) => {
+    if (!Array.isArray(imagePreviews) || index >= imagePreviews.length) {
+      return;
+    }
+
     const imageToRemove = imagePreviews[index];
 
     // Check if it's an existing image (from server) or a new image (blob URL)
-    if (imageToRemove.startsWith('blob:')) {
+    if (typeof imageToRemove === "string" && imageToRemove.startsWith('blob:')) {
       // It's a new image - revoke the object URL and remove from files
       URL.revokeObjectURL(imageToRemove);
       const newFiles = imageFiles.filter((_, i) => i !== index);
       setImageFiles(newFiles);
-    } else {
+    } else if (typeof imageToRemove === "string") {
       // It's an existing image - add to removed images list
       setRemovedImages(prev => [...prev, imageToRemove]);
     }
@@ -249,9 +261,29 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
 
   // Load existing images when editing a product
   React.useEffect(() => {
-    if (selectedProduct && selectedProduct.images && selectedProduct.images.length > 0) {
-      setImagePreviews(selectedProduct.images);
-    } else if (!selectedProduct) {
+    if (selectedProduct) {
+      // Handle images - ensure it's always an array
+      let imagesArray: string[] = [];
+      
+      // Handle images field - backend might return array, string, or null
+      const imagesValue = selectedProduct.images as unknown;
+      if (imagesValue) {
+        // If images is an array, use it
+        if (Array.isArray(imagesValue)) {
+          imagesArray = imagesValue.filter((img) => img && typeof img === "string" && img.trim() !== "");
+        } 
+        // If images is a string (single image from backend), convert to array
+        else if (typeof imagesValue === "string" && imagesValue.trim() !== "") {
+          imagesArray = [imagesValue];
+        }
+      }
+      
+      // Fallback to image_url if images array is empty
+      if (imagesArray.length === 0 && selectedProduct.image_url && typeof selectedProduct.image_url === "string" && selectedProduct.image_url.trim() !== "") {
+        imagesArray = [selectedProduct.image_url];
+      }
+      setImagePreviews(imagesArray);
+    } else {
       // Clear images when adding new product
       setImagePreviews([]);
       setImageFiles([]);
@@ -262,12 +294,14 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   // Cleanup object URLs when component unmounts
   React.useEffect(() => {
     return () => {
-      imagePreviews.forEach((url) => {
-        // Only revoke object URLs (not existing image URLs)
-        if (url.startsWith('blob:')) {
-          URL.revokeObjectURL(url);
-        }
-      });
+      if (Array.isArray(imagePreviews)) {
+        imagePreviews.forEach((url) => {
+          // Only revoke object URLs (not existing image URLs)
+          if (typeof url === "string" && url.startsWith('blob:')) {
+            URL.revokeObjectURL(url);
+          }
+        });
+      }
     };
   }, [imagePreviews]);
 
@@ -327,27 +361,27 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   };
 
   React.useEffect(() => {
-    if (categories && categories.length > 0 && !formData.category_id) {
+    if (categoriesArray.length > 0 && !formData.category_id) {
       setFormData({
         ...formData,
-        category_id: categories[0].id,
+        category_id: categoriesArray[0].id,
       });
     }
-  }, [categories, formData, setFormData]);
+  }, [categoriesArray, formData, setFormData]);
 
   // Set default category_id after categories are loaded, or sanitize draft
   React.useEffect(() => {
-    if (categories && categories.length > 0) {
-      const validCategoryIds = categories.map((c) => c.id);
+    if (categoriesArray.length > 0) {
+      const validCategoryIds = categoriesArray.map((c) => c.id);
       // If current category_id is missing or invalid, set to first valid
       if (!formData.category_id || !validCategoryIds.includes(formData.category_id)) {
         setFormData({
           ...formData,
-          category_id: categories[0].id,
+          category_id: categoriesArray[0].id,
         });
       }
     }
-  }, [categories, formData, setFormData]);
+  }, [categoriesArray, formData, setFormData]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -376,7 +410,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
             <div className="text-xs text-gray-500 mt-1">
               Supported formats: JPEG, PNG, WebP. Max size: 5MB per file. Max files: 10.
             </div>
-            {imagePreviews.length > 0 && (
+            {Array.isArray(imagePreviews) && imagePreviews.length > 0 && (
               <div className="mt-2 flex gap-2 flex-wrap">
                 {imagePreviews.map((url, idx) => (
                   <div key={idx} className="relative">
@@ -421,17 +455,16 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
               }
               required
               className="block w-full border rounded px-3 py-2"
-              disabled={isLoading || !categories}
+              disabled={isLoading || categoriesArray.length === 0}
             >
               <option value="" disabled>
                 {isLoading ? "Loading..." : "Select category"}
               </option>
-              {categories &&
-                categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
+              {categoriesArray.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-4">
