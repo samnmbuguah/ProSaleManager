@@ -8,6 +8,8 @@ import path from "path";
 import app from "./app.js";
 import env from "./config/env.js";
 import { resolveStore, attachStoreIdToUser } from "./middleware/auth.middleware.js";
+import cron from "node-cron";
+import { backupService } from "./services/backupService.js";
 
 const PORT = env.PORT || 5000;
 
@@ -47,10 +49,39 @@ async function initializeDatabase() {
   // await syncDatabase() // <-- Manual sync only if needed
 }
 
+// Initialize backup scheduler
+function initializeBackupScheduler() {
+  // Only enable cron in production
+  if (process.env.NODE_ENV === 'production') {
+    // Schedule backup to run daily at midnight (00:00)
+    // Cron format: minute hour day month day-of-week
+    // '0 0 * * *' means: at 0 minutes, 0 hours, every day of month, every month, every day of week
+    const task = cron.schedule('0 0 * * *', async () => {
+      console.log('🔄 Scheduled backup starting at midnight...');
+      try {
+        await backupService.performBackup();
+        console.log('✅ Scheduled backup completed successfully');
+      } catch (error) {
+        console.error('❌ Scheduled backup failed:', error);
+      }
+    }, {
+      timezone: process.env.BACKUP_TIMEZONE || 'UTC', // Default to UTC, can be overridden
+    });
+
+    console.log('📅 Backup scheduler initialized: Daily backups at midnight (00:00)');
+    console.log(`   Timezone: ${process.env.BACKUP_TIMEZONE || 'UTC'}`);
+  } else {
+    console.log('📅 Backup scheduler: Disabled (not in production mode)');
+  }
+}
+
 // Start server
 async function startServer() {
   try {
     await initializeDatabase();
+    
+    // Initialize backup scheduler
+    initializeBackupScheduler();
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

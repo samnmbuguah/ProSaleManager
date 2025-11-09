@@ -136,6 +136,84 @@ const Product = sequelize.define<ProductInstance>(
         name: "products_sku_store_id_unique",
       },
     ],
+    hooks: {
+      afterFind: (instances: ProductInstance | ProductInstance[] | null) => {
+        const normalizeImages = (product: ProductInstance) => {
+          if (!product) return;
+          const imagesValue = product.getDataValue("images");
+          if (imagesValue == null) {
+            product.setDataValue("images", []);
+            return;
+          }
+          // If it's already an array, ensure it's valid
+          if (Array.isArray(imagesValue)) {
+            const validImages = imagesValue.filter(
+              (img): img is string => typeof img === "string" && img.trim() !== ""
+            );
+            product.setDataValue("images", validImages);
+            return;
+          }
+          // If it's a string, try to parse it
+          if (typeof imagesValue === "string") {
+            const imagesStr = imagesValue as string;
+            if (imagesStr.trim() === "") {
+              product.setDataValue("images", []);
+              return;
+            }
+            try {
+              const parsed = JSON.parse(imagesStr);
+              if (Array.isArray(parsed)) {
+                const validImages = parsed.filter(
+                  (img): img is string => typeof img === "string" && img.trim() !== ""
+                );
+                product.setDataValue("images", validImages);
+              } else if (typeof parsed === "string" && parsed.trim() !== "") {
+                product.setDataValue("images", [parsed]);
+              } else {
+                product.setDataValue("images", []);
+              }
+            } catch {
+              // If parsing fails, check if it's a single image path
+              if (imagesStr.startsWith("/") || imagesStr.startsWith("http")) {
+                product.setDataValue("images", [imagesStr]);
+              } else {
+                // Corrupted data, set to empty array
+                console.warn(`Failed to parse images for product ${product.id}:`, imagesStr);
+                product.setDataValue("images", []);
+              }
+            }
+            return;
+          }
+          // For any other type, set to empty array
+          product.setDataValue("images", []);
+        };
+
+        if (Array.isArray(instances)) {
+          instances.forEach(normalizeImages);
+        } else if (instances) {
+          normalizeImages(instances);
+        }
+      },
+      afterCreate: (product: ProductInstance) => {
+        const imagesValue = product.getDataValue("images");
+        if (imagesValue == null) {
+          product.setDataValue("images", []);
+        } else if (!Array.isArray(imagesValue)) {
+          // Normalize on create as well
+          if (typeof imagesValue === "string") {
+            const imagesStr = imagesValue as string;
+            try {
+              const parsed = JSON.parse(imagesStr);
+              product.setDataValue("images", Array.isArray(parsed) ? parsed : []);
+            } catch {
+              product.setDataValue("images", imagesStr.startsWith("/") || imagesStr.startsWith("http") ? [imagesStr] : []);
+            }
+          } else {
+            product.setDataValue("images", []);
+          }
+        }
+      },
+    },
   },
 );
 

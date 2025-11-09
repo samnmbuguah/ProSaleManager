@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Sale, SaleItem, Product, User } from "../models/index.js";
 import { sequelize } from "../config/database.js";
 import { storeScope } from "../utils/helpers.js";
+import { Op } from "sequelize";
 
 export const getOrders = async (req: Request, res: Response) => {
   try {
@@ -10,17 +11,34 @@ export const getOrders = async (req: Request, res: Response) => {
     }
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
-    const where = storeScope(req.user!, { user_id: userId });
+    
+    // For admins/managers/sales, show all orders with status "unprocessed" or "pending"
+    // For clients, show only their own orders
+    const isAdmin = ["admin", "manager", "super_admin", "sales"].includes(req.user.role);
+    let baseWhere: any = storeScope(req.user!, {});
+    
+    if (isAdmin) {
+      // Admins see all unprocessed/pending orders in their store
+      baseWhere.status = {
+        [Op.in]: ["unprocessed", "pending"]
+      };
+    } else {
+      // Clients see only their own orders
+      baseWhere.user_id = userId;
+    }
+    
     const orders = await Sale.findAll({
-      where,
+      where: baseWhere,
       include: [
         { model: SaleItem, as: "items", include: [Product] },
         { model: User, as: "Customer", attributes: ["id", "name", "email", "phone"] },
+        { model: User, as: "User", attributes: ["id", "name", "email"] },
       ],
       order: [["createdAt", "DESC"]],
     });
     res.json({ orders });
-  } catch {
+  } catch (error) {
+    console.error("Error fetching orders:", error);
     res.status(500).json({ message: "Failed to fetch orders" });
   }
 };

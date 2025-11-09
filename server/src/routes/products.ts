@@ -3,10 +3,11 @@ import Product from "../models/Product.js";
 import Category from "../models/Category.js";
 import { Op, Sequelize } from "sequelize";
 import upload, { getImageUrl } from "../middleware/upload.js";
+import { requireStoreContext } from "../middleware/store-context.middleware.js";
+import { requireAuth, requireRole } from "../middleware/auth.middleware.js";
 // Cloudinary import commented out for testing
 // import cloudinary from "../config/cloudinary.js";
 import PurchaseOrderItem from "../models/PurchaseOrderItem.js";
-import { requireAuth, requireRole } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -17,7 +18,7 @@ async function uploadToCloudinary(file: Express.Multer.File): Promise<string> {
 }
 
 // Get all products with filtering and pagination
-router.get("/", async (req, res) => {
+router.get("/", requireAuth, requireStoreContext, async (req, res) => {
   try {
     const {
       page = 1,
