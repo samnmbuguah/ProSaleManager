@@ -13,14 +13,21 @@ import Store from "./Store.js";
 import ReceiptSettings from "./ReceiptSettings.js";
 import Favorite from "./Favorite.js";
 
+let associationsSetup = false;
+
 export function setupAssociations() {
+  // Prevent setting up associations multiple times
+  if (associationsSetup) {
+    return;
+  }
+
   // User - UserPreference association
   User.hasOne(UserPreference, { foreignKey: "user_id" });
   UserPreference.belongsTo(User, { foreignKey: "user_id" });
 
-  // User - Sale association
-  User.hasMany(Sale, { foreignKey: "user_id" });
-  Sale.belongsTo(User, { foreignKey: "user_id" });
+  // User - Sale association (sales made by the user/staff)
+  User.hasMany(Sale, { foreignKey: "user_id", as: "Sales" });
+  Sale.belongsTo(User, { foreignKey: "user_id", as: "User" });
 
   // Client User (customer) - Sale association
   User.hasMany(Sale, { foreignKey: "customer_id", as: "ClientSales" });
@@ -119,4 +126,7 @@ export function setupAssociations() {
 
   Product.hasMany(Favorite, { foreignKey: "product_id", as: "favorites" });
   Favorite.belongsTo(Product, { foreignKey: "product_id", as: "product" });
+  
+  // Mark associations as set up
+  associationsSetup = true;
 }

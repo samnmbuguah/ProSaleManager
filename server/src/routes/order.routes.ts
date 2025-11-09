@@ -20,8 +20,8 @@ router.get("/", getOrders);
 router.get("/:id", getOrder);
 router.post("/", createOrder);
 
-// Only admin and manager can modify orders
-router.use(requireRole(["admin", "manager"]));
+// Only admin, manager, and sales can modify orders
+router.use(requireRole(["admin", "manager", "sales"]));
 router.put("/:id", updateOrder);
 router.delete("/:id", deleteOrder);
 

@@ -1,5 +1,5 @@
 import { syncDatabase } from "./sync.js";
-import { seedProducts } from "../seed/products.js";
+import { seedProducts } from "../seed/index.js";
 import { seedUsers } from "../seed/users.js";
 import { seedCustomers } from "../seed/customers.js";
 

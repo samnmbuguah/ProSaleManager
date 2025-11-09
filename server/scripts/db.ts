@@ -5,7 +5,7 @@ import { seedStoresAndSuperAdmin } from "../src/seed/stores.js";
 import { seedUsers } from "../src/seed/users.js";
 import { seedCustomers } from "../src/seed/customers.js";
 import { seedCategories } from "../src/seed/categories.js";
-import { seedProducts } from "../src/seed/products.js";
+import { seedProducts } from "../src/seed/index.js";
 import { seedSuppliers } from "../src/seed/suppliers.js";
 import { seedSales } from "../src/seed/sales.js";
 import { seedExpenses } from "../src/seed/expenses.js";

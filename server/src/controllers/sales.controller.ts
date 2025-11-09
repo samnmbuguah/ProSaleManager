@@ -153,12 +153,15 @@ export const createSale = async (req: Request, res: Response) => {
       include: [
         {
           model: User,
+          as: "User",
           attributes: ["id", "name", "email"],
+          required: false,
         },
         {
           model: User,
           as: "Customer",
           attributes: ["id", "name", "email", "phone"],
+          required: false,
         },
         {
           model: SaleItem,
@@ -256,6 +259,7 @@ export const getSales = async (req: Request, res: Response) => {
       include: [
         {
           model: User,
+          as: "User",
           attributes: ["id", "name", "email"],
           required: false,
         },
@@ -395,7 +399,9 @@ export const getSaleById = async (req: Request, res: Response) => {
       include: [
         {
           model: User,
+          as: "User",
           attributes: ["id", "name", "email"],
+          required: false,
         },
         {
           model: User,
@@ -574,7 +580,9 @@ export const updateSale = async (req: Request, res: Response) => {
       include: [
         {
           model: User,
+          as: "User",
           attributes: ["id", "name", "email"],
+          required: false,
         },
         {
           model: User,
