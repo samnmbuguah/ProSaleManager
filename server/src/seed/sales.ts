@@ -15,7 +15,7 @@ function getBusinessHoursTime(date: Date): Date {
   const businessEnd = 20; // 8 PM
   const randomHour = businessStart + Math.random() * (businessEnd - businessStart);
   const randomMinute = Math.floor(Math.random() * 60);
-  
+
   const newDate = new Date(date);
   newDate.setHours(Math.floor(randomHour), randomMinute, 0, 0);
   return newDate;
@@ -31,14 +31,14 @@ const PAYMENT_METHODS = [
 function getRandomPaymentMethod(): string {
   const random = Math.random();
   let cumulative = 0;
-  
+
   for (const { method, weight } of PAYMENT_METHODS) {
     cumulative += weight;
     if (random <= cumulative) {
       return method;
     }
   }
-  
+
   return "cash"; // fallback
 }
 
@@ -52,14 +52,14 @@ const SALE_STATUSES = [
 function getRandomSaleStatus(): string {
   const random = Math.random();
   let cumulative = 0;
-  
+
   for (const { status, weight } of SALE_STATUSES) {
     cumulative += weight;
     if (random <= cumulative) {
       return status;
     }
   }
-  
+
   return "completed"; // fallback
 }
 
@@ -72,10 +72,14 @@ export async function seedSales(): Promise<void> {
     await Sale.destroy({ where: {} });
     console.log("🗑️ Cleared existing sales data");
 
-    const stores = await Store.findAll();
-    if (!stores.length) {
-      throw new Error("No stores found. Please seed stores first.");
+    // Only seed sales for Demo Store
+    const demoStore = await Store.findOne({ where: { name: "Demo Store" } });
+
+    if (!demoStore) {
+      throw new Error("Demo Store not found. Please seed stores first.");
     }
+
+    const stores = [demoStore];
 
     let totalSalesCreated = 0;
 
@@ -94,9 +98,9 @@ export async function seedSales(): Promise<void> {
 
       // Get users (cashiers/admins) for this store
       const users = await User.findAll({
-        where: { 
+        where: {
           store_id: store.id,
-          role: ["admin", "cashier", "manager"]
+          role: ["admin", "sales", "manager"]
         }
       });
 
@@ -107,7 +111,7 @@ export async function seedSales(): Promise<void> {
 
       // Get customers for this store
       const customers = await User.findAll({
-        where: { 
+        where: {
           store_id: store.id,
           role: "client"
         }
@@ -122,7 +126,7 @@ export async function seedSales(): Promise<void> {
       // Generate sales for each day in the last 2 months
       for (let date = new Date(twoMonthsAgo); date <= currentDate; date.setDate(date.getDate() + 1)) {
         const dayOfWeek = date.getDay();
-        
+
         // Determine number of sales for this day
         let salesCount = 0;
         if (dayOfWeek >= 1 && dayOfWeek <= 5) {
@@ -138,18 +142,18 @@ export async function seedSales(): Promise<void> {
           const saleDate = getBusinessHoursTime(new Date(date));
           const user = faker.helpers.arrayElement(users);
           const customer = customers.length > 0 ? faker.helpers.arrayElement(customers) : null;
-          
+
           // Generate 1-5 items per sale
           const itemCount = Math.floor(Math.random() * 5) + 1;
           const selectedProducts = faker.helpers.arrayElements(products, itemCount);
-          
+
           let totalAmount = 0;
           const saleItems = [];
 
           for (const product of selectedProducts) {
             const quantity = Math.floor(Math.random() * 3) + 1; // 1-3 items
             const unitType = faker.helpers.arrayElement(["piece", "pack", "dozen"]);
-            
+
             let unitPrice = 0;
             switch (unitType) {
               case "piece":
@@ -205,13 +209,13 @@ export async function seedSales(): Promise<void> {
       const batchSize = 50;
       for (let i = 0; i < salesToCreate.length; i += batchSize) {
         const batch = salesToCreate.slice(i, i + batchSize);
-        
+
         for (const saleData of batch) {
           const { items, ...saleAttributes } = saleData;
-          
+
           // Create the sale
           const sale = await Sale.create(saleAttributes);
-          
+
           // Create sale items
           for (const item of items) {
             await SaleItem.create({
@@ -227,7 +231,7 @@ export async function seedSales(): Promise<void> {
     }
 
     console.log(`🎉 Sales seeder completed! Total sales created: ${totalSalesCreated}`);
-    
+
     // Verify the data
     const totalSalesInDb = await Sale.count();
     const totalItemsInDb = await SaleItem.count();
