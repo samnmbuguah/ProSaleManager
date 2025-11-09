@@ -30,3 +30,56 @@ export function formatCurrency(amount: string | number | null | undefined) {
     return "KSh 0.00";
   }
 }
+
+/**
+ * Safely parse product images from API response.
+ * Handles cases where images might be:
+ * - An array (correct format)
+ * - A JSON string (needs parsing)
+ * - A corrupted/malformed string (fallback to empty array)
+ * - null/undefined (fallback to empty array)
+ */
+export function parseProductImages(images: unknown): string[] {
+  // If it's already an array of strings, return it
+  if (Array.isArray(images)) {
+    return images.filter((img): img is string => typeof img === "string" && img.trim() !== "");
+  }
+
+  // If it's null or undefined, return empty array
+  if (images == null) {
+    return [];
+  }
+
+  // If it's a string, try to parse it as JSON
+  if (typeof images === "string") {
+    // If the string is empty, return empty array
+    if (images.trim() === "") {
+      return [];
+    }
+
+    // Try to parse as JSON (might be a JSON string)
+    try {
+      const parsed = JSON.parse(images);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((img): img is string => typeof img === "string" && img.trim() !== "");
+      }
+      // If parsed is a single string, return it as an array
+      if (typeof parsed === "string" && parsed.trim() !== "") {
+        return [parsed];
+      }
+    } catch {
+      // If parsing fails, check if it looks like a single image path
+      // (starts with / or http)
+      if (images.startsWith("/") || images.startsWith("http")) {
+        return [images];
+      }
+      // If it's a corrupted string, return empty array
+      console.warn("Failed to parse product images:", images);
+      return [];
+    }
+  }
+
+  // For any other type, return empty array
+  console.warn("Unexpected images type:", typeof images, images);
+  return [];
+}

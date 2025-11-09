@@ -51,17 +51,22 @@ export const Cart: React.FC<CartProps> = ({
     })}`;
   };
 
-  const getUnitPrice = (product: CartItem["product"], unitType: string) => {
+  const getUnitPrice = (product: CartItem["product"], unitType: string): number => {
+    let price: number | string | null | undefined;
     switch (unitType) {
       case "piece":
-        return product.piece_selling_price || 0;
+        price = product.piece_selling_price;
+        break;
       case "pack":
-        return product.pack_selling_price || 0;
+        price = product.pack_selling_price;
+        break;
       case "dozen":
-        return product.dozen_selling_price || 0;
+        price = product.dozen_selling_price;
+        break;
       default:
-        return product.piece_selling_price || 0;
+        price = product.piece_selling_price;
     }
+    return typeof price === 'string' ? parseFloat(price) : Number(price) || 0;
   };
 
   // Function to validate stock for all cart items

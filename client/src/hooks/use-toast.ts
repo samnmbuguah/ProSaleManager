@@ -176,9 +176,11 @@ function toast({ ...props }: Toast) {
   });
 
   // Auto-dismiss after a short delay for better UX
+  // Error/destructive toasts dismiss after 2 seconds, others after 3.5 seconds
+  const dismissDelay = props.variant === "destructive" ? 2000 : 3500;
   setTimeout(() => {
     dismiss();
-  }, 3500);
+  }, dismissDelay);
 
   return {
     id,

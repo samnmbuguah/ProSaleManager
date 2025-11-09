@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
 import { Product } from "@/types/product";
 import { getImageUrl } from "@/lib/api-endpoints";
+import { parseProductImages } from "@/lib/utils";
 
 interface ProductCardProps {
   product: Product;
@@ -23,19 +24,21 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
   };
 
   const stockStatus = getStockStatus();
+  // Safely parse images - handles corrupted/malformed data from backend
+  const images = parseProductImages(product.images);
+  // Get the first image or fallback to image_url or placeholder
+  const imageUrl = images.length > 0 
+    ? images[0] 
+    : (product.image_url && product.image_url.trim() !== ""
+      ? product.image_url
+      : "https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=120&q=80");
 
   return (
     <Card className="h-full">
       {/* Product Image */}
       <div className="w-full flex justify-center items-center pt-4">
         <img
-          src={getImageUrl(
-            product.images && product.images.length > 0 && product.images[0].trim() !== ""
-              ? product.images[0]
-              : product.image_url && product.image_url.trim() !== ""
-                ? product.image_url
-                : "https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=120&q=80"
-          )}
+          src={getImageUrl(imageUrl)}
           alt={product.name}
           className="w-28 h-28 object-cover rounded-md border"
         />

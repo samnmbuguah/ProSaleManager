@@ -11,15 +11,29 @@ import { useLocation } from "wouter";
 
 interface CartDrawerProps {
   onCheckout: () => void;
+  clientCheckoutHandler?: () => void;
+  isSubmitting?: boolean;
 }
 
-export default function CartDrawer({ onCheckout }: CartDrawerProps) {
+export default function CartDrawer({ 
+  onCheckout, 
+  clientCheckoutHandler,
+  isSubmitting = false 
+}: CartDrawerProps) {
   const { cart, removeFromCart, updateQuantity } = useCart();
   const { isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleCheckout = () => {
+    // If clientCheckoutHandler is provided (homepage), use it
+    if (clientCheckoutHandler) {
+      clientCheckoutHandler();
+      setIsOpen(false);
+      return;
+    }
+
+    // Otherwise, use the default behavior (redirect to POS or show auth)
     if (!isAuthenticated) {
       onCheckout();
     } else {
@@ -162,10 +176,15 @@ export default function CartDrawer({ onCheckout }: CartDrawerProps) {
 
                 <Button
                   onClick={handleCheckout}
+                  disabled={isSubmitting}
                   className="w-full bg-blue-600 hover:bg-blue-700"
                   size="lg"
                 >
-                  {isAuthenticated ? "Proceed to Checkout" : "Login to Checkout"}
+                  {isSubmitting 
+                    ? "Processing..." 
+                    : isAuthenticated 
+                      ? "Checkout" 
+                      : "Login to Checkout"}
                 </Button>
               </div>
             </>

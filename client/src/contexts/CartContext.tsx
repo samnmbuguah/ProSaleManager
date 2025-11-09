@@ -60,6 +60,9 @@ function cartReducer(state: Cart, action: CartAction): Cart {
   switch (action.type) {
     case "ADD_ITEM": {
       const { product, unitType, unitPrice } = action.payload;
+      // Ensure unitPrice is a number
+      const priceAsNumber = typeof unitPrice === 'string' ? parseFloat(unitPrice) : Number(unitPrice) || 0;
+      
       const existingItem = state.items.find(
         (item) => item.product.id === product.id && item.unit_type === unitType
       );
@@ -77,7 +80,8 @@ function cartReducer(state: Cart, action: CartAction): Cart {
             return {
               ...item,
               quantity: newQuantity,
-              total: unitPrice * newQuantity,
+              unit_price: priceAsNumber,
+              total: priceAsNumber * newQuantity,
             };
           }
           return item;
@@ -86,7 +90,7 @@ function cartReducer(state: Cart, action: CartAction): Cart {
         return {
           ...state,
           items: updatedItems,
-          total: updatedItems.reduce((sum: number, item: CartItem) => sum + item.total, 0),
+          total: updatedItems.reduce((sum: number, item: CartItem) => sum + (Number(item.total) || 0), 0),
         };
       }
 
@@ -95,8 +99,8 @@ function cartReducer(state: Cart, action: CartAction): Cart {
         id: Date.now(),
         product,
         quantity: 1,
-        unit_price: unitPrice,
-        total: unitPrice,
+        unit_price: priceAsNumber,
+        total: priceAsNumber,
         unit_type: unitType,
       };
 
@@ -104,7 +108,7 @@ function cartReducer(state: Cart, action: CartAction): Cart {
       return {
         ...state,
         items: updatedItems,
-        total: updatedItems.reduce((sum: number, item: CartItem) => sum + item.total, 0),
+        total: updatedItems.reduce((sum: number, item: CartItem) => sum + (Number(item.total) || 0), 0),
       };
     }
 
@@ -113,7 +117,7 @@ function cartReducer(state: Cart, action: CartAction): Cart {
       return {
         ...state,
         items: updatedItems,
-        total: updatedItems.reduce((sum: number, item: CartItem) => sum + item.total, 0),
+        total: updatedItems.reduce((sum: number, item: CartItem) => sum + (Number(item.total) || 0), 0),
       };
     }
 
@@ -123,10 +127,12 @@ function cartReducer(state: Cart, action: CartAction): Cart {
 
       const updatedItems = state.items.map((item) => {
         if (item.id === itemId) {
+          const unitPrice = Number(item.unit_price) || 0;
           return {
             ...item,
             quantity,
-            total: item.unit_price * quantity,
+            unit_price: unitPrice,
+            total: unitPrice * quantity,
           };
         }
         return item;
@@ -135,18 +141,19 @@ function cartReducer(state: Cart, action: CartAction): Cart {
       return {
         ...state,
         items: updatedItems,
-        total: updatedItems.reduce((sum: number, item: CartItem) => sum + item.total, 0),
+        total: updatedItems.reduce((sum: number, item: CartItem) => sum + (Number(item.total) || 0), 0),
       };
     }
 
     case "UPDATE_UNIT_PRICE": {
       const { itemId, price } = action.payload;
+      const priceAsNumber = typeof price === 'string' ? parseFloat(price) : Number(price) || 0;
       const updatedItems = state.items.map((item) => {
         if (item.id === itemId) {
           return {
             ...item,
-            unit_price: price,
-            total: price * item.quantity,
+            unit_price: priceAsNumber,
+            total: priceAsNumber * item.quantity,
           };
         }
         return item;
@@ -155,7 +162,7 @@ function cartReducer(state: Cart, action: CartAction): Cart {
       return {
         ...state,
         items: updatedItems,
-        total: updatedItems.reduce((sum: number, item: CartItem) => sum + item.total, 0),
+        total: updatedItems.reduce((sum: number, item: CartItem) => sum + (Number(item.total) || 0), 0),
       };
     }
 
@@ -163,9 +170,27 @@ function cartReducer(state: Cart, action: CartAction): Cart {
       const { itemId, unitType } = action.payload;
       const updatedItems = state.items.map((item) => {
         if (item.id === itemId) {
+          // Get the new unit price based on unit type
+          let newPrice: number | string | null | undefined;
+          switch (unitType) {
+            case "piece":
+              newPrice = item.product.piece_selling_price;
+              break;
+            case "pack":
+              newPrice = item.product.pack_selling_price;
+              break;
+            case "dozen":
+              newPrice = item.product.dozen_selling_price;
+              break;
+            default:
+              newPrice = item.product.piece_selling_price;
+          }
+          const priceAsNumber = typeof newPrice === 'string' ? parseFloat(newPrice) : Number(newPrice) || 0;
           return {
             ...item,
             unit_type: unitType,
+            unit_price: priceAsNumber,
+            total: priceAsNumber * item.quantity,
           };
         }
         return item;
@@ -174,7 +199,7 @@ function cartReducer(state: Cart, action: CartAction): Cart {
       return {
         ...state,
         items: updatedItems,
-        total: updatedItems.reduce((sum: number, item: CartItem) => sum + item.total, 0),
+        total: updatedItems.reduce((sum: number, item: CartItem) => sum + (Number(item.total) || 0), 0),
       };
     }
 
@@ -194,7 +219,8 @@ function cartReducer(state: Cart, action: CartAction): Cart {
       }
 
       // Add delivery to cart
-      const unitPrice = parseFloat(product.piece_selling_price.toString());
+      const price = product.piece_selling_price;
+      const unitPrice = typeof price === 'string' ? parseFloat(price) : Number(price) || 0;
       const newItem: CartItem = {
         id: Date.now(),
         product,
@@ -208,7 +234,7 @@ function cartReducer(state: Cart, action: CartAction): Cart {
       return {
         ...state,
         items: updatedItems,
-        total: updatedItems.reduce((sum: number, item: CartItem) => sum + item.total, 0),
+        total: updatedItems.reduce((sum: number, item: CartItem) => sum + (Number(item.total) || 0), 0),
       };
     }
 
@@ -281,7 +307,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // Recalculate total to ensure it's correct
             const validCart = {
               items: validItems,
-              total: validItems.reduce((sum: number, item: CartItem) => sum + item.total, 0),
+              total: validItems.reduce((sum: number, item: CartItem) => sum + (Number(item.total) || 0), 0),
             };
 
             console.log("🛒 Loading valid cart:", validCart);

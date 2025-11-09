@@ -62,4 +62,5 @@ export interface CreateSaleRequest {
   payment_status: string;
   amount_paid: number;
   change_amount: number;
+  created_at?: string;
 }

@@ -65,8 +65,8 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   const [historicalDate, setHistoricalDate] = useState("");
   const [historicalTime, setHistoricalTime] = useState("");
 
-  const total = cartTotal + deliveryFee;
-  const tendered = parseFloat(amountTendered);
+  const total = Number(cartTotal) + Number(deliveryFee);
+  const tendered = parseFloat(amountTendered) || 0;
   const balance = paymentMethod === "cash" && !isNaN(tendered) ? tendered - total : 0;
   const canCheckout = paymentMethod === "cash" ? tendered >= total : true;
 

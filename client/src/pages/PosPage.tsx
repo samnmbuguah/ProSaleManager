@@ -8,10 +8,10 @@ import { useCart } from "@/contexts/CartContext";
 import { ProductSearch } from "@/components/pos/ProductSearch";
 import { Cart } from "@/components/pos/Cart";
 import { CheckoutDialog } from "@/components/pos/CheckoutDialog";
-import type { CartItem } from "@/types/pos";
 import { ReceiptDialog } from "@/components/pos/ReceiptDialog";
 import { useProducts } from "@/hooks/use-products";
 import { useCustomers } from "@/hooks/useCustomers";
+import { useFavorites } from "@/hooks/use-favorites";
 import {
   Select,
   SelectContent,
@@ -26,10 +26,18 @@ import { Label } from "@/components/ui/label";
 import { useDispatch } from "react-redux";
 import { createSale } from "@/store/salesSlice";
 import type { AppDispatch } from "@/store";
+import { api } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
 
 const PosPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { products: allProducts, refetch, error } = useProducts();
+  const { toast } = useToast();
+  const { user } = useAuthContext();
+  
+  // Initialize favorites after user is available
+  const { refetch: refetchFavorites } = useFavorites(!!user);
+  
+  const { products: allProducts, refetch: refetchProducts, error } = useProducts();
   const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
   const {
     cart,
@@ -40,8 +48,6 @@ const PosPage: React.FC = () => {
     removeFromCart,
     clearCart,
   } = useCart();
-  const { toast } = useToast();
-  const { user } = useAuthContext();
   const [selectedCustomer, setSelectedCustomer] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "mpesa">("cash");
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
@@ -50,17 +56,35 @@ const PosPage: React.FC = () => {
   const [currentSaleId, setCurrentSaleId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState({
     checkout: false,
+    isCheckingOut: false,
   });
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [isHistoricalMode, setIsHistoricalMode] = useState(false);
 
-  // Load products and customers on component mount
-  // Note: In development mode with React.StrictMode, this may run twice
-  // which is expected behavior and helps catch certain types of bugs
+  // Load products and customers on component mount and when historical mode changes
   useEffect(() => {
-    refetch();
-    fetchCustomers();
-  }, [refetch, fetchCustomers]);
+    // Make sure we have the refetch functions before proceeding
+    if (!refetchProducts || !fetchCustomers) return;
+
+    const fetchData = async () => {
+      try {
+        // Use the correctly named refetch functions
+        const productsPromise = refetchProducts();
+        const customersPromise = fetchCustomers();
+        
+        await Promise.all([productsPromise, customersPromise]);
+        
+        // If in historical mode and user is authenticated, also fetch favorites
+        if (isHistoricalMode && user && refetchFavorites) {
+          await refetchFavorites();
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, [refetchProducts, fetchCustomers, refetchFavorites, isHistoricalMode, user]);
 
   // Initialize displayed products when allProducts changes
   useEffect(() => {
@@ -88,7 +112,10 @@ const PosPage: React.FC = () => {
   const handleAddToCart = (product: Product) => {
     // Default to piece pricing
     const unitType = "piece";
-    const unitPrice = product.piece_selling_price || 0;
+    // Ensure unitPrice is a number (convert from string if needed)
+    const unitPrice = typeof product.piece_selling_price === 'string' 
+      ? parseFloat(product.piece_selling_price) 
+      : Number(product.piece_selling_price) || 0;
 
     addToCart(product, unitType, unitPrice);
 
@@ -103,107 +130,50 @@ const PosPage: React.FC = () => {
     change: number,
     historicalDate?: string
   ) => {
+    setIsLoading({ ...isLoading, isCheckingOut: true });
     try {
-      setIsLoading((prev) => ({ ...prev, checkout: true }));
+      // Calculate subtotal from cart items (ensure all totals are numbers)
+      const subtotal = cart.items.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+      const total = subtotal + Number(deliveryFee);
 
-      if (cart.items.length === 0) {
-        toast({
-          title: "Error",
-          description: "Cart is empty",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!selectedCustomer) {
-        toast({
-          title: "Error",
-          description: "Please select a customer",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Format sale data for API
       const saleData = {
-        items: (cart.items || [])
-          .filter((item) => item?.product && item.product.id > 0)
-          .map((item) => ({
-            product_id: item.product.id,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            total: item.total,
-            unit_type: item.unit_type || "piece",
-          })),
-        total: cart.total + deliveryFee,
-        delivery_fee: deliveryFee,
         customer_id: selectedCustomer,
+        items: cart.items.map((item) => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+          unit_type: item.unit_type,
+          unit_price: Number(item.unit_price) || 0,
+          total: Number(item.total) || 0,
+        })),
+        total: total,
+        delivery_fee: Number(deliveryFee),
         payment_method: paymentMethod,
         status: "completed",
         payment_status: "paid",
-        amount_paid: amountTendered,
-        change_amount: change,
-        ...(historicalDate && { created_at: historicalDate }),
+        amount_paid: paymentMethod === "cash" ? Number(amountTendered) || 0 : total,
+        change_amount: Number(change) || 0,
+        created_at: historicalDate,
       };
 
-      // Use Redux to create the sale
       const resultAction = await dispatch(createSale(saleData));
-
       if (createSale.fulfilled.match(resultAction)) {
         const saleId = resultAction.payload.id;
-
-        // Success - show toast and clear cart
-        toast({
-          title: "Success",
-          description: "Checkout successful!",
-        });
-
-        // ONLY clear the cart after successful checkout using the context function
-        clearCart();
-
-        // Close the checkout dialog immediately
-        setIsCheckoutDialogOpen(false);
-
-        // Set the sale ID for the receipt dialog
         setCurrentSaleId(saleId);
-
-        // Open the receipt dialog immediately
+        setIsCheckoutDialogOpen(false);
         setIsReceiptDialogOpen(true);
+        clearCart();
       } else {
-        // Handle Redux action rejection
-        const errorMessage = resultAction.payload as string || "Failed to create sale";
-        toast({
-          title: "Error",
-          description: errorMessage,
-          variant: "destructive",
-        });
+        throw new Error("Failed to create sale");
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Checkout error:", error);
-
-      // Handle checkout errors
-      const errorTitle = "Checkout Error";
-      let errorDescription = "Failed to complete checkout. Please try again.";
-
-      if (error && typeof error === "object" && "response" in error) {
-        const axiosError = error as { response?: { data?: { message?: string } } };
-        const responseData = axiosError.response?.data;
-
-        if (responseData?.message) {
-          errorDescription = responseData.message;
-        }
-      } else if (error instanceof Error) {
-        errorDescription = error.message;
-      }
-
       toast({
-        title: errorTitle,
-        description: errorDescription,
+        title: "Error",
+        description: "Failed to complete checkout. Please try again.",
         variant: "destructive",
-        duration: 8000,
       });
     } finally {
-      setIsLoading((prev) => ({ ...prev, checkout: false }));
+      setIsLoading({ ...isLoading, isCheckingOut: false });
     }
   };
 
@@ -213,12 +183,12 @@ const PosPage: React.FC = () => {
     <div className="container mx-auto p-2 sm:p-4 mt-16">
       {/* Header with Customer Selection */}
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <h1 className="text-2xl font-bold">Point of Sale</h1>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch gap-4 w-full sm:w-auto">
             {/* Historical Sales Toggle - Only for admin and super_admin */}
             {(user?.role === "admin" || user?.role === "super_admin") && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
                 <History className="h-5 w-5 text-gray-500" />
                 <Label htmlFor="historical-mode" className="text-sm text-gray-600">
                   Historical Sales
@@ -230,48 +200,49 @@ const PosPage: React.FC = () => {
                 />
               </div>
             )}
-            <div className="flex items-center gap-2">
-              <User className="h-5 w-5 text-gray-500" />
-              <span className="text-sm text-gray-600">Customer:</span>
+            <div className="flex-1 flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
+              <User className="h-5 w-5 text-gray-500 flex-shrink-0" />
+              <span className="text-sm text-gray-600 whitespace-nowrap">Customer:</span>
+              <div className="w-full">
+                <Select
+                  value={selectedCustomer?.toString() || ""}
+                  onValueChange={(value) => setSelectedCustomer(value ? parseInt(value) : null)}
+                >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a customer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {customers.map((customer) => (
+                    <SelectItem key={customer.id} value={customer.id.toString()}>
+                      {customer.name} - {customer.phone}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+                </Select>
+              </div>
             </div>
-            <Select
-              value={selectedCustomer?.toString() || ""}
-              onValueChange={(value) => setSelectedCustomer(value ? parseInt(value) : null)}
-            >
-              <SelectTrigger className="w-full sm:w-64">
-                <SelectValue placeholder="Select a customer" />
-              </SelectTrigger>
-              <SelectContent>
-                {customers.map((customer) => (
-                  <SelectItem key={customer.id} value={customer.id.toString()}>
-                    {customer.name} - {customer.phone}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         </div>
-        {/* Remove the Selected Customer card/band here */}
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Products Section */}
-        <div className="w-full lg:w-2/3 flex flex-col">
-          <Card className="flex-1 flex flex-col min-h-0">
-            <CardHeader>
+        {/* Products Section - Shown first on mobile, on left on desktop */}
+        <div className="w-full lg:w-2/3 order-2 lg:order-1">
+          <Card className="flex-1 flex flex-col h-full">
+            <CardHeader className="border-b">
               <CardTitle className="flex items-center gap-2">
                 <ShoppingCart className="h-5 w-5" />
                 Products
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            <CardContent className="flex-1 p-4 overflow-hidden">
               {error && (
                 <Alert variant="destructive" className="mb-4">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Connection Error</AlertTitle>
                   <AlertDescription>
                     Failed to load products. Please try again later.
-                    <Button variant="outline" size="sm" onClick={() => refetch()} className="ml-2">
+                    <Button variant="outline" size="sm" onClick={() => refetchProducts()} className="ml-2">
                       <RefreshCcw className="h-4 w-4 mr-1" /> Retry
                     </Button>
                   </AlertDescription>
@@ -287,34 +258,12 @@ const PosPage: React.FC = () => {
                   searchProducts={async (query: string) => {
                     try {
                       if (!query.trim()) {
-                        // If query is empty, show all products
                         setDisplayedProducts(allProducts || []);
                         return;
                       }
-
-                      const response = await fetch(
-                        `${import.meta.env.VITE_API_URL}/products/search?q=${query}`,
-                        {
-                          credentials: "include",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                        }
-                      );
-                      if (!response.ok) {
-                        throw new Error("Failed to search products");
-                      }
-
-                      const data = await response.json();
-                      if (data.message === "getProducts stub") {
-                        throw new Error("Stub response received - API not properly configured");
-                      }
-
-                      // Update displayed products with search results
-                      // Handle both {success: true, data: [...]} and [...] formats
-                      const searchResults = data.data || data || [];
-                      console.log("Search results:", searchResults.length, "products found");
-                      setDisplayedProducts(searchResults);
+                      const res = await api.get(API_ENDPOINTS.products.search(query));
+                      const searchResults = (res.data && res.data.data) ? res.data.data : (res.data || []);
+                      setDisplayedProducts(searchResults as Product[]);
                     } catch (error) {
                       console.error("Error:", error);
                       toast({
@@ -322,10 +271,7 @@ const PosPage: React.FC = () => {
                         description: "Failed to search products",
                         variant: "destructive",
                       });
-                      // On error, show all products
                       setDisplayedProducts(allProducts || []);
-                    } finally {
-                      // Search completed
                     }
                   }}
                 />
@@ -334,13 +280,13 @@ const PosPage: React.FC = () => {
           </Card>
         </div>
 
-        {/* Cart Section */}
-        <div className="w-full lg:w-1/3 flex flex-col">
+        {/* Cart Section - Shown second on mobile, on right on desktop */}
+        <div className="w-full lg:w-1/3 order-1 lg:order-2">
           <Cart
-            items={cart.items as CartItem[]}
-            onUpdateQuantity={(productId: number, _unitType: string, quantity: number) =>
-              updateQuantity(productId, quantity)
-            }
+            items={cart.items}
+            onUpdateQuantity={(itemId, _unitType, quantity) => {
+              updateQuantity(itemId, quantity);
+            }}
             onUpdateUnitType={updateUnitType}
             onUpdateUnitPrice={updateUnitPrice}
             onRemoveItem={removeFromCart}
@@ -364,7 +310,7 @@ const PosPage: React.FC = () => {
         selectedCustomer={selectedCustomer}
         setSelectedCustomer={setSelectedCustomer}
         onCheckout={handleCheckout}
-        isLoadingCheckout={isLoading.checkout}
+        isLoadingCheckout={isLoading.isCheckingOut}
         isHistoricalMode={isHistoricalMode}
       />
 

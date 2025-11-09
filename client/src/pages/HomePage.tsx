@@ -27,9 +27,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Swal from "sweetalert2";
+import { useToast } from "@/hooks/use-toast";
 import {
   Search,
-  ShoppingCart,
   User,
   Star,
   Filter,
@@ -61,11 +61,12 @@ type LoginFormData = z.infer<typeof loginSchema>;
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function HomePage() {
-  const { products: rawProducts, isLoading } = useProducts();
+  const { products: rawProducts, isLoading, refetch: refetchProducts } = useProducts();
   const products = Array.isArray(rawProducts) ? rawProducts : [];
   const { cart, clearCart } = useCart();
   const { user, isAuthenticated, login, register } = useAuth();
   const { currentStore } = useStoreContext();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
@@ -77,6 +78,14 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  // Refetch data when authentication state changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      refetchProducts();
+      // Add any other data refetching here (e.g., favorites, cart, etc.)
+    }
+  }, [isAuthenticated, refetchProducts]);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -244,10 +253,10 @@ export default function HomePage() {
       handleOrder();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Authentication failed";
-      Swal.fire({
-        icon: "error",
+      toast({
+        variant: "destructive",
         title: "Authentication Failed",
-        text: errorMessage,
+        description: errorMessage,
       });
     }
   };
@@ -285,7 +294,11 @@ export default function HomePage() {
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
               {/* Cart Drawer */}
-              <CartDrawer onCheckout={() => setShowAuthDialog(true)} />
+              <CartDrawer 
+                onCheckout={() => setShowAuthDialog(true)} 
+                clientCheckoutHandler={handleCheckout}
+                isSubmitting={isSubmitting}
+              />
 
               {isAuthenticated ? (
                 <>
@@ -442,7 +455,7 @@ export default function HomePage() {
       </header>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8 pb-24 sm:pb-8">
+      <div className="container mx-auto px-4 py-8">
         {/* Hero Section */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 text-white">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4">
@@ -697,45 +710,6 @@ export default function HomePage() {
           </div>
         )}
       </div>
-
-      {/* Cart Summary - Fixed at bottom (Mobile) */}
-      {cart.items.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-2xl p-3 sm:p-4 z-50 backdrop-blur-sm bg-white/95">
-          <div className="container mx-auto">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="flex items-center gap-2 px-2 sm:px-3 py-1 bg-blue-100 rounded-full">
-                  <ShoppingCart className="w-4 h-4 text-blue-600" />
-                  <span className="text-xs sm:text-sm font-medium text-blue-800">
-                    {cart.items.reduce((sum, item) => sum + item.quantity, 0)} item
-                    {cart.items.reduce((sum, item) => sum + item.quantity, 0) !== 1 ? "s" : ""}
-                  </span>
-                </div>
-                <span className="font-bold text-lg sm:text-xl text-gray-900">
-                  KSh {cart.total.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={clearCart}
-                  className="text-gray-600 flex-1 sm:flex-none"
-                >
-                  Clear
-                </Button>
-                <Button
-                  onClick={handleCheckout}
-                  disabled={isSubmitting}
-                  className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-4 sm:px-6 py-2 rounded-lg font-semibold shadow-lg flex-1 sm:flex-none"
-                >
-                  {isSubmitting ? "Processing..." : "Checkout"}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Auth Dialog */}
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
