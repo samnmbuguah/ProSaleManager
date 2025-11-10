@@ -120,6 +120,30 @@ ssh -p 21098 elteijae@198.54.114.246 "cd /home/elteijae/byccollections.com && \
   \n  # Install Sequelize CLI globally if not already installed
   echo 'Installing Sequelize CLI...'; \
   npm install -g sequelize-cli || { echo 'Failed to install Sequelize CLI'; exit 1; }; \
+  \n  # Create database and tables if they don't exist
+  echo 'Creating database and tables...'; \
+  NODE_ENV=production node -e "
+    const { Sequelize } = require('sequelize');
+    const config = require('./config.json');
+    const dbConfig = config.production;
+    
+    // Create database if it doesn't exist
+    const sequelize = new Sequelize('', dbConfig.username, dbConfig.password, {
+      host: dbConfig.host,
+      dialect: dbConfig.dialect,
+      logging: false
+    });
+    
+    sequelize.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`)
+      .then(() => {
+        console.log('Database created or already exists');
+        return sequelize.close();
+      })
+      .catch(err => {
+        console.error('Error creating database:', err);
+        process.exit(1);
+      });
+  " || { echo 'Failed to create database'; exit 1; }; \
   \n  # Run database migrations using the config file
   echo 'Running database migrations...'; \
   NODE_ENV=production npx sequelize-cli db:migrate --config=config.json || { echo 'Failed to run migrations'; exit 1; }; \
