@@ -7,9 +7,9 @@ rm -rf production
 
 # 2. Create database backup before deployment (legacy SQLite backup if exists)
 echo "Creating database backup (if SQLite database exists)..."
-BACKUP_DIR="/home/elteijae/eltee.store/backups"
+BACKUP_DIR="/home/elteijae/byccollections.com/backups"
 BACKUP_FILE="database-backup-$(date +%F-%H%M%S).sqlite"
-ssh -p 21098 elteijae@198.54.114.246 "mkdir -p $BACKUP_DIR && if [ -f /home/elteijae/eltee.store/database.sqlite ]; then cp /home/elteijae/eltee.store/database.sqlite $BACKUP_DIR/$BACKUP_FILE; echo 'Database backed up to: $BACKUP_DIR/$BACKUP_FILE'; else echo 'No existing SQLite database to backup (using MySQL in production)'; fi"
+ssh -p 21098 elteijae@198.54.114.246 "mkdir -p $BACKUP_DIR && if [ -f /home/elteijae/byccollections.com/database.sqlite ]; then cp /home/elteijae/byccollections.com/database.sqlite $BACKUP_DIR/$BACKUP_FILE; echo 'Database backed up to: $BACKUP_DIR/$BACKUP_FILE'; else echo 'No existing SQLite database to backup (using MySQL in production)'; fi"
 
 # 2.5. Configure production environment in .env before builds
 echo "Configuring production environment in .env..."
@@ -84,7 +84,23 @@ echo "📝 Database management: Handled manually to preserve production data"
 
 # 10. Upload to cPanel server (excluding database file)
 echo "Uploading to server using rsync (excluding database)..."
-rsync -avz -e "ssh -p 21098" --exclude='database.sqlite' production/server/ elteijae@198.54.114.246:/home/elteijae/eltee.store/
+rsync -avz -e "ssh -p 21098" --exclude='database.sqlite' production/server/ elteijae@198.54.114.246:/home/elteijae/byccollections.com/
+
+# 10.5 Upload Itemlist.csv used for seeding
+if [ -f Itemlist.csv ]; then
+  echo "Uploading Itemlist.csv to server..."
+  rsync -avz -e "ssh -p 21098" Itemlist.csv elteijae@198.54.114.246:/home/elteijae/byccollections.com/Itemlist.csv
+else
+  echo "⚠️  Itemlist.csv not found locally; remote seeding will fail without it."
+fi
+
+# 10.7 Seed BYC Collections data on remote (runs compiled JS)
+echo "Running remote BYC Collections seeding script..."
+ssh -p 21098 elteijae@198.54.114.246 "cd /home/elteijae/byccollections.com && \
+  if [ -f package.json ]; then \
+    if [ ! -d node_modules ]; then echo 'Installing production dependencies on remote...'; npm ci --omit=dev || npm install --omit=dev; fi; \
+  fi; \
+  NODE_ENV=production node dist/src/scripts/seed-byc-collections.js"
 
 # 11. Restore original NODE_ENV in server/.env (optional, for local development)
 echo "Restoring original NODE_ENV in server/.env..."
