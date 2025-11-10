@@ -99,6 +99,8 @@ echo "Installing production dependencies and running BYC Collections seeder on r
 ssh -p 21098 elteijae@198.54.114.246 "cd /home/elteijae/byccollections.com && \
   if [ -f package.json ]; then \
     echo 'Installing production dependencies...'; \
+    # Install required production dependencies explicitly
+    npm install bcrypt@5.1.1 sqlite3@5.1.7 mysql2@3.12.0 --save --omit=dev --legacy-peer-deps && \
     npm install --omit=dev --legacy-peer-deps || { echo 'Failed to install dependencies'; exit 1; }; \
     echo 'Dependencies installed successfully'; \
   fi; \
