@@ -146,9 +146,7 @@ async function seedBYCCollections() {
           quantity: 100, // Default quantity
           min_quantity: 5,
           stock_unit: 'piece',
-          is_active: true,
-          created_at: new Date(),
-          updated_at: new Date()
+          is_active: true
         }, { transaction });
         
         productCount++;
