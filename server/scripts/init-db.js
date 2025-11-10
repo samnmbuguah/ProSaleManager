@@ -1,9 +1,21 @@
-const { Sequelize } = require('sequelize');
-const config = require('../config/config.json');
+import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { Sequelize } from 'sequelize';
+
+// Create require in ES module scope
+const require = createRequire(import.meta.url);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load config
+const config = require(join(process.cwd(), 'config.json'));
 
 async function initializeDatabase() {
   try {
     const dbConfig = config.production;
+    
+    console.log('Creating database if it does not exist...');
     
     // Create database if it doesn't exist
     const sequelize = new Sequelize('', dbConfig.username, dbConfig.password, {
@@ -12,14 +24,13 @@ async function initializeDatabase() {
       logging: console.log
     });
     
-    console.log('Creating database if it does not exist...');
     await sequelize.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
     console.log('Database created or already exists');
     
     // Close the connection
     await sequelize.close();
     
-    // Now connect to the new database and run migrations
+    // Now connect to the new database
     const db = new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, {
       host: dbConfig.host,
       dialect: dbConfig.dialect,
@@ -43,4 +54,8 @@ async function initializeDatabase() {
   }
 }
 
-initializeDatabase();
+// Execute the function
+initializeDatabase().catch(error => {
+  console.error('Unhandled error in database initialization:', error);
+  process.exit(1);
+});
