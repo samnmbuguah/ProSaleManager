@@ -107,6 +107,12 @@ fi
 echo "Uploading files to server..."
 rsync -avz -e "ssh -p 21098" --exclude='database.sqlite' "$TMP_DIR/" elteijae@198.54.114.246:/home/elteijae/byccollections.com/
 
+# Create a scripts directory on the remote server if it doesn't exist
+ssh -p 21098 elteijae@198.54.114.246 "mkdir -p /home/elteijae/byccollections.com/scripts"
+
+# Upload the init-db.js script to the scripts directory
+rsync -avz -e "ssh -p 21098" server/scripts/init-db.js elteijae@198.54.114.246:/home/elteijae/byccollections.com/scripts/
+
 # Clean up the temporary directory
 echo "Cleaning up temporary files..."
 rm -rf "$TMP_DIR"
@@ -124,9 +130,13 @@ ssh -p 21098 elteijae@198.54.114.246 "cd /home/elteijae/byccollections.com && \
   \n  # Install Sequelize CLI globally if not already installed
   echo 'Installing Sequelize CLI...'; \
   npm install -g sequelize-cli || { echo 'Failed to install Sequelize CLI'; exit 1; }; \
-  \n  # Initialize the database
+  \
+  # Make sure init-db.js is executable
+  chmod +x scripts/init-db.js || { echo 'Failed to set execute permissions on init-db.js'; exit 1; }; \
+  \
+  # Initialize the database
   echo 'Initializing database...'; \
-  NODE_ENV=production node scripts/init-db.js || { echo 'Failed to initialize database'; exit 1; }; \
+  cd /home/elteijae/byccollections.com && NODE_ENV=production node scripts/init-db.js || { echo 'Failed to initialize database'; exit 1; }; \
   \n  # Run database migrations using the config file
   echo 'Running database migrations...'; \
   NODE_ENV=production npx sequelize-cli db:migrate --config=config.json || { echo 'Failed to run migrations'; exit 1; }; \
