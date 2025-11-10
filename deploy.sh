@@ -86,7 +86,12 @@ echo "📝 Database management: Handled manually to preserve production data"
 echo "Uploading to server using rsync (excluding database)..."
 rsync -avz -e "ssh -p 21098" --exclude='database.sqlite' production/server/ elteijae@198.54.114.246:/home/elteijae/byccollections.com/
 
-# 10.5 Upload Itemlist.csv used for seeding
+# 10.5 Upload configuration and data files
+# Upload Sequelize config file
+echo "Uploading Sequelize config file..."
+rsync -avz -e "ssh -p 21098" server/config/config.json elteijae@198.54.114.246:/home/elteijae/byccollections.com/config.json
+
+# Upload Itemlist.csv used for seeding
 if [ -f Itemlist.csv ]; then
   echo "Uploading Itemlist.csv to server..."
   rsync -avz -e "ssh -p 21098" Itemlist.csv elteijae@198.54.114.246:/home/elteijae/byccollections.com/Itemlist.csv
@@ -104,9 +109,12 @@ ssh -p 21098 elteijae@198.54.114.246 "cd /home/elteijae/byccollections.com && \
     npm install --omit=dev --legacy-peer-deps || { echo 'Failed to install dependencies'; exit 1; }; \
     echo 'Dependencies installed successfully'; \
   fi; \
-  \n  # Run database migrations
+  \n  # Install Sequelize CLI globally if not already installed
+  echo 'Installing Sequelize CLI...'; \
+  npm install -g sequelize-cli || { echo 'Failed to install Sequelize CLI'; exit 1; }; \
+  \n  # Run database migrations using the config file
   echo 'Running database migrations...'; \
-  NODE_ENV=production npx sequelize-cli db:migrate || { echo 'Failed to run migrations'; exit 1; }; \
+  NODE_ENV=production npx sequelize-cli db:migrate --config=config.json || { echo 'Failed to run migrations'; exit 1; }; \
   echo 'Database migrations completed successfully'; \
   \n  # Run the BYC Collections seeder
   echo 'Running BYC Collections seeder...'; \
