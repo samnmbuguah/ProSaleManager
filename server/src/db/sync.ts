@@ -1,5 +1,7 @@
 import { sequelize } from "../config/database.js";
 import User from "../models/User.js";
+import Store from "../models/Store.js";
+import Category from "../models/Category.js";
 import Product from "../models/Product.js";
 import Supplier from "../models/Supplier.js";
 import ProductSupplier from "../models/ProductSupplier.js";
@@ -13,10 +15,12 @@ import { setupAssociations } from "../models/associations.js";
 
 // Define the order of table creation
 const modelSequence = [
+  Store, // Base store table
+  Category, // Depends on Store (has store_id)
   User, // No dependencies
   Customer, // No dependencies
   Supplier, // No dependencies
-  Product, // Create products first
+  Product, // Depends on Category and Store
   ProductSupplier, // Depends on Product and Supplier
   Sale, // Depends on Customer and User
   SaleItem, // Depends on Sale and Product

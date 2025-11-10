@@ -13,6 +13,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as csv from 'fast-csv';
 import bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 
 interface ProductCSV {
   Category: string;
@@ -123,8 +124,10 @@ async function seedBYCCollections() {
         // Calculate dozen price (10% discount from piece price)
         const dozenSellingPrice = sellingPrice * 12 * 0.9; // 10% discount for dozen
         
-        // Generate SKU (simple implementation)
-        const sku = `BYC-${productData.Category.substring(0, 3).toUpperCase()}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        // Generate collision-resistant SKU/barcode
+        const categoryCode = productData.Category.substring(0, 3).toUpperCase();
+        const uniqueSuffix = `${Date.now()}-${productCount}-${randomUUID().slice(0, 8)}`;
+        const sku = `BYC-${categoryCode}-${uniqueSuffix}`;
         
         if (!category?.id) {
           console.warn(`Skipping product '${productData['Item Name']}' - invalid category`);
