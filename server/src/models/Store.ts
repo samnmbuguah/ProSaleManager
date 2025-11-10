@@ -5,6 +5,7 @@ class Store extends Model {
   declare id: number;
   declare name: string;
   declare subdomain: string | null;
+  declare is_active?: boolean;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }

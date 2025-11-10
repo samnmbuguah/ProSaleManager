@@ -82,15 +82,22 @@ export function setupAssociations() {
     foreignKey: "product_id",
   });
 
+  // Store - Category association
+  Store.hasMany(Category, { foreignKey: 'store_id', as: 'categories' });
+  Category.belongsTo(Store, { foreignKey: 'store_id', as: 'store' });
+
   // Category - Product association
-  Category.hasMany(Product, { foreignKey: "category_id" });
-  Product.belongsTo(Category, { foreignKey: "category_id" });
+  Category.hasMany(Product, { foreignKey: 'category_id' });
+  Product.belongsTo(Category, { foreignKey: 'category_id' });
+
+  // Store - Product association
+  Store.hasMany(Product, { foreignKey: 'store_id' });
+  Product.belongsTo(Store, { foreignKey: 'store_id' });
 
   // Store associations
   Store.hasMany(User, { foreignKey: "store_id" });
   User.belongsTo(Store, { foreignKey: "store_id" });
 
-  Store.hasMany(Product, { foreignKey: "store_id" });
   Product.belongsTo(Store, { foreignKey: "store_id" });
 
   // Store - Users association already exists via User model; clients are users with role='client'
