@@ -91,6 +91,14 @@ rsync -avz -e "ssh -p 21098" --exclude='database.sqlite' production/server/ elte
 echo "Uploading Sequelize config file..."
 rsync -avz -e "ssh -p 21098" server/config/config.json elteijae@198.54.114.246:/home/elteijae/byccollections.com/config.json
 
+# Create migrations directory on remote server if it doesn't exist
+echo "Creating migrations directory on remote server..."
+ssh -p 21098 elteijae@198.54.114.246 "mkdir -p /home/elteijae/byccollections.com/migrations"
+
+# Upload migration files
+echo "Uploading migration files..."
+rsync -avz -e "ssh -p 21098" server/src/migrations/ elteijae@198.54.114.246:/home/elteijae/byccollections.com/migrations/
+
 # Upload Itemlist.csv used for seeding
 if [ -f Itemlist.csv ]; then
   echo "Uploading Itemlist.csv to server..."
