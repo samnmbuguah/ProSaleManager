@@ -125,6 +125,11 @@ async function seedBYCCollections() {
         // Generate SKU (simple implementation)
         const sku = `BYC-${productData.Category.substring(0, 3).toUpperCase()}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
         
+        if (!category?.id) {
+          console.warn(`Skipping product '${productData['Item Name']}' - invalid category`);
+          continue;
+        }
+        
         await Product.create({
           name: productData['Item Name'].trim(),
           sku,
