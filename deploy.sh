@@ -82,30 +82,34 @@ cp -r client/dist/* production/server/public/
 # 9. Database management - handled manually
 echo "📝 Database management: Handled manually to preserve production data"
 
-# 10. Upload to cPanel server (excluding database file)
-echo "Uploading to server using rsync (excluding database)..."
-rsync -avz -e "ssh -p 21098" --exclude='database.sqlite' production/server/ elteijae@198.54.114.246:/home/elteijae/byccollections.com/
+# 9.5 Create a temporary directory for deployment
+TMP_DIR="/tmp/prosale-deploy-$(date +%s)"
+echo "Creating temporary directory for deployment: $TMP_DIR"
+mkdir -p "$TMP_DIR"
 
-# 10.5 Upload configuration and data files
-# Upload Sequelize config file
-echo "Uploading Sequelize config file..."
-rsync -avz -e "ssh -p 21098" server/config/config.json elteijae@198.54.114.246:/home/elteijae/byccollections.com/config.json
+# 10. Copy all necessary files to the temporary directory
+echo "Preparing files for deployment..."
+cp -r production/server/* "$TMP_DIR/"
+cp server/config/config.json "$TMP_DIR/"
+mkdir -p "$TMP_DIR/migrations"
+cp -r server/src/migrations/* "$TMP_DIR/migrations/"
+cp server/scripts/init-db.js "$TMP_DIR/"
 
-# Create migrations directory on remote server if it doesn't exist
-echo "Creating migrations directory on remote server..."
-ssh -p 21098 elteijae@198.54.114.246 "mkdir -p /home/elteijae/byccollections.com/migrations"
-
-# Upload migration files
-echo "Uploading migration files..."
-rsync -avz -e "ssh -p 21098" server/src/migrations/ elteijae@198.54.114.246:/home/elteijae/byccollections.com/migrations/
-
-# Upload Itemlist.csv used for seeding
+# Copy Itemlist.csv if it exists
 if [ -f Itemlist.csv ]; then
-  echo "Uploading Itemlist.csv to server..."
-  rsync -avz -e "ssh -p 21098" Itemlist.csv elteijae@198.54.114.246:/home/elteijae/byccollections.com/Itemlist.csv
+  echo "Including Itemlist.csv in deployment..."
+  cp Itemlist.csv "$TMP_DIR/Itemlist.csv"
 else
   echo "⚠️  Itemlist.csv not found locally; remote seeding will fail without it."
 fi
+
+# 10.5 Upload everything to the server
+echo "Uploading files to server..."
+rsync -avz -e "ssh -p 21098" --exclude='database.sqlite' "$TMP_DIR/" elteijae@198.54.114.246:/home/elteijae/byccollections.com/
+
+# Clean up the temporary directory
+echo "Cleaning up temporary files..."
+rm -rf "$TMP_DIR"
 
 # 10.7 Install production dependencies, run migrations, and seed BYC Collections data on remote
 echo "Setting up BYC Collections on remote server..."
