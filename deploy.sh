@@ -94,13 +94,17 @@ else
   echo "⚠️  Itemlist.csv not found locally; remote seeding will fail without it."
 fi
 
-# 10.7 Seed BYC Collections data on remote (runs compiled JS)
-echo "Running remote BYC Collections seeding script..."
+# 10.7 Install production dependencies and seed BYC Collections data on remote
+echo "Installing production dependencies and running BYC Collections seeder on remote..."
 ssh -p 21098 elteijae@198.54.114.246 "cd /home/elteijae/byccollections.com && \
   if [ -f package.json ]; then \
-    if [ ! -d node_modules ]; then echo 'Installing production dependencies on remote...'; npm ci --omit=dev || npm install --omit=dev; fi; \
+    echo 'Installing production dependencies...'; \
+    npm install --omit=dev --legacy-peer-deps || { echo 'Failed to install dependencies'; exit 1; }; \
+    echo 'Dependencies installed successfully'; \
   fi; \
-  NODE_ENV=production node dist/src/scripts/seed-byc-collections.js"
+  echo 'Running BYC Collections seeder...'; \
+  NODE_ENV=production node dist/src/scripts/seed-byc-collections.js || { echo 'Failed to run seeder'; exit 1; }; \
+  echo 'BYC Collections seeder completed successfully'"
 
 # 11. Restore original NODE_ENV in server/.env (optional, for local development)
 echo "Restoring original NODE_ENV in server/.env..."
