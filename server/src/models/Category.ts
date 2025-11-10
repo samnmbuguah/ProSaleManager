@@ -6,6 +6,7 @@ class Category extends Model {
   declare name: string;
   declare description: string;
   declare is_active?: boolean;
+  declare store_id?: number;
 }
 
 Category.init(
@@ -28,6 +29,14 @@ Category.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: true,
+    },
+    store_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true, // Temporarily allow null for existing records
+      references: {
+        model: 'stores', // Name of the target table
+        key: 'id',
+      },
     },
   },
   {
