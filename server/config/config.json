@@ -18,10 +18,11 @@
     "logging": false
   },
   "production": {
-    "username": "elteijae_byc_user",
-    "password": "byc123456",
+    "username": "elteijae_eltee_store",
+    "password": "eltee_store_admin",
     "database": "elteijae_byc_collections",
     "host": "localhost",
+    "port": 3306,
     "dialect": "mysql",
     "logging": false,
     "pool": {
