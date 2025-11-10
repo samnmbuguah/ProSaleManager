@@ -117,34 +117,7 @@ rsync -avz -e "ssh -p 21098" server/scripts/init-db.js elteijae@198.54.114.246:/
 echo "Cleaning up temporary files..."
 rm -rf "$TMP_DIR"
 
-# 10.7 Install production dependencies, run migrations, and seed BYC Collections data on remote
-echo "Setting up BYC Collections on remote server..."
-ssh -p 21098 elteijae@198.54.114.246 "cd /home/elteijae/byccollections.com && \
-  if [ -f package.json ]; then \
-    echo 'Installing production dependencies...'; \
-    # Install required production dependencies explicitly
-    npm install bcrypt@5.1.1 sqlite3@5.1.7 mysql2@3.12.0 --save --omit=dev --legacy-peer-deps && \
-    npm install --omit=dev --legacy-peer-deps || { echo 'Failed to install dependencies'; exit 1; }; \
-    echo 'Dependencies installed successfully'; \
-  fi; \
-  \n  # Install Sequelize CLI globally if not already installed
-  echo 'Installing Sequelize CLI...'; \
-  npm install -g sequelize-cli || { echo 'Failed to install Sequelize CLI'; exit 1; }; \
-  \
-  # Make sure init-db.js is executable
-  chmod +x scripts/init-db.js || { echo 'Failed to set execute permissions on init-db.js'; exit 1; }; \
-  \
-  # Initialize the database
-  echo 'Initializing database...'; \
-  cd /home/elteijae/byccollections.com && NODE_ENV=production node scripts/init-db.js || { echo 'Failed to initialize database'; exit 1; }; \
-  \n  # Run database migrations using the config file
-  echo 'Running database migrations...'; \
-  NODE_ENV=production npx sequelize-cli db:migrate --config=config.json || { echo 'Failed to run migrations'; exit 1; }; \
-  echo 'Database migrations completed successfully'; \
-  \n  # Run the BYC Collections seeder
-  echo 'Running BYC Collections seeder...'; \
-  NODE_ENV=production node dist/src/scripts/seed-byc-collections.js || { echo 'Failed to run seeder'; exit 1; }; \
-  echo 'BYC Collections seeder completed successfully'"
+echo "Upload complete. Skipping remote migrations and seeding (to be run manually via SSH)."
 
 # 11. Restore original NODE_ENV in server/.env (optional, for local development)
 echo "Restoring original NODE_ENV in server/.env..."
