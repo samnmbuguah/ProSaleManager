@@ -26,8 +26,9 @@ async function seedBYCCollections() {
   try {
     console.log("🚀 Starting BYC Collections database seeding...");
     
-    // Read the CSV file from the project root (one level up from server)
-    const csvFilePath = path.join(process.cwd(), '..', 'Itemlist.csv');
+    // Read the CSV file from the current directory on the server
+    const csvFilePath = path.join(process.cwd(), 'Itemlist.csv');
+    console.log(`Looking for CSV file at: ${csvFilePath}`);
     const products: ProductCSV[] = [];
     
     // Parse CSV
