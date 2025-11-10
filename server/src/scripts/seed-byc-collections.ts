@@ -146,9 +146,7 @@ async function seedBYCCollections() {
           quantity: 100, // Default quantity
           min_quantity: 5,
           stock_unit: 'piece',
-          pack_size: null,
           is_active: true,
-          margin_percentage: parseFloat(productData['Margin %']) || 0,
           created_at: new Date(),
           updated_at: new Date()
         }, { transaction });
