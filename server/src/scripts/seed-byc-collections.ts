@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import 'dotenv/config';
 /**
  * BYC Collections Seeding Script
  * 
@@ -64,96 +65,110 @@ async function seedBYCCollections() {
         console.log("🏪 Using existing BYC Collections store");
       }
 
-      // Create admin user for BYC Collections
-      const hashedPassword = await bcrypt.hash('bycadmin123', 10);
-      
-      const [admin] = await User.findOrCreate({
+      // Create or update admin user for BYC Collections
+      const adminPassword = process.env.BYC_ADMIN_PASSWORD || 'changeme!';
+      const [admin, createdAdmin] = await User.findOrCreate({
         where: { email: 'admin@byccollections.com' },
         defaults: {
           name: 'BYC Admin',
           email: 'admin@byccollections.com',
-          password: hashedPassword,
+          password: adminPassword, // rely on model hook to hash
           role: 'admin',
           is_active: true,
           store_id: store.id
         },
         transaction
       });
+      if (!createdAdmin) {
+        const matches = await (admin as any).comparePassword(adminPassword);
+        if (!matches) {
+          admin.password = adminPassword; // hook will hash
+          await admin.save({ transaction });
+        }
+      }
 
       console.log(`👤 Created admin user: ${admin.email}`);
 
       // Get unique categories from CSV
       const categories = [...new Set(products.map(p => p.Category))];
       
-      // Create categories
+      // Create categories (reuse existing by name to avoid unique constraint errors)
       const categoryMap = new Map<string, Category>();
       for (const categoryName of categories) {
-        if (!categoryName) continue;
-        
-        const [category] = await Category.findOrCreate({
-          where: { 
-            name: categoryName.trim(),
-            store_id: store.id
-          },
-          defaults: {
-            name: categoryName.trim(),
-            description: `${categoryName} category`,
-            store_id: store.id,
-            is_active: true
-          },
-          transaction
-        });
-        
+        const trimmed = categoryName?.trim();
+        if (!trimmed) continue;
+
+        // First, try to find any existing category by name (global uniqueness on name)
+        let category = await Category.findOne({ where: { name: trimmed }, transaction });
+
+        // If not found, create it and associate to the current store
+        if (!category) {
+          category = await Category.create(
+            {
+              name: trimmed,
+              description: `${trimmed} category`,
+              store_id: store.id,
+              is_active: true,
+            },
+            { transaction }
+          );
+        }
+
         categoryMap.set(categoryName, category);
       }
 
       console.log(`📂 Created ${categoryMap.size} categories`);
 
-      // Create products
+      // Create products (skip if products already exist for this store)
+      const existingProductCount = await Product.count({ where: { store_id: store.id }, transaction });
       let productCount = 0;
-      
-      for (const productData of products) {
-        if (!productData.Category || !productData['Item Name']) continue;
-        
-        const category = categoryMap.get(productData.Category);
-        if (!category) continue;
+      if (existingProductCount > 0) {
+        console.log(`🛑 Skipping product creation: ${existingProductCount} products already exist for BYC Collections`);
+      } else {
+        for (const productData of products) {
+          if (!productData.Category || !productData['Item Name']) continue;
+          
+          const category = categoryMap.get(productData.Category);
+          if (!category) continue;
 
-        const cost = parseFloat(productData.Cost) || 0;
-        const sellingPrice = parseFloat(productData['Active Price']) || 0;
+          const cost = parseFloat(productData.Cost) || 0;
+          const sellingPrice = parseFloat(productData['Active Price']) || 0;
+          
+          // Calculate dozen price (10% discount from piece price)
+          const dozenSellingPrice = sellingPrice * 12 * 0.9; // 10% discount for dozen
+          
+          // Generate collision-resistant SKU/barcode
+          const categoryCode = productData.Category.substring(0, 3).toUpperCase();
+          const uniqueSuffix = `${Date.now()}-${productCount}-${randomUUID().slice(0, 8)}`;
+          const sku = `BYC-${categoryCode}-${uniqueSuffix}`;
+          
+          if (!category?.id) {
+            console.warn(`Skipping product '${productData['Item Name']}' - invalid category`);
+            continue;
+          }
+          
+          await Product.create({
+            name: productData['Item Name'].trim(),
+            sku,
+            barcode: sku,
+            description: `${productData['Item Name']} - ${productData.Category}`,
+            category_id: category.id,
+            store_id: store.id,
+            piece_buying_price: cost,
+            piece_selling_price: sellingPrice,
+            dozen_buying_price: cost * 12,
+            dozen_selling_price: dozenSellingPrice,
+            pack_buying_price: 0,
+            pack_selling_price: 0,
+            quantity: 100, // Default quantity
+            min_quantity: 5,
+            stock_unit: 'piece',
+            is_active: true
+          }, { transaction });
+          
+          productCount++;
         
-        // Calculate dozen price (10% discount from piece price)
-        const dozenSellingPrice = sellingPrice * 12 * 0.9; // 10% discount for dozen
-        
-        // Generate collision-resistant SKU/barcode
-        const categoryCode = productData.Category.substring(0, 3).toUpperCase();
-        const uniqueSuffix = `${Date.now()}-${productCount}-${randomUUID().slice(0, 8)}`;
-        const sku = `BYC-${categoryCode}-${uniqueSuffix}`;
-        
-        if (!category?.id) {
-          console.warn(`Skipping product '${productData['Item Name']}' - invalid category`);
-          continue;
         }
-        
-        await Product.create({
-          name: productData['Item Name'].trim(),
-          sku,
-          barcode: sku,
-          description: `${productData['Item Name']} - ${productData.Category}`,
-          category_id: category.id,
-          store_id: store.id,
-          piece_buying_price: cost,
-          piece_selling_price: sellingPrice,
-          dozen_buying_price: cost * 12,
-          dozen_selling_price: dozenSellingPrice,
-          pack_buying_price: 0,
-          pack_selling_price: 0,
-          quantity: 100, // Default quantity
-          min_quantity: 5,
-          stock_unit: 'piece',
-          is_active: true
-        }, { transaction });
-        
-        productCount++;
       }
 
       console.log(`🛍️  Created ${productCount} products`);
