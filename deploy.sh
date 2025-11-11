@@ -75,22 +75,20 @@ cp server/package-lock.json production/server/
 # 7. Copy .env to production directory (already configured with NODE_ENV=production)
 cp server/.env production/server/.env
 
-# 8. Copy frontend build to backend public directory
+# 8. Copy frontend build into backend public directory (served by the Node app)
 mkdir -p production/server/public
 cp -r client/dist/* production/server/public/
 
-# 9. Database management - handled manually
-echo "📝 Database management: Handled manually to preserve production data"
-
-# 10. Upload to cPanel server (excluding database file)
+# 9. Upload to cPanel server (excluding database file)
 echo "Uploading to server using rsync (excluding database)..."
-rsync -avz -e "ssh -p 21098" --exclude='database.sqlite' production/server/ elteijae@198.54.114.246:/home/elteijae/eltee.store/
+rsync -rtvz -e "ssh -p 21098" --exclude='database.sqlite' production/server/ elteijae@198.54.114.246:/home/elteijae/eltee.store/
+
+# 10. Trigger Passenger restart
+ssh -p 21098 elteijae@198.54.114.246 "touch /home/elteijae/eltee.store/tmp/restart.txt"
 
 # 11. Restore original NODE_ENV in server/.env (optional, for local development)
 echo "Restoring original NODE_ENV in server/.env..."
 sed -i "s/^NODE_ENV=.*/NODE_ENV=${ORIGINAL_NODE_ENV}/" server/.env
-
-# 12. Deployment complete
 
 # 13. Do NOT delete production folder after deployment
 
@@ -103,7 +101,4 @@ echo "   ✅ Database backed up to: $BACKUP_FILE"
 echo "   📝 Database managed manually (not uploaded)"
 echo ""
 echo "🔗 Application should be available at your domain"
-echo "🔑 Login credentials:"
-echo "   Admin: eltee.admin@prosale.com / elteeadmin123"
-echo "   Cashier: eltee.cashier@prosale.com / eltee123"
-echo "   Manager: eltee.manager@prosale.com / elteemgr123"
+echo ""
