@@ -364,3 +364,4 @@ server/src/database/seeders/20250728122816-initial-data.js
 server/uploads
 server/src/config/config.json
 server/config/config.json
+server/.env copy
