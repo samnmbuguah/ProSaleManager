@@ -1,7 +1,7 @@
 #!/usr/bin/env node
+import 'dotenv/config';
 import { sequelize } from "../config/database.js";
 import { Store, User, sequelize as seq } from "../models/index.js";
-import bcrypt from "bcrypt";
 
 async function seedBYCUsers() {
   try {
@@ -14,36 +14,51 @@ async function seedBYCUsers() {
         throw new Error("BYC Collections store not found. Run the main BYC seeder first.");
       }
 
+      // Get passwords from environment variables with fallback to default values
+      const managerPassword = process.env.BYC_MANAGER_PASSWORD || 'changeme!';
+      const cashierPassword = process.env.BYC_CASHIER_PASSWORD || 'changeme!';
+
       const usersToCreate = [
         {
           name: "BYC Manager",
           email: "manager@byccollections.com",
-          password: "bycmanager123",
+          password: managerPassword,
           role: "manager" as const,
         },
         {
           name: "BYC Cashier",
           email: "cashier@byccollections.com",
-          password: "byccashier123",
+          password: cashierPassword,
           role: "sales" as const,
         },
       ];
 
       for (const u of usersToCreate) {
-        const hashed = await bcrypt.hash(u.password, 10);
         const [user, created] = await User.findOrCreate({
           where: { email: u.email },
           defaults: {
             name: u.name,
             email: u.email,
-            password: hashed,
+            password: u.password, // rely on model hook to hash
             role: u.role,
             is_active: true,
             store_id: store.id,
           },
           transaction,
         });
-        console.log(created ? `✅ Created ${u.role} ${u.email}` : `ℹ️  ${u.email} already exists`);
+        if (!created) {
+          // Ensure password matches the intended value; if not, update to plaintext (hook will hash)
+          const matches = await (user as any).comparePassword(u.password);
+          if (!matches) {
+            user.password = u.password;
+            await user.save({ transaction });
+            console.log(`🔁 Updated password for ${u.email}`);
+          } else {
+            console.log(`ℹ️  ${u.email} already exists`);
+          }
+        } else {
+          console.log(`✅ Created ${u.role} ${u.email}`);
+        }
       }
 
       await transaction.commit();
