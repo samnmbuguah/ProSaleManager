@@ -7,9 +7,9 @@ rm -rf production
 
 # 2. Create database backup before deployment (legacy SQLite backup if exists)
 echo "Creating database backup (if SQLite database exists)..."
-BACKUP_DIR="/home/elteijae/byccollections.com/backups"
+BACKUP_DIR="/home/elteijae/eltee.store/backups"
 BACKUP_FILE="database-backup-$(date +%F-%H%M%S).sqlite"
-ssh -p 21098 elteijae@198.54.114.246 "mkdir -p $BACKUP_DIR && if [ -f /home/elteijae/byccollections.com/database.sqlite ]; then cp /home/elteijae/byccollections.com/database.sqlite $BACKUP_DIR/$BACKUP_FILE; echo 'Database backed up to: $BACKUP_DIR/$BACKUP_FILE'; else echo 'No existing SQLite database to backup (using MySQL in production)'; fi"
+ssh -p 21098 elteijae@198.54.114.246 "mkdir -p $BACKUP_DIR && if [ -f /home/elteijae/eltee.store/database.sqlite ]; then cp /home/elteijae/eltee.store/database.sqlite $BACKUP_DIR/$BACKUP_FILE; echo 'Database backed up to: $BACKUP_DIR/$BACKUP_FILE'; else echo 'No existing SQLite database to backup (using MySQL in production)'; fi"
 
 # 2.5. Configure production environment in .env before builds
 echo "Configuring production environment in .env..."
@@ -75,55 +75,20 @@ cp server/package-lock.json production/server/
 # 7. Copy .env to production directory (already configured with NODE_ENV=production)
 cp server/.env production/server/.env
 
-# 8. Copy frontend build to backend public directory
+# 8. Copy frontend build into backend public directory (served by the Node app)
 mkdir -p production/server/public
 cp -r client/dist/* production/server/public/
 
-# 9. Database management - handled manually
-echo "📝 Database management: Handled manually to preserve production data"
+# 9. Upload to cPanel server (excluding database file)
+echo "Uploading to server using rsync (excluding database)..."
+rsync -rtvz -e "ssh -p 21098" --exclude='database.sqlite' production/server/ elteijae@198.54.114.246:/home/elteijae/eltee.store/
 
-# 9.5 Create a temporary directory for deployment
-TMP_DIR="/tmp/prosale-deploy-$(date +%s)"
-echo "Creating temporary directory for deployment: $TMP_DIR"
-mkdir -p "$TMP_DIR"
-
-# 10. Copy all necessary files to the temporary directory
-echo "Preparing files for deployment..."
-cp -r production/server/* "$TMP_DIR/"
-cp server/config/config.json "$TMP_DIR/"
-mkdir -p "$TMP_DIR/migrations"
-cp -r server/src/migrations/* "$TMP_DIR/migrations/"
-cp server/scripts/init-db.js "$TMP_DIR/"
-
-# Copy Itemlist.csv if it exists
-if [ -f Itemlist.csv ]; then
-  echo "Including Itemlist.csv in deployment..."
-  cp Itemlist.csv "$TMP_DIR/Itemlist.csv"
-else
-  echo "⚠️  Itemlist.csv not found locally; remote seeding will fail without it."
-fi
-
-# 10.5 Upload everything to the server
-echo "Uploading files to server..."
-rsync -avz -e "ssh -p 21098" --exclude='database.sqlite' "$TMP_DIR/" elteijae@198.54.114.246:/home/elteijae/byccollections.com/
-
-# Create a scripts directory on the remote server if it doesn't exist
-ssh -p 21098 elteijae@198.54.114.246 "mkdir -p /home/elteijae/byccollections.com/scripts"
-
-# Upload the init-db.js script to the scripts directory
-rsync -avz -e "ssh -p 21098" server/scripts/init-db.js elteijae@198.54.114.246:/home/elteijae/byccollections.com/scripts/
-
-# Clean up the temporary directory
-echo "Cleaning up temporary files..."
-rm -rf "$TMP_DIR"
-
-echo "Upload complete. Skipping remote migrations and seeding (to be run manually via SSH)."
+# 10. Trigger Passenger restart
+ssh -p 21098 elteijae@198.54.114.246 "touch /home/elteijae/eltee.store/tmp/restart.txt"
 
 # 11. Restore original NODE_ENV in server/.env (optional, for local development)
 echo "Restoring original NODE_ENV in server/.env..."
 sed -i "s/^NODE_ENV=.*/NODE_ENV=${ORIGINAL_NODE_ENV}/" server/.env
-
-# 12. Deployment complete
 
 # 13. Do NOT delete production folder after deployment
 
@@ -136,7 +101,4 @@ echo "   ✅ Database backed up to: $BACKUP_FILE"
 echo "   📝 Database managed manually (not uploaded)"
 echo ""
 echo "🔗 Application should be available at your domain"
-echo "🔑 Login credentials:"
-echo "   Admin: admin@byccollections.com / bycadmin123"
 echo ""
-echo "🔗 Application should be available at your domain"

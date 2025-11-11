@@ -68,6 +68,7 @@ const ROLE_ROUTES: Record<AppRole, Route[]> = {
   sales: [
     { path: "pos", label: "POS", icon: Store },
     { path: "inventory", label: "Inventory", icon: PackageSearch },
+    { path: "sales", label: "Sales", icon: Receipt },
     { path: "expenses", label: "Expenses", icon: Wallet },
     { path: "favorites", label: "Favorites", icon: Heart },
   ],
