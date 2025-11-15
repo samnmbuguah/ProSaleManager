@@ -151,16 +151,17 @@ function shouldCreateExpenseOnDate(category: typeof EXPENSE_CATEGORIES[0], date:
 export async function seedExpenses(): Promise<void> {
   try {
     console.log("💰 Starting expenses seeder...");
-
-    // Clear existing expenses data
-    await Expense.destroy({ where: {} });
-    console.log("🗑️ Cleared existing expenses data");
-
+    
     // Only seed expenses for Demo Store
     const demoStore = await Store.findOne({ where: { name: "Demo Store" } });
     if (!demoStore) {
       throw new Error("Demo Store not found. Please seed stores first.");
     }
+
+    // Clear existing expenses data ONLY for Demo Store to avoid affecting other stores
+    await Expense.destroy({ where: { store_id: demoStore.id } });
+    console.log("🗑️ Cleared existing expenses data for Demo Store only");
+
     const stores = [demoStore];
 
     let totalExpensesCreated = 0;

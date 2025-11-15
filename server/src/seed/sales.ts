@@ -66,17 +66,24 @@ function getRandomSaleStatus(): string {
 export async function seedSales(): Promise<void> {
   try {
     console.log("🛒 Starting sales seeder...");
-
-    // Clear existing sales data
-    await SaleItem.destroy({ where: {} });
-    await Sale.destroy({ where: {} });
-    console.log("🗑️ Cleared existing sales data");
-
+    
     // Only seed sales for Demo Store
     const demoStore = await Store.findOne({ where: { name: "Demo Store" } });
 
     if (!demoStore) {
       throw new Error("Demo Store not found. Please seed stores first.");
+    }
+
+    // Clear existing sales data ONLY for Demo Store to avoid affecting other stores
+    const demoStoreSales = await Sale.findAll({ where: { store_id: demoStore.id } });
+    const demoSaleIds = demoStoreSales.map((sale) => sale.id).filter((id): id is number => typeof id === "number");
+
+    if (demoSaleIds.length > 0) {
+      await SaleItem.destroy({ where: { sale_id: demoSaleIds } });
+      await Sale.destroy({ where: { id: demoSaleIds } });
+      console.log("🗑️ Cleared existing sales data for Demo Store only");
+    } else {
+      console.log("ℹ️ No existing sales for Demo Store to clear");
     }
 
     const stores = [demoStore];
