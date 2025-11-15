@@ -53,7 +53,7 @@ function RootRedirect() {
       } else if (user.role === "admin" || user.role === "sales" || user.role === "manager") {
         setLocation(`/${encodeURIComponent(currentStore.name)}/pos`);
       } else if (user.role === "client") {
-        setLocation("/");
+        setLocation(`/${encodeURIComponent(currentStore.name)}`);
       }
     } else if (user && !currentStore) {
       // If user is logged in but no store context, redirect to direct routes

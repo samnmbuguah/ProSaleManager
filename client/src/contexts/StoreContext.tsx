@@ -25,16 +25,29 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Load stores for super admin (fetch from API if user is super admin)
   useEffect(() => {
     // Only fetch if not already loaded
-    if (stores.length === 0 && window.location.pathname !== "/auth") {
+    if (stores.length === 0) {
       setIsLoading(true);
       fetch("/api/stores")
         .then((res) => res.json())
         .then((data) => {
           if (data.success && Array.isArray(data.data)) {
             setStores(data.data);
-            // If no store selected, default to the first
+            // If no store selected, derive from URL first, otherwise default to the first
             if (!currentStore && data.data.length > 0) {
-              setCurrentStore(data.data[0]);
+              let initialStore = data.data[0];
+
+              const pathParts = window.location.pathname.split("/").filter(Boolean);
+              const urlStoreSegment = pathParts[0];
+
+              if (urlStoreSegment) {
+                const decodedName = decodeURIComponent(urlStoreSegment);
+                const matchedStore = data.data.find((store: Store) => store.name === decodedName);
+                if (matchedStore) {
+                  initialStore = matchedStore;
+                }
+              }
+
+              setCurrentStore(initialStore);
             }
           }
         })
