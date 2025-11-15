@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/hooks/use-auth";
+import { useStoreContext } from "@/contexts/StoreContext";
 import { useLocation } from "wouter";
 
 interface CartDrawerProps {
@@ -22,6 +23,7 @@ export default function CartDrawer({
 }: CartDrawerProps) {
   const { cart, removeFromCart, updateQuantity } = useCart();
   const { isAuthenticated } = useAuth();
+  const { currentStore } = useStoreContext();
   const [, setLocation] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -37,7 +39,8 @@ export default function CartDrawer({
     if (!isAuthenticated) {
       onCheckout();
     } else {
-      setLocation("/pos");
+      const storePrefix = currentStore?.name ? `/${encodeURIComponent(currentStore.name)}` : "";
+      setLocation(storePrefix ? `${storePrefix}/pos` : "/pos");
     }
     setIsOpen(false);
   };

@@ -126,7 +126,7 @@ export default function MainNav() {
     }
   };
 
-  const storePrefix = currentStore?.name ? `/${currentStore.name}` : "";
+  const storePrefix = currentStore?.name ? `/${encodeURIComponent(currentStore.name)}` : "";
   const firstName = (user.name || "").split(" ")[0] || user.name;
 
   const NavLinks = () => (
