@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useStoreContext } from "@/contexts/StoreContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,19 +26,40 @@ export default function AuthPage() {
   const { user } = useAuthContext();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { currentStore } = useStoreContext();
 
   // Handle navigation after successful auth
   useEffect(() => {
     if (shouldNavigate && user) {
-      // Only clients go to root route (/), everyone else goes to POS (/pos)
+      // Wait until store context is available so we can build store-aware routes
+      if (!currentStore?.name) {
+        return;
+      }
+
+      const storePrefix = `/${encodeURIComponent(currentStore.name)}`;
+
+      // Only clients go to store home route, everyone else goes to POS
       if (user.role === "client") {
-        setLocation("/");
+        setLocation(storePrefix);
       } else {
-        setLocation("/pos");
+        setLocation(`${storePrefix}/pos`);
       }
       setShouldNavigate(false);
     }
-  }, [shouldNavigate, user, setLocation]);
+  }, [shouldNavigate, user, currentStore, setLocation]);
+
+  // If user is already authenticated and visits /auth directly, redirect them
+  useEffect(() => {
+    if (user && currentStore?.name) {
+      const storePrefix = `/${encodeURIComponent(currentStore.name)}`;
+
+      if (user.role === "client") {
+        setLocation(storePrefix);
+      } else {
+        setLocation(`${storePrefix}/pos`);
+      }
+    }
+  }, [user, currentStore, setLocation]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -55,8 +77,8 @@ export default function AuthPage() {
       console.error("Auth error:", error);
 
       // Show error toast
-      let errorMessage =
-        error instanceof Error ? error.message : "Please check your credentials and try again";
+      let errorMessage = "Incorrect email or password. Please check your details and try again.";
+
       if (
         typeof error === "object" &&
         error !== null &&
