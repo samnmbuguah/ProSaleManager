@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useStoreContext } from "@/contexts/StoreContext";
 import { useEffect, useState } from "react";
 import { api, API_ENDPOINTS } from "@/lib/api";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -40,6 +40,8 @@ import {
   LogOut,
   Heart,
   Package,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
 import CategoryFilter from "@/components/shop/CategoryFilter";
@@ -70,6 +72,8 @@ export default function HomePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [shouldNavigateAfterAuth, setShouldNavigateAfterAuth] = useState(false);
   const [imageErrorIds, setImageErrorIds] = useState<{ [id: number]: boolean }>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
@@ -249,10 +253,31 @@ export default function HomePage() {
       setShowAuthDialog(false);
       loginForm.reset();
       registerForm.reset();
-      // After successful auth, proceed with order
-      handleOrder();
+      // After successful auth, trigger post-auth navigation / order flow
+      setShouldNavigateAfterAuth(true);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Authentication failed";
+      let errorMessage = "Incorrect email or password. Please check your details and try again.";
+
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        (
+          error as {
+            response?: { status?: number; headers?: { [key: string]: string } };
+          }
+        ).response &&
+        (error as { response: { status: number } }).response.status === 429
+      ) {
+        const retryAfter = (error as {
+          response: { headers?: { [key: string]: string } };
+        }).response.headers?.["retry-after"];
+        if (retryAfter) {
+          errorMessage = `Too many login attempts. Please wait ${retryAfter} seconds and try again.`;
+        } else {
+          errorMessage = "Too many login attempts. Please wait and try again.";
+        }
+      }
       toast({
         variant: "destructive",
         title: "Authentication Failed",
@@ -266,6 +291,30 @@ export default function HomePage() {
     loginForm.reset();
     registerForm.reset();
   };
+
+  const [, setLocation] = useLocation();
+
+  // Handle post-auth behavior for homepage dialog
+  useEffect(() => {
+    if (shouldNavigateAfterAuth && user) {
+      // Wait until store context is available so we can build store-aware routes
+      if (!currentStore?.name) {
+        return;
+      }
+
+      const storePrefix = `/${encodeURIComponent(currentStore.name)}`;
+
+      if (user.role === "client") {
+        // For clients, continue with the existing order flow
+        handleOrder();
+      } else {
+        // For staff roles, navigate to store POS
+        setLocation(`${storePrefix}/pos`);
+      }
+
+      setShouldNavigateAfterAuth(false);
+    }
+  }, [shouldNavigateAfterAuth, user, currentStore, setLocation]);
 
   if (isLoading)
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
@@ -787,12 +836,25 @@ export default function HomePage() {
 
             <div>
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                {...(isLogin ? loginForm.register("password") : registerForm.register("password"))}
-                placeholder="Enter your password"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  {...(isLogin
+                    ? loginForm.register("password")
+                    : registerForm.register("password"))}
+                  placeholder="Enter your password"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
               {(isLogin
                 ? loginForm.formState.errors.password
                 : registerForm.formState.errors.password) && (
