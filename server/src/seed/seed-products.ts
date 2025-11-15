@@ -1,6 +1,7 @@
 import { Product, Category, Store } from "../models/index.js";
 import { ProductInput, ProductAttributes } from "./products/product-types.js";
 import { PRODUCTS, PACK_DISCOUNT, DOZEN_DISCOUNT } from "./products/product-data.js";
+import { fetchPexelsImages } from "./products/product-utils.js";
 
 interface ProductData {
   name: string;
@@ -25,6 +26,8 @@ type ProductCreationData = Omit<ProductAttributes, 'id' | 'createdAt' | 'updated
   updated_at: Date;
   is_active?: boolean;
   image_urls?: string[];
+  images?: string[];
+  image_url?: string | null;
   store_id: number;
   unit_type: string;
   pack_size: number | null;
@@ -196,7 +199,20 @@ export const seedProducts = async (): Promise<void> => {
                 validCategoryMap
               );
               
-              productsToCreate.push(productData);
+              // For Demo Store only, try to fetch a few product images from Pexels
+              if (store.name === 'Demo Store') {
+                try {
+                  const images = await fetchPexelsImages(product.name, 3);
+                  if (images && images.length > 0) {
+                    (productData as any).images = images;
+                    (productData as any).image_url = images[0];
+                  }
+                } catch (error) {
+                  console.error(`Error fetching Pexels images for product ${product.name}:`, error);
+                }
+              }
+
+              productsToCreate.push(productData as ProductCreationData);
             }
             
             // Use type assertion to ensure TypeScript understands the types
@@ -215,6 +231,93 @@ export const seedProducts = async (): Promise<void> => {
     console.log("\n🎉 Product seeding completed successfully!");
   } catch (error) {
     console.error("❌ Error seeding products:", error);
+    throw error;
+  }
+};
+
+export const seedDemoProducts = async (): Promise<void> => {
+  try {
+    console.log("🚀 Starting Demo Store product seeder...");
+
+    const demoStore = await Store.findOne({ where: { name: "Demo Store" } });
+    if (!demoStore) {
+      console.log("Demo Store not found. Please create it first.");
+      return;
+    }
+
+    const categories = await Category.findAll();
+    const categoryMap = new Map(categories.map(cat => [cat.name, cat.id]));
+
+    console.log(`\n🛍️  Processing store: ${demoStore.name}`);
+
+    await Product.destroy({ where: { store_id: demoStore.id } });
+    console.log(`✅  Removed existing products for ${demoStore.name}`);
+
+    const batchSize = 25;
+    console.log(`🛒  Creating ${PRODUCTS.length} products for Demo Store...`);
+
+    for (let i = 0; i < PRODUCTS.length; i += batchSize) {
+      const batch = PRODUCTS.slice(i, i + batchSize);
+      try {
+        const productsToCreate: ProductCreationData[] = [];
+
+        for (const product of batch) {
+          const baseSku = `ELT${String(i + productsToCreate.length + 1).padStart(3, "0")}`;
+          const uniqueSku = `${baseSku}-${demoStore.id}`;
+
+          const productWithDefaults = {
+            ...product,
+            sku: uniqueSku,
+            quantity: "quantity" in product ? product.quantity : 10,
+            unitType: ("unitType" in product ? product.unitType : (product.isPack ? "pack" : "piece")) as "piece" | "pack",
+            barcode: `BC${demoStore.id}-${baseSku}`,
+            created_at: new Date(),
+            updated_at: new Date(),
+            category: product.category || "Accessories",
+          };
+
+          const validCategoryMap = new Map<string, number>();
+          categoryMap.forEach((value, key) => {
+            if (value !== undefined) {
+              validCategoryMap.set(key, value);
+            }
+          });
+
+          const productData = createProduct(
+            productWithDefaults as ProductData & {
+              sku: string;
+              quantity: number;
+              unitType: "piece" | "pack";
+              category: string;
+            },
+            demoStore.id,
+            validCategoryMap,
+          );
+
+          try {
+            const images = await fetchPexelsImages(product.name, 3);
+            if (images && images.length > 0) {
+              (productData as any).images = images;
+              (productData as any).image_url = images[0];
+            }
+          } catch (error) {
+            console.error(`Error fetching Pexels images for product ${product.name}:`, error);
+          }
+
+          productsToCreate.push(productData as ProductCreationData);
+        }
+
+        await Product.bulkCreate(productsToCreate as any, { validate: true });
+        console.log(`   Created Demo batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(PRODUCTS.length / batchSize)}`);
+      } catch (error) {
+        console.error(`❌ Error creating Demo batch ${Math.floor(i / batchSize) + 1}:`, error);
+        throw error;
+      }
+    }
+
+    console.log("✅ Demo Store products seeded successfully");
+  } catch (error) {
+    console.error("❌ Error seeding Demo Store products:", error);
     throw error;
   }
 };

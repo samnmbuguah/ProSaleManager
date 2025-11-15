@@ -27,6 +27,7 @@
     "seed:sales": "tsx src/seed/sales.ts",
     "seed:expenses": "tsx src/seed/expenses.ts",
     "seed:production": "tsx src/scripts/seed-production.ts",
+    "seed:demo": "tsx src/scripts/seed-demo-store.ts",
     "seed:byc": "tsx src/scripts/seed-byc-collections.ts",
     "delete:eltee-sales": "tsx src/scripts/delete-eltee-sales.ts",
     "generate:migration": "sequelize-cli migration:generate --name",
