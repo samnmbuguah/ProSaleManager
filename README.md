@@ -2,6 +2,24 @@
 
 A comprehensive Point of Sale (POS) system with inventory management, customer tracking, and sales analytics.
 
+## Live Demo
+
+- **URL:** https://byccollections.com/
+
+### Demo Store Logins
+
+These demo credentials are seeded for the **Demo Store** and are safe to share in interviews/demos:
+
+- **Demo Admin**
+  - Email: `demo.admin@prosale.com`
+  - Password: `demoadmin123`
+- **Demo Manager**
+  - Email: `demo.manager@prosale.com`
+  - Password: `demomgr123`
+- **Demo Cashier**
+  - Email: `demo.cashier@prosale.com`
+  - Password: `demo123`
+
 ## Database Management
 
 ### Migrations
@@ -51,6 +69,9 @@ npm run seed:generate seed-name
 
 # Legacy seeding (for development only)
 npm run seed:legacy
+
+# Seed demo-only data (development)
+cd server && npm run seed:demo
 ```
 
 #### Seeding Workflow:
@@ -76,6 +97,26 @@ npm run seed:legacy
 - 💰 Sales Management (orders, dynamic pricing, real-time stock)
 - 🎨 Modern UI (light/dark mode, Tailwind CSS, Radix UI)
 - 🔒 Secure Authentication (session-based, role-based, bcrypt)
+
+## Tech Stack
+
+- **Frontend**
+  - React (Vite)
+  - TypeScript
+  - Tailwind CSS
+  - Radix UI
+
+- **Backend**
+  - Node.js
+  - Express
+  - Sequelize ORM
+  - PostgreSQL
+
+- **Tooling & Infrastructure**
+  - Docker & Docker Compose
+  - Jest / Vitest and integration/e2e tests (see `tests/` directory)
+  - Multer for file uploads
+  - Optional Cloudinary integration for product images
 
 ## Prerequisites
 
