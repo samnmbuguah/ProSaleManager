@@ -365,3 +365,5 @@ server/uploads
 server/src/config/config.json
 server/config/config.json
 server/.env copy
+server/.env eltee
+server/.env byc
