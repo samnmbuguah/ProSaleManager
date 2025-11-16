@@ -7,9 +7,9 @@ rm -rf production
 
 # 2. Create database backup before deployment (legacy SQLite backup if exists)
 echo "Creating database backup (if SQLite database exists)..."
-BACKUP_DIR="/home/elteijae/byccollections.com/backups"
+BACKUP_DIR="/home/elteijae/eltee.store/backups"
 BACKUP_FILE="database-backup-$(date +%F-%H%M%S).sqlite"
-ssh -p 21098 elteijae@198.54.114.246 "mkdir -p $BACKUP_DIR && if [ -f /home/elteijae/byccollections.com/database.sqlite ]; then cp /home/elteijae/byccollections.com/database.sqlite $BACKUP_DIR/$BACKUP_FILE; echo 'Database backed up to: $BACKUP_DIR/$BACKUP_FILE'; else echo 'No existing SQLite database to backup (using MySQL in production)'; fi"
+ssh -p 21098 elteijae@198.54.114.246 "mkdir -p $BACKUP_DIR && if [ -f /home/elteijae/eltee.store/database.sqlite ]; then cp /home/elteijae/eltee.store/database.sqlite $BACKUP_DIR/$BACKUP_FILE; echo 'Database backed up to: $BACKUP_DIR/$BACKUP_FILE'; else echo 'No existing SQLite database to backup (using MySQL in production)'; fi"
 
 # 2.5. Configure production environment in .env before builds
 echo "Configuring production environment in .env..."
@@ -81,10 +81,10 @@ cp -r client/dist/* production/server/public/
 
 # 9. Upload to cPanel server (excluding database file)
 echo "Uploading to server using rsync (excluding database)..."
-rsync -rtvz -e "ssh -p 21098" --exclude='database.sqlite' production/server/ elteijae@198.54.114.246:/home/elteijae/byccollections.com/
+rsync -rtvz -e "ssh -p 21098" --exclude='database.sqlite' production/server/ elteijae@198.54.114.246:/home/elteijae/eltee.store/
 
 # 10. Trigger Passenger restart
-ssh -p 21098 elteijae@198.54.114.246 "touch /home/elteijae/byccollections.com/tmp/restart.txt"
+ssh -p 21098 elteijae@198.54.114.246 "touch /home/elteijae/eltee.store/tmp/restart.txt"
 
 # 11. Restore original NODE_ENV in server/.env (optional, for local development)
 echo "Restoring original NODE_ENV in server/.env..."
