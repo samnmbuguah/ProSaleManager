@@ -69,6 +69,8 @@ mkdir -p production/server
 
 # 6. Copy backend build and essentials
 cp -r server/dist production/server/
+cp -r server/src production/server/ # Copy src for seeding
+cp "server/El Tee Records  - Price list.csv" production/server/ # Copy CSV for seeding
 cp server/package.json production/server/
 cp server/package-lock.json production/server/
 

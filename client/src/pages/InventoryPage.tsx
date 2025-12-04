@@ -39,6 +39,7 @@ import { api } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
 import Swal from "sweetalert2";
 import { usePurchaseOrders } from "@/hooks/use-purchase-orders";
+import StockTake from "@/components/inventory/StockTake";
 
 const InventoryPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -636,6 +637,7 @@ const InventoryPage: React.FC = () => {
       {activeTab === "purchase-orders" && (
         <PurchaseOrders purchaseOrders={purchaseOrders || []} loading={purchaseOrdersLoading} />
       )}
+      {activeTab === "stock-take" && <StockTake />}
     </div>
   );
 };
