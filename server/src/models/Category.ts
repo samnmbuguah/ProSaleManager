@@ -19,7 +19,7 @@ Category.init(
     name: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      // unique: true, // Removed global uniqueness
     },
     description: {
       type: DataTypes.TEXT,
@@ -45,6 +45,12 @@ Category.init(
     tableName: "categories",
     timestamps: true,
     underscored: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ["name", "store_id"],
+      },
+    ],
   },
 );
 
