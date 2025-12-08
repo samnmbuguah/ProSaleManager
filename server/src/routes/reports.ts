@@ -833,6 +833,95 @@ router.post(
   },
 );
 
+// Apply stock take updates - bulk update quantities
+router.post(
+  "/stock-take/apply",
+  requireAuth,
+  attachStoreIdToUser,
+  requireStoreContext,
+  async (req, res) => {
+    try {
+      const { updates } = req.body; // Array of { productId, newQuantity, notes? }
+
+      if (!Array.isArray(updates) || updates.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid updates data format. Expected array of { productId, newQuantity }",
+        });
+      }
+
+      const storeId = req.user!.store_id;
+      const results = {
+        updated: 0,
+        failed: 0,
+        failedProducts: [] as { productId: number; reason: string }[],
+      };
+
+      // Get all products for this store to validate
+      const products = await Product.findAll({
+        where: storeScope(req.user!, { is_active: true }),
+      });
+      const productMap = new Map<number, typeof products[0]>();
+      products.forEach((p) => productMap.set(p.id!, p));
+
+      // Process updates
+      for (const update of updates) {
+        const { productId, newQuantity } = update;
+
+        if (typeof productId !== 'number' || typeof newQuantity !== 'number') {
+          results.failed++;
+          results.failedProducts.push({
+            productId,
+            reason: "Invalid productId or newQuantity",
+          });
+          continue;
+        }
+
+        const product = productMap.get(productId);
+        if (!product) {
+          results.failed++;
+          results.failedProducts.push({
+            productId,
+            reason: "Product not found or not in your store",
+          });
+          continue;
+        }
+
+        try {
+          await Product.update(
+            { quantity: newQuantity },
+            { where: { id: productId, store_id: product.store_id } }
+          );
+          results.updated++;
+        } catch (err) {
+          results.failed++;
+          results.failedProducts.push({
+            productId,
+            reason: "Database update failed",
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        data: {
+          totalProcessed: updates.length,
+          updated: results.updated,
+          failed: results.failed,
+          failedProducts: results.failedProducts,
+        },
+      });
+
+    } catch (error) {
+      console.error("Error applying stock take updates:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to apply stock take updates",
+      });
+    }
+  },
+);
+
 // Enhanced export endpoint with multiple formats
 router.get(
   "/export/:type/:format",
