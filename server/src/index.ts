@@ -26,6 +26,11 @@ app.use("/api", routes);
 
 // 404 handler - must be after all routes
 app.use((req, res, next) => {
+  // Silently return 404 for known browser extension/devtools routes
+  const silentRoutes = ['/api/metrics', '/api/events', '/api/ticker'];
+  if (silentRoutes.some(route => req.originalUrl.startsWith(route))) {
+    return res.status(404).json({ success: false, message: 'Not found' });
+  }
   next(new ApiError(404, `Route not found: ${req.method} ${req.originalUrl}`));
 });
 
@@ -79,7 +84,7 @@ function initializeBackupScheduler() {
 async function startServer() {
   try {
     await initializeDatabase();
-    
+
     // Initialize backup scheduler
     initializeBackupScheduler();
 
