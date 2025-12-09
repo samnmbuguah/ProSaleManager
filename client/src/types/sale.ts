@@ -21,6 +21,10 @@ export interface Sale {
   user_id: number;
   total_amount: number;
   payment_method: string;
+  payment_details?: {
+    cash?: number;
+    mpesa?: number;
+  } | null;
   amount_paid: number;
   status: string;
   payment_status: string;
@@ -58,6 +62,10 @@ export interface CreateSaleRequest {
   delivery_fee: number;
   customer_id: number | null;
   payment_method: string;
+  payment_details?: {
+    cash?: number;
+    mpesa?: number;
+  } | null;
   status: string;
   payment_status: string;
   amount_paid: number;

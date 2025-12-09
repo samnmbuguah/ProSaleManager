@@ -7,7 +7,7 @@ import { AlertCircle, RefreshCcw, User, ShoppingCart, History } from "lucide-rea
 import { useCart } from "@/contexts/CartContext";
 import { ProductSearch } from "@/components/pos/ProductSearch";
 import { Cart } from "@/components/pos/Cart";
-import { CheckoutDialog } from "@/components/pos/CheckoutDialog";
+import { CheckoutDialog, type PaymentDetails } from "@/components/pos/CheckoutDialog";
 import { ReceiptDialog } from "@/components/pos/ReceiptDialog";
 import { useProducts } from "@/hooks/use-products";
 import { useCustomers } from "@/hooks/useCustomers";
@@ -33,10 +33,10 @@ const PosPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { toast } = useToast();
   const { user } = useAuthContext();
-  
+
   // Initialize favorites after user is available
   const { refetch: refetchFavorites } = useFavorites(!!user);
-  
+
   const { products: allProducts, refetch: refetchProducts, error } = useProducts();
   const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
   const {
@@ -49,7 +49,8 @@ const PosPage: React.FC = () => {
     clearCart,
   } = useCart();
   const [selectedCustomer, setSelectedCustomer] = useState<number | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "mpesa">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "mpesa" | "split">("cash");
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const { customers, fetchCustomers } = useCustomers();
   const [isReceiptDialogOpen, setIsReceiptDialogOpen] = useState(false);
@@ -71,9 +72,9 @@ const PosPage: React.FC = () => {
         // Use the correctly named refetch functions
         const productsPromise = refetchProducts();
         const customersPromise = fetchCustomers();
-        
+
         await Promise.all([productsPromise, customersPromise]);
-        
+
         // If in historical mode and user is authenticated, also fetch favorites
         if (isHistoricalMode && user && refetchFavorites) {
           await refetchFavorites();
@@ -113,8 +114,8 @@ const PosPage: React.FC = () => {
     // Default to piece pricing
     const unitType = "piece";
     // Ensure unitPrice is a number (convert from string if needed)
-    const unitPrice = typeof product.piece_selling_price === 'string' 
-      ? parseFloat(product.piece_selling_price) 
+    const unitPrice = typeof product.piece_selling_price === 'string'
+      ? parseFloat(product.piece_selling_price)
       : Number(product.piece_selling_price) || 0;
 
     addToCart(product, unitType, unitPrice);
@@ -148,6 +149,7 @@ const PosPage: React.FC = () => {
         total: total,
         delivery_fee: Number(deliveryFee),
         payment_method: paymentMethod,
+        payment_details: paymentMethod === "split" ? paymentDetails : null,
         status: "completed",
         payment_status: "paid",
         amount_paid: paymentMethod === "cash" ? Number(amountTendered) || 0 : total,
@@ -208,16 +210,16 @@ const PosPage: React.FC = () => {
                   value={selectedCustomer?.toString() || ""}
                   onValueChange={(value) => setSelectedCustomer(value ? parseInt(value) : null)}
                 >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a customer" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id.toString()}>
-                      {customer.name} - {customer.phone}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a customer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers.map((customer) => (
+                      <SelectItem key={customer.id} value={customer.id.toString()}>
+                        {customer.name} - {customer.phone}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
             </div>
@@ -306,6 +308,8 @@ const PosPage: React.FC = () => {
         setDeliveryFee={setDeliveryFee}
         paymentMethod={paymentMethod}
         setPaymentMethod={setPaymentMethod}
+        paymentDetails={paymentDetails}
+        setPaymentDetails={setPaymentDetails}
         customers={customers}
         selectedCustomer={selectedCustomer}
         setSelectedCustomer={setSelectedCustomer}

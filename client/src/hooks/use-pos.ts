@@ -28,6 +28,10 @@ export interface ReceiptData {
   };
   total: number;
   payment_method: string;
+  payment_details?: {
+    cash?: number;
+    mpesa?: number;
+  } | null;
   timestamp: string;
   transaction_id: string;
   cash_amount?: number;
