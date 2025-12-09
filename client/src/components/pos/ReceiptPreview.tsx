@@ -157,22 +157,50 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
               <span>{formatCurrency(receipt.total)}</span>
             </div>
             <div className="text-muted-foreground text-[11px] print:text-[10px] print:text-black">
-              Paid via {receipt.payment_method || "Unknown"}
-              {receipt.payment_method === "cash" && (
+              {receipt.payment_method === "split" && receipt.payment_details ? (
+                /* Split Payment Display */
                 <div className="mt-1 print:mt-1">
-                  {typeof receipt.cash_amount === "number" && (
-                    <>
-                      <div className="flex justify-between text-[11px] print:text-[10px]">
-                        <span>Cash Tendered:</span>
-                        <span>{formatCurrency(receipt.cash_amount)}</span>
-                      </div>
-                      <div className="flex justify-between text-[11px] print:text-[10px]">
-                        <span>Change:</span>
-                        <span>{formatCurrency(receipt.cash_amount - receipt.total)}</span>
-                      </div>
-                    </>
+                  <div className="font-medium mb-1">Paid via Split Payment:</div>
+                  {receipt.payment_details.cash && receipt.payment_details.cash > 0 && (
+                    <div className="flex justify-between text-[11px] print:text-[10px]">
+                      <span>Cash:</span>
+                      <span>{formatCurrency(receipt.payment_details.cash)}</span>
+                    </div>
+                  )}
+                  {receipt.payment_details.mpesa && receipt.payment_details.mpesa > 0 && (
+                    <div className="flex justify-between text-[11px] print:text-[10px]">
+                      <span>M-Pesa:</span>
+                      <span>{formatCurrency(receipt.payment_details.mpesa)}</span>
+                    </div>
+                  )}
+                  {(receipt.payment_details.cash || 0) + (receipt.payment_details.mpesa || 0) > receipt.total && (
+                    <div className="flex justify-between text-[11px] print:text-[10px] mt-1 border-t pt-1">
+                      <span>Change:</span>
+                      <span>{formatCurrency((receipt.payment_details.cash || 0) + (receipt.payment_details.mpesa || 0) - receipt.total)}</span>
+                    </div>
                   )}
                 </div>
+              ) : (
+                /* Single Payment Display */
+                <>
+                  Paid via {receipt.payment_method || "Unknown"}
+                  {receipt.payment_method === "cash" && (
+                    <div className="mt-1 print:mt-1">
+                      {typeof receipt.cash_amount === "number" && (
+                        <>
+                          <div className="flex justify-between text-[11px] print:text-[10px]">
+                            <span>Cash Tendered:</span>
+                            <span>{formatCurrency(receipt.cash_amount)}</span>
+                          </div>
+                          <div className="flex justify-between text-[11px] print:text-[10px]">
+                            <span>Change:</span>
+                            <span>{formatCurrency(receipt.cash_amount - receipt.total)}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
