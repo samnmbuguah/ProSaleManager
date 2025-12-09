@@ -7,6 +7,10 @@ class Sale extends Model {
   declare user_id: number;
   declare total_amount: number;
   declare payment_method: string;
+  declare payment_details: {
+    cash?: number;
+    mpesa?: number;
+  } | null;
   declare amount_paid: number;
   declare status: string;
   declare payment_status: string;
@@ -53,6 +57,12 @@ Sale.init(
       type: DataTypes.STRING,
       allowNull: false,
       defaultValue: "cash",
+    },
+    payment_details: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: null,
+      // Structure: { cash?: number, mpesa?: number }
     },
     amount_paid: {
       type: DataTypes.DECIMAL(10, 2),

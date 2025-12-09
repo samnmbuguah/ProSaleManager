@@ -16,6 +16,7 @@ export const createSale = async (req: Request, res: Response) => {
       items,
       total,
       payment_method,
+      payment_details,
       status,
       payment_status,
       amount_paid,
@@ -50,6 +51,7 @@ export const createSale = async (req: Request, res: Response) => {
       customer_id: customer_id || null,
       total_amount: total,
       payment_method: payment_method || "cash",
+      payment_details: payment_details || null,  // Split payment details: { cash?: number, mpesa?: number }
       amount_paid: amount_paid || total,
       status: status || "completed", // Default to completed instead of pending
       payment_status: payment_status || "paid", // Explicitly track payment status
