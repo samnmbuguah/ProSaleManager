@@ -67,7 +67,10 @@ export default function StockTake() {
         try {
             setLoading(true);
             const response = await api.get("/products?limit=1000");
-            const data = response.data?.data?.products || response.data?.products || response.data || [];
+            console.log("Stock Take products response:", response.data);
+            // API returns { success: true, data: [...products...], pagination: {...} }
+            const data = response.data?.data || response.data?.products || [];
+            console.log("Extracted products:", data?.length || 0);
             setProducts(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Error fetching products:", error);
