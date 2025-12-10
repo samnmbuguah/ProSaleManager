@@ -33,7 +33,6 @@ interface CheckoutDialogProps {
   setDeliveryFee: (fee: number) => void;
   paymentMethod: "cash" | "mpesa" | "split";
   setPaymentMethod: (method: "cash" | "mpesa" | "split") => void;
-  paymentDetails?: PaymentDetails | null;
   setPaymentDetails?: (details: PaymentDetails | null) => void;
   customers: Customer[];
   selectedCustomer: number | null;
@@ -51,7 +50,6 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   setDeliveryFee,
   paymentMethod,
   setPaymentMethod,
-  paymentDetails,
   setPaymentDetails,
   customers,
   selectedCustomer,

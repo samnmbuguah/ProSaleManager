@@ -308,7 +308,6 @@ const PosPage: React.FC = () => {
         setDeliveryFee={setDeliveryFee}
         paymentMethod={paymentMethod}
         setPaymentMethod={setPaymentMethod}
-        paymentDetails={paymentDetails}
         setPaymentDetails={setPaymentDetails}
         customers={customers}
         selectedCustomer={selectedCustomer}
