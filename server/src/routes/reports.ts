@@ -1,16 +1,20 @@
 import { Router } from "express";
+import { Op } from "sequelize";
+import * as XLSX from "xlsx";
+import { sequelize } from "../config/database.js";
 import Product from "../models/Product.js";
 import Sale from "../models/Sale.js";
 import SaleItem from "../models/SaleItem.js";
 import Category from "../models/Category.js";
 import Store from "../models/Store.js";
 import User from "../models/User.js";
-import { Op } from "sequelize";
 import { storeScope } from "../utils/helpers.js";
 import { requireStoreContext } from "../middleware/store-context.middleware.js";
-import { requireAuth, attachStoreIdToUser } from "../middleware/auth.middleware.js";
+import { requireAuth, attachStoreIdToUser, requireRole } from "../middleware/auth.middleware.js";
 import Expense from "../models/Expense.js";
-import * as XLSX from 'xlsx';
+import StockTakeSession from "../models/StockTakeSession.js";
+import StockTakeItem, { StockTakeItemInstance } from "../models/StockTakeItem.js";
+import { notifyAdminsOfStockTake } from "../services/notification.service.js";
 
 const router = Router();
 
@@ -833,12 +837,258 @@ router.post(
   },
 );
 
+// Cashier submits stock take counts (no inventory mutation)
+router.post(
+  "/stock-take/submit",
+  requireAuth,
+  attachStoreIdToUser,
+  requireStoreContext,
+  async (req, res) => {
+    const { items, notes } = req.body as {
+      items?: Array<{ productId: number; countedQuantity: number; note?: string }>;
+      notes?: string;
+    };
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid stock take payload. Provide items with productId and countedQuantity.",
+      });
+    }
+
+    const validItems = items.filter(
+      (item) => typeof item.productId === "number" && typeof item.countedQuantity === "number",
+    );
+    if (validItems.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid items found. Ensure productId and countedQuantity are numbers.",
+      });
+    }
+
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ success: false, message: "Unauthorized: user not found." });
+    }
+
+    const storeId = req.user.store_id ?? req.store?.id;
+    if (!storeId) {
+      return res.status(400).json({ success: false, message: "Store context is required." });
+    }
+
+    const productIds = validItems.map((item) => item.productId);
+    const products = await Product.findAll({
+      where: {
+        ...storeScope(req.user, { id: { [Op.in]: productIds } }),
+        store_id: storeId,
+      },
+      include: [{ model: Category, attributes: ["name"] }],
+    });
+    const productMap = new Map(products.map((p) => [p.id!, p]));
+
+    const missing = productIds.filter((id) => !productMap.has(id));
+    if (missing.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Products not found or not in your store: ${missing.join(", ")}`,
+      });
+    }
+
+    const transaction = await sequelize.transaction();
+    try {
+      const session = await StockTakeSession.create(
+        {
+          store_id: storeId,
+          submitted_by: req.user.id,
+          status: "pending",
+          notes: notes || null,
+        },
+        { transaction },
+      );
+
+      const itemsToCreate = validItems.map((item) => {
+        const product = productMap.get(item.productId)!;
+        const systemQty = product.quantity || 0;
+        const countedQty = Number(item.countedQuantity || 0);
+        const variance = countedQty - systemQty;
+        return {
+          session_id: session.id!,
+          product_id: product.id,
+          product_name: product.name,
+          sku: product.sku,
+          category_name: (product as any).Category?.name || null,
+          system_quantity: systemQty,
+          counted_quantity: countedQty,
+          variance,
+          notes: item.note || null,
+        };
+      });
+
+      await StockTakeItem.bulkCreate(itemsToCreate, { transaction });
+      await transaction.commit();
+
+      // Notify admins/managers for this store
+      await notifyAdminsOfStockTake(req.user.store_id, {
+        title: "New stock take submitted",
+        message: `Stock take #${session.id} is awaiting review (${itemsToCreate.length} items).`,
+        data: { sessionId: session.id, storeId },
+        type: "stock_take",
+      });
+
+      res.json({
+        success: true,
+        data: {
+          sessionId: session.id,
+          itemsCount: itemsToCreate.length,
+          status: session.status,
+        },
+      });
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Error submitting stock take:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to submit stock take",
+      });
+    }
+  },
+);
+
+// Admin view pending stock takes with variance
+router.get(
+  "/stock-take/pending",
+  requireAuth,
+  attachStoreIdToUser,
+  requireStoreContext,
+  requireRole(["admin", "manager", "super_admin"]),
+  async (req, res) => {
+    const storeFilter = req.store?.id ? { store_id: req.store.id } : {};
+    const sessions = await StockTakeSession.findAll({
+      where: storeScope(req.user!, { status: "pending", ...storeFilter }),
+      include: [
+        { model: StockTakeItem, as: "items" },
+        { model: User, as: "submittedBy", attributes: ["id", "name", "email"] },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    const summary = sessions.reduce(
+      (acc, session) => {
+        const items = (session as any).items || [];
+        acc.totalSessions += 1;
+        acc.totalItems += items.length;
+        acc.totalVariance += items.reduce(
+          (sum: number, i: StockTakeItemInstance) => sum + i.variance,
+          0,
+        );
+        return acc;
+      },
+      { totalSessions: 0, totalItems: 0, totalVariance: 0 },
+    );
+
+    res.json({
+      success: true,
+      data: {
+        sessions,
+        summary,
+      },
+    });
+  },
+);
+
+// Approve/apply a stock take (admin)
+router.post(
+  "/stock-take/:id/approve",
+  requireAuth,
+  attachStoreIdToUser,
+  requireStoreContext,
+  requireRole(["admin", "manager", "super_admin"]),
+  async (req, res) => {
+    const { notes } = req.body as { notes?: string };
+    const storeFilter = req.store?.id ? { store_id: req.store.id } : {};
+    const session = await StockTakeSession.findOne({
+      where: storeScope(req.user!, { id: req.params.id, ...storeFilter }),
+      include: [{ model: StockTakeItem, as: "items" }],
+    });
+
+    if (!session) {
+      return res.status(404).json({ success: false, message: "Stock take session not found" });
+    }
+    if (session.status !== "pending") {
+      return res.status(400).json({ success: false, message: "Stock take already processed" });
+    }
+
+    const transaction = await sequelize.transaction();
+    try {
+      const items = (session as any).items as StockTakeItemInstance[];
+      for (const item of items) {
+        if (!item.product_id) continue;
+        await Product.update(
+          { quantity: item.counted_quantity },
+          { where: storeScope(req.user!, { id: item.product_id, ...storeFilter }), transaction },
+        );
+      }
+
+      await session.update(
+        {
+          status: "applied",
+          reviewed_by: req.user!.id,
+          reviewed_at: new Date(),
+          notes: notes ?? session.notes,
+        },
+        { transaction },
+      );
+
+      await transaction.commit();
+      res.json({
+        success: true,
+        data: { sessionId: session.id, updated: (items || []).length },
+      });
+    } catch (error) {
+      await transaction.rollback();
+      console.error("Error applying stock take:", error);
+      res.status(500).json({ success: false, message: "Failed to apply stock take" });
+    }
+  },
+);
+
+// Reject a stock take (admin)
+router.post(
+  "/stock-take/:id/reject",
+  requireAuth,
+  attachStoreIdToUser,
+  requireStoreContext,
+  requireRole(["admin", "manager", "super_admin"]),
+  async (req, res) => {
+    const { notes } = req.body as { notes?: string };
+    const storeFilter = req.store?.id ? { store_id: req.store.id } : {};
+    const session = await StockTakeSession.findOne({
+      where: storeScope(req.user!, { id: req.params.id, ...storeFilter }),
+    });
+    if (!session) {
+      return res.status(404).json({ success: false, message: "Stock take session not found" });
+    }
+    if (session.status !== "pending") {
+      return res.status(400).json({ success: false, message: "Stock take already processed" });
+    }
+
+    await session.update({
+      status: "rejected",
+      reviewed_by: req.user!.id,
+      reviewed_at: new Date(),
+      notes: notes ?? session.notes,
+    });
+
+    res.json({ success: true, data: { sessionId: session.id, status: session.status } });
+  },
+);
+
 // Apply stock take updates - bulk update quantities
 router.post(
   "/stock-take/apply",
   requireAuth,
   attachStoreIdToUser,
   requireStoreContext,
+  requireRole(["admin", "manager", "super_admin"]),
   async (req, res) => {
     try {
       const { updates } = req.body; // Array of { productId, newQuantity, notes? }

@@ -12,6 +12,9 @@ import Category from "./Category.js";
 import Store from "./Store.js";
 import ReceiptSettings from "./ReceiptSettings.js";
 import Favorite from "./Favorite.js";
+import StockTakeSession from "./StockTakeSession.js";
+import StockTakeItem from "./StockTakeItem.js";
+import Notification from "./Notification.js";
 
 let associationsSetup = false;
 
@@ -133,7 +136,23 @@ export function setupAssociations() {
 
   Product.hasMany(Favorite, { foreignKey: "product_id", as: "favorites" });
   Favorite.belongsTo(Product, { foreignKey: "product_id", as: "product" });
-  
+
+  // Stock take associations
+  StockTakeSession.belongsTo(Store, { foreignKey: "store_id", as: "store" });
+  Store.hasMany(StockTakeSession, { foreignKey: "store_id", as: "stockTakeSessions" });
+
+  StockTakeSession.belongsTo(User, { foreignKey: "submitted_by", as: "submittedBy" });
+  StockTakeSession.belongsTo(User, { foreignKey: "reviewed_by", as: "reviewedBy" });
+
+  StockTakeSession.hasMany(StockTakeItem, { foreignKey: "session_id", as: "items" });
+  StockTakeItem.belongsTo(StockTakeSession, { foreignKey: "session_id", as: "session" });
+
+  StockTakeItem.belongsTo(Product, { foreignKey: "product_id", as: "product" });
+
+  // Notification associations
+  User.hasMany(Notification, { foreignKey: "user_id", as: "notifications" });
+  Notification.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
   // Mark associations as set up
   associationsSetup = true;
 }
