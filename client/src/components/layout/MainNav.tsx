@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -17,10 +17,14 @@ import {
   User,
   ShoppingCart,
   Package,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import CartModal from "@/components/pos/CartModal";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { api } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/api-endpoints";
 
 type AppRole = "admin" | "manager" | "user" | "super_admin" | "sales" | "client";
 
@@ -78,6 +82,14 @@ const ROLE_ROUTES: Record<AppRole, Route[]> = {
   ],
 };
 
+type NotificationItem = {
+  id: number;
+  title: string;
+  message: string;
+  is_read: boolean;
+  createdAt?: string;
+};
+
 export default function MainNav() {
   const [location] = useLocation();
   const { user, logout } = useAuthContext();
@@ -86,6 +98,9 @@ export default function MainNav() {
   const { cart } = useCart();
   const [cartOpen, setCartOpen] = useState(false);
   const { currentStore, setCurrentStore, stores, isLoading } = useStoreContext();
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
 
   if (!user) return null;
 
@@ -125,6 +140,33 @@ export default function MainNav() {
       });
     }
   };
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setNotificationsLoading(true);
+      const response = await api.get(API_ENDPOINTS.notifications.list);
+      setNotifications(response.data?.data || []);
+    } catch (error) {
+      console.error("Failed to fetch notifications", error);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, []);
+
+  const markAllNotificationsRead = useCallback(async () => {
+    try {
+      await api.post(API_ENDPOINTS.notifications.markAllRead, {});
+      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    } catch (error) {
+      console.error("Failed to mark notifications as read", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   const storePrefix = currentStore?.name ? `/${encodeURIComponent(currentStore.name)}` : "";
   const firstName = (user.name || "").split(" ")[0] || user.name;
@@ -200,6 +242,64 @@ export default function MainNav() {
           )}
 
           <div className="flex items-center gap-x-1.5 sm:gap-x-2">
+            <Popover
+              open={notificationsOpen}
+              onOpenChange={async (open) => {
+                setNotificationsOpen(open);
+                if (open && unreadCount > 0) {
+                  await markAllNotificationsRead();
+                }
+              }}
+            >
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] sm:text-xs px-1">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0">
+                <div className="flex items-center justify-between px-3 py-2 border-b">
+                  <span className="text-sm font-semibold">Notifications</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={fetchNotifications}
+                    disabled={notificationsLoading}
+                  >
+                    Refresh
+                  </Button>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {notificationsLoading ? (
+                    <div className="px-3 py-4 text-sm text-muted-foreground">Loading...</div>
+                  ) : notifications.length === 0 ? (
+                    <div className="px-3 py-4 text-sm text-muted-foreground">
+                      No notifications
+                    </div>
+                  ) : (
+                    notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`px-3 py-2 text-sm border-b last:border-b-0 ${notification.is_read ? "bg-white" : "bg-blue-50"
+                          }`}
+                      >
+                        <div className="font-semibold">{notification.title}</div>
+                        <div className="text-muted-foreground">{notification.message}</div>
+                        {notification.createdAt && (
+                          <div className="text-[11px] text-muted-foreground">
+                            {new Date(notification.createdAt).toLocaleString()}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
             {/* Floating Cart Button */}
             <Button
               variant="ghost"

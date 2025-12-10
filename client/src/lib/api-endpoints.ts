@@ -100,6 +100,15 @@ export const API_ENDPOINTS = {
     inventory: `${API_BASE_URL}/reports/inventory`,
     productPerformance: `${API_BASE_URL}/reports/product-performance`,
     salesSummary: `${API_BASE_URL}/reports/sales-summary`,
+    stockTakeSubmit: `${API_BASE_URL}/reports/stock-take/submit`,
+    stockTakePending: `${API_BASE_URL}/reports/stock-take/pending`,
+    stockTakeApprove: (id: number | string) => `${API_BASE_URL}/reports/stock-take/${id}/approve`,
+    stockTakeReject: (id: number | string) => `${API_BASE_URL}/reports/stock-take/${id}/reject`,
+  },
+  notifications: {
+    list: `${API_BASE_URL}/notifications`,
+    markRead: (id: number | string) => `${API_BASE_URL}/notifications/${id}/read`,
+    markAllRead: `${API_BASE_URL}/notifications/read-all`,
   },
   loyalty: {
     points: (customerId: number) => `${API_BASE_URL}/customers/${customerId}/loyalty/points`,

@@ -9,6 +9,11 @@ interface EnvConfig {
   CLIENT_URL: string;
   DATABASE_URL: string;
   PORT: number;
+  SMTP_HOST?: string;
+  SMTP_PORT?: number;
+  SMTP_USER?: string;
+  SMTP_PASS?: string;
+  SMTP_FROM?: string;
   // Database configuration (optional, handled by database.ts)
   SQLITE_PATH?: string;
   DB_HOST?: string;
@@ -60,6 +65,11 @@ const env: EnvConfig = {
     ? `mysql://${process.env.DB_USER || process.env.MYSQL_USER}@${process.env.DB_HOST || "localhost"}/${process.env.DB_NAME || process.env.MYSQL_DATABASE}`
     : process.env.SQLITE_PATH || "database.sqlite",
   PORT: parseInt(process.env.PORT || "3000", 10),
+  SMTP_HOST: process.env.SMTP_HOST,
+  SMTP_PORT: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined,
+  SMTP_USER: process.env.SMTP_USER,
+  SMTP_PASS: process.env.SMTP_PASS,
+  SMTP_FROM: process.env.SMTP_FROM,
   SQLITE_PATH: process.env.SQLITE_PATH,
   DB_HOST: process.env.DB_HOST || process.env.MYSQL_HOST,
   DB_PORT: process.env.DB_PORT || process.env.MYSQL_PORT,
