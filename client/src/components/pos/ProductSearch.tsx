@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { getImageUrl } from "@/lib/api-endpoints";
 import { parseProductImages } from "@/lib/utils";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface ProductSearchProps {
   products: Product[];
@@ -38,10 +39,10 @@ const ProductImageCarousel: React.FC<{
   product?: Product; // Optional product for fallback to image_url
 }> = ({ images, productName, onImageClick, product }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  
+
   // Use images array if available, otherwise fallback to image_url, then placeholder
-  const displayImages = images.length > 0 
-    ? images 
+  const displayImages = images.length > 0
+    ? images
     : (product?.image_url ? [product.image_url] : []);
 
   const goToPrevious = (e: React.MouseEvent) => {
@@ -118,6 +119,10 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const totalPages = Math.ceil(products.length / productsPerPage);
   const paginatedProducts = products.slice((page - 1) * productsPerPage, page * productsPerPage);
+
+  // Check if user is sales/cashier (should not see stock quantity)
+  const { user } = useAuthContext();
+  const isSalesOrCashier = user?.role === "sales";
 
   // Debounce search
   const debounceRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -207,7 +212,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="text-xs text-gray-500">Stock: {product.quantity}</span>
+                {!isSalesOrCashier && <span className="text-xs text-gray-500">Stock: {product.quantity}</span>}
                 <Button
                   size="sm"
                   className="h-6 px-2 text-xs"
@@ -347,7 +352,8 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                   </div>
 
                   <div className="flex items-center justify-between pt-2 border-t">
-                    <div className="text-xs text-gray-500">Stock: {product.quantity}</div>
+                    {!isSalesOrCashier && <div className="text-xs text-gray-500">Stock: {product.quantity}</div>}
+                    {isSalesOrCashier && <div></div>}
                     <Button
                       size="sm"
                       className="h-6 px-2 text-xs"
