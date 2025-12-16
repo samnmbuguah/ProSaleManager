@@ -110,28 +110,7 @@ export default function MainNav() {
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
 
-  if (!user) return null;
-
-  // Don't render navigation until store context is loaded
-  if (isLoading) {
-    return (
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b shadow-sm bg-gradient-to-r from-[#c8cbc8] to-white">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
-              <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="h-6 w-24 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-          </div>
-        </div>
-      </nav>
-    );
-  }
-
-  const routes = ROLE_ROUTES[user.role as AppRole] || ROLE_ROUTES.user;
+  const routes = user ? (ROLE_ROUTES[user.role as AppRole] || ROLE_ROUTES.user) : [];
 
   const playNotificationSound = useCallback(() => {
     try {
@@ -171,6 +150,7 @@ export default function MainNav() {
   }, []);
 
   const fetchNotifications = useCallback(async () => {
+    if (!user) return;
     try {
       setNotificationsLoading(true);
       const [notifsRes, ordersRes] = await Promise.all([
@@ -213,17 +193,19 @@ export default function MainNav() {
     } finally {
       setNotificationsLoading(false);
     }
-  }, []);
+  }, [user]);
 
   // Poll for notifications and pending orders every minute
   useEffect(() => {
+    if (!user) return;
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 60000);
     return () => clearInterval(interval);
-  }, [fetchNotifications]);
+  }, [fetchNotifications, user]);
 
   // Hourly sound notification if there are pending orders
   useEffect(() => {
+    if (!user) return;
     const soundInterval = setInterval(() => {
       if (pendingOrdersCount > 0) {
         playNotificationSound();
@@ -235,7 +217,28 @@ export default function MainNav() {
     }, 3600000); // 1 hour
 
     return () => clearInterval(soundInterval);
-  }, [pendingOrdersCount, playNotificationSound, toast]);
+  }, [pendingOrdersCount, playNotificationSound, toast, user]);
+
+  if (!user) return null;
+
+  // Don't render navigation until store context is loaded
+  if (isLoading) {
+    return (
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b shadow-sm bg-gradient-to-r from-[#c8cbc8] to-white">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="h-6 w-24 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
 
   const handleMarkAsRead = async (id: number) => {
@@ -321,32 +324,28 @@ export default function MainNav() {
           </div>
 
           {/* Mobile Menu */}
-          {(user.role as AppRole) !== "client" && (
-            <div className="md:hidden">
-              <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left">
-                  <SheetHeader>
-                    <SheetTitle>Menu</SheetTitle>
-                  </SheetHeader>
-                  <div className="flex flex-col space-y-2 mt-4">
-                    <NavLinks />
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
-          )}
+          <div className="md:hidden">
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left">
+                <SheetHeader>
+                  <SheetTitle>Menu</SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col space-y-2 mt-4">
+                  <NavLinks />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
 
           {/* Desktop Menu */}
-          {(user.role as AppRole) !== "client" && (
-            <div className="hidden md:flex items-center gap-x-3">
-              <NavLinks />
-            </div>
-          )}
+          <div className="hidden md:flex items-center gap-x-3">
+            <NavLinks />
+          </div>
 
           <div className="flex items-center gap-x-1.5 sm:gap-x-2">
             <Popover
