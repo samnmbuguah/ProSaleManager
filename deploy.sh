@@ -9,12 +9,12 @@ rm -rf production
 echo "Creating backup of MySQL database and product images..."
 ssh -p 21098 elteijae@198.54.114.246 "
   # Define backup root
-  BACKUP_ROOT='/home/elteijae/eltee.store_backup'
+  BACKUP_ROOT='/home/elteijae/byccollections.com_backup'
   mkdir -p \$BACKUP_ROOT
 
   # Source env for DB credentials (safely)
-  if [ -f /home/elteijae/eltee.store/.env ]; then
-    export \$(grep -E '^(DB_|MYSQL_)' /home/elteijae/eltee.store/.env | xargs)
+  if [ -f /home/elteijae/byccollections.com/.env ]; then
+    export \$(grep -E '^(DB_|MYSQL_)' /home/elteijae/byccollections.com/.env | xargs)
   fi
 
   TIMESTAMP=\$(date +%F-%H%M%S)
@@ -28,15 +28,15 @@ ssh -p 21098 elteijae@198.54.114.246 "
     echo 'Could not find DB_NAME in .env, skipping DB backup.'
   fi
 
-  # 2. Backup Images (eltee.store/uploads)
+  # 2. Backup Images (byccollections.com/uploads)
   echo 'Backing up product images...'
-  if [ -d /home/elteijae/eltee.store/uploads ]; then
+  if [ -d /home/elteijae/byccollections.com/uploads ]; then
     TARGET_IMG_DIR=\"\$BACKUP_ROOT/images_\$TIMESTAMP\"
     mkdir -p \$TARGET_IMG_DIR
-    cp -r /home/elteijae/eltee.store/uploads/* \$TARGET_IMG_DIR
+    cp -r /home/elteijae/byccollections.com/uploads/* \$TARGET_IMG_DIR
     echo \"Images backed up to: \$TARGET_IMG_DIR\"
   else
-    echo 'No uploads directory found at /home/elteijae/eltee.store/uploads'
+    echo 'No uploads directory found at /home/elteijae/byccollections.com/uploads'
   fi
 "
 
@@ -121,7 +121,7 @@ cp -r server/src/database/seeders production/server/dist/src/database/
 
 # 9. Upload to cPanel server (excluding database file)
 echo "Uploading to server using rsync (excluding database)..."
-rsync -rtvz -e "ssh -p 21098" --exclude='database.sqlite' production/server/ elteijae@198.54.114.246:/home/elteijae/eltee.store/
+rsync -rtvz -e "ssh -p 21098" --exclude='database.sqlite' production/server/ elteijae@198.54.114.246:/home/elteijae/byccollections.com/
 
 # 9.5. Run Database Migrations (Interactive)
 echo ""
@@ -130,13 +130,13 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
   echo "🚀 Running migrations on production server..."
   # Clean up stale .js migrations on remote (we now use .cjs, and rsync doesn't delete old files)
-  ssh -p 21098 elteijae@198.54.114.246 "cd /home/elteijae/eltee.store && rm -f dist/src/database/migrations/*.js && export NODE_ENV=production && npm install --production && npx sequelize-cli db:migrate"
+  ssh -p 21098 elteijae@198.54.114.246 "cd /home/elteijae/byccollections.com && rm -f dist/src/database/migrations/*.js && export NODE_ENV=production && npm install --production && npx sequelize-cli db:migrate"
 else
   echo "⏩ Skipping database migrations."
 fi
 
 # 10. Trigger Passenger restart
-ssh -p 21098 elteijae@198.54.114.246 "touch /home/elteijae/eltee.store/tmp/restart.txt"
+ssh -p 21098 elteijae@198.54.114.246 "touch /home/elteijae/byccollections.com/tmp/restart.txt"
 
 # 11. Restore original NODE_ENV in server/.env (optional, for local development)
 echo "Restoring original NODE_ENV in server/.env..."
