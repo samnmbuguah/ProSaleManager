@@ -143,7 +143,7 @@ function App() {
         </Route>
 
         <Route path="/:store/customers">
-          <ProtectedRoute component={CustomersPage} roles={["admin", "super_admin", "manager"]} />
+          <ProtectedRoute component={CustomersPage} roles={["admin", "sales", "super_admin", "manager"]} />
         </Route>
 
         <Route path="/:store/reports">
