@@ -22,9 +22,14 @@ interface ProductTableProps {
   onUpdateProduct?: (id: number, data: z.infer<typeof productSchema>) => Promise<void>;
 }
 
+import { useAuthContext } from "@/contexts/AuthContext";
+
 export function ProductTable({ products = [], isLoading, onUpdateProduct }: ProductTableProps) {
+  const { user } = useAuthContext();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  const canViewStock = ["super_admin", "admin", "manager"].includes(user?.role || "");
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -57,7 +62,7 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
               <TableHead>Category ID</TableHead>
               <TableHead>Piece Price (Buy/Sell)</TableHead>
               <TableHead>Profit Margin</TableHead>
-              <TableHead>Stock</TableHead>
+              {canViewStock && <TableHead>Stock</TableHead>}
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -75,7 +80,7 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
                   <TableCell>
                     {calculateProfitMargin(product.piece_buying_price, product.piece_selling_price)}
                   </TableCell>
-                  <TableCell>{product.quantity}</TableCell>
+                  {canViewStock && <TableCell>{product.quantity}</TableCell>}
                   <TableCell>
                     <Badge variant={getStockStatus(product).variant}>
                       {getStockStatus(product).label}
@@ -83,6 +88,7 @@ export function ProductTable({ products = [], isLoading, onUpdateProduct }: Prod
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
+
                       <Button
                         variant="outline"
                         size="sm"

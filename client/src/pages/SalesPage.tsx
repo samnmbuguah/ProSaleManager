@@ -49,6 +49,8 @@ interface Order {
   total_amount: number;
   items: OrderItem[];
 }
+import { ReceiptDialog } from "@/components/pos/ReceiptDialog";
+
 // OrderDetailsDialog: Separate component for order details in Orders tab
 function OrderDetailsDialog({
   order,
@@ -58,7 +60,7 @@ function OrderDetailsDialog({
   isAdmin,
   isProcessing,
 }: {
-  order: Order;
+  order: Order & { Customer?: { name: string; email?: string; phone?: string } };
   open: boolean;
   onClose: () => void;
   onMarkFulfilled: () => void;
@@ -82,6 +84,18 @@ function OrderDetailsDialog({
               <p>Total: KSh {order.total_amount}</p>
             </div>
             <div>
+              <h3 className="font-semibold mb-2">Customer Info</h3>
+              {order.Customer ? (
+                <>
+                  <p className="font-medium">{order.Customer.name}</p>
+                  {order.Customer.phone && <p>Phone: {order.Customer.phone}</p>}
+                  {order.Customer.email && <p>Email: {order.Customer.email}</p>}
+                </>
+              ) : (
+                <p className="text-muted-foreground">Walk-in / Unknown</p>
+              )}
+            </div>
+            <div>
               <h3 className="font-semibold mb-2">Items</h3>
               <ul className="list-disc pl-4">
                 {order.items?.map((item: OrderItem) => (
@@ -95,8 +109,8 @@ function OrderDetailsDialog({
           </div>
           <div className="flex gap-4 justify-end">
             {isAdmin && order.status !== "completed" && order.status !== "fulfilled" && (
-              <Button 
-                variant="default" 
+              <Button
+                variant="default"
                 onClick={onMarkFulfilled}
                 disabled={isProcessing}
               >
@@ -121,7 +135,9 @@ export function SalesPage() {
   const { user } = useAuthContext();
   const { toast } = useToast();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
+  const [receiptSettingsOpen, setReceiptSettingsOpen] = useState(false);
+  const [viewReceiptOpen, setViewReceiptOpen] = useState(false);
+  const [saleForReceipt, setSaleForReceipt] = useState<number | null>(null);
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
 
   // Redux state
@@ -248,14 +264,14 @@ export function SalesPage() {
       console.error("Error marking order as fulfilled:", error);
       const errorMessage =
         error &&
-        typeof error === "object" &&
-        "response" in error &&
-        error.response &&
-        typeof error.response === "object" &&
-        "data" in error.response &&
-        error.response.data &&
-        typeof error.response.data === "object" &&
-        "message" in error.response.data
+          typeof error === "object" &&
+          "response" in error &&
+          error.response &&
+          typeof error.response === "object" &&
+          "data" in error.response &&
+          error.response.data &&
+          typeof error.response.data === "object" &&
+          "message" in error.response.data
           ? (error.response.data as { message: string }).message
           : "Failed to mark order as fulfilled. Please try again.";
 
@@ -273,7 +289,7 @@ export function SalesPage() {
     <div className="container mx-auto p-4 mt-16">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Sales & Orders</h1>
-        <Dialog open={receiptDialogOpen} onOpenChange={setReceiptDialogOpen}>
+        <Dialog open={receiptSettingsOpen} onOpenChange={setReceiptSettingsOpen}>
           <DialogTrigger asChild>
             <Button variant="outline">
               <Receipt className="w-4 h-4 mr-2" />
@@ -284,7 +300,7 @@ export function SalesPage() {
             <DialogHeader>
               <DialogTitle>Customize Receipt</DialogTitle>
             </DialogHeader>
-            <ReceiptSettings onClose={() => setReceiptDialogOpen(false)} />
+            <ReceiptSettings onClose={() => setReceiptSettingsOpen(false)} />
           </DialogContent>
         </Dialog>
       </div>
@@ -522,41 +538,55 @@ export function SalesPage() {
                 </div>
               </div>
 
-              {/* Admin Actions */}
-              {isAdmin && selectedSale && (
-                <div className="flex gap-3 justify-end pt-4 border-t">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      // TODO: Implement edit functionality
-                      toast({
-                        title: "Edit Sale",
-                        description: "Edit functionality will be implemented in the next update.",
-                        variant: "default",
-                      });
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Edit Sale
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteSale(selectedSale.id)}
-                    disabled={isDeleting}
-                    className="flex items-center gap-2"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    {isDeleting ? "Deleting..." : "Delete Sale"}
-                  </Button>
-                </div>
-              )}
+              {/* Actions */}
+              <div className="flex gap-3 justify-end pt-4 border-t">
+                <Button variant="outline" size="sm" onClick={() => {
+                  setSaleForReceipt(selectedSale.id);
+                  setViewReceiptOpen(true);
+                }}>
+                  <Receipt className="h-4 w-4 mr-2" />
+                  View Receipt
+                </Button>
+                {isAdmin && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        toast({
+                          title: "Edit Sale",
+                          description: "Edit functionality will be implemented in the next update.",
+                          variant: "default",
+                        });
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edit Sale
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteSale(selectedSale.id)}
+                      disabled={isDeleting}
+                      className="flex items-center gap-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      {isDeleting ? "Deleting..." : "Delete Sale"}
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      <ReceiptDialog
+        open={viewReceiptOpen}
+        onOpenChange={setViewReceiptOpen}
+        currentSaleId={saleForReceipt}
+      />
     </div>
   );
 }

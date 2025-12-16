@@ -91,7 +91,7 @@ type NotificationItem = {
 };
 
 export default function MainNav() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user, logout } = useAuthContext();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -125,6 +125,132 @@ export default function MainNav() {
 
   const routes = ROLE_ROUTES[user.role as AppRole] || ROLE_ROUTES.user;
 
+  const playNotificationSound = useCallback(() => {
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(500, ctx.currentTime);
+      // Double beep
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.setTargetAtTime(0, ctx.currentTime + 0.1, 0.1);
+
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.2);
+
+      // Second beep
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.frequency.setValueAtTime(600, ctx.currentTime + 0.25);
+      gain2.gain.setValueAtTime(0.1, ctx.currentTime + 0.25);
+      gain2.gain.setTargetAtTime(0, ctx.currentTime + 0.35, 0.1);
+      osc2.start(ctx.currentTime + 0.25);
+      osc2.stop(ctx.currentTime + 0.5);
+
+    } catch (e) {
+      console.error("Audio play failed", e);
+    }
+  }, []);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setNotificationsLoading(true);
+      const [notifsRes, ordersRes] = await Promise.all([
+        api.get(API_ENDPOINTS.notifications.getAll),
+        api.get('/orders?status=pending') // Fetch pending orders
+      ]);
+
+      let loadedParams: NotificationItem[] = [];
+      if (notifsRes.data) {
+        if (Array.isArray(notifsRes.data)) {
+          loadedParams = notifsRes.data;
+        } else if (notifsRes.data.data && Array.isArray(notifsRes.data.data)) {
+          loadedParams = notifsRes.data.data;
+        }
+      }
+
+      // Process pending orders
+      const pendingOrders = ordersRes.data && Array.isArray(ordersRes.data) ? ordersRes.data :
+        (ordersRes.data?.data && Array.isArray(ordersRes.data.data) ? ordersRes.data.data : []);
+
+      const pCount = pendingOrders.length;
+      setPendingOrdersCount(pCount);
+
+      if (pCount > 0) {
+        // Synthesize a notification for pending orders
+        const orderNotif: NotificationItem = {
+          id: -1, // Virtual ID
+          title: "Pending Orders",
+          message: `You have ${pCount} uncompleted order${pCount !== 1 ? 's' : ''} waiting for action.`,
+          is_read: false,
+          createdAt: new Date().toISOString()
+        };
+        // Add to top list
+        loadedParams = [orderNotif, ...loadedParams];
+      }
+
+      setNotifications(loadedParams);
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, []);
+
+  // Poll for notifications and pending orders every minute
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  // Hourly sound notification if there are pending orders
+  useEffect(() => {
+    const soundInterval = setInterval(() => {
+      if (pendingOrdersCount > 0) {
+        playNotificationSound();
+        toast({
+          title: "Pending Orders Alert",
+          description: `You have ${pendingOrdersCount} uncompleted orders.`,
+        });
+      }
+    }, 3600000); // 1 hour
+
+    return () => clearInterval(soundInterval);
+  }, [pendingOrdersCount, playNotificationSound, toast]);
+
+
+  const handleMarkAsRead = async (id: number) => {
+    try {
+      if (id === -1) {
+        // If it's the virtual pending orders notification, navigate to orders
+        setLocation(`${storePrefix}/sales?tab=orders`);
+        // We can't "mark read" per se, it disappears when orders are completed
+        setNotificationsOpen(false);
+        return;
+      }
+
+      await api.patch(API_ENDPOINTS.notifications.markAsRead(id));
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+      );
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -140,33 +266,6 @@ export default function MainNav() {
       });
     }
   };
-
-  const fetchNotifications = useCallback(async () => {
-    try {
-      setNotificationsLoading(true);
-      const response = await api.get(API_ENDPOINTS.notifications.list);
-      setNotifications(response.data?.data || []);
-    } catch (error) {
-      console.error("Failed to fetch notifications", error);
-    } finally {
-      setNotificationsLoading(false);
-    }
-  }, []);
-
-  const markAllNotificationsRead = useCallback(async () => {
-    try {
-      await api.post(API_ENDPOINTS.notifications.markAllRead, {});
-      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-    } catch (error) {
-      console.error("Failed to mark notifications as read", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
-
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   const storePrefix = currentStore?.name ? `/${encodeURIComponent(currentStore.name)}` : "";
   const firstName = (user.name || "").split(" ")[0] || user.name;
@@ -244,12 +343,7 @@ export default function MainNav() {
           <div className="flex items-center gap-x-1.5 sm:gap-x-2">
             <Popover
               open={notificationsOpen}
-              onOpenChange={async (open) => {
-                setNotificationsOpen(open);
-                if (open && unreadCount > 0) {
-                  await markAllNotificationsRead();
-                }
-              }}
+              onOpenChange={setNotificationsOpen}
             >
               <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
@@ -285,7 +379,8 @@ export default function MainNav() {
                       <div
                         key={notification.id}
                         className={`px-3 py-2 text-sm border-b last:border-b-0 ${notification.is_read ? "bg-white" : "bg-blue-50"
-                          }`}
+                          } ${notification.id === -1 ? "cursor-pointer hover:bg-blue-100" : ""}`}
+                        onClick={() => handleMarkAsRead(notification.id)}
                       >
                         <div className="font-semibold">{notification.title}</div>
                         <div className="text-muted-foreground">{notification.message}</div>
@@ -333,21 +428,49 @@ export default function MainNav() {
           </div>
           {(user?.role as AppRole) === "super_admin" && stores.length > 0 && (
             <div className="ml-4 flex items-center gap-2">
-              <span className="text-sm text-gray-600">Store:</span>
-              <select
-                className="border rounded px-2 py-1"
-                value={currentStore?.id || ""}
-                onChange={(e) => {
-                  const store = stores.find((s) => s.id === Number(e.target.value));
-                  if (store) setCurrentStore(store);
-                }}
-              >
-                {stores.map((store) => (
-                  <option key={store.id} value={store.id}>
-                    {store.name}
-                  </option>
-                ))}
-              </select>
+              <span className="text-sm font-medium text-muted-foreground hidden lg:inline-block">Store:</span>
+              <div className="w-[180px]">
+                <Select
+                  value={currentStore?.id?.toString() || ""}
+                  onValueChange={(value) => {
+                    const store = stores.find((s) => s.id === Number(value));
+                    if (store) {
+                      setCurrentStore(store);
+
+                      // Redirect to new store path while preserving current route suffix if possible
+                      const currentPath = location;
+                      const pathParts = currentPath.split('/').filter(Boolean);
+
+                      // Assuming path is like /storeName/route or /route
+                      // If we have a store context in URL, replace it
+                      if (currentStore?.name && pathParts[0] === encodeURIComponent(currentStore.name)) {
+                        pathParts[0] = encodeURIComponent(store.name);
+                        setLocation(`/${pathParts.join('/')}`);
+                      } else {
+                        // If we were on specific route (like /users) that didn't have store prefix,
+                        // or root, just go to new store dashboard
+                        setLocation(`/${encodeURIComponent(store.name)}/pos`);
+                      }
+
+                      toast({
+                        title: "Store Switched",
+                        description: `Now viewing ${store.name}`,
+                      });
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-8">
+                    <SelectValue placeholder="Select Store" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stores.map((store) => (
+                      <SelectItem key={store.id} value={store.id.toString()}>
+                        {store.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
         </div>

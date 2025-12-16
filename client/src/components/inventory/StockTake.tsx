@@ -338,14 +338,14 @@ export default function StockTake() {
                   <TableHead>Product</TableHead>
                   <TableHead>SKU</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead className="text-right">System Qty</TableHead>
+                  {isReviewer && <TableHead className="text-right">System Qty</TableHead>}
                   <TableHead className="text-right w-32">Counted Qty</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredProducts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    <TableCell colSpan={isReviewer ? 5 : 4} className="text-center text-muted-foreground">
                       No products found
                     </TableCell>
                   </TableRow>
@@ -359,7 +359,7 @@ export default function StockTake() {
                         <TableCell>
                           <Badge variant="outline">{product.Category?.name || "Unknown"}</Badge>
                         </TableCell>
-                        <TableCell className="text-right">{product.quantity || 0}</TableCell>
+                        {isReviewer && <TableCell className="text-right">{product.quantity || 0}</TableCell>}
                         <TableCell className="text-right">
                           <Input
                             type="number"
