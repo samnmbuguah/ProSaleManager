@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { api } from "@/lib/api";
 
 interface Store {
   id: number;
@@ -27,9 +28,9 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Only fetch if not already loaded
     if (stores.length === 0) {
       setIsLoading(true);
-      fetch("/api/stores")
-        .then((res) => res.json())
-        .then((data) => {
+      api.get("/stores")
+        .then((res) => {
+          const data = res.data;
           if (data.success && Array.isArray(data.data)) {
             setStores(data.data);
             // If no store selected, derive from URL first, otherwise default to the first
@@ -51,7 +52,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
           }
         })
-        .catch(() => {})
+        .catch(() => { })
         .finally(() => {
           setIsLoading(false);
         });

@@ -48,14 +48,7 @@ export const authService = {
       const response = await api.get<AuthResponse>(API_ENDPOINTS.auth.me);
       return response.data.authenticated ? response.data.data : null;
     } catch (error: unknown) {
-      if ((error as { response?: { status?: number } })?.response?.status === 401) {
-        toast({
-          title: "Session expired",
-          description: "Please log in again.",
-          variant: "destructive",
-        });
-        return null;
-      }
+      // Allow other errors to bubble up
       throw error;
     }
   },

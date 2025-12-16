@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { register, login, logout, getMe } from "../controllers/auth.controller.js";
-import { requireAuth } from "../middleware/auth.middleware.js";
+import { requireAuth, optionalAuth } from "../middleware/auth.middleware.js";
 import { generateCsrfToken } from "../utils/csrf.js";
 
 const router = Router();
@@ -16,6 +16,6 @@ router.post("/login", login);
 router.post("/logout", logout);
 
 // Public route that handles both authenticated and unauthenticated states
-router.get("/me", requireAuth, getMe);
+router.get("/me", optionalAuth, getMe);
 
 export default router;

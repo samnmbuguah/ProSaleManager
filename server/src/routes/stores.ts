@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { Store } from "../models/index.js";
-import { requireAuth } from "../middleware/auth.middleware.js";
+import { requireAuth, optionalAuth } from "../middleware/auth.middleware.js";
 import {
   getReceiptSettings,
   createReceiptSettings,
@@ -10,7 +10,8 @@ import {
 const router = Router();
 
 // GET /api/stores - super admin: all stores, others: only their store
-router.get("/", requireAuth, async (req, res) => {
+// Uses optionalAuth so unauthenticated users get default store
+router.get("/", optionalAuth, async (req, res) => {
   try {
     if (req.user?.role === "super_admin") {
       const stores = await Store.findAll({ order: [["name", "ASC"]] });
@@ -19,7 +20,9 @@ router.get("/", requireAuth, async (req, res) => {
       const store = await Store.findByPk(req.user.store_id);
       res.json({ success: true, data: store ? [store] : [] });
     } else {
-      res.json({ success: true, data: [] });
+      // For unauthenticated users, return default store
+      const defaultStore = await Store.findOne({ order: [["id", "ASC"]] });
+      res.json({ success: true, data: defaultStore ? [defaultStore] : [] });
     }
   } catch {
     res.status(500).json({ success: false, message: "Failed to fetch stores" });

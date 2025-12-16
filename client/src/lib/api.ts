@@ -81,12 +81,15 @@ api.interceptors.response.use(
   },
   async (error) => {
     if (isDevelopment) {
-      console.error("API Error:", {
-        url: error.config?.url,
-        method: error.config?.method,
-        status: error.response?.status,
-        data: error.response?.data,
-      });
+      // Don't log 401s to console to keep it clean during session checks
+      if (error.response?.status !== 401) {
+        console.error("API Error:", {
+          url: error.config?.url,
+          method: error.config?.method,
+          status: error.response?.status,
+          data: error.response?.data,
+        });
+      }
     }
 
     // If we get a 403, clear the token and retry once

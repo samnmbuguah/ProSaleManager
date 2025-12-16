@@ -66,7 +66,6 @@ export const register = catchAsync(async (req: Request, res: Response) => {
 
 export const login = catchAsync(async (req: Request, res: Response) => {
   const { email, password: loginPassword } = req.body;
-  console.log("Login attempt for email:", email);
 
   // Validate required fields
   if (!email || !loginPassword) {
@@ -116,7 +115,7 @@ export const login = catchAsync(async (req: Request, res: Response) => {
     (userData2 as { password?: string }).password = undefined;
   }
 
-  console.log("Login successful for:", email);
+
   res.json({
     success: true,
     data: userData2,
