@@ -5,11 +5,40 @@ set -e
 # 1. Clean up previous production directory
 rm -rf production
 
-# 2. Create database backup before deployment (legacy SQLite backup if exists)
-echo "Creating database backup (if SQLite database exists)..."
-BACKUP_DIR="/home/elteijae/eltee.store/backups"
-BACKUP_FILE="database-backup-$(date +%F-%H%M%S).sqlite"
-ssh -p 21098 elteijae@198.54.114.246 "mkdir -p $BACKUP_DIR && if [ -f /home/elteijae/eltee.store/database.sqlite ]; then cp /home/elteijae/eltee.store/database.sqlite $BACKUP_DIR/$BACKUP_FILE; echo 'Database backed up to: $BACKUP_DIR/$BACKUP_FILE'; else echo 'No existing SQLite database to backup (using MySQL in production)'; fi"
+# 2. Create database and image backup (MySQL & Uploads)
+echo "Creating backup of MySQL database and product images..."
+ssh -p 21098 elteijae@198.54.114.246 "
+  # Define backup root
+  BACKUP_ROOT='/home/elteijae/eltee.store_backup'
+  mkdir -p \$BACKUP_ROOT
+
+  # Source env for DB credentials (safely)
+  if [ -f /home/elteijae/eltee.store/.env ]; then
+    export \$(grep -E '^(DB_|MYSQL_)' /home/elteijae/eltee.store/.env | xargs)
+  fi
+
+  TIMESTAMP=\$(date +%F-%H%M%S)
+
+  # 1. Backup MySQL Database
+  echo 'Backing up MySQL database...'
+  if [ ! -z \"\$DB_NAME\" ]; then
+    mysqldump -u \$DB_USER -p\$DB_PASSWORD \$DB_NAME > \$BACKUP_ROOT/db_\$TIMESTAMP.sql
+    echo \"Database backup created: \$BACKUP_ROOT/db_\$TIMESTAMP.sql\"
+  else
+    echo 'Could not find DB_NAME in .env, skipping DB backup.'
+  fi
+
+  # 2. Backup Images (eltee.store/uploads)
+  echo 'Backing up product images...'
+  if [ -d /home/elteijae/eltee.store/uploads ]; then
+    TARGET_IMG_DIR=\"\$BACKUP_ROOT/images_\$TIMESTAMP\"
+    mkdir -p \$TARGET_IMG_DIR
+    cp -r /home/elteijae/eltee.store/uploads/* \$TARGET_IMG_DIR
+    echo \"Images backed up to: \$TARGET_IMG_DIR\"
+  else
+    echo 'No uploads directory found at /home/elteijae/eltee.store/uploads'
+  fi
+"
 
 # 2.5. Configure production environment in .env before builds
 echo "Configuring production environment in .env..."
@@ -79,9 +108,32 @@ cp server/.env production/server/.env
 mkdir -p production/server/public
 cp -r client/dist/* production/server/public/
 
+# 8.5. Manually copy config.cjs, migrations, and clean up
+echo "Copying config, migrations, and .sequelizerc..."
+cp server/src/config/config.cjs production/server/dist/src/config/config.cjs
+cp server/.sequelizerc production/server/
+
+# Ensure migrations and seeders are in dist (tsc ignores non-ts files)
+mkdir -p production/server/dist/src/database
+# Clean up potential stale migrations in the build output to avoid running deleted migrations
+cp -r server/src/database/migrations production/server/dist/src/database/
+cp -r server/src/database/seeders production/server/dist/src/database/
+
 # 9. Upload to cPanel server (excluding database file)
 echo "Uploading to server using rsync (excluding database)..."
 rsync -rtvz -e "ssh -p 21098" --exclude='database.sqlite' production/server/ elteijae@198.54.114.246:/home/elteijae/eltee.store/
+
+# 9.5. Run Database Migrations (Interactive)
+echo ""
+read -p "Do you want to run DATABASE MIGRATIONS on production? (y/N) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  echo "🚀 Running migrations on production server..."
+  # Clean up stale .js migrations on remote (we now use .cjs, and rsync doesn't delete old files)
+  ssh -p 21098 elteijae@198.54.114.246 "cd /home/elteijae/eltee.store && rm -f dist/src/database/migrations/*.js && export NODE_ENV=production && npm install --production && npx sequelize-cli db:migrate"
+else
+  echo "⏩ Skipping database migrations."
+fi
 
 # 10. Trigger Passenger restart
 ssh -p 21098 elteijae@198.54.114.246 "touch /home/elteijae/eltee.store/tmp/restart.txt"
