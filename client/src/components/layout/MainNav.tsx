@@ -18,7 +18,10 @@ import {
   ShoppingCart,
   Package,
   Bell,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import CartModal from "@/components/pos/CartModal";
@@ -110,6 +113,7 @@ export default function MainNav() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const { setTheme, theme } = useTheme();
 
   const routes = user ? (ROLE_ROUTES[user.role as AppRole] || ROLE_ROUTES.user) : [];
 
@@ -225,7 +229,7 @@ export default function MainNav() {
   // Don't render navigation until store context is loaded
   if (isLoading) {
     return (
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b shadow-sm bg-gradient-to-r from-[#c8cbc8] to-white">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b shadow-sm bg-background dark:bg-background bg-gradient-to-r from-[#c8cbc8] to-white dark:from-background dark:to-background">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
@@ -310,8 +314,7 @@ export default function MainNav() {
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 border-b shadow-sm"
-      style={{ background: "linear-gradient(to right, #c8cbc8, white)" }}
+      className="fixed top-0 left-0 right-0 z-50 border-b shadow-sm bg-background dark:bg-background bg-gradient-to-r from-[#c8cbc8] to-white dark:from-background dark:to-background"
     >
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6">
         <div className="h-14 sm:h-16 min-h-14 sm:min-h-16 flex items-center justify-between w-full">
@@ -432,6 +435,15 @@ export default function MainNav() {
             </div>
             <Button variant="ghost" size="icon" onClick={handleLogout} className="hover:bg-accent">
               <LogOut className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
             </Button>
           </div>
           {(user?.role as AppRole) === "super_admin" && stores.length > 0 && (
