@@ -82,3 +82,4 @@ const StockTakeItem = sequelize.define<StockTakeItemInstance>(
 
 export default StockTakeItem;
 
+

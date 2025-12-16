@@ -73,3 +73,4 @@ const Notification = sequelize.define<NotificationInstance>(
 
 export default Notification;
 
+

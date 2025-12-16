@@ -1,0 +1,1280 @@
+{
+  "sales": {
+    "id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": true,
+      "autoIncrement": true,
+      "comment": null
+    },
+    "customer_id": {
+      "type": "INT(11)",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "user_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "total_amount": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": false,
+      "defaultValue": "0.00",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "payment_method": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": "cash",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "amount_paid": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": false,
+      "defaultValue": "0.00",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "status": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": "pending",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "payment_status": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": "pending",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "delivery_fee": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": false,
+      "defaultValue": "0.00",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "receipt_status": {
+      "type": "LONGTEXT",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "store_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "createdAt": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "updatedAt": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "payment_details": {
+      "type": "LONGTEXT",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    }
+  },
+  "receipt_settings": {
+    "id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": true,
+      "autoIncrement": true,
+      "comment": null
+    },
+    "store_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "business_name": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": "",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "address": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": "",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "phone": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": "",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "email": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": "",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "website": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": "",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "thank_you_message": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": "Thank you for your business!",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "show_logo": {
+      "type": "TINYINT(1)",
+      "allowNull": false,
+      "defaultValue": "1",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "font_size": {
+      "type": "ENUM('small','medium','large')",
+      "allowNull": false,
+      "defaultValue": "medium",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "paper_size": {
+      "type": "ENUM('standard','thermal')",
+      "allowNull": false,
+      "defaultValue": "thermal",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "logo_url": {
+      "type": "VARCHAR(255)",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "created_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "updated_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    }
+  },
+  "sale_items": {
+    "id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": true,
+      "autoIncrement": true,
+      "comment": null
+    },
+    "sale_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "product_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "quantity": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "unit_price": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "total": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "unit_type": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "created_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "updated_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    }
+  },
+  "stores": {
+    "id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": true,
+      "autoIncrement": true,
+      "comment": null
+    },
+    "name": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "subdomain": {
+      "type": "VARCHAR(255)",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "created_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "updated_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    }
+  },
+  "purchase_order_items": {
+    "id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": true,
+      "autoIncrement": true,
+      "comment": null
+    },
+    "purchase_order_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "product_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "quantity": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": "1",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "unit_price": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": false,
+      "defaultValue": "0.00",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "selling_price": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "total_price": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": false,
+      "defaultValue": "0.00",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "unit_type": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "store_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "createdAt": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "updatedAt": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    }
+  },
+  "users": {
+    "id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": true,
+      "autoIncrement": true,
+      "comment": null
+    },
+    "email": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "password": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "name": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "phone": {
+      "type": "VARCHAR(255)",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "store_id": {
+      "type": "INT(11)",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "role": {
+      "type": "ENUM('super_admin','admin','sales','manager','client')",
+      "allowNull": true,
+      "defaultValue": "client",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "is_active": {
+      "type": "TINYINT(1)",
+      "allowNull": true,
+      "defaultValue": "1",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "last_login": {
+      "type": "DATETIME",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "created_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "updated_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    }
+  },
+  "expenses": {
+    "id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": true,
+      "autoIncrement": true,
+      "comment": null
+    },
+    "description": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "amount": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "date": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "category": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "payment_method": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": "cash",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "user_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "store_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "createdAt": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "updatedAt": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    }
+  },
+  "user_preferences": {
+    "id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": true,
+      "autoIncrement": true,
+      "comment": null
+    },
+    "user_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "dark_mode": {
+      "type": "TINYINT(1)",
+      "allowNull": true,
+      "defaultValue": "0",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "notifications": {
+      "type": "TINYINT(1)",
+      "allowNull": true,
+      "defaultValue": "1",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "language": {
+      "type": "VARCHAR(255)",
+      "allowNull": true,
+      "defaultValue": "english",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "theme": {
+      "type": "VARCHAR(255)",
+      "allowNull": true,
+      "defaultValue": "default",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "timezone": {
+      "type": "VARCHAR(255)",
+      "allowNull": true,
+      "defaultValue": "UTC",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "created_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "updated_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    }
+  },
+  "suppliers": {
+    "id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": true,
+      "autoIncrement": true,
+      "comment": null
+    },
+    "name": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "email": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "phone": {
+      "type": "VARCHAR(255)",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "address": {
+      "type": "VARCHAR(255)",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "contact_person": {
+      "type": "VARCHAR(255)",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "store_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "createdAt": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "updatedAt": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    }
+  },
+  "purchase_orders": {
+    "id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": true,
+      "autoIncrement": true,
+      "comment": null
+    },
+    "supplier_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "order_number": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "order_date": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "expected_delivery_date": {
+      "type": "DATETIME",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "status": {
+      "type": "ENUM('pending','approved','ordered','received','cancelled')",
+      "allowNull": false,
+      "defaultValue": "pending",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "total_amount": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": false,
+      "defaultValue": "0.00",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "notes": {
+      "type": "TEXT",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "store_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "createdAt": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "updatedAt": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    }
+  },
+  "product_suppliers": {
+    "id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": true,
+      "autoIncrement": true,
+      "comment": null
+    },
+    "product_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "supplier_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "cost_price": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "is_preferred": {
+      "type": "TINYINT(1)",
+      "allowNull": false,
+      "defaultValue": "0",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "last_supply_date": {
+      "type": "DATETIME",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "store_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "created_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "updated_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    }
+  },
+  "categories": {
+    "id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": true,
+      "autoIncrement": true,
+      "comment": null
+    },
+    "name": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "description": {
+      "type": "TEXT",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "is_active": {
+      "type": "TINYINT(1)",
+      "allowNull": false,
+      "defaultValue": "1",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "store_id": {
+      "type": "INT(11)",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "created_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "updated_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    }
+  },
+  "customers": {
+    "id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": true,
+      "autoIncrement": true,
+      "comment": null
+    },
+    "name": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "email": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "phone": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "address": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "notes": {
+      "type": "TEXT",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "loyalty_points": {
+      "type": "INT(11)",
+      "allowNull": true,
+      "defaultValue": "0",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "is_active": {
+      "type": "TINYINT(1)",
+      "allowNull": false,
+      "defaultValue": "1",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "store_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "created_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "updated_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    }
+  },
+  "products": {
+    "id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": true,
+      "autoIncrement": true,
+      "comment": null
+    },
+    "name": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "description": {
+      "type": "TEXT",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "sku": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "barcode": {
+      "type": "VARCHAR(255)",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "category_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "piece_buying_price": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "piece_selling_price": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "pack_buying_price": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "pack_selling_price": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "dozen_buying_price": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "dozen_selling_price": {
+      "type": "DECIMAL(10,2)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "quantity": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": "0",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "min_quantity": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": "0",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "image_url": {
+      "type": "VARCHAR(255)",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "images": {
+      "type": "LONGTEXT",
+      "allowNull": true,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "is_active": {
+      "type": "TINYINT(1)",
+      "allowNull": false,
+      "defaultValue": "1",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "stock_unit": {
+      "type": "VARCHAR(255)",
+      "allowNull": false,
+      "defaultValue": "piece",
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "store_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "created_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "updated_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    }
+  },
+  "favorites": {
+    "id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": true,
+      "autoIncrement": true,
+      "comment": null
+    },
+    "user_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "product_id": {
+      "type": "INT(11)",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "created_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    },
+    "updated_at": {
+      "type": "DATETIME",
+      "allowNull": false,
+      "defaultValue": null,
+      "primaryKey": false,
+      "autoIncrement": false,
+      "comment": null
+    }
+  }
+}

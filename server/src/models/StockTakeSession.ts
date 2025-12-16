@@ -67,3 +67,4 @@ const StockTakeSession = sequelize.define<StockTakeSessionInstance>(
 
 export default StockTakeSession;
 
+
