@@ -51,12 +51,6 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, onDelete })
       },
       { priority: 4 }
     ),
-    createTextColumn(
-      "quantity",
-      "Quantity",
-      (product) => `${product.quantity} ${product.stock_unit}`,
-      { priority: 5 }
-    ),
     createCurrencyColumn("piece_price", "Piece Price", (product) => product.piece_selling_price, {
       priority: 6,
     }),
@@ -69,6 +63,21 @@ const ProductList: React.FC<ProductListProps> = ({ products, onEdit, onDelete })
       priority: 8,
     }),
   ];
+
+  // Only add quantity column for non-sales users
+  if (!isSalesOrCashier) {
+    // Insert quantity column after stock status (at index 4)
+    columns.splice(
+      4,
+      0,
+      createTextColumn(
+        "quantity",
+        "Quantity",
+        (product) => `${product.quantity} ${product.stock_unit}`,
+        { priority: 5 }
+      )
+    );
+  }
 
   // Only add actions column for non-sales users
   if (!isSalesOrCashier) {
