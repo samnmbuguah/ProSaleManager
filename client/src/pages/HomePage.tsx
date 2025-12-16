@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useStoreContext } from "@/contexts/StoreContext";
 import { useEffect, useState } from "react";
 import { api, API_ENDPOINTS } from "@/lib/api";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,30 +22,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Swal from "sweetalert2";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Search,
   User,
   Star,
   Filter,
   Grid,
   List,
   ChevronDown,
-  Menu,
-  LogOut,
-  Heart,
-  Package,
   Eye,
   EyeOff,
 } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
 import CategoryFilter from "@/components/shop/CategoryFilter";
-import CartDrawer from "@/components/shop/CartDrawer";
+import StoreNav from "@/components/layout/StoreNav";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -81,7 +76,7 @@ export default function HomePage() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
+
 
   // Refetch data when authentication state changes
   useEffect(() => {
@@ -291,8 +286,8 @@ export default function HomePage() {
     loginForm.reset();
     registerForm.reset();
   };
-
   const [, setLocation] = useLocation();
+
 
   // Handle post-auth behavior for homepage dialog
   useEffect(() => {
@@ -331,177 +326,14 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header
-        className="shadow-lg sticky top-0 z-40"
-        style={{ background: "linear-gradient(to right, #c8cbc8, white)" }}
-      >
-        <div className="container mx-auto px-4 py-4">
-          {/* Top Header */}
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center space-x-2">
-              <img src="/logo.png" alt="Eltee Store Logo" className="w-16 h-16 object-contain" />
-            </div>
-            <div className="flex items-center gap-2 sm:gap-4">
-              {/* Cart Drawer */}
-              <CartDrawer 
-                onCheckout={() => setShowAuthDialog(true)} 
-                clientCheckoutHandler={handleCheckout}
-                isSubmitting={isSubmitting}
-              />
-
-              {isAuthenticated ? (
-                <>
-                  {/* Desktop Navigation */}
-                  <div className="hidden sm:flex items-center gap-3">
-                    <Link href="/profile">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full hover:bg-gray-200"
-                      >
-                        <User className="w-4 h-4 text-gray-600" />
-                        <span className="text-sm text-gray-700">
-                          {(user?.name || "").split(" ")[0] || user?.name}
-                        </span>
-                      </Button>
-                    </Link>
-                    <Link href={currentStore?.name ? `/${currentStore.name}/orders` : "/orders"}>
-                      <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                        <Package className="h-4 w-4" />
-                        <span className="text-sm">My Orders</span>
-                      </Button>
-                    </Link>
-                    <Link
-                      href={currentStore?.name ? `/${currentStore.name}/favorites` : "/favorites"}
-                    >
-                      <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                        <Heart className="h-4 w-4" />
-                        <span className="text-sm">Favorites</span>
-                      </Button>
-                    </Link>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={async () => {
-                        try {
-                          await api.post("/auth/logout");
-                          window.location.href = "/";
-                        } catch {
-                          // Ignore logout errors
-                        }
-                      }}
-                    >
-                      <LogOut className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  {/* Mobile Menu Button */}
-                  <div className="sm:hidden">
-                    <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
-                      <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <Menu className="h-5 w-5" />
-                        </Button>
-                      </SheetTrigger>
-                      <SheetContent side="right">
-                        <SheetHeader>
-                          <SheetTitle>Account Menu</SheetTitle>
-                        </SheetHeader>
-                        <div className="flex flex-col space-y-2 mt-4">
-                          <Link href="/profile">
-                            <Button
-                              variant="ghost"
-                              className="w-full justify-start"
-                              onClick={() => setShowMobileMenu(false)}
-                            >
-                              <User className="w-4 h-4 mr-2" />
-                              Profile
-                            </Button>
-                          </Link>
-                          <Link
-                            href={currentStore?.name ? `/${currentStore.name}/orders` : "/orders"}
-                          >
-                            <Button
-                              variant="ghost"
-                              className="w-full justify-start"
-                              onClick={() => setShowMobileMenu(false)}
-                            >
-                              <Package className="w-4 h-4 mr-2" />
-                              My Orders
-                            </Button>
-                          </Link>
-                          <Link
-                            href={
-                              currentStore?.name ? `/${currentStore.name}/favorites` : "/favorites"
-                            }
-                          >
-                            <Button
-                              variant="ghost"
-                              className="w-full justify-start"
-                              onClick={() => setShowMobileMenu(false)}
-                            >
-                              <Heart className="w-4 h-4 mr-2" />
-                              Favorites
-                            </Button>
-                          </Link>
-                          <Button
-                            variant="ghost"
-                            className="w-full justify-start"
-                            onClick={async () => {
-                              try {
-                                await api.post("/auth/logout");
-                                window.location.href = "/";
-                              } catch {
-                                // Ignore logout errors
-                              }
-                            }}
-                          >
-                            <LogOut className="w-4 h-4 mr-2" />
-                            Logout
-                          </Button>
-                        </div>
-                      </SheetContent>
-                    </Sheet>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Desktop Login Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAuthDialog(true)}
-                    className="hidden sm:flex"
-                  >
-                    Login / Sign Up
-                  </Button>
-                  {/* Mobile Login Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAuthDialog(true)}
-                    className="sm:hidden"
-                  >
-                    Login
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Search Bar */}
-          <div className="relative max-w-2xl mx-auto">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <Input
-              type="text"
-              placeholder="Search for products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-3 text-lg border-2 border-gray-200 focus:border-blue-500 rounded-xl"
-            />
-          </div>
-        </div>
-      </header>
+      <StoreNav
+        onLoginClick={() => setShowAuthDialog(true)}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        showSearch={true}
+        onCheckout={handleCheckout}
+        isSubmitting={isSubmitting}
+      />
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
@@ -687,8 +519,8 @@ export default function HomePage() {
         {/* Products Grid */}
         <div
           className={`grid gap-3 sm:gap-4 md:gap-6 mb-8 ${viewMode === "grid"
-              ? "grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-              : "grid-cols-1"
+            ? "grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+            : "grid-cols-1"
             }`}
         >
           {paginatedProducts.map((product) => (

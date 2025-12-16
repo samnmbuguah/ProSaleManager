@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { useAuth } from "@/hooks/use-auth";
 import { RoleBasedRoute } from "@/components/auth/RoleBasedRoute";
 import MainNav from "@/components/layout/MainNav";
+import StoreNav from "@/components/layout/StoreNav";
 // Import your pages
 import AuthPage from "@/pages/AuthPage";
 import InventoryPage from "@/pages/InventoryPage";
@@ -32,7 +33,7 @@ function ProtectedRoute({ component: Component, roles }: ProtectedRouteProps) {
   return (
     <RoleBasedRoute allowedRoles={roles || ["admin", "user", "client"]}>
       <div className="min-h-screen bg-background flex flex-col">
-        <MainNav />
+        <NavigationWrapper />
         <main className="flex-1">
           <Component />
         </main>
@@ -40,6 +41,19 @@ function ProtectedRoute({ component: Component, roles }: ProtectedRouteProps) {
     </RoleBasedRoute>
   );
 }
+
+function NavigationWrapper() {
+  const { user } = useAuthContext();
+
+  if (!user) return null;
+
+  if (user.role === "client") {
+    return <StoreNav showSearch={false} />;
+  }
+
+  return <MainNav />;
+}
+
 
 function RootRedirect() {
   const { user } = useAuthContext();
