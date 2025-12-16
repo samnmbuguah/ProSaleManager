@@ -64,16 +64,7 @@ api.interceptors.request.use(async (config) => {
     if (user && user.role === "super_admin" && store) {
       const storeObj = JSON.parse(store);
       if (storeObj && storeObj.id) {
-        // Add as query param for GET, or in data/body for POST/PUT
-        if (config.method === "get" || config.method === "delete") {
-          const url = new URL(config.url!, window.location.origin);
-          url.searchParams.set("store_id", storeObj.id);
-          config.url = url.pathname + url.search;
-        } else if (config.data && typeof config.data === "object") {
-          config.data = { ...config.data, store_id: storeObj.id };
-        } else {
-          config.data = { store_id: storeObj.id };
-        }
+        config.headers["x-store-id"] = storeObj.id.toString();
       }
     }
   } catch {
