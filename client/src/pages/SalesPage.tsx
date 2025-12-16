@@ -179,8 +179,8 @@ export function SalesPage() {
     }
   };
 
-  // Check if user has admin or sales privileges
-  const isAdmin = user ? ["admin", "manager", "super_admin", "sales"].includes(user.role) : false;
+  // Check if user has admin privileges (excludes sales role)
+  const isAdmin = user ? ["admin", "manager", "super_admin"].includes(user.role) : false;
 
   // Delete sale function
   const handleDeleteSale = async (saleId: number) => {
