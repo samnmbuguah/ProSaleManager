@@ -86,31 +86,31 @@ class BackupService {
   }
 
   async uploadToDrive(filePath: string): Promise<string> {
-    if (!process.env.GOOGLE_DRIVE_FOLDER_ID || !process.env.GOOGLE_DRIVE_CREDENTIALS) {
-      throw new Error('Google Drive credentials not configured. Set GOOGLE_DRIVE_FOLDER_ID and GOOGLE_DRIVE_CREDENTIALS');
+    // Check for OAuth2 credentials first
+    const clientId = process.env.GOOGLE_DRIVE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET;
+    const refreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN;
+
+    // Check for Service Account credentials
+    const credentials = process.env.GOOGLE_DRIVE_CREDENTIALS;
+
+    if ((!clientId || !clientSecret || !refreshToken) && !credentials) {
+      throw new Error('Google Drive credentials not configured. Set GOOGLE_DRIVE_CREDENTIALS (Service Account) or CLIENT_ID/SECRET/REFRESH_TOKEN (OAuth2)');
     }
 
     try {
-      const credentialsJson = JSON.parse(process.env.GOOGLE_DRIVE_CREDENTIALS);
-      
-      // Handle both OAuth2 client credentials and service account
       let auth;
-      if (credentialsJson.web) {
-        // OAuth2 client credentials format
-        // For automated backups, we need to use OAuth2 with refresh token
-        // This requires additional setup - consider using service account instead
-        throw new Error(
-          'OAuth2 client credentials detected. For automated backups, please use a Service Account JSON instead. ' +
-          'Create a service account in Google Cloud Console and download the JSON key.'
-        );
-      } else if (credentialsJson.type === 'service_account') {
-        // Service account format (preferred for automated backups)
-        auth = new google.auth.GoogleAuth({
-          credentials: credentialsJson,
-          scopes: ['https://www.googleapis.com/auth/drive.file'],
-        });
-      } else {
-        // Try to use as-is (might be service account without type field)
+
+      if (clientId && clientSecret && refreshToken) {
+        // Use OAuth2 (Standard User Account) - PREFERRED for Personal Gmail
+        const oAuth2Client = new google.auth.OAuth2(clientId, clientSecret);
+        oAuth2Client.setCredentials({ refresh_token: refreshToken });
+        auth = oAuth2Client;
+        console.log('Using OAuth2 credentials for Google Drive.');
+      } else if (credentials) {
+        // Use Service Account
+        const credentialsJson = JSON.parse(credentials);
+        console.log('Using Service Account credentials for Google Drive.');
         auth = new google.auth.GoogleAuth({
           credentials: credentialsJson,
           scopes: ['https://www.googleapis.com/auth/drive.file'],
@@ -122,7 +122,7 @@ class BackupService {
 
       const fileMetadata = {
         name: fileName,
-        parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
+        parents: [process.env.GOOGLE_DRIVE_FOLDER_ID!],
       };
 
       const media = {
@@ -164,16 +164,23 @@ class BackupService {
     });
   }
 
-  async performBackup(): Promise<void> {
+  async performBackup(force: boolean = false): Promise<void> {
     try {
-      if (process.env.NODE_ENV !== 'production') {
+      if (!force && process.env.NODE_ENV !== 'production') {
         console.log('Backup skipped: Not in production environment');
         return;
       }
 
+      // If forced, we might want to bypass the dialect check or ensure we have a fallback
+      // But usually local dev is sqlite, so mysqldump won't work unless we have mysql credentials for a local mysql instance.
+      // We will warn but try to proceed if config exists.
       if (this.config.dialect !== 'mysql') {
-        console.log('Backup skipped: Database is not MySQL');
-        return;
+        if (force) {
+          console.warn('⚠️  Warning: Performing backup on non-MySQL database. This may fail if mysqldump is not compatible.');
+        } else {
+          console.log('Backup skipped: Database is not MySQL');
+          return;
+        }
       }
 
       console.log('Starting database backup...');
@@ -181,26 +188,30 @@ class BackupService {
 
       if (backupFile) {
         try {
+          console.log(`Uploading backup ${backupFile} to Drive...`);
           await this.uploadToDrive(backupFile);
+
           await this.cleanupOldBackups(
             parseInt(process.env.BACKUP_RETENTION_DAYS || '7', 10)
           );
-          console.log('Backup process completed successfully');
+          console.log('✅ Backup process completed successfully');
         } catch (uploadError) {
-          console.error('Error during backup upload/cleanup:', uploadError);
+          console.error('❌ Error during backup upload/cleanup:', uploadError);
           throw uploadError;
         } finally {
           // Clean up the local backup file after upload
           try {
-            fs.unlinkSync(backupFile);
-            console.log('Cleaned up local backup file');
+            if (fs.existsSync(backupFile)) {
+              fs.unlinkSync(backupFile);
+              console.log('Cleaned up local backup file');
+            }
           } catch (cleanupError) {
             console.error('Error cleaning up backup file:', cleanupError);
           }
         }
       }
     } catch (error) {
-      console.error('Backup process failed:', error);
+      console.error('❌ Backup process failed:', error);
       throw error;
     }
   }
