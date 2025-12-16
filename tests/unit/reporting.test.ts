@@ -100,8 +100,15 @@ describe("Report Generation", () => {
         sales: any[],
       ): Record<string, number> {
         return sales.reduce((result: Record<string, number>, sale: any) => {
-          const method = sale.payment_method;
-          result[method] = (result[method] || 0) + Number(sale.total_amount);
+          if (sale.payment_method === "split" && sale.payment_details) {
+            const details = sale.payment_details;
+            if (details.cash) result["cash"] = (result["cash"] || 0) + details.cash;
+            if (details.mpesa) result["mpesa"] = (result["mpesa"] || 0) + details.mpesa;
+            if (details.card) result["card"] = (result["card"] || 0) + details.card;
+          } else {
+            const method = sale.payment_method;
+            result[method] = (result[method] || 0) + Number(sale.total_amount);
+          }
           return result;
         }, {});
       }
@@ -111,6 +118,23 @@ describe("Report Generation", () => {
       expect(Object.keys(groupedSales)).toHaveLength(2);
       expect(groupedSales.cash).toBe(1250);
       expect(groupedSales.mpesa).toBe(1200);
+
+      // Test with split payment
+      const splitSale = {
+        id: 4,
+        customer_id: 2,
+        total_amount: 1000,
+        payment_method: "split",
+        payment_details: { cash: 600, mpesa: 400 },
+        status: "paid",
+        createdAt: new Date("2023-01-03T10:00:00Z"),
+      };
+
+      const salesWithSplit = [...mockSales, splitSale];
+      const groupedWithSplit = groupSalesByPaymentMethod(salesWithSplit);
+
+      expect(groupedWithSplit.cash).toBe(1250 + 600); // 1850
+      expect(groupedWithSplit.mpesa).toBe(1200 + 400); // 1600
     });
   });
 

@@ -94,7 +94,7 @@ router.get("/", requireAuth, requireStoreContext, async (req, res) => {
 // Search products endpoint - must come before /:id routes
 router.get("/search", async (req, res) => {
   try {
-    const { q: query, category_id } = req.query;
+    const { q: query, category_id, store_id } = req.query;
     console.log("Received search query:", query);
 
     if (!query || typeof query !== "string" || query.trim() === "") {
@@ -113,8 +113,15 @@ router.get("/search", async (req, res) => {
       where.category_id = Number(category_id);
     }
 
-    // Add store filtering for non-super-admin users
-    if (req.user && req.user.role !== 'super_admin' && req.user.store_id) {
+    // Add store filtering
+    if (req.user && req.user.role === 'super_admin') {
+      // For super_admin, use store_id from query parameter if provided
+      if (store_id) {
+        where.store_id = Number(store_id);
+      }
+      // If no store_id provided, don't filter by store (show all products)
+    } else if (req.user && req.user.store_id) {
+      // For non-super-admin users, use their assigned store_id
       where.store_id = req.user.store_id;
     }
 

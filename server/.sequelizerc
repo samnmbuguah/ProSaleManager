@@ -1,13 +1,11 @@
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+const path = require('path');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const isProd = process.env.NODE_ENV === 'production';
+const base = isProd ? 'dist/src' : 'src';
 
-export default {
-  config: path.resolve("src/config", "sequelize.cjs"),
-  "models-path": path.resolve("src", "models"),
-  "seeders-path": path.resolve("src/database", "seeders"),
-  "migrations-path": path.resolve("src/database", "migrations"),
+module.exports = {
+  'config': path.resolve(base, 'config', 'config.cjs'),
+  'models-path': path.resolve(base, 'models'),
+  'seeders-path': path.resolve(base, 'database', 'seeders'),
+  'migrations-path': path.resolve(base, 'database', 'migrations')
 };
