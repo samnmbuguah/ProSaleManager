@@ -23,6 +23,13 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import CartModal from "@/components/pos/CartModal";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
 
@@ -101,6 +108,7 @@ export default function MainNav() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
 
   if (!user) return null;
 
@@ -166,7 +174,7 @@ export default function MainNav() {
     try {
       setNotificationsLoading(true);
       const [notifsRes, ordersRes] = await Promise.all([
-        api.get(API_ENDPOINTS.notifications.getAll),
+        api.get(API_ENDPOINTS.notifications.list),
         api.get('/orders?status=pending') // Fetch pending orders
       ]);
 
@@ -240,7 +248,7 @@ export default function MainNav() {
         return;
       }
 
-      await api.patch(API_ENDPOINTS.notifications.markAsRead(id));
+      await api.patch(API_ENDPOINTS.notifications.markRead(id));
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
       );
