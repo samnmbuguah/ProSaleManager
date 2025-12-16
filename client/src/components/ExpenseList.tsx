@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import type { Expense } from "@/types/expense";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 interface ExpenseListProps {
   expenses: Expense[];
@@ -17,6 +18,11 @@ interface ExpenseListProps {
 }
 
 export default function ExpenseList({ expenses = [], onDeleteExpense }: ExpenseListProps) {
+  const { user } = useAuthContext();
+
+  // Check if user is sales/cashier (should not see delete button)
+  const isSalesOrCashier = user?.role === "sales";
+
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString();
   };
@@ -56,7 +62,7 @@ export default function ExpenseList({ expenses = [], onDeleteExpense }: ExpenseL
               <TableHead>Category</TableHead>
               <TableHead>Date</TableHead>
               <TableHead className="text-right">Amount</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
+              {!isSalesOrCashier && <TableHead className="w-[50px]"></TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -66,11 +72,13 @@ export default function ExpenseList({ expenses = [], onDeleteExpense }: ExpenseL
                 <TableCell>{expense.category}</TableCell>
                 <TableCell>{formatDate(expense.date)}</TableCell>
                 <TableCell className="text-right">{formatAmount(expense.amount)}</TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="icon" onClick={() => onDeleteExpense(expense.id)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
+                {!isSalesOrCashier && (
+                  <TableCell>
+                    <Button variant="ghost" size="icon" onClick={() => onDeleteExpense(expense.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
