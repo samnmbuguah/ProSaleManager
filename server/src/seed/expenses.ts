@@ -151,7 +151,7 @@ function shouldCreateExpenseOnDate(category: typeof EXPENSE_CATEGORIES[0], date:
 export async function seedExpenses(): Promise<void> {
   try {
     console.log("💰 Starting expenses seeder...");
-    
+
     // Only seed expenses for Demo Store
     const demoStore = await Store.findOne({ where: { name: "Demo Store" } });
     if (!demoStore) {
@@ -183,42 +183,40 @@ export async function seedExpenses(): Promise<void> {
       }
 
       // Generate expenses for the last 2 months
+
+
+      // Generate exactly 10 expenses
+      const expensesCount = 10;
       const expensesToCreate = [];
-      const currentDate = new Date();
-      const twoMonthsAgo = new Date(currentDate.getFullYear(), currentDate.getMonth() - 2, currentDate.getDate());
 
-      // Generate expenses for each day in the last 2 months
-      for (let date = new Date(twoMonthsAgo); date <= currentDate; date.setDate(date.getDate() + 1)) {
-        // Check each expense category for this day
-        for (const category of EXPENSE_CATEGORIES) {
-          if (shouldCreateExpenseOnDate(category, date)) {
-            const user = faker.helpers.arrayElement(users);
-            const description = faker.helpers.arrayElement(category.descriptions);
-            const amount = getExpenseAmount(category);
-            const paymentMethod = getRandomPaymentMethod();
+      for (let i = 0; i < expensesCount; i++) {
+        const date = getRandomDateInLastTwoMonths();
+        const category = getRandomExpenseCategory();
+        const user = faker.helpers.arrayElement(users);
+        const description = faker.helpers.arrayElement(category.descriptions);
+        const amount = getExpenseAmount(category);
+        const paymentMethod = getRandomPaymentMethod();
 
-            // Add some randomness to the time within the day
-            const expenseDate = new Date(date);
-            expenseDate.setHours(
-              Math.floor(Math.random() * 12) + 8, // 8 AM to 8 PM
-              Math.floor(Math.random() * 60),
-              0,
-              0
-            );
+        // Add some randomness to the time within the day
+        const expenseDate = new Date(date);
+        expenseDate.setHours(
+          Math.floor(Math.random() * 12) + 8, // 8 AM to 8 PM
+          Math.floor(Math.random() * 60),
+          0,
+          0
+        );
 
-            expensesToCreate.push({
-              description,
-              amount,
-              date: expenseDate,
-              category: category.category,
-              payment_method: paymentMethod,
-              user_id: user.id,
-              store_id: store.id,
-              createdAt: expenseDate,
-              updatedAt: expenseDate
-            });
-          }
-        }
+        expensesToCreate.push({
+          description,
+          amount,
+          date: expenseDate,
+          category: category.category,
+          payment_method: paymentMethod,
+          user_id: user.id,
+          store_id: store.id,
+          createdAt: expenseDate,
+          updatedAt: expenseDate
+        });
       }
 
       // Create expenses in batches

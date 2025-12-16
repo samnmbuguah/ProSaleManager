@@ -66,7 +66,7 @@ function getRandomSaleStatus(): string {
 export async function seedSales(): Promise<void> {
   try {
     console.log("🛒 Starting sales seeder...");
-    
+
     // Only seed sales for Demo Store
     const demoStore = await Store.findOne({ where: { name: "Demo Store" } });
 
@@ -126,90 +126,74 @@ export async function seedSales(): Promise<void> {
 
       // Generate sales for the last 2 months
       // More sales on weekdays, fewer on weekends
+      // Generate exactly 10 sales
+      const salesCount = 10;
       const salesToCreate = [];
-      const currentDate = new Date();
-      const twoMonthsAgo = new Date(currentDate.getFullYear(), currentDate.getMonth() - 2, currentDate.getDate());
 
-      // Generate sales for each day in the last 2 months
-      for (let date = new Date(twoMonthsAgo); date <= currentDate; date.setDate(date.getDate() + 1)) {
-        const dayOfWeek = date.getDay();
+      for (let i = 0; i < salesCount; i++) {
+        const saleDate = getBusinessHoursTime(getRandomDateInLastTwoMonths());
+        const user = faker.helpers.arrayElement(users);
+        const customer = customers.length > 0 ? faker.helpers.arrayElement(customers) : null;
 
-        // Determine number of sales for this day
-        let salesCount = 0;
-        if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-          // Weekdays: 15-35 sales per day
-          salesCount = Math.floor(Math.random() * 21) + 15;
-        } else {
-          // Weekends: 8-20 sales per day
-          salesCount = Math.floor(Math.random() * 13) + 8;
-        }
+        // Generate 1-5 items per sale
+        const itemCount = Math.floor(Math.random() * 5) + 1;
+        const selectedProducts = faker.helpers.arrayElements(products, itemCount);
 
-        // Create sales for this day
-        for (let i = 0; i < salesCount; i++) {
-          const saleDate = getBusinessHoursTime(new Date(date));
-          const user = faker.helpers.arrayElement(users);
-          const customer = customers.length > 0 ? faker.helpers.arrayElement(customers) : null;
+        let totalAmount = 0;
+        const saleItems = [];
 
-          // Generate 1-5 items per sale
-          const itemCount = Math.floor(Math.random() * 5) + 1;
-          const selectedProducts = faker.helpers.arrayElements(products, itemCount);
+        for (const product of selectedProducts) {
+          const quantity = Math.floor(Math.random() * 3) + 1; // 1-3 items
+          const unitType = faker.helpers.arrayElement(["piece", "pack", "dozen"]);
 
-          let totalAmount = 0;
-          const saleItems = [];
-
-          for (const product of selectedProducts) {
-            const quantity = Math.floor(Math.random() * 3) + 1; // 1-3 items
-            const unitType = faker.helpers.arrayElement(["piece", "pack", "dozen"]);
-
-            let unitPrice = 0;
-            switch (unitType) {
-              case "piece":
-                unitPrice = parseFloat(product.piece_selling_price.toString());
-                break;
-              case "pack":
-                unitPrice = parseFloat(product.pack_selling_price.toString());
-                break;
-              case "dozen":
-                unitPrice = parseFloat(product.dozen_selling_price.toString());
-                break;
-            }
-
-            const itemTotal = unitPrice * quantity;
-            totalAmount += itemTotal;
-
-            saleItems.push({
-              product_id: product.id,
-              quantity,
-              unit_price: unitPrice,
-              total: itemTotal,
-              unit_type: unitType
-            });
+          let unitPrice = 0;
+          switch (unitType) {
+            case "piece":
+              unitPrice = parseFloat(product.piece_selling_price.toString());
+              break;
+            case "pack":
+              unitPrice = parseFloat(product.pack_selling_price.toString());
+              break;
+            case "dozen":
+              unitPrice = parseFloat(product.dozen_selling_price.toString());
+              break;
           }
 
-          const paymentMethod = getRandomPaymentMethod();
-          const status = getRandomSaleStatus();
-          const deliveryFee = Math.random() < 0.1 ? Math.floor(Math.random() * 200) + 50 : 0; // 10% chance of delivery
+          const itemTotal = unitPrice * quantity;
+          totalAmount += itemTotal;
 
-          salesToCreate.push({
-            customer_id: customer?.id || null,
-            user_id: user.id,
-            total_amount: totalAmount + deliveryFee,
-            payment_method: paymentMethod,
-            amount_paid: status === "completed" ? totalAmount + deliveryFee : Math.random() * (totalAmount + deliveryFee),
-            status,
-            payment_status: status === "completed" ? "paid" : "pending",
-            delivery_fee: deliveryFee,
-            receipt_status: {
-              whatsapp: Math.random() < 0.3,
-              sms: Math.random() < 0.2,
-              last_sent_at: Math.random() < 0.4 ? saleDate : null
-            },
-            store_id: store.id,
-            createdAt: saleDate,
-            updatedAt: saleDate,
-            items: saleItems
+          saleItems.push({
+            product_id: product.id,
+            quantity,
+            unit_price: unitPrice,
+            total: itemTotal,
+            unit_type: unitType
           });
         }
+
+        const paymentMethod = getRandomPaymentMethod();
+        const status = getRandomSaleStatus();
+        const deliveryFee = Math.random() < 0.1 ? Math.floor(Math.random() * 200) + 50 : 0; // 10% chance of delivery
+
+        salesToCreate.push({
+          customer_id: customer?.id || null,
+          user_id: user.id,
+          total_amount: totalAmount + deliveryFee,
+          payment_method: paymentMethod,
+          amount_paid: status === "completed" ? totalAmount + deliveryFee : Math.random() * (totalAmount + deliveryFee),
+          status,
+          payment_status: status === "completed" ? "paid" : "pending",
+          delivery_fee: deliveryFee,
+          receipt_status: {
+            whatsapp: Math.random() < 0.3,
+            sms: Math.random() < 0.2,
+            last_sent_at: Math.random() < 0.4 ? saleDate : null
+          },
+          store_id: store.id,
+          createdAt: saleDate,
+          updatedAt: saleDate,
+          items: saleItems
+        });
       }
 
       // Create sales in batches to avoid memory issues

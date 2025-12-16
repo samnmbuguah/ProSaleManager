@@ -118,7 +118,7 @@ async function main() {
     // so we resolve three levels up from dist/src/seed to reach it.
     const csvPath = path.resolve(__dirname, '../../../El Tee Records  - Price list.csv');
     const csvContent = fs.readFileSync(csvPath, 'utf-8');
-    const records = parse(csvContent, { columns: true, skip_empty_lines: true });
+    const records = parse(csvContent, { columns: true, skip_empty_lines: true }).slice(0, 10);
     console.log(`📦 Found ${records.length} products in CSV. Seeding...`);
 
     const inferCategory = (name: string) => {

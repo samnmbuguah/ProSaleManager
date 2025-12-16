@@ -65,38 +65,38 @@ export function createProduct(
 
   const validCategory = categoryMapping[product.category] || 'Accessories';
   const categoryId = categoryMap.get(validCategory);
-  
+
   if (!categoryId) {
     console.warn(`Category ${product.category} not found, using 'Accessories'`);
     return createProduct({ ...product, category: 'Accessories' }, storeId, categoryMap);
   }
 
   const packSize = product.unitType === 'pack' ? (product.packSize || 1) : 1;
-  
+
   // Calculate prices based on unit type
   const pieceBuyingPrice = product.piecePrice;
   const pieceSellingPrice = Math.round(product.piecePrice * 1.2);
-  
+
   // Calculate pack prices if unitType is 'pack'
   const packBuyingPrice = (product.unitType === 'pack' && product.isPack)
     ? product.piecePrice * (product.packSize || 1) * 0.95
     : product.piecePrice * 1.2;
-  
+
   // Ensure pack_buying_price is never null
   const safePackBuyingPrice = packBuyingPrice || 0;
   const packSellingPrice = Math.round(safePackBuyingPrice * 1.2);
-  
+
   // Calculate dozen prices
   const dozenBuyingPrice = product.dozenPrice;
   const dozenSellingPrice = Math.round(product.dozenPrice * 1.2);
-  
+
   // Define a type that includes all the fields we need
-  type ProductCreationData = Omit<ProductAttributes, 'id'> & { 
-    barcode?: string; 
-    created_at: Date; 
-    updated_at: Date; 
+  type ProductCreationData = Omit<ProductAttributes, 'id'> & {
+    barcode?: string;
+    created_at: Date;
+    updated_at: Date;
   };
-  
+
   // Create the product data object with all required fields
   const productData = {
     name: product.name,
@@ -121,52 +121,53 @@ export function createProduct(
     created_at: new Date(),
     updated_at: new Date()
   } as const;
-  
+
   return productData;
 }
 
 export const seedProducts = async (): Promise<void> => {
   try {
     console.log("🚀 Starting product seeder...");
-    
+
     // Get all stores
     const stores = await Store.findAll();
     if (stores.length === 0) {
       console.log("No stores found. Please seed stores first.");
       return;
     }
-    
+
     // Get all categories
     const categories = await Category.findAll();
     const categoryMap = new Map(categories.map(cat => [cat.name, cat.id]));
-    
+
     // Process each store
     for (const store of stores) {
       console.log(`\n🛍️  Processing store: ${store.name}`);
-      
+
       // Process all stores (Eltee Store, Eltee Store Nairobi, and Demo Store)
       if (store.name === 'Eltee Store' || store.name === 'Eltee Store Nairobi' || store.name === 'Demo Store') {
         console.log(`\n🛒  Removing existing products for ${store.name}...`);
         await Product.destroy({ where: { store_id: store.id } });
         console.log(`✅  Removed existing products for ${store.name}`);
-        
+
         console.log(`\n🛒  Creating products for ${store.name}...`);
-        
+
         // Create products in batches to avoid memory issues
         const batchSize = 25;
-        
-        console.log(`🛒  Creating ${PRODUCTS.length} products...`);
-        
-        for (let i = 0; i < PRODUCTS.length; i += batchSize) {
-          const batch = PRODUCTS.slice(i, i + batchSize);
+
+        const PRODUCTS_TO_SEED = PRODUCTS.slice(0, 10);
+        console.log(`🛒  Creating ${PRODUCTS_TO_SEED.length} products...`);
+
+        for (let i = 0; i < PRODUCTS_TO_SEED.length; i += batchSize) {
+          const batch = PRODUCTS_TO_SEED.slice(i, i + batchSize);
           try {
             const productsToCreate: ProductCreationData[] = [];
-            
+
             for (const product of batch) {
               // Create a unique SKU by combining the base SKU with the index
               const baseSku = `ELT${String(i + productsToCreate.length + 1).padStart(3, '0')}`;
               const uniqueSku = `${baseSku}-${store.id}`;
-              
+
               // Create a complete product object with all required fields
               const productWithDefaults = {
                 ...product,
@@ -179,7 +180,7 @@ export const seedProducts = async (): Promise<void> => {
                 // Ensure category is set, default to 'Accessories' if not provided
                 category: product.category || 'Accessories'
               };
-              
+
               // Get a non-null category map
               const validCategoryMap = new Map<string, number>();
               categoryMap.forEach((value, key) => {
@@ -187,18 +188,18 @@ export const seedProducts = async (): Promise<void> => {
                   validCategoryMap.set(key, value);
                 }
               });
-              
+
               const productData = createProduct(
-                productWithDefaults as ProductData & { 
-                  sku: string; 
-                  quantity: number; 
-                  unitType: 'piece' | 'pack'; 
+                productWithDefaults as ProductData & {
+                  sku: string;
+                  quantity: number;
+                  unitType: 'piece' | 'pack';
                   category: string;
-                }, 
-                store.id, 
+                },
+                store.id,
                 validCategoryMap
               );
-              
+
               // For Demo Store only, try to fetch a few product images from Pexels
               if (store.name === 'Demo Store') {
                 try {
@@ -214,7 +215,7 @@ export const seedProducts = async (): Promise<void> => {
 
               productsToCreate.push(productData as ProductCreationData);
             }
-            
+
             // Use type assertion to ensure TypeScript understands the types
             await Product.bulkCreate(productsToCreate as any, { validate: true });
             console.log(`   Created batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(PRODUCTS.length / batchSize)}`);
@@ -223,11 +224,11 @@ export const seedProducts = async (): Promise<void> => {
             throw error;
           }
         }
-        
+
         console.log(`✅ Created ${PRODUCTS.length} products for ${store.name}`);
       }
     }
-    
+
     console.log("\n🎉 Product seeding completed successfully!");
   } catch (error) {
     console.error("❌ Error seeding products:", error);
@@ -254,10 +255,11 @@ export const seedDemoProducts = async (): Promise<void> => {
     console.log(`✅  Removed existing products for ${demoStore.name}`);
 
     const batchSize = 25;
-    console.log(`🛒  Creating ${PRODUCTS.length} products for Demo Store...`);
+    const PRODUCTS_TO_SEED = PRODUCTS.slice(0, 10);
+    console.log(`🛒  Creating ${PRODUCTS_TO_SEED.length} products for Demo Store...`);
 
-    for (let i = 0; i < PRODUCTS.length; i += batchSize) {
-      const batch = PRODUCTS.slice(i, i + batchSize);
+    for (let i = 0; i < PRODUCTS_TO_SEED.length; i += batchSize) {
+      const batch = PRODUCTS_TO_SEED.slice(i, i + batchSize);
       try {
         const productsToCreate: ProductCreationData[] = [];
 
