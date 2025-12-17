@@ -119,7 +119,6 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   res.json({
     success: true,
     data: userData2,
-    token: token,
   });
 });
 
