@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useStoreContext } from "@/contexts/StoreContext";
 import { api } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
 
@@ -70,6 +71,7 @@ const formatVariance = (variance: number) => {
 
 export default function StockTake() {
   const { user } = useAuthContext();
+  const { currentStore } = useStoreContext();
   const isReviewer = REVIEW_ROLES.includes(user?.role as (typeof REVIEW_ROLES)[number]);
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -86,7 +88,8 @@ export default function StockTake() {
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get("/products?limit=1000");
+      const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
+      const response = await api.get("/products?limit=1000", { headers });
       const data = response.data?.data || response.data?.products || [];
       setProducts(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -99,12 +102,13 @@ export default function StockTake() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, currentStore?.id]);
 
   const fetchPending = useCallback(async () => {
     try {
       setPendingLoading(true);
-      const response = await api.get(API_ENDPOINTS.reports.stockTakePending);
+      const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
+      const response = await api.get(API_ENDPOINTS.reports.stockTakePending, { headers });
       setPendingSessions(response.data?.data?.sessions || []);
     } catch (error) {
       console.error("Error loading pending stock takes:", error);
@@ -116,7 +120,7 @@ export default function StockTake() {
     } finally {
       setPendingLoading(false);
     }
-  }, [toast]);
+  }, [toast, currentStore?.id]);
 
   useEffect(() => {
     fetchProducts();
@@ -193,7 +197,8 @@ export default function StockTake() {
         productId: item.productId,
         countedQuantity: item.countedQuantity,
       }));
-      const response = await api.post(API_ENDPOINTS.reports.stockTakeSubmit, { items });
+      const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
+      const response = await api.post(API_ENDPOINTS.reports.stockTakeSubmit, { items }, { headers });
       if (response.data?.success) {
         toast({
           title: "Submitted for review",
@@ -221,7 +226,8 @@ export default function StockTake() {
 
   const handleApprove = async (sessionId: number) => {
     try {
-      await api.post(API_ENDPOINTS.reports.stockTakeApprove(sessionId), {});
+      const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
+      await api.post(API_ENDPOINTS.reports.stockTakeApprove(sessionId), {}, { headers });
       toast({
         title: "Stock take applied",
         description: `Updated inventory for session #${sessionId}`,
@@ -240,7 +246,8 @@ export default function StockTake() {
 
   const handleReject = async (sessionId: number) => {
     try {
-      await api.post(API_ENDPOINTS.reports.stockTakeReject(sessionId), {});
+      const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
+      await api.post(API_ENDPOINTS.reports.stockTakeReject(sessionId), {}, { headers });
       toast({
         title: "Stock take rejected",
         description: `Marked session #${sessionId} as rejected`,

@@ -8,12 +8,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
+import { useStoreContext } from "@/contexts/StoreContext";
 
 export default function ExpensesPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading: authLoading, checkSession } = useAuth();
   const [, setLocation] = useLocation();
+  const { currentStore, isLoading: isStoreLoading } = useStoreContext();
 
   useEffect(() => {
     if (!isAuthenticated && !authLoading) {
@@ -33,15 +35,16 @@ export default function ExpensesPage() {
   }, [isAuthenticated, authLoading, setLocation, toast]);
 
   const { data: expenses = [], isLoading: expensesLoading } = useQuery({
-    queryKey: ["expenses"],
-    queryFn: expenseService.getAll,
-    enabled: isAuthenticated,
+    queryKey: ["expenses", currentStore?.id],
+    queryFn: () => expenseService.getAll(currentStore?.id),
+    enabled: isAuthenticated && !!currentStore && !isStoreLoading,
   });
 
   const createExpenseMutation = useMutation({
-    mutationFn: expenseService.create,
+    mutationFn: (data: Parameters<typeof expenseService.create>[0]) =>
+      expenseService.create(data, currentStore?.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["expenses", currentStore?.id] });
       toast({
         title: "Success",
         description: "Expense added successfully",
@@ -58,9 +61,9 @@ export default function ExpensesPage() {
   });
 
   const deleteExpenseMutation = useMutation({
-    mutationFn: expenseService.delete,
+    mutationFn: (id: number) => expenseService.delete(id, currentStore?.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["expenses", currentStore?.id] });
       toast({
         title: "Success",
         description: "Expense deleted successfully",

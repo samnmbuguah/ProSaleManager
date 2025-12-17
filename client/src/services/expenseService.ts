@@ -14,20 +14,23 @@ interface CreateExpenseData {
 }
 
 export const expenseService = {
-  getAll: async (): Promise<Expense[]> => {
-    const response = await api.get<ExpenseResponse>(API_ENDPOINTS.expenses.list);
+  getAll: async (storeId?: number): Promise<Expense[]> => {
+    const headers = storeId ? { "x-store-id": storeId.toString() } : {};
+    const response = await api.get<ExpenseResponse>(API_ENDPOINTS.expenses.list, { headers });
     return response.data.expenses;
   },
 
-  create: async (data: CreateExpenseData): Promise<Expense> => {
+  create: async (data: CreateExpenseData, storeId?: number): Promise<Expense> => {
+    const headers = storeId ? { "x-store-id": storeId.toString() } : {};
     const response = await api.post(API_ENDPOINTS.expenses.create, {
       ...data,
       payment_method: data.payment_method || "cash",
-    });
+    }, { headers });
     return response.data.data;
   },
 
-  delete: async (id: number): Promise<void> => {
-    await api.delete(API_ENDPOINTS.expenses.delete(id));
+  delete: async (id: number, storeId?: number): Promise<void> => {
+    const headers = storeId ? { "x-store-id": storeId.toString() } : {};
+    await api.delete(API_ENDPOINTS.expenses.delete(id), { headers });
   },
 };

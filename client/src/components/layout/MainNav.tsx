@@ -412,21 +412,32 @@ export default function MainNav() {
                       // Synchronously update localStorage so API interceptor sees it immediately
                       localStorage.setItem("currentStore", JSON.stringify(store));
                       setCurrentStore(store);
+                      // Note: Query cache is now cleared centrally by StoreContext when store changes
 
-                      // Redirect to new store path while preserving current route suffix if possible
+                      // Preserve current route, just update the store prefix in URL
                       const currentPath = location;
                       const pathParts = currentPath.split('/').filter(Boolean);
 
-                      // Assuming path is like /storeName/route or /route
-                      // If we have a store context in URL, replace it
-                      if (currentStore?.name && pathParts[0] === encodeURIComponent(currentStore.name)) {
-                        pathParts[0] = encodeURIComponent(store.name);
-                        setLocation(`/${pathParts.join('/')}`);
-                      } else {
-                        // If we were on specific route (like /users) that didn't have store prefix,
-                        // or root, just go to new store dashboard
-                        setLocation(`/${encodeURIComponent(store.name)}/pos`);
+                      // Get the route part (everything after store name)
+                      let routePart = 'pos'; // default fallback
+
+                      // Check if the first path segment is ANY store name (not just currentStore)
+                      const firstSegmentDecoded = decodeURIComponent(pathParts[0] || '');
+                      const isFirstSegmentAStore = stores.some(s => s.name === firstSegmentDecoded);
+
+                      if (isFirstSegmentAStore && pathParts.length > 1) {
+                        // Current URL has a store prefix, get only the route part (everything after store name)
+                        routePart = pathParts.slice(1).join('/');
+                      } else if (isFirstSegmentAStore && pathParts.length === 1) {
+                        // Just the store name, default to pos
+                        routePart = 'pos';
+                      } else if (pathParts.length > 0) {
+                        // No store prefix in URL, use the first segment as the route
+                        routePart = pathParts[0];
                       }
+
+                      // Navigate to new store with same route
+                      setLocation(`/${encodeURIComponent(store.name)}/${routePart}`);
 
                       toast({
                         title: "Store Switched",

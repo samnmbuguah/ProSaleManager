@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { useStoreContext } from "@/contexts/StoreContext";
 
 export function useInventoryReport(filters?: {
   search?: string;
@@ -10,8 +11,10 @@ export function useInventoryReport(filters?: {
   startDate?: Date;
   endDate?: Date;
 }) {
+  const { currentStore, isLoading: isStoreLoading } = useStoreContext();
+
   return useQuery({
-    queryKey: ["inventory-report", filters],
+    queryKey: ["inventory-report", currentStore?.id, filters],
     queryFn: async () => {
       const params: Record<string, string> = {};
       if (filters?.search) params.search = filters.search;
@@ -22,9 +25,11 @@ export function useInventoryReport(filters?: {
       if (filters?.startDate) params.startDate = filters.startDate.toISOString();
       if (filters?.endDate) params.endDate = filters.endDate.toISOString();
 
-      const res = await api.get("/reports/inventory", { params });
+      const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
+      const res = await api.get("/reports/inventory", { params, headers });
       return res.data.data;
     },
+    enabled: !!currentStore && !isStoreLoading,
   });
 }
 
@@ -37,9 +42,12 @@ export function useProductPerformanceReport(filters?: {
   minPrice?: number;
   maxPrice?: number;
 }) {
+  const { currentStore, isLoading: isStoreLoading } = useStoreContext();
+
   return useQuery({
     queryKey: [
       "product-performance-report",
+      currentStore?.id,
       filters?.startDate?.toISOString(),
       filters?.endDate?.toISOString(),
       filters?.sortBy,
@@ -58,20 +66,26 @@ export function useProductPerformanceReport(filters?: {
       if (filters?.minPrice) params.minPrice = filters.minPrice.toString();
       if (filters?.maxPrice) params.maxPrice = filters.maxPrice.toString();
 
-      const res = await api.get("/reports/product-performance", { params });
+      const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
+      const res = await api.get("/reports/product-performance", { params, headers });
       return res.data.data;
     },
+    enabled: !!currentStore && !isStoreLoading,
   });
 }
 
 export function useSalesSummary(period?: string) {
+  const { currentStore, isLoading: isStoreLoading } = useStoreContext();
+
   return useQuery({
-    queryKey: ["sales-summary", period],
+    queryKey: ["sales-summary", currentStore?.id, period],
     queryFn: async () => {
       const params = period ? { period } : {};
-      const res = await api.get("/reports/sales-summary", { params });
+      const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
+      const res = await api.get("/reports/sales-summary", { params, headers });
       return res.data.data;
     },
+    enabled: !!currentStore && !isStoreLoading,
   });
 }
 
@@ -81,8 +95,10 @@ export function useExpensesSummary(filters?: {
   category?: string;
   paymentMethod?: string;
 }) {
+  const { currentStore, isLoading: isStoreLoading } = useStoreContext();
+
   return useQuery({
-    queryKey: ["expenses-summary", filters],
+    queryKey: ["expenses-summary", currentStore?.id, filters],
     queryFn: async () => {
       const params: Record<string, string> = {};
       if (filters?.startDate) params.startDate = filters.startDate.toISOString();
@@ -90,8 +106,11 @@ export function useExpensesSummary(filters?: {
       if (filters?.category && filters.category !== "all") params.category = filters.category;
       if (filters?.paymentMethod && filters.paymentMethod !== "all") params.paymentMethod = filters.paymentMethod;
 
-      const res = await api.get("/reports/expenses-summary", { params });
+      const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
+      const res = await api.get("/reports/expenses-summary", { params, headers });
       return res.data.data;
     },
+    enabled: !!currentStore && !isStoreLoading,
   });
 }
+
