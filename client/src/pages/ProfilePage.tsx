@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
 import { useLocation } from "wouter";
 import { Loader2, User, Save, Eye, EyeOff } from "lucide-react";
+import { useTheme } from "@/components/theme-provider";
 import {
   Card,
   CardContent,
@@ -42,6 +43,7 @@ export default function ProfilePage() {
   const { user, isAuthenticated, isLoading: authLoading, setUser } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { setTheme } = useTheme();
 
   // Form states
   const [profileData, setProfileData] = useState({
@@ -113,7 +115,12 @@ export default function ProfilePage() {
   const fetchUserPreferences = async () => {
     try {
       const response = await api.get(API_ENDPOINTS.users.preferences);
+
       setPreferences(response.data.data);
+      // Sync theme with backend preference on load
+      if (response.data.data) {
+        setTheme(response.data.data.dark_mode ? "dark" : "light");
+      }
     } catch (error) {
       console.error("Failed to fetch user preferences:", error);
     }
@@ -247,6 +254,10 @@ export default function ProfilePage() {
       // Update preferences via API
       const response = await api.put(API_ENDPOINTS.users.preferences, updatedPreferences);
       setPreferences(response.data.data);
+
+      if (key === "dark_mode") {
+        setTheme(value ? "dark" : "light");
+      }
 
       toast({
         title: "Preference Updated",

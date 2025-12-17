@@ -9,12 +9,7 @@ import { store } from "./store";
 import { AuthProvider } from "@/contexts/AuthContext";
 import App from "./App";
 import { StoreProvider } from "@/contexts/StoreContext";
-
-// Force light mode by removing the 'dark' class from html and body
-if (typeof document !== "undefined") {
-  document.documentElement.classList.remove("dark");
-  document.body.classList.remove("dark");
-}
+import { ThemeProvider } from "@/components/theme-provider";
 
 const root = document.getElementById("root") as HTMLElement;
 createRoot(root).render(
@@ -24,7 +19,9 @@ createRoot(root).render(
         <QueryClientProvider client={queryClient}>
           <StoreProvider>
             <CartProvider>
-              <App />
+              <ThemeProvider defaultTheme="light" storageKey="app-ui-theme">
+                <App />
+              </ThemeProvider>
             </CartProvider>
           </StoreProvider>
         </QueryClientProvider>

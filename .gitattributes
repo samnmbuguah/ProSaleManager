@@ -1,0 +1,2 @@
+deploy.sh merge=ours
+client/public/logo.png merge=ours
