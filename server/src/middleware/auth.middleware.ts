@@ -148,16 +148,11 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
 
           // Allow super_admin to impersonate a store via header
           if (req.user.role === "super_admin" && req.headers["x-store-id"]) {
-            console.log(`[Auth] SuperAdmin header x-store-id found: ${req.headers["x-store-id"]}`);
             const requestedStoreId = parseInt(req.headers["x-store-id"] as string);
             if (!isNaN(requestedStoreId)) {
               req.user.store_id = requestedStoreId;
             }
-          } else if (req.user.role === "super_admin") {
-            console.log("[Auth] SuperAdmin NO x-store-id header found");
           }
-
-          console.log(`[Auth] Final User Context: Role=${req.user.role}, StoreID=${req.user.store_id}`);
         }
       } catch {
         // Ignore DB errors during optional auth
@@ -203,13 +198,8 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
         const requestedStoreId = parseInt(req.headers["x-store-id"] as string);
         if (!isNaN(requestedStoreId)) {
           req.user.store_id = requestedStoreId;
-          console.log(`[Auth:requireAuth] SuperAdmin header x-store-id found: ${req.headers["x-store-id"]}`);
         }
-      } else if (req.user.role === "super_admin") {
-        console.log("[Auth:requireAuth] SuperAdmin NO x-store-id header found");
       }
-
-      console.log(`[Auth:requireAuth] Final User Context: Role=${req.user.role}, StoreID=${req.user.store_id}`);
     }
     next();
   } catch (err) {

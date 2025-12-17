@@ -44,9 +44,14 @@ router.get("/", requireAuth, requireStoreContext, async (req, res) => {
       ];
     }
 
-    // Add store filtering for non-super-admin users
-    if (req.user && req.user.role !== 'super_admin' && req.user.store_id) {
+    // Add store filtering
+    // Allow filtering for super_admin if they have impersonated a store (via header)
+    // For regular users, they are always restricted to their assigned store
+    if (req.user && req.user.store_id) {
+      console.log(`[Products] Filtering by store_id: ${req.user.store_id}`);
       where.store_id = req.user.store_id;
+    } else {
+      console.log(`[Products] NO store_id filter applied! User Role: ${req.user?.role}, StoreID: ${req.user?.store_id}`);
     }
 
     const limitNum = Number(limit);
