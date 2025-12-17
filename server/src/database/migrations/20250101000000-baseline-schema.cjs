@@ -16,7 +16,7 @@ module.exports = {
         id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: true,
           autoIncrement: true,
         },
@@ -30,7 +30,7 @@ module.exports = {
         user_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -86,21 +86,21 @@ module.exports = {
         store_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         createdAt: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         updatedAt: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -119,14 +119,14 @@ module.exports = {
         id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: true,
           autoIncrement: true,
         },
         store_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -203,14 +203,14 @@ module.exports = {
         created_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         updated_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -222,63 +222,63 @@ module.exports = {
         id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: true,
           autoIncrement: true,
         },
         sale_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         product_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         quantity: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         unit_price: {
           type: 'DECIMAL(10,2)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         total: {
           type: 'DECIMAL(10,2)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         unit_type: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         created_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         updated_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -290,14 +290,14 @@ module.exports = {
         id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: true,
           autoIncrement: true,
         },
         name: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -311,14 +311,14 @@ module.exports = {
         created_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         updated_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -330,21 +330,21 @@ module.exports = {
         id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: true,
           autoIncrement: true,
         },
         purchase_order_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         product_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -379,28 +379,28 @@ module.exports = {
         unit_type: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         store_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         createdAt: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         updatedAt: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -412,28 +412,28 @@ module.exports = {
         id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: true,
           autoIncrement: true,
         },
         email: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         password: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         name: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -475,14 +475,14 @@ module.exports = {
         created_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         updated_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -494,35 +494,35 @@ module.exports = {
         id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: true,
           autoIncrement: true,
         },
         description: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         amount: {
           type: 'DECIMAL(10,2)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         date: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         category: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -536,28 +536,28 @@ module.exports = {
         user_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         store_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         createdAt: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         updatedAt: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -569,14 +569,14 @@ module.exports = {
         id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: true,
           autoIncrement: true,
         },
         user_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -618,14 +618,14 @@ module.exports = {
         created_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         updated_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -637,21 +637,21 @@ module.exports = {
         id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: true,
           autoIncrement: true,
         },
         name: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         email: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -679,21 +679,21 @@ module.exports = {
         store_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         createdAt: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         updatedAt: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -705,28 +705,28 @@ module.exports = {
         id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: true,
           autoIncrement: true,
         },
         supplier_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         order_number: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         order_date: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -761,21 +761,21 @@ module.exports = {
         store_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         createdAt: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         updatedAt: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -787,28 +787,28 @@ module.exports = {
         id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: true,
           autoIncrement: true,
         },
         product_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         supplier_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         cost_price: {
           type: 'DECIMAL(10,2)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -829,21 +829,21 @@ module.exports = {
         store_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         created_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         updated_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -855,14 +855,14 @@ module.exports = {
         id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: true,
           autoIncrement: true,
         },
         name: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -890,14 +890,14 @@ module.exports = {
         created_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         updated_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -909,35 +909,35 @@ module.exports = {
         id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: true,
           autoIncrement: true,
         },
         name: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         email: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         phone: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         address: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -965,21 +965,21 @@ module.exports = {
         store_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         created_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         updated_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -991,14 +991,14 @@ module.exports = {
         id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: true,
           autoIncrement: true,
         },
         name: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -1012,7 +1012,7 @@ module.exports = {
         sku: {
           type: 'VARCHAR(255)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -1026,49 +1026,49 @@ module.exports = {
         category_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         piece_buying_price: {
           type: 'DECIMAL(10,2)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         piece_selling_price: {
           type: 'DECIMAL(10,2)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         pack_buying_price: {
           type: 'DECIMAL(10,2)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         pack_selling_price: {
           type: 'DECIMAL(10,2)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         dozen_buying_price: {
           type: 'DECIMAL(10,2)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         dozen_selling_price: {
           type: 'DECIMAL(10,2)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -1117,21 +1117,21 @@ module.exports = {
         store_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         created_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         updated_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
@@ -1143,35 +1143,35 @@ module.exports = {
         id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: true,
           autoIncrement: true,
         },
         user_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         product_id: {
           type: 'INT(11)',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         created_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
         updated_at: {
           type: 'DATETIME',
           allowNull: false,
-          defaultValue: null,
+          // defaultValue: skipped
           primaryKey: false,
           autoIncrement: false,
         },
