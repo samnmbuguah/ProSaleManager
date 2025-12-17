@@ -1,39 +1,28 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import CustomerList from "../components/customers/CustomerList";
 import { useToast } from "@/components/ui/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { useSelector, useDispatch } from "react-redux";
-import type { RootState, AppDispatch } from "@/store";
-import { fetchCustomers } from "@/store/customersSlice";
 import type { Customer } from "@/types/customer";
 import CustomerFormDialog from "../components/customers/CustomerFormDialog";
+import { useCustomers } from "@/hooks/useCustomers";
 
 const CustomersPage = () => {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const dispatch = useDispatch<AppDispatch>();
-  const customers = useSelector((state: RootState) => state.customers.items);
-  const customersStatus = useSelector((state: RootState) => state.customers.status);
-  const isLoading = customersStatus === "loading";
+  // Replace Redux with useCustomers hook
+  const { customers, isLoading, fetchCustomers } = useCustomers();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<Customer>>({});
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
-  useEffect(() => {
-    if (customersStatus === "idle") {
-      dispatch(fetchCustomers());
-    }
-  }, [dispatch, customersStatus]);
-
   const createCustomerMutation = useMutation({
     mutationFn: async (customer: Omit<Customer, "id" | "createdAt" | "updatedAt">) => {
-      // FIX: Remove double /api prefix
       const response = await api.post("/customers", customer);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      fetchCustomers(); // Use the hook's refetch to update context
       toast({
         title: "Success",
         description: "Customer added successfully.",
@@ -54,12 +43,11 @@ const CustomersPage = () => {
 
   const updateCustomerMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<Customer> }) => {
-      // FIX: Remove double /api prefix
       const response = await api.put(`/customers/${id}`, data);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      fetchCustomers();
       toast({
         title: "Success",
         description: "Customer updated successfully.",
@@ -80,11 +68,10 @@ const CustomersPage = () => {
 
   const deleteCustomerMutation = useMutation({
     mutationFn: async (id: number) => {
-      // FIX: Remove double /api prefix
       await api.delete(`/customers/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      fetchCustomers();
       toast({
         title: "Success",
         description: "Customer deleted successfully.",
@@ -159,7 +146,7 @@ const CustomersPage = () => {
   return (
     <div className="container mx-auto p-4 mt-16">
       <CustomerList
-        customers={customers}
+        customers={customers || []}
         onAdd={handleAddCustomer}
         onEdit={handleEditCustomer}
         onDelete={handleDeleteCustomer}

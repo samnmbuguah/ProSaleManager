@@ -67,9 +67,10 @@ api.interceptors.request.use(async (config) => {
   // Add store_id for super admin if present
   try {
     // Priority 1: In-memory active store ID (set instantly by UI switch)
-    if (activeStoreId) {
+    // Priority 1: In-memory active store ID (set instantly by UI switch)
+    if (activeStoreId && !config.headers["x-store-id"]) {
       config.headers["x-store-id"] = activeStoreId;
-    } else {
+    } else if (!config.headers["x-store-id"]) {
       // Priority 2: Fallback to localStorage (for initial load / refresh)
       const store = localStorage.getItem("currentStore");
       if (store) {
