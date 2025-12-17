@@ -159,7 +159,7 @@ export default function UserManagementPage() {
 
   const fetchStores = async () => {
     try {
-      const response = await api.get("/api/stores");
+      const response = await api.get("/stores");
       setStores(response.data.data);
     } catch (error) {
       console.error("Failed to fetch stores:", error);
@@ -487,13 +487,13 @@ export default function UserManagementPage() {
               <Label>Role</Label>
               <Select
                 value={filters.role}
-                onValueChange={(value) => setFilters({ ...filters, role: value, page: 1 })}
+                onValueChange={(value) => setFilters({ ...filters, role: value === "all" ? "" : value, page: 1 })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All roles" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All roles</SelectItem>
+                  <SelectItem value="all">All roles</SelectItem>
                   {userRoles.map((role) => (
                     <SelectItem key={role.value} value={role.value}>
                       {role.label}
@@ -506,13 +506,13 @@ export default function UserManagementPage() {
               <Label>Store</Label>
               <Select
                 value={filters.store_id}
-                onValueChange={(value) => setFilters({ ...filters, store_id: value, page: 1 })}
+                onValueChange={(value) => setFilters({ ...filters, store_id: value === "all" ? "" : value, page: 1 })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All stores" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All stores</SelectItem>
+                  <SelectItem value="all">All stores</SelectItem>
                   {stores.map((store) => (
                     <SelectItem key={store.id} value={store.id.toString()}>
                       {store.name}

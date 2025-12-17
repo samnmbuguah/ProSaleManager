@@ -35,6 +35,8 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
+import { useNotifications } from "@/hooks/use-notifications";
+
 
 type AppRole = "admin" | "manager" | "user" | "super_admin" | "sales" | "client";
 
@@ -93,13 +95,7 @@ const ROLE_ROUTES: Record<AppRole, Route[]> = {
   ],
 };
 
-type NotificationItem = {
-  id: number;
-  title: string;
-  message: string;
-  is_read: boolean;
-  createdAt?: string;
-};
+
 
 export default function MainNav() {
   const [location, setLocation] = useLocation();
@@ -109,10 +105,7 @@ export default function MainNav() {
   const { cart } = useCart();
   const [cartOpen, setCartOpen] = useState(false);
   const { currentStore, setCurrentStore, stores, isLoading } = useStoreContext();
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notificationsLoading, setNotificationsLoading] = useState(false);
-  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const { setTheme, theme } = useTheme();
 
   const routes = user ? (ROLE_ROUTES[user.role as AppRole] || ROLE_ROUTES.user) : [];
@@ -154,59 +147,22 @@ export default function MainNav() {
     }
   }, []);
 
-  const fetchNotifications = useCallback(async () => {
-    if (!user) return;
-    try {
-      setNotificationsLoading(true);
-      const [notifsRes, ordersRes] = await Promise.all([
-        api.get(API_ENDPOINTS.notifications.list),
-        api.get('/orders?status=pending') // Fetch pending orders
-      ]);
+  // Use the new hook for notifications
+  const { data: notifData, isLoading: isNotifLoading, refetch: refetchNotifications } = useNotifications();
 
-      let loadedParams: NotificationItem[] = [];
-      if (notifsRes.data) {
-        if (Array.isArray(notifsRes.data)) {
-          loadedParams = notifsRes.data;
-        } else if (notifsRes.data.data && Array.isArray(notifsRes.data.data)) {
-          loadedParams = notifsRes.data.data;
-        }
-      }
+  const notifications = notifData?.notifications || [];
+  const pendingOrdersCount = notifData?.pendingOrdersCount || 0;
 
-      // Process pending orders
-      const pendingOrders = ordersRes.data && Array.isArray(ordersRes.data) ? ordersRes.data :
-        (ordersRes.data?.data && Array.isArray(ordersRes.data.data) ? ordersRes.data.data : []);
+  // fetchNotifications is no longer needed manually as useQuery handles it
 
-      const pCount = pendingOrders.length;
-      setPendingOrdersCount(pCount);
+  // NOTE: Original code had logic for "setNotificationsLoading", "setPendingOrdersCount" etc.
+  // We need to map the hook result to the component state or just use the hook result directly.
+  // The component mostly uses `notifications` and `pendingOrdersCount`.
 
-      if (pCount > 0) {
-        // Synthesize a notification for pending orders
-        const orderNotif: NotificationItem = {
-          id: -1, // Virtual ID
-          title: "Pending Orders",
-          message: `You have ${pCount} uncompleted order${pCount !== 1 ? 's' : ''} waiting for action.`,
-          is_read: false,
-          createdAt: new Date().toISOString()
-        };
-        // Add to top list
-        loadedParams = [orderNotif, ...loadedParams];
-      }
+  // We can remove the old state if we replace usages.
+  // But to be safe with minimal changes, let's sync them or just shadow variables.
+  // Shadowing/Replacing variables is better.
 
-      setNotifications(loadedParams);
-    } catch (error) {
-      console.error("Failed to fetch notifications:", error);
-    } finally {
-      setNotificationsLoading(false);
-    }
-  }, [user]);
-
-  // Poll for notifications and pending orders every minute
-  useEffect(() => {
-    if (!user) return;
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000);
-    return () => clearInterval(interval);
-  }, [fetchNotifications, user]);
 
   // Hourly sound notification if there are pending orders
   useEffect(() => {
@@ -257,9 +213,7 @@ export default function MainNav() {
       }
 
       await api.patch(API_ENDPOINTS.notifications.markRead(id));
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
-      );
+      await refetchNotifications(); // Refresh data from server instead of local state
     } catch (error) {
       console.error("Failed to mark notification as read:", error);
     }
@@ -372,14 +326,14 @@ export default function MainNav() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={fetchNotifications}
-                    disabled={notificationsLoading}
+                    onClick={() => refetchNotifications()}
+                    disabled={isNotifLoading}
                   >
                     Refresh
                   </Button>
                 </div>
                 <div className="max-h-80 overflow-y-auto">
-                  {notificationsLoading ? (
+                  {isNotifLoading ? (
                     <div className="px-3 py-4 text-sm text-muted-foreground">Loading...</div>
                   ) : notifications.length === 0 ? (
                     <div className="px-3 py-4 text-sm text-muted-foreground">
@@ -455,6 +409,8 @@ export default function MainNav() {
                   onValueChange={(value) => {
                     const store = stores.find((s) => s.id === Number(value));
                     if (store) {
+                      // Synchronously update localStorage so API interceptor sees it immediately
+                      localStorage.setItem("currentStore", JSON.stringify(store));
                       setCurrentStore(store);
 
                       // Redirect to new store path while preserving current route suffix if possible

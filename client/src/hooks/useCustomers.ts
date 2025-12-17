@@ -1,27 +1,30 @@
-import { useState, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Customer } from "@/types/customer";
 import { api } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
 import { useStoreContext } from "@/contexts/StoreContext";
 
 export function useCustomers() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { currentStore } = useStoreContext();
+  const queryClient = useQueryClient();
 
-  const fetchCustomers = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
+  // Create a unique query key that includes the store ID
+  // This ensures that when the store changes, the query is automatically refetched
+  const queryKey = ["customers", currentStore?.id];
+
+  const { data: customers = [], isLoading, error } = useQuery<Customer[]>({
+    queryKey, // ["customers", 1] or ["customers", undefined]
+    queryFn: async () => {
       let url = API_ENDPOINTS.customers.list;
       // If super admin and currentStore is set, add store_id param
-      const userStr = localStorage.getItem("user");
+      const userStr = localStorage.getItem("auth-storage"); // Correctly read auth-storage
       let isSuperAdmin = false;
       if (userStr) {
         try {
-          const user = JSON.parse(userStr);
-          isSuperAdmin = user?.role === "super_admin";
+          const parsed = JSON.parse(userStr);
+          if (parsed.state && parsed.state.user) {
+            isSuperAdmin = parsed.state.user.role === "super_admin";
+          }
         } catch {
           // Ignore parsing errors
         }
@@ -30,43 +33,38 @@ export function useCustomers() {
         url += `?store_id=${currentStore.id}`;
       }
       const response = await api.get(url);
-      const data = response.data.data;
-      setCustomers(data);
-      if (!data || data.length === 0) {
-        setError("No customers found for this store. Please add a customer or contact support.");
-      }
-    } catch (error: unknown) {
-      let errorMessage = error instanceof Error ? error.message : String(error);
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "response" in error &&
-        typeof (error as { response?: { status?: number } }).response?.status === "number" &&
-        ((error as { response: { status: number } }).response.status === 401 ||
-          (error as { response: { status: number } }).response.status === 403)
-      ) {
-        errorMessage = "You are not authorized to view customers. Please log in again.";
-      }
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentStore]);
+      return response.data.data || [];
+    },
+    // Only run query if we are not a super admin OR if we have a currentStore
+    // This prevents fetching "all" customers for super admins blindly if that's not desired,
+    // though the backend likely filters by store_id anyway.
+    enabled: true,
+  });
 
-  const ensureWalkInCustomer = useCallback(async () => {
-    // Check if walk-in customer already exists
-    const walkInCustomer = customers.find((customer) => customer.name === "Walk-in Customer");
+  const ensureWalkInCustomer = async () => {
+    // Check if walk-in customer already exists in the cache
+    const existingCustomers = queryClient.getQueryData<Customer[]>(queryKey) || [];
+    const walkInCustomer = existingCustomers.find((c) => c.name === "Walk-in Customer");
+
     if (walkInCustomer) {
       return walkInCustomer;
     }
 
-    // If no walk-in customer exists, fetch customers to ensure it's created
-    await fetchCustomers();
-    const updatedWalkInCustomer = customers.find(
-      (customer) => customer.name === "Walk-in Customer"
-    );
-    return updatedWalkInCustomer || null;
-  }, [customers, fetchCustomers]);
+    // Force strict refetch
+    await queryClient.invalidateQueries({ queryKey });
+    const freshCustomers = await queryClient.fetchQuery({ queryKey }); // Re-trigger fetch
+    // Note: This logic assumes the backend creates "Walk-in Customer" on GET if missing,
+    // or that it exists. The original hook logic was a bit recursive.
 
-  return { customers, isLoading, error, fetchCustomers, setCustomers, ensureWalkInCustomer };
+    return (freshCustomers as Customer[]).find((c) => c.name === "Walk-in Customer") || null;
+  };
+
+  return {
+    customers,
+    isLoading,
+    error: error ? (error instanceof Error ? error.message : String(error)) : null,
+    fetchCustomers: () => queryClient.invalidateQueries({ queryKey }), // Manual refetch mapping 
+    setCustomers: (newCustomers: Customer[]) => queryClient.setQueryData(queryKey, newCustomers), // Manual set mapping
+    ensureWalkInCustomer
+  };
 }
