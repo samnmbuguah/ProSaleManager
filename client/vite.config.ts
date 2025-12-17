@@ -26,6 +26,10 @@ export default defineConfig(({ mode }) => {
         "branch.local",
         "eltee.local",
       ],
+      hmr: {
+        host: "localhost",
+        port: 5173,
+      },
       proxy: {
         "/api": {
           target: "http://localhost:5000",
