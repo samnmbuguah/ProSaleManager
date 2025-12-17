@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { api } from "@/lib/api";
+import { api, setApiStoreId } from "@/lib/api";
 
 interface Store {
   id: number;
@@ -49,10 +49,13 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               }
 
               setCurrentStore(initialStore);
+              localStorage.setItem("currentStore", JSON.stringify(initialStore));
             }
           }
         })
-        .catch(() => { })
+        .catch((err) => {
+          console.error("Failed to fetch stores in StoreContext:", err);
+        })
         .finally(() => {
           setIsLoading(false);
         });
@@ -61,10 +64,14 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [stores.length, currentStore]);
 
-  // Persist current store in localStorage
+  // Persist current store in localStorage and sync to API module
   useEffect(() => {
     if (currentStore) {
       localStorage.setItem("currentStore", JSON.stringify(currentStore));
+      setApiStoreId(currentStore.id.toString());
+    } else {
+      localStorage.removeItem("currentStore");
+      setApiStoreId(null);
     }
   }, [currentStore]);
 
@@ -73,7 +80,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const stored = localStorage.getItem("currentStore");
     if (stored) {
       try {
-        setCurrentStore(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        setCurrentStore(parsed);
+        if (parsed?.id) {
+          setApiStoreId(parsed.id.toString());
+        }
       } catch {
         // Ignore parsing errors
       }
