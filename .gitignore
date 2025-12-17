@@ -370,3 +370,6 @@ server/.env byc
 server/seed_output.txt
 server/src/scripts/reset-db.ts
 
+# Local deployment config
+deploy.sh
+client/public/logo.png
