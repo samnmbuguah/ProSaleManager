@@ -313,7 +313,6 @@
     "name": {
       "type": "VARCHAR(255)",
       "allowNull": false,
-      "defaultValue": null,
       "primaryKey": false,
       "autoIncrement": false,
       "comment": null
@@ -461,7 +460,6 @@
     "name": {
       "type": "VARCHAR(255)",
       "allowNull": false,
-      "defaultValue": null,
       "primaryKey": false,
       "autoIncrement": false,
       "comment": null
@@ -559,7 +557,6 @@
     "category": {
       "type": "VARCHAR(255)",
       "allowNull": false,
-      "defaultValue": null,
       "primaryKey": false,
       "autoIncrement": false,
       "comment": null
@@ -691,7 +688,6 @@
     "name": {
       "type": "VARCHAR(255)",
       "allowNull": false,
-      "defaultValue": null,
       "primaryKey": false,
       "autoIncrement": false,
       "comment": null
@@ -699,7 +695,6 @@
     "email": {
       "type": "VARCHAR(255)",
       "allowNull": false,
-      "defaultValue": null,
       "primaryKey": false,
       "autoIncrement": false,
       "comment": null

@@ -58,7 +58,7 @@ for (const tableName of tables) {
     upCode += `        ${colName}: {
           type: '${colDef.type.replace(/'/g, "\\'")}',
           allowNull: ${colDef.allowNull},
-          defaultValue: ${colDef.defaultValue === null ? 'null' : (typeof colDef.defaultValue === 'string' && !colDef.defaultValue.includes('CURRENT_TIMESTAMP') ? `'${colDef.defaultValue}'` : 'Sequelize.literal("'+colDef.defaultValue+'")')},
+          ${(colDef.defaultValue === undefined || (colDef.defaultValue === null && !colDef.allowNull)) ? '// defaultValue: skipped' : `defaultValue: ${colDef.defaultValue === null ? 'null' : (typeof colDef.defaultValue === 'string' && !colDef.defaultValue.includes('CURRENT_TIMESTAMP') ? `'${colDef.defaultValue}'` : 'Sequelize.literal("'+colDef.defaultValue+'")')},`}
           primaryKey: ${colDef.primaryKey},
           autoIncrement: ${colDef.autoIncrement},
         },
