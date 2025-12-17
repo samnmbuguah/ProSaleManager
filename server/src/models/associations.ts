@@ -99,7 +99,7 @@ export function setupAssociations() {
 
   // Store associations
   Store.hasMany(User, { foreignKey: "store_id" });
-  User.belongsTo(Store, { foreignKey: "store_id" });
+  User.belongsTo(Store, { foreignKey: "store_id", as: "store" });
 
   Product.belongsTo(Store, { foreignKey: "store_id" });
 
