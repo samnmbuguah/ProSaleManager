@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { X, Filter, RotateCcw } from "lucide-react";
 import { useCategories } from "@/hooks/use-categories";
-import type { ProductFilters as ProductFiltersType } from "@/store/productsSlice";
+import type { ProductFilters as ProductFiltersType } from "@/hooks/use-products-query";
 
 interface ProductFiltersProps {
     filters: ProductFiltersType;

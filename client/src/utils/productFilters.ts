@@ -1,5 +1,5 @@
 import { Product } from "@/types/product";
-import type { ProductFilters } from "@/store/productsSlice";
+import type { ProductFilters } from "@/hooks/use-products-query";
 
 export const filterProducts = (products: Product[], filters: ProductFilters): Product[] => {
   return products.filter((product) => {

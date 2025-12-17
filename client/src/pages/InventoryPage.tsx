@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,23 +12,6 @@ import { z } from "zod";
 import { Product, productSchema } from "@/types/product";
 import Suppliers from "@/components/inventory/Suppliers";
 import { PurchaseOrders } from "@/components/inventory/PurchaseOrders";
-import { useSelector, useDispatch } from "react-redux";
-import type { RootState, AppDispatch } from "@/store";
-import {
-  fetchProducts,
-  setIsAddDialogOpen,
-  setIsEditDialogOpen,
-  setSelectedProduct,
-  setSearchQuery,
-  setActiveTab,
-  setFormData,
-  searchProducts,
-  setPage,
-  setLimit,
-  setFilters,
-  clearFilters,
-  type ProductFilters,
-} from "@/store/productsSlice";
 import ProductList from "@/components/inventory/ProductList";
 import ProductFormDialog from "@/components/inventory/ProductFormDialog";
 import ProductSearchBar from "@/components/inventory/ProductSearchBar";
@@ -40,23 +23,59 @@ import { API_ENDPOINTS } from "@/lib/api-endpoints";
 import Swal from "sweetalert2";
 import { usePurchaseOrders } from "@/hooks/use-purchase-orders";
 import StockTake from "@/components/inventory/StockTake";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useProductsQuery,
+  type ProductFilters,
+} from "@/hooks/use-products-query";
+import { useStoreContext } from "@/contexts/StoreContext";
 
 const InventoryPage: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const products = useSelector((state: RootState) => state.products.items as Product[]);
-  const productsStatus = useSelector((state: RootState) => state.products.status);
-  const isAddDialogOpen = useSelector((state: RootState) => state.products.isAddDialogOpen);
-  const isEditDialogOpen = useSelector((state: RootState) => state.products.isEditDialogOpen);
-  const selectedProduct = useSelector((state: RootState) => state.products.selectedProduct);
-  const searchQuery = useSelector((state: RootState) => state.products.searchQuery);
-  const activeTab = useSelector((state: RootState) => state.products.activeTab);
-  const formData = useSelector((state: RootState) => state.products.formData);
-  const pagination = useSelector((state: RootState) => state.products.pagination);
-  const filters = useSelector((state: RootState) => state.products.filters);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { currentStore } = useStoreContext();
+
+  // React Query for products data
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(100);
+  const { products, pagination } = useProductsQuery(page, limit);
+
+  // Local UI state (replaces Redux UI state)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("products");
+  const [filters, setFilters] = useState<ProductFilters>({
+    categoryId: null,
+    stockStatus: "all",
+    priceRange: { min: null, max: null },
+    quantityRange: { min: null, max: null },
+    isActive: null,
+    stockUnit: "all",
+  });
+  const [formData, setFormData] = useState<z.infer<typeof productSchema>>({
+    name: "",
+    description: "",
+    sku: "",
+    barcode: "",
+    category_id: 1,
+    piece_buying_price: 0,
+    piece_selling_price: 0,
+    pack_buying_price: 0,
+    pack_selling_price: 0,
+    dozen_buying_price: 0,
+    dozen_selling_price: 0,
+    quantity: 0,
+    min_quantity: 0,
+    image_url: "",
+    is_active: true,
+    stock_unit: "piece",
+  });
 
   // Filter state
-  const [showFilters, setShowFilters] = React.useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [searchResults, setSearchResults] = useState<Product[] | null>(null);
 
   // File validation function
   const validateImageFiles = (files: File[]): string | null => {
@@ -79,29 +98,36 @@ const InventoryPage: React.FC = () => {
 
     return null;
   };
-  // Remove local state and manual fetching for purchase orders
-  // const [purchaseOrders, setPurchaseOrders] = React.useState([])
-  // const [purchaseOrdersLoading, setPurchaseOrdersLoading] = React.useState(false)
 
   // Use React Query hook for purchase orders
   const { purchaseOrders, isLoading: purchaseOrdersLoading } = usePurchaseOrders();
 
+  // Display products - either search results or filtered products
+  const displayProducts = searchResults || products;
+
   // Filter products based on current filters
   const filteredProducts = React.useMemo(() => {
-    if (searchQuery) {
-      // If searching, don't apply filters (search results are already filtered)
-      return products;
+    if (searchQuery && searchResults) {
+      // If searching, show search results
+      return searchResults;
     }
-    return filterProducts(products, filters);
-  }, [products, filters, searchQuery]);
+    return filterProducts(displayProducts, filters);
+  }, [displayProducts, filters, searchQuery, searchResults]);
 
   // Filter handlers
   const handleFiltersChange = (newFilters: Partial<ProductFilters>) => {
-    dispatch(setFilters(newFilters));
+    setFilters(prev => ({ ...prev, ...newFilters }));
   };
 
   const handleClearFilters = () => {
-    dispatch(clearFilters());
+    setFilters({
+      categoryId: null,
+      stockStatus: "all",
+      priceRange: { min: null, max: null },
+      quantityRange: { min: null, max: null },
+      isActive: null,
+      stockUnit: "all",
+    });
   };
 
   const initialFormData: z.infer<typeof productSchema> = {
@@ -122,12 +148,6 @@ const InventoryPage: React.FC = () => {
     is_active: true,
     stock_unit: "piece",
   };
-
-  useEffect(() => {
-    if (productsStatus === "idle") {
-      dispatch(fetchProducts({ page: pagination.page, limit: pagination.limit }));
-    }
-  }, [dispatch, productsStatus, pagination.page, pagination.limit]);
 
   // Helper function to build clean payload (only allowed fields)
   const buildCleanPayload = () => {
@@ -158,6 +178,10 @@ const InventoryPage: React.FC = () => {
     });
 
     return cleanPayload;
+  };
+
+  const invalidateProducts = () => {
+    queryClient.invalidateQueries({ queryKey: ["products", currentStore?.id] });
   };
 
   const handleSubmit = async (_unused: unknown, localImageFiles?: File[], onProgress?: (progress: number) => void, removedImages?: string[]) => {
@@ -272,10 +296,10 @@ const InventoryPage: React.FC = () => {
         title: "Success",
         description: `Product ${selectedProduct ? "updated" : "created"} successfully`,
       });
-      dispatch(setFormData(initialFormData));
-      dispatch(setIsAddDialogOpen(false));
-      dispatch(setIsEditDialogOpen(false));
-      dispatch(fetchProducts({ page: pagination.page, limit: pagination.limit }));
+      setFormData(initialFormData);
+      setIsAddDialogOpen(false);
+      setIsEditDialogOpen(false);
+      invalidateProducts();
     } catch (error: unknown) {
       console.error("Error:", error);
 
@@ -351,7 +375,7 @@ const InventoryPage: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={() => {
-                dispatch(setFormData({ ...formData, sku: suggestedSku }));
+                setFormData({ ...formData, sku: suggestedSku });
                 toast({
                   title: "SKU Updated",
                   description: `SKU updated to: ${suggestedSku}`,
@@ -384,28 +408,26 @@ const InventoryPage: React.FC = () => {
   };
 
   const handleEdit = (product: Product) => {
-    dispatch(setSelectedProduct(product));
-    dispatch(
-      setFormData({
-        name: product.name,
-        description: product.description || "",
-        sku: product.sku || "",
-        barcode: product.barcode || "",
-        category_id: product.category_id,
-        piece_buying_price: product.piece_buying_price || 0,
-        piece_selling_price: product.piece_selling_price || 0,
-        pack_buying_price: product.pack_buying_price || 0,
-        pack_selling_price: product.pack_selling_price || 0,
-        dozen_buying_price: product.dozen_buying_price || 0,
-        dozen_selling_price: product.dozen_selling_price || 0,
-        quantity: product.quantity,
-        min_quantity: product.min_quantity,
-        image_url: product.image_url || "",
-        is_active: product.is_active,
-        stock_unit: product.stock_unit || "piece", // Ensure stock_unit is set
-      })
-    );
-    dispatch(setIsEditDialogOpen(true));
+    setSelectedProduct(product);
+    setFormData({
+      name: product.name,
+      description: product.description || "",
+      sku: product.sku || "",
+      barcode: product.barcode || "",
+      category_id: product.category_id,
+      piece_buying_price: product.piece_buying_price || 0,
+      piece_selling_price: product.piece_selling_price || 0,
+      pack_buying_price: product.pack_buying_price || 0,
+      pack_selling_price: product.pack_selling_price || 0,
+      dozen_buying_price: product.dozen_buying_price || 0,
+      dozen_selling_price: product.dozen_selling_price || 0,
+      quantity: product.quantity,
+      min_quantity: product.min_quantity,
+      image_url: product.image_url || "",
+      is_active: product.is_active,
+      stock_unit: product.stock_unit || "piece",
+    });
+    setIsEditDialogOpen(true);
   };
 
   const handleDelete = async (id: number) => {
@@ -424,7 +446,7 @@ const InventoryPage: React.FC = () => {
         title: "Success",
         description: "Product deleted successfully",
       });
-      dispatch(fetchProducts({ page: pagination.page, limit: pagination.limit }));
+      invalidateProducts();
     } catch (error: unknown) {
       // Show SweetAlert2 error dialog for backend error
       let message = "Failed to delete product";
@@ -455,8 +477,15 @@ const InventoryPage: React.FC = () => {
   };
 
   const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults(null);
+      setSearchQuery("");
+      return;
+    }
     try {
-      await dispatch(searchProducts(query));
+      const response = await api.get(API_ENDPOINTS.products.search(query));
+      setSearchResults(response.data.data);
+      setSearchQuery(query);
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -469,14 +498,17 @@ const InventoryPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4 mt-16">
-      <TabsNav activeTab={activeTab} setActiveTab={(tab) => dispatch(setActiveTab(tab))} />
+      <TabsNav activeTab={activeTab} setActiveTab={setActiveTab} />
       <div className="flex justify-between items-center mb-4">
         {activeTab === "products" && (
           <>
             <div className="flex items-center gap-4">
               <ProductSearchBar
                 searchQuery={searchQuery}
-                setSearchQuery={(q) => dispatch(setSearchQuery(q))}
+                setSearchQuery={(q) => {
+                  setSearchQuery(q);
+                  if (!q) setSearchResults(null);
+                }}
                 onSearch={handleSearch}
               />
               <div className="flex items-center gap-2">
@@ -517,9 +549,9 @@ const InventoryPage: React.FC = () => {
             </div>
             <Button
               onClick={() => {
-                dispatch(setFormData(initialFormData));
-                dispatch(setSelectedProduct(null));
-                dispatch(setIsAddDialogOpen(true));
+                setFormData(initialFormData);
+                setSelectedProduct(null);
+                setIsAddDialogOpen(true);
               }}
             >
               Add Product
@@ -545,7 +577,7 @@ const InventoryPage: React.FC = () => {
           <div className="mb-4 text-sm text-gray-600">
             {searchQuery ? (
               <span>
-                Search results for "{searchQuery}" ({products.length} products)
+                Search results for "{searchQuery}" ({displayProducts.length} products)
               </span>
             ) : (
               <span>
@@ -566,11 +598,11 @@ const InventoryPage: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600">Show:</span>
                 <Select
-                  value={pagination.limit.toString()}
+                  value={limit.toString()}
                   onValueChange={(value) => {
                     const newLimit = parseInt(value);
-                    dispatch(setLimit(newLimit));
-                    dispatch(fetchProducts({ page: 1, limit: newLimit }));
+                    setLimit(newLimit);
+                    setPage(1);
                   }}
                 >
                   <SelectTrigger className="w-20">
@@ -591,11 +623,8 @@ const InventoryPage: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    dispatch(setPage(pagination.page - 1));
-                    dispatch(fetchProducts({ page: pagination.page - 1, limit: pagination.limit }));
-                  }}
-                  disabled={pagination.page <= 1}
+                  onClick={() => setPage(page - 1)}
+                  disabled={page <= 1}
                 >
                   Previous
                 </Button>
@@ -605,11 +634,8 @@ const InventoryPage: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    dispatch(setPage(pagination.page + 1));
-                    dispatch(fetchProducts({ page: pagination.page + 1, limit: pagination.limit }));
-                  }}
-                  disabled={pagination.page >= pagination.totalPages}
+                  onClick={() => setPage(page + 1)}
+                  disabled={page >= pagination.totalPages}
                 >
                   Next
                 </Button>
@@ -622,14 +648,14 @@ const InventoryPage: React.FC = () => {
         open={isAddDialogOpen || isEditDialogOpen}
         onOpenChange={(open) => {
           if (!open) {
-            dispatch(setFormData(initialFormData));
-            dispatch(setSelectedProduct(null));
+            setFormData(initialFormData);
+            setSelectedProduct(null);
           }
-          dispatch(setIsAddDialogOpen(open));
-          dispatch(setIsEditDialogOpen(open));
+          setIsAddDialogOpen(open);
+          setIsEditDialogOpen(open);
         }}
         formData={formData}
-        setFormData={(data) => dispatch(setFormData(data))}
+        setFormData={setFormData}
         onSubmit={handleSubmit}
         selectedProduct={selectedProduct}
       />
