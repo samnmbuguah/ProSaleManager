@@ -9,6 +9,7 @@ declare global {
       user?: {
         id: number;
         email: string;
+        name: string;
         role: string;
         store_id?: number | null;
       };
@@ -91,6 +92,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
       req.user = {
         id: decoded.id,
         email: decoded.email,
+        name: user?.name || "User",
         role: user?.role || decoded.role,
         store_id: user?.role === "super_admin" ? null : user?.store_id,
       };
@@ -142,14 +144,15 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
           req.user = {
             id: decoded.id,
             email: decoded.email,
+            name: user.name,
             role: user.role || decoded.role,
             store_id: user.role === "super_admin" ? null : user.store_id,
           };
 
           // Allow super_admin to impersonate a store via header
-          if (req.user.role === "super_admin" && req.headers["x-store-id"]) {
+          if (req.user?.role === "super_admin" && req.headers["x-store-id"]) {
             const requestedStoreId = parseInt(req.headers["x-store-id"] as string);
-            if (!isNaN(requestedStoreId)) {
+            if (!isNaN(requestedStoreId) && req.user) {
               req.user.store_id = requestedStoreId;
             }
           }
@@ -189,14 +192,15 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
       req.user = {
         id: decoded.id,
         email: decoded.email,
+        name: user?.name || "User",
         role: user?.role || decoded.role,
         store_id: user?.role === "super_admin" ? null : user?.store_id,
       };
 
       // Allow super_admin to impersonate a store via header
-      if (req.user.role === "super_admin" && req.headers["x-store-id"]) {
+      if (req.user?.role === "super_admin" && req.headers["x-store-id"]) {
         const requestedStoreId = parseInt(req.headers["x-store-id"] as string);
-        if (!isNaN(requestedStoreId)) {
+        if (!isNaN(requestedStoreId) && req.user) {
           req.user.store_id = requestedStoreId;
         }
       }

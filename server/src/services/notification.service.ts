@@ -44,8 +44,6 @@ export async function createNotificationsForUsers(
   return Notification.bulkCreate(entries);
 }
 
-}
-
 export async function notifyUsersOfPurchaseOrder(
   storeId: number | null | undefined,
   payload: NotificationPayload,
