@@ -203,7 +203,7 @@ router.get("/low-stock", async (req, res) => {
 });
 
 // Bulk price update - must come before /:id routes
-router.put("/bulk-price-update", requireAuth, requireRole(["admin", "manager"]), async (req, res) => {
+router.put("/bulk-price-update", requireAuth, requireRole(["admin", "manager", "super_admin"]), async (req, res) => {
   try {
     const { category_id, price_increase_percent } = req.body;
 
@@ -275,7 +275,7 @@ router.put("/bulk-price-update", requireAuth, requireRole(["admin", "manager"]),
 
 
 // Create a new product
-router.post("/", requireAuth, requireRole(["admin", "manager"]), upload.array("images", 10), async (req, res) => {
+router.post("/", requireAuth, requireRole(["admin", "manager", "super_admin"]), upload.array("images", 10), async (req, res) => {
   try {
     const productData = req.body;
 
@@ -465,7 +465,7 @@ router.post("/", requireAuth, requireRole(["admin", "manager"]), upload.array("i
 });
 
 // Update a product
-router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.array("images", 10), async (req, res) => {
+router.put("/:id", requireAuth, requireRole(["admin", "manager", "super_admin"]), upload.array("images", 10), async (req, res) => {
   try {
     const productData = req.body;
     const product = await Product.findByPk(req.params.id);
@@ -679,7 +679,7 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager"]), upload.array(
 });
 
 // Delete a product
-router.delete("/:id", requireAuth, requireRole(["admin", "manager"]), async (req, res) => {
+router.delete("/:id", requireAuth, requireRole(["admin", "manager", "super_admin"]), async (req, res) => {
   try {
     const product = await Product.findByPk(req.params.id);
     if (product) {
@@ -779,7 +779,7 @@ router.get("/:id/pricing", requireAuth, async (req, res) => {
 
 
 // Stock adjustment
-router.post("/:id/adjust-stock", requireAuth, requireRole(["admin", "manager"]), async (req, res) => {
+router.post("/:id/adjust-stock", requireAuth, requireRole(["admin", "manager", "super_admin"]), async (req, res) => {
   try {
     const { quantity_change, reason } = req.body;
     const product = await Product.findByPk(req.params.id);
@@ -835,54 +835,6 @@ router.post("/:id/adjust-stock", requireAuth, requireRole(["admin", "manager"]),
   }
 });
 
-// Stock adjustment
-router.post("/:id/adjust-stock", requireAuth, requireRole(["admin", "manager"]), async (req, res) => {
-  try {
-    const { quantity_change, reason } = req.body;
-    const product = await Product.findByPk(req.params.id);
-
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found"
-      });
-    }
-
-    if (!quantity_change || isNaN(Number(quantity_change))) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid quantity change",
-        error: "quantity_change must be a valid number"
-      });
-    }
-
-    const newQuantity = product.quantity + Number(quantity_change);
-    if (newQuantity < 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid quantity change",
-        error: "Resulting quantity cannot be negative"
-      });
-    }
-
-    await product.update({ quantity: newQuantity });
-
-    res.json({
-      success: true,
-      data: {
-        message: `Stock adjusted by ${quantity_change}`,
-        new_quantity: newQuantity,
-        reason: reason || "Stock adjustment"
-      }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Error adjusting stock",
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
-  }
-});
 
 // Get a single product - must come after all specific routes
 router.get("/:id", async (req, res) => {
