@@ -49,9 +49,10 @@ export interface PurchaseOrderSubmitData {
 
 export interface PurchaseOrder {
   id: number;
+  order_number?: string;
   supplier_id: number;
   total_amount: string;
-  status: "pending" | "approved" | "rejected" | "completed";
+  status: "pending" | "approved" | "rejected" | "completed" | "received";
   notes?: string | null;
   expected_delivery_date?: string | null;
   created_at: Date | null;
