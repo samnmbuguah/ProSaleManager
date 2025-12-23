@@ -328,8 +328,24 @@ export default function MainNav() {
                     size="sm"
                     onClick={() => refetchNotifications()}
                     disabled={isNotifLoading}
+                    className="mr-1"
                   >
                     Refresh
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
+                    onClick={async () => {
+                      try {
+                        await api.post(API_ENDPOINTS.notifications.markAllRead);
+                        await refetchNotifications();
+                      } catch (e) {
+                        console.error("Failed to mark all read", e);
+                      }
+                    }}
+                  >
+                    Mark all read
                   </Button>
                 </div>
                 <div className="max-h-80 overflow-y-auto">
@@ -343,9 +359,27 @@ export default function MainNav() {
                     notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`px-3 py-2 text-sm border-b last:border-b-0 ${notification.is_read ? "bg-white" : "bg-blue-50"
-                          } ${notification.id === -1 ? "cursor-pointer hover:bg-blue-100" : ""}`}
-                        onClick={() => handleMarkAsRead(notification.id)}
+                        className={`px-3 py-2 text-sm border-b last:border-b-0 cursor-pointer hover:bg-muted/50 transition-colors ${notification.is_read ? "bg-white" : "bg-blue-50"
+                          } ${notification.id === -1 ? "bg-blue-50" : ""}`}
+                        onClick={() => {
+                          handleMarkAsRead(notification.id);
+                          // Navigate if link exists
+                          if (notification.data?.link) {
+                            // If link starts with /, append to store prefix if needed or just use as is
+                            // Our store routing usually puts store name first.
+                            // If link is absolute path like /inventory, we might need to prepend store name.
+                            let targetLink = notification.data.link;
+                            if (currentStore?.name && !targetLink.startsWith(`/${currentStore.name}`) && targetLink.startsWith('/')) {
+                              targetLink = `/${encodeURIComponent(currentStore.name)}${targetLink}`;
+                            }
+                            setLocation(targetLink);
+                            setNotificationsOpen(false);
+                          } else if (notification.id === -1) {
+                            // Default pending order behavior
+                            setLocation(`${storePrefix}/sales?tab=orders`);
+                            setNotificationsOpen(false);
+                          }
+                        }}
                       >
                         <div className="font-semibold">{notification.title}</div>
                         <div className="text-muted-foreground">{notification.message}</div>

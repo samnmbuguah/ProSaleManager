@@ -46,6 +46,7 @@ export function useNotifications() {
                     title: "Pending Orders",
                     message: `You have ${pCount} uncompleted order${pCount !== 1 ? 's' : ''} waiting for action.`,
                     is_read: false,
+                    type: "system", // Added type
                     createdAt: new Date().toISOString()
                 };
                 loadedParams = [orderNotif, ...loadedParams];

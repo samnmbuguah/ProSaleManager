@@ -44,6 +44,27 @@ export async function createNotificationsForUsers(
   return Notification.bulkCreate(entries);
 }
 
+}
+
+export async function notifyUsersOfPurchaseOrder(
+  storeId: number | null | undefined,
+  payload: NotificationPayload,
+  targetRoles: string[] = ["admin", "manager", "super_admin"]
+) {
+  const users = await User.findAll({
+    where: {
+      [Op.or]: [
+        { role: { [Op.in]: targetRoles }, store_id: storeId ?? null },
+        { role: "super_admin" },
+      ],
+    },
+    attributes: ["id"],
+  });
+
+  const userIds = Array.from(new Set(users.map((u) => u.id!)));
+  return createNotificationsForUsers(userIds, { ...payload, type: "system" });
+}
+
 export async function notifyAdminsOfStockTake(
   storeId: number | null | undefined,
   payload: NotificationPayload,
@@ -60,7 +81,14 @@ export async function notifyAdminsOfStockTake(
   });
 
   const userIds = Array.from(new Set(admins.map((u) => u.id!)));
-  await createNotificationsForUsers(userIds, { ...payload, type: payload.type || "stock_take" });
+  // Include data with link if not present
+  const data = payload.data || { link: "/inventory?tab=stock-take" };
+
+  await createNotificationsForUsers(userIds, {
+    ...payload,
+    type: payload.type || "stock_take",
+    data
+  });
 
   const transporter = getMailer();
   if (transporter) {
