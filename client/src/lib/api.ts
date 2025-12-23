@@ -112,8 +112,9 @@ api.interceptors.response.use(
       }
     }
 
-    // If we get a 403, clear the token and retry once
-    if (error.response?.status === 403 && error.config.method !== "get") {
+    // If we get a 403, clear the token and retry a failed request once
+    if (error.response?.status === 403 && error.config.method !== "get" && !error.config._retry) {
+      error.config._retry = true;
       csrfToken = null;
       const newToken = await fetchCsrfToken();
       if (newToken) {
