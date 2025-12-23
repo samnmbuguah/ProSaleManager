@@ -24,6 +24,9 @@ import {
   PaginationContent,
   PaginationItem,
   PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
 } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -362,34 +365,74 @@ export function SalesPage() {
           <Pagination className="mt-4">
             <PaginationContent>
               <PaginationItem>
-                <Button
-                  variant="outline"
-                  size="sm"
+                <PaginationPrevious
                   onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
+                  aria-disabled={currentPage === 1}
+                  className={
+                    currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"
+                  }
+                />
               </PaginationItem>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    onClick={() => setCurrentPage(page)}
-                    isActive={currentPage === page}
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
+              {(() => {
+                const pages = [];
+                const maxVisiblePages = 5;
+
+                if (totalPages <= maxVisiblePages) {
+                  for (let i = 1; i <= totalPages; i++) {
+                    pages.push(i);
+                  }
+                } else {
+                  pages.push(1);
+                  if (currentPage > 3) {
+                    pages.push("...");
+                  }
+
+                  let startPage = Math.max(2, currentPage - 1);
+                  let endPage = Math.min(totalPages - 1, currentPage + 1);
+
+                  if (currentPage <= 3) {
+                    startPage = 2;
+                    endPage = 4;
+                  }
+
+                  if (currentPage >= totalPages - 2) {
+                    startPage = totalPages - 3;
+                    endPage = totalPages - 1;
+                  }
+
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(i);
+                  }
+
+                  if (currentPage < totalPages - 2) {
+                    pages.push("...");
+                  }
+                  pages.push(totalPages);
+                }
+
+                return pages.map((page, index) => (
+                  <PaginationItem key={index}>
+                    {page === "..." ? (
+                      <PaginationEllipsis />
+                    ) : (
+                      <PaginationLink
+                        onClick={() => setCurrentPage(page as number)}
+                        isActive={currentPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    )}
+                  </PaginationItem>
+                ));
+              })()}
               <PaginationItem>
-                <Button
-                  variant="outline"
-                  size="sm"
+                <PaginationNext
                   onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
+                  aria-disabled={currentPage === totalPages}
+                  className={
+                    currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"
+                  }
+                />
               </PaginationItem>
             </PaginationContent>
           </Pagination>

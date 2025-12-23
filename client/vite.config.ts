@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      port: 5173,
+      port: 5174,
       host: true, // Allow connections from subdomains like demo.local
       allowedHosts: [
         "localhost",
@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
       ],
       hmr: {
         host: "localhost",
-        port: 5173,
+        port: 5174,
       },
       proxy: {
         "/api": {
