@@ -57,7 +57,9 @@ app.use(
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
+  "http://localhost:5174",
   "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
   "http://127.0.0.1:3000",
   "http://localhost:5000",
   "http://127.0.0.1:5000",
@@ -77,8 +79,8 @@ function isAllowedOrigin(origin: string) {
   if (/^https?:\/\/([a-z0-9-]+\.)*eltee\.store$/.test(origin)) return true;
   // Allow any subdomain of byccollections.com (http or https)
   if (/^https?:\/\/([a-z0-9-]+\.)*byccollections\.com$/.test(origin)) return true;
-  // Allow any subdomain of .local:5173 in dev
-  if (/^http:\/\/[a-z0-9-]+\.local:5173$/.test(origin)) return true;
+  // Allow any subdomain of .local:5173 or .local:5174 in dev
+  if (/^http:\/\/[a-z0-9-]+\.local:517(3|4)$/.test(origin)) return true;
   return false;
 }
 
