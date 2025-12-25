@@ -273,11 +273,12 @@ export default function MainNav() {
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6">
         <div className="h-14 sm:h-16 min-h-14 sm:min-h-16 flex items-center justify-between w-full">
           {/* Left logo linking to homepage */}
+          {/* Left logo linking to homepage */}
           <div className="flex items-center">
             <Link href={`${storePrefix}` || "/"}>
-              <Button variant="ghost" className="flex items-center gap-2 px-1 sm:px-2">
+              <div className="flex items-center gap-2 px-1 sm:px-2 cursor-pointer">
                 <img src="/logo.png" alt="Eltee Store Logo" className="w-10 h-10 sm:w-14 sm:h-14 object-contain" />
-              </Button>
+              </div>
             </Link>
           </div>
 
