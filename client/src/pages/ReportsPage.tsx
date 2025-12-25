@@ -4,11 +4,13 @@ import ProductPerformance from "../components/reports/ProductPerformance";
 import InventoryStatus from "../components/reports/InventoryStatus";
 import ExpensesSummary from "../components/reports/ExpensesSummary";
 import {
+  useCategoryPerformance,
   useInventoryReport,
   useProductPerformanceReport,
   useSalesSummary,
   useExpensesSummary,
 } from "@/hooks/use-reports";
+import { getDatesFromPeriod } from "@/lib/utils";
 import { SalesChart } from "../components/reports/SalesChart";
 import { InventoryFilters, PerformanceFilters, ExpenseFilters } from "@/components/reports/ReportFilters";
 import DashboardOverview from "../components/reports/DashboardOverview";
@@ -72,52 +74,66 @@ export default function ReportsPage() {
   const { data: expensesData } = useExpensesSummary(expenseFilters);
 
   const [period, setPeriod] = useState<
-    "today" | "this_week" | "last_week" | "this_month" | "last_month"
+    "today" | "this_week" | "last_week" | "this_month" | "last_month" | "this_year" | "custom"
   >("this_week");
-  const { data: salesSummary, isLoading: salesSummaryLoading } = useSalesSummary(period);
+
+  const [customDateRange, setCustomDateRange] = useState<{ start: Date | null; end: Date | null }>({
+    start: null,
+    end: null
+  });
+
+  const summaryFilters: { startDate: Date; endDate: Date } | undefined = period === "custom"
+    ? (customDateRange.start && customDateRange.end ? { startDate: customDateRange.start, endDate: customDateRange.end } : undefined)
+    : (getDatesFromPeriod(period) || undefined);
+
+  // For Sales Summary (Trends), we can pass period string OR dates. 
+  // If period is custom, we pass dates. If period is standard, we can pass period string OR dates.
+  // Passing period string lets backend handle logic, but passing dates ensures consistency across all charts if we trust our frontend helper.
+  // Let's pass dates if we have them, otherwise period.
+
+  const { data: salesSummary, isLoading: salesSummaryLoading } = useSalesSummary(
+    period === "custom" ? undefined : period,
+    summaryFilters
+  );
+
+  // For Category Performance & Dashboard Overview, we MUST pass dates because they don't accept 'period' string in these specific hooks/endpoints (unless I updated them, which I didn't fully for all).
+  const { data: categoryPerformanceData } = useCategoryPerformance(summaryFilters);
+
+  // Fetch performance data specifically for the dashboard metrics using the global period
+  const { data: dashboardPerformanceData } = useProductPerformanceReport({
+    ...performanceFilters, // Keep other filters if needed, but mainly override dates
+    startDate: summaryFilters?.startDate,
+    endDate: summaryFilters?.endDate
+  });
+
   const { data: expensesSummary, isLoading: expensesSummaryLoading } = useExpensesSummary();
   const [tab, setTab] = useState("dashboard");
 
-  // Top sellers (top 3 by revenue)
-  const topSellers = (performanceData?.products || [])
+  // Top sellers (top 3 by revenue) - use dashboardPerformanceData for the overview tab
+  const topSellers = (dashboardPerformanceData?.products || [])
     .slice()
     .sort((a: { revenue: number }, b: { revenue: number }) => b.revenue - a.revenue)
     .slice(0, 3) as Array<{ productId: number; productName: string; revenue: number }>;
 
-  // Calculate dashboard metrics
+  // Calculate dashboard metrics using dashboardPerformanceData
   const dashboardMetrics = {
-    totalRevenue: performanceData?.summary?.totalRevenue || 0,
-    totalProfit: performanceData?.summary?.totalProfit || 0,
-    totalSales: performanceData?.summary?.totalQuantity || 0,
+    totalRevenue: dashboardPerformanceData?.summary?.totalRevenue || 0,
+    totalProfit: dashboardPerformanceData?.summary?.totalProfit || 0,
+    totalSales: dashboardPerformanceData?.summary?.totalQuantity || 0,
     totalProducts: inventoryData?.totalProducts || 0,
     lowStockProducts: inventoryData?.lowStockProducts || 0,
     outOfStockProducts: inventoryData?.outOfStockProducts || 0,
-    totalCustomers: 0, // This would need to be fetched from a customers endpoint
-    averageOrderValue: performanceData?.summary?.totalRevenue / (performanceData?.summary?.totalQuantity || 1) || 0,
-    revenueGrowth: 0, // This would need comparison data
-    profitGrowth: 0, // This would need comparison data
-    salesGrowth: 0, // This would need comparison data
+    totalCustomers: 0,
+    averageOrderValue: dashboardPerformanceData?.summary?.totalRevenue / (dashboardPerformanceData?.summary?.totalQuantity || 1) || 0,
+    revenueGrowth: 0,
+    profitGrowth: 0,
+    salesGrowth: 0,
     topCategory: topSellers[0]?.productName || "N/A",
     topCategoryRevenue: topSellers[0]?.revenue || 0,
   };
 
-  // Mock sales trend data (in a real app, this would come from the API)
-  const salesTrendData = [
-    { date: "2024-01-01", revenue: 15000, profit: 3000, sales: 45, orders: 12 },
-    { date: "2024-01-02", revenue: 18000, profit: 3600, sales: 52, orders: 15 },
-    { date: "2024-01-03", revenue: 12000, profit: 2400, sales: 38, orders: 10 },
-    { date: "2024-01-04", revenue: 22000, profit: 4400, sales: 65, orders: 18 },
-    { date: "2024-01-05", revenue: 19000, profit: 3800, sales: 48, orders: 14 },
-  ];
+  // salesTrendData and categoryPerformanceData mocks removed
 
-  // Mock category performance data
-  const categoryPerformanceData = [
-    { category: "Shoes", revenue: 25000, profit: 5000, quantity: 120, products: 15 },
-    { category: "Boxers", revenue: 18000, profit: 3600, quantity: 200, products: 8 },
-    { category: "Panties", revenue: 15000, profit: 3000, quantity: 150, products: 12 },
-    { category: "Bras", revenue: 12000, profit: 2400, quantity: 80, products: 6 },
-    { category: "Oil", revenue: 8000, profit: 1600, quantity: 60, products: 4 },
-  ];
 
   if (inventoryLoading || performanceLoading || salesSummaryLoading || expensesSummaryLoading) {
     return (
@@ -131,16 +147,40 @@ export default function ReportsPage() {
     <ErrorBoundary>
       <div className="container mx-auto p-4 mt-16">
         {/* Period Selector */}
-        <div className="flex gap-2 mb-4">
-          {(["today", "this_week", "last_week", "this_month", "last_month"] as const).map((p) => (
+        <div className="flex flex-wrap gap-2 mb-4 items-center">
+          <div className="flex gap-2">
+            {(["today", "this_week", "last_week", "this_month", "last_month", "this_year"] as const).map((p) => (
+              <button
+                key={p}
+                className={`px-3 py-1 rounded ${period === p ? "bg-primary text-white" : "bg-gray-200"}`}
+                onClick={() => setPeriod(p)}
+              >
+                {p.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+              </button>
+            ))}
             <button
-              key={p}
-              className={`px-3 py-1 rounded ${period === p ? "bg-primary text-white" : "bg-gray-200"}`}
-              onClick={() => setPeriod(p)}
+              className={`px-3 py-1 rounded ${period === "custom" ? "bg-primary text-white" : "bg-gray-200"}`}
+              onClick={() => setPeriod("custom")}
             >
-              {p.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+              Custom Range
             </button>
-          ))}
+          </div>
+
+          {period === "custom" && (
+            <div className="flex gap-2 items-center bg-white p-1 rounded border">
+              <input
+                type="date"
+                className="border p-1 rounded"
+                onChange={(e) => setCustomDateRange(prev => ({ ...prev, start: e.target.value ? new Date(e.target.value) : null }))}
+              />
+              <span>to</span>
+              <input
+                type="date"
+                className="border p-1 rounded"
+                onChange={(e) => setCustomDateRange(prev => ({ ...prev, end: e.target.value ? new Date(e.target.value) : null }))}
+              />
+            </div>
+          )}
         </div>
         {/* Sales Performance Chart */}
         <div className="mb-8">
@@ -205,18 +245,24 @@ export default function ReportsPage() {
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
-            <DashboardOverview 
-              metrics={dashboardMetrics} 
+            <DashboardOverview
+              metrics={dashboardMetrics}
               period={period}
               isLoading={inventoryLoading || performanceLoading}
             />
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white p-6 rounded-lg border">
-                <SalesTrendChart data={salesTrendData} title="Sales Trend (Last 5 Days)" />
+                <SalesTrendChart
+                  data={salesSummary?.current?.salesByDay || []}
+                  title="Sales Trend"
+                />
               </div>
               <div className="bg-white p-6 rounded-lg border">
-                <CategoryPerformanceChart data={categoryPerformanceData} title="Category Performance" />
+                <CategoryPerformanceChart
+                  data={categoryPerformanceData || []}
+                  title="Category Performance"
+                />
               </div>
             </div>
           </TabsContent>

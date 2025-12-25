@@ -74,15 +74,43 @@ export function useProductPerformanceReport(filters?: {
   });
 }
 
-export function useSalesSummary(period?: string) {
+export function useSalesSummary(
+  period?: string,
+  filters?: { startDate?: Date; endDate?: Date }
+) {
   const { currentStore, isLoading: isStoreLoading } = useStoreContext();
 
   return useQuery({
-    queryKey: ["sales-summary", currentStore?.id, period],
+    queryKey: ["sales-summary", currentStore?.id, period, filters?.startDate?.toISOString(), filters?.endDate?.toISOString()],
     queryFn: async () => {
-      const params = period ? { period } : {};
+      const params: Record<string, string> = {};
+      if (period) params.period = period;
+      if (filters?.startDate) params.startDate = filters.startDate.toISOString();
+      if (filters?.endDate) params.endDate = filters.endDate.toISOString();
+
       const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
       const res = await api.get("/reports/sales-summary", { params, headers });
+      return res.data.data;
+    },
+    enabled: !!currentStore && !isStoreLoading,
+  });
+}
+
+export function useCategoryPerformance(filters?: {
+  startDate?: Date;
+  endDate?: Date;
+}) {
+  const { currentStore, isLoading: isStoreLoading } = useStoreContext();
+
+  return useQuery({
+    queryKey: ["category-performance", currentStore?.id, filters?.startDate?.toISOString(), filters?.endDate?.toISOString()],
+    queryFn: async () => {
+      const params: Record<string, string> = {};
+      if (filters?.startDate) params.startDate = filters.startDate.toISOString();
+      if (filters?.endDate) params.endDate = filters.endDate.toISOString();
+
+      const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
+      const res = await api.get("/reports/category-performance", { params, headers });
       return res.data.data;
     },
     enabled: !!currentStore && !isStoreLoading,

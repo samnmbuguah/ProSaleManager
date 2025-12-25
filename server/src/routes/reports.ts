@@ -65,31 +65,35 @@ async function getSummary(
       {
         model: SaleItem,
         as: "items",
+        include: [
+          {
+            model: Product,
+            attributes: ["id", "name", "piece_buying_price", "pack_buying_price", "dozen_buying_price", "piece_selling_price"]
+          }
+        ]
       },
     ],
-  })) as Array<Sale & { items?: SaleItem[] }>;
-  const totalSales = sales.length;
+  })) as Array<Sale & { items?: Array<SaleItem & { Product?: any }> }>;
+
+  const totalSales = sales.length; // This is actually Total Orders
   const totalRevenue = sales.reduce(
     (sum, sale) => sum + parseFloat(String(sale.total_amount || "0")),
     0,
   );
+
+  let totalProfit = 0;
   const totalItems = sales.reduce((sum, sale) => sum + (sale.items?.length || 0), 0);
+
   const paymentMethods = sales.reduce(
     (acc, sale) => {
       const amount = parseFloat(String(sale.total_amount || 0));
 
-      // Handle split payments - distribute to actual payment methods
+      // Handle split payments
       if (sale.payment_method === "split" && sale.payment_details) {
         const details = sale.payment_details as { cash?: number; mpesa?: number; card?: number };
-        if (details.cash && details.cash > 0) {
-          acc["cash"] = (acc["cash"] || 0) + details.cash;
-        }
-        if (details.mpesa && details.mpesa > 0) {
-          acc["mpesa"] = (acc["mpesa"] || 0) + details.mpesa;
-        }
-        if (details.card && details.card > 0) {
-          acc["card"] = (acc["card"] || 0) + details.card;
-        }
+        if (details.cash && details.cash > 0) acc["cash"] = (acc["cash"] || 0) + details.cash;
+        if (details.mpesa && details.mpesa > 0) acc["mpesa"] = (acc["mpesa"] || 0) + details.mpesa;
+        if (details.card && details.card > 0) acc["card"] = (acc["card"] || 0) + details.card;
       } else {
         const method = sale.payment_method || "unknown";
         acc[method] = (acc[method] || 0) + amount;
@@ -98,18 +102,54 @@ async function getSummary(
     },
     {} as Record<string, number>,
   );
-  // Group by day
-  const salesByDay: Record<string, number> = {};
+
+  // Group by day for trends
+  const salesByDay: Record<string, { revenue: number; profit: number; sales: number; orders: number; date: string }> = {};
+
   sales.forEach((sale) => {
     const date = sale.createdAt.toISOString().slice(0, 10);
-    salesByDay[date] = (salesByDay[date] || 0) + parseFloat(String(sale.total_amount || 0));
+    const amount = parseFloat(String(sale.total_amount || 0));
+
+    // Calculate profit for this sale
+    let saleProfit = 0;
+    let saleItemsCount = 0;
+
+    sale.items?.forEach(item => {
+      const quantity = item.quantity || 0;
+      saleItemsCount += quantity;
+
+      // Calculate item cost based on unit type
+      let unitCost = 0;
+      if (item.Product) {
+        if (item.unit_type === 'pack') unitCost = item.Product.pack_buying_price || 0;
+        else if (item.unit_type === 'dozen') unitCost = item.Product.dozen_buying_price || 0;
+        else unitCost = item.Product.piece_buying_price || 0;
+      }
+
+      const totalCost = unitCost * quantity;
+      const itemRevenue = parseFloat(String(item.total || 0));
+      saleProfit += (itemRevenue - totalCost);
+    });
+
+    totalProfit += saleProfit;
+
+    if (!salesByDay[date]) {
+      salesByDay[date] = { revenue: 0, profit: 0, sales: 0, orders: 0, date };
+    }
+
+    salesByDay[date].revenue += amount;
+    salesByDay[date].profit += saleProfit;
+    salesByDay[date].sales += saleItemsCount; // Total quantity of items
+    salesByDay[date].orders += 1; // Transaction count
   });
+
   return {
-    totalSales,
+    totalSales, // Total Orders
     totalRevenue,
+    totalProfit,
     totalItems,
     paymentMethods,
-    salesByDay,
+    salesByDay: Object.values(salesByDay).sort((a, b) => a.date.localeCompare(b.date)),
   };
 }
 
@@ -437,6 +477,119 @@ router.get(
   },
 );
 
+// Get category performance report
+router.get(
+  "/category-performance",
+  requireAuth,
+  attachStoreIdToUser,
+  requireStoreContext,
+  async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+
+      // Build date filter
+      const dateFilter: Record<string, unknown> = {};
+      if (startDate && endDate) {
+        dateFilter.createdAt = {
+          [Op.between]: [new Date(startDate as string), new Date(endDate as string)],
+        };
+      }
+
+      // Get sales with items, products and categories
+      const sales = (await Sale.findAll({
+        where: storeScope(req.user!, {
+          status: "completed",
+          ...dateFilter,
+        }),
+        include: [
+          {
+            model: SaleItem,
+            as: "items",
+            include: [
+              {
+                model: Product,
+                include: [
+                  {
+                    model: Category,
+                    attributes: ["id", "name"],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      })) as Array<
+        Sale & {
+          items?: Array<SaleItem & {
+            Product?: {
+              piece_buying_price?: number;
+              pack_buying_price?: number;
+              dozen_buying_price?: number;
+              Category?: { id?: number; name?: string };
+            }
+          }>;
+        }
+      >;
+
+      const categoryMap = new Map<string, { category: string; revenue: number; profit: number; quantity: number; products: Set<number> }>();
+
+      sales.forEach((sale) => {
+        sale.items?.forEach((item) => {
+          const product = item.Product;
+          const categoryName = product?.Category?.name || "Uncategorized";
+
+          if (!categoryMap.has(categoryName)) {
+            categoryMap.set(categoryName, {
+              category: categoryName,
+              revenue: 0,
+              profit: 0,
+              quantity: 0,
+              products: new Set() // Track unique products sold
+            });
+          }
+
+          const catData = categoryMap.get(categoryName)!;
+
+          // Calculate stats
+          const itemRevenue = parseFloat(String(item.total || 0));
+          const quantity = parseFloat(String(item.quantity || 0));
+
+          // Calculate item cost
+          let unitCost = 0;
+          if (product) {
+            if (item.unit_type === 'pack') unitCost = product.pack_buying_price || 0;
+            else if (item.unit_type === 'dozen') unitCost = product.dozen_buying_price || 0;
+            else unitCost = product.piece_buying_price || 0;
+          }
+          const totalCost = unitCost * quantity;
+          const itemProfit = itemRevenue - totalCost;
+
+          catData.revenue += itemRevenue;
+          catData.profit += itemProfit;
+          catData.quantity += quantity;
+          if (item.product_id) catData.products.add(item.product_id);
+        });
+      });
+
+      const categoryPerformance = Array.from(categoryMap.values()).map(cat => ({
+        ...cat,
+        products: cat.products.size
+      })).sort((a, b) => b.revenue - a.revenue);
+
+      res.json({
+        success: true,
+        data: categoryPerformance
+      });
+    } catch (error) {
+      console.error("Error fetching category performance report:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch category performance report",
+      });
+    }
+  },
+);
+
 // Get sales summary report
 router.get(
   "/sales-summary",
@@ -482,6 +635,15 @@ router.get(
         start = getFirstDayOfMonthNairobi(new Date(now.getFullYear(), now.getMonth() - 1, 1));
         compareEnd = start;
         compareStart = getFirstDayOfMonthNairobi(new Date(now.getFullYear(), now.getMonth() - 2, 1));
+      } else if (period === "this_year") {
+        const nairobi = toNairobiTime(now);
+        start = new Date(nairobi.getFullYear(), 0, 1, 0, 0, 0, 0); // Jan 1st
+        start = new Date(start.getTime() - 3 * 60 * 60 * 1000); // UTC
+        end = new Date(nairobi.getFullYear() + 1, 0, 1, 0, 0, 0, 0); // Next year Jan 1st
+        end = new Date(end.getTime() - 3 * 60 * 60 * 1000); // UTC
+        compareStart = new Date(nairobi.getFullYear() - 1, 0, 1, 0, 0, 0, 0);
+        compareStart = new Date(compareStart.getTime() - 3 * 60 * 60 * 1000);
+        compareEnd = start;
       } else if (startDate && endDate) {
         start = new Date(startDate as string);
         end = new Date(endDate as string);
