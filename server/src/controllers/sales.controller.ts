@@ -57,7 +57,7 @@ export const createSale = async (req: Request, res: Response) => {
       payment_status: payment_status || "paid", // Explicitly track payment status
       delivery_fee: delivery_fee || 0,
       store_id:
-        req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id,
+        req.user?.role === "super_admin" ? (req.body.store_id || req.user?.store_id) : req.user?.store_id,
     };
 
     // If created_at is provided (for historical sales), use it
@@ -91,7 +91,7 @@ export const createSale = async (req: Request, res: Response) => {
           total: item.total,
           unit_type: item.unit_type,
           store_id:
-            req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id,
+            req.user?.role === "super_admin" ? (req.body.store_id || req.user?.store_id) : req.user?.store_id,
         };
 
         // If created_at is provided (for historical sales), use it for sale items too
@@ -285,6 +285,7 @@ export const getSales = async (req: Request, res: Response) => {
       order: [["createdAt", "DESC"]],
       limit: pageSize,
       offset,
+      distinct: true,
     });
 
     res.json({
