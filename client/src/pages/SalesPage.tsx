@@ -37,6 +37,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useStoreContext } from "@/contexts/StoreContext";
 import { useSalesQuery, useOrdersQuery, useDeleteSale } from "@/hooks/use-sales-query";
 import { ReceiptDialog } from "@/components/pos/ReceiptDialog";
+import { EditSaleDialog } from "@/components/sales/EditSaleDialog";
 
 interface OrderItem {
   id: number;
@@ -131,6 +132,7 @@ export function SalesPage() {
   const [tab, setTab] = useState<"sales" | "orders">("sales");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [editSaleOpen, setEditSaleOpen] = useState(false);
   const [ordersError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const pageSize = 10;
@@ -593,11 +595,7 @@ export function SalesPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        toast({
-                          title: "Edit Sale",
-                          description: "Edit functionality will be implemented in the next update.",
-                          variant: "default",
-                        });
+                        setEditSaleOpen(true);
                       }}
                       className="flex items-center gap-2"
                     >
@@ -622,11 +620,17 @@ export function SalesPage() {
         </DialogContent>
       </Dialog>
 
+      <EditSaleDialog
+        sale={selectedSale}
+        open={editSaleOpen}
+        onOpenChange={setEditSaleOpen}
+      />
+
       <ReceiptDialog
         open={viewReceiptOpen}
         onOpenChange={setViewReceiptOpen}
         currentSaleId={saleForReceipt}
       />
-    </div>
+    </div >
   );
 }
