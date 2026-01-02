@@ -63,12 +63,25 @@ const allowedOrigins = [
   "http://127.0.0.1:3000",
   "http://localhost:5000",
   "http://127.0.0.1:5000",
-  "http://34.131.30.62:5000", // Allow external server
-  "https://34.131.30.62:5000", // Allow HTTPS external server
+  // Internal network IPs (GCP VM internal addresses)
+  "http://10.190.0.2:5173",
+  "http://10.190.0.2:5174",
+  "http://10.190.0.2:5000",
+  "http://172.18.0.1:5173",
+  "http://172.18.0.1:5174",
+  "http://172.18.0.1:5000",
+  // External IPs
+  "http://34.131.30.62:5000", // Allow external server (old IP)
+  "https://34.131.30.62:5000",
+  "http://34.131.220.5", // Current external IP
+  "http://34.131.220.5:5173",
+  "http://34.131.220.5:5174",
+  "http://34.131.220.5:5000",
+  // Production domains
   "https://eltee.store",
-  "https://www.eltee.store", // Allow both root and www subdomain
+  "https://www.eltee.store",
   "https://byccollections.com",
-  "https://www.byccollections.com", // Allow both root and www subdomain
+  "https://www.byccollections.com",
 ];
 
 // Helper to allow *.local:5173 in dev
