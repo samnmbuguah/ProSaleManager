@@ -8,38 +8,7 @@ import {
   ResponsiveTableColumn,
 } from "@/components/ui/responsive-table";
 import { formatCurrency } from "@/utils/format";
-
-interface Sale {
-  id: number;
-  total_amount: number;
-  delivery_fee: number;
-  customer_id: number;
-  payment_method: string;
-  status: string;
-  payment_status: string;
-  amount_paid: number | null;
-  change_amount: number;
-  created_at: string;
-  updated_at: string;
-  Customer: {
-    id: number;
-    name: string;
-    email: string;
-    phone: string;
-  };
-  items: Array<{
-    id: number;
-    quantity: number;
-    unit_price: number;
-    total: number;
-    unit_type: string;
-    Product: {
-      id: number;
-      name: string;
-      sku: string;
-    };
-  }>;
-}
+import type { Sale } from "@/types/sale";
 
 interface OrdersTableProps {
   orders: Sale[];
@@ -105,8 +74,8 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders, onViewOrder, isLoadin
         <div className="flex items-center gap-2">
           <User className="h-4 w-4 text-muted-foreground" />
           <div>
-            <div className="font-medium">{order.Customer.name}</div>
-            <div className="text-sm text-muted-foreground">{order.Customer.email}</div>
+            <div className="font-medium">{order.Customer?.name ?? "Walk-in"}</div>
+            <div className="text-sm text-muted-foreground">{order.Customer?.email ?? "-"}</div>
           </div>
         </div>
       ),
@@ -156,7 +125,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders, onViewOrder, isLoadin
       render: (order) => (
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">{new Date(order.created_at).toLocaleDateString()}</span>
+          <span className="text-sm">{new Date(order.createdAt).toLocaleDateString()}</span>
         </div>
       ),
     },

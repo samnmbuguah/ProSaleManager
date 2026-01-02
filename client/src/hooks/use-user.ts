@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { api } from "@/lib/api";
-import type { User, InsertUser } from "@/types/schema";
+import type { User, InsertUser } from "@/types/user";
 
 interface UserState {
   user: User | null;

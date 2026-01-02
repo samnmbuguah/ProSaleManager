@@ -24,14 +24,10 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useStoreContext } from "@/contexts/StoreContext";
 import { api } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
+import type { Product as FullProduct } from "@/types/product";
 
-interface Product {
-  id: number;
-  name: string;
-  sku: string;
-  quantity: number;
-  Category?: { name: string };
-}
+// Local subset type for stock-take specific Product fields
+type Product = Pick<FullProduct, "id" | "name" | "sku" | "quantity" | "Category">;
 
 interface StockTakeItem {
   productId: number;

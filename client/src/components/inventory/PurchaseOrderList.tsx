@@ -44,10 +44,10 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
     }
   };
 
-  const formatDate = (date: Date | null) => {
+  const formatDate = (date: Date | string | null | undefined) => {
     if (!date) return "-";
     try {
-      return format(date, "MMM d, yyyy");
+      return format(new Date(date), "MMM d, yyyy");
     } catch {
       return "-";
     }
@@ -86,7 +86,7 @@ export function PurchaseOrderList({ onCreateOrder }: PurchaseOrderListProps) {
                   setSelectedOrder(order);
                 }}
               >
-                <TableCell>{formatDate(order?.created_at)}</TableCell>
+                <TableCell>{formatDate(order?.createdAt ?? order?.created_at)}</TableCell>
                 <TableCell>{getSupplier(order?.supplier_id)?.name || "Unknown Supplier"}</TableCell>
                 <TableCell>
                   KSh{" "}

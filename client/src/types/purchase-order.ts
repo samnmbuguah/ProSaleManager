@@ -2,21 +2,25 @@ import { z } from "zod";
 
 export interface PurchaseOrderItem {
   id?: number;
-  product_id: number | string;
+  product_id: number | string;  // Allow string for form input
   purchase_order_id?: number;
   quantity: number;
-  buying_price: number;
-  selling_price: number;
-  name?: string;
-  product_name?: string;
-  unit_type: string;
   unit_price?: number;
+  buying_price?: number;  // Legacy field name - alias for unit_price
+  selling_price?: number | null;
+  total_price?: number;
+  unit_type: string;
+  store_id?: number;
+  name?: string;  // For display purposes
+  product_name?: string;  // For display purposes
   Product?: {
     id: number;
     name: string;
     sku?: string;
     piece_selling_price?: number;
   };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Define schema for PurchaseOrderItem used within the form
@@ -24,8 +28,9 @@ export interface PurchaseOrderItem {
 const purchaseOrderItemSchema = z.object({
   product_id: z.union([z.number(), z.string()]),
   quantity: z.coerce.number().int().positive("Quantity must be at least 1"),
-  buying_price: z.coerce.number().nonnegative("Buying price cannot be negative"),
-  selling_price: z.coerce.number().nonnegative("Selling price cannot be negative"),
+  buying_price: z.coerce.number().nonnegative("Buying price cannot be negative").optional(),
+  unit_price: z.coerce.number().nonnegative("Unit price cannot be negative").optional(),
+  selling_price: z.coerce.number().nonnegative("Selling price cannot be negative").optional(),
   name: z.string().optional(),
   unit_type: z.string(),
 });
@@ -44,19 +49,26 @@ export type PurchaseOrderFormData = z.infer<typeof purchaseOrderSchema>;
 export interface PurchaseOrderSubmitData {
   supplier_id: number;
   items: PurchaseOrderItem[];
-  total: string;
+  total: number | string;
 }
+
+export type PurchaseOrderStatus = "pending" | "approved" | "ordered" | "received" | "cancelled" | "rejected" | "completed";
 
 export interface PurchaseOrder {
   id: number;
   order_number?: string;
   supplier_id: number;
-  total_amount: string;
-  status: "pending" | "approved" | "rejected" | "completed" | "received";
+  total_amount: number | string;
+  status: PurchaseOrderStatus;
   notes?: string | null;
+  order_date?: string | null;
   expected_delivery_date?: string | null;
-  created_at: Date | null;
-  updated_at: Date | null;
+  store_id?: number;
+  // Support both naming conventions for timestamps
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   supplier?: {
     id: number;
     name: string;

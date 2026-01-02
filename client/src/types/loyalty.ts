@@ -20,3 +20,20 @@ export interface LoyaltyStats {
   averagePoints: number;
   totalCustomers: number;
 }
+
+// Types previously in schema.ts - now consolidated here
+export interface LoyaltyPoints {
+  id: number;
+  customerId: number;
+  points: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface LoyaltyTransaction {
+  id: number;
+  customerId: number;
+  points: number;
+  type: "earn" | "redeem";
+  createdAt: Date;
+}

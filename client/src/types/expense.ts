@@ -15,6 +15,7 @@ export interface Expense {
   date: string;
   payment_method: string;
   user_id: number;
+  store_id?: number;  // Set server-side
   createdAt: string;
   updatedAt: string;
   user?: {

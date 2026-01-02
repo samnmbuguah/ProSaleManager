@@ -12,6 +12,11 @@ export interface Customer {
   name: string;
   email: string | null;
   phone: string | null;
+  address?: string | null;
+  notes?: string | null;
+  loyalty_points?: number;
+  is_active?: boolean;
+  store_id?: number;  // Set server-side
   createdAt?: string;
   updatedAt?: string;
 }

@@ -187,7 +187,7 @@ export function PurchaseOrderDetails({
                       {isEditing ? (
                         <Input
                           type="number"
-                          value={item.selling_price}
+                          value={item.selling_price ?? ""}
                           onChange={(e) => handleItemChange(index, 'selling_price', e.target.value)}
                           className="h-8 w-28"
                         />

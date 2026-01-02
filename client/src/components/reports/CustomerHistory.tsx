@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Customer } from "@/types/schema";
+import type { Customer } from "@/types/customer";
 import {
   Table,
   TableBody,
@@ -50,7 +50,7 @@ export default function CustomerHistory({
         <div>
           <h2 className="text-2xl font-bold">{customer.name}</h2>
           <p className="text-muted-foreground">
-            Customer since {format(new Date(customer.createdAt), "MMM d, yyyy")}
+            Customer since {format(new Date(customer.createdAt ?? new Date()), "MMM d, yyyy")}
           </p>
         </div>
         <div className="text-right">
