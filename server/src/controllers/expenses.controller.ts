@@ -46,7 +46,9 @@ export const createExpense = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "User not authenticated" });
     }
     const store_id =
-      req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id;
+      req.user?.role === "super_admin"
+        ? (req.body.store_id ?? req.user?.store_id)
+        : req.user?.store_id;
     if (req.user?.role !== "super_admin" && !store_id) {
       await t.rollback();
       return res.status(400).json({ message: "Store context missing" });
