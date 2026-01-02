@@ -106,6 +106,34 @@ function App() {
           />
         </Route>
 
+        <Route path="/sales">
+          <ProtectedRoute
+            component={SalesPage}
+            roles={["admin", "sales", "super_admin", "manager"]}
+          />
+        </Route>
+
+        <Route path="/customers">
+          <ProtectedRoute
+            component={CustomersPage}
+            roles={["admin", "sales", "super_admin", "manager"]}
+          />
+        </Route>
+
+        <Route path="/reports">
+          <ProtectedRoute
+            component={ReportsPage}
+            roles={["admin", "super_admin", "manager"]}
+          />
+        </Route>
+
+        <Route path="/expenses">
+          <ProtectedRoute
+            component={ExpensesPage}
+            roles={["admin", "sales", "super_admin", "manager"]}
+          />
+        </Route>
+
         <Route path="/users">
           <ProtectedRoute component={UserManagementPage} roles={["super_admin"]} />
         </Route>
