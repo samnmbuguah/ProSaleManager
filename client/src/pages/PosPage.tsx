@@ -47,7 +47,7 @@ const PosPage: React.FC = () => {
     clearCart,
   } = useCart();
   const [selectedCustomer, setSelectedCustomer] = useState<number | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "mpesa" | "split">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "mpesa" | "split" | "paid_to_byc">("cash");
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const { customers, fetchCustomers } = useCustomers();
