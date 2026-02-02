@@ -371,3 +371,7 @@ server/seed_output.txt
 server/src/scripts/reset-db.ts
 
 *.sql
+
+# Playwright
+/playwright-report/
+/test-results/
