@@ -33,9 +33,9 @@ router.get("/search", async (req, res) => {
     if (q) {
       where = {
         [Op.or]: [
-          { name: { [Op.iLike]: `%${q}%` } },
-          { email: { [Op.iLike]: `%${q}%` } },
-          { phone: { [Op.iLike]: `%${q}%` } },
+          { name: { [Op.like]: `%${q}%` } },
+          { email: { [Op.like]: `%${q}%` } },
+          { phone: { [Op.like]: `%${q}%` } },
         ],
       };
     }

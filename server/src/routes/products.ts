@@ -39,8 +39,8 @@ router.get("/", requireAuth, requireStoreContext, async (req, res) => {
     }
     if (search) {
       (where as any)[Op.or] = [
-        { name: { [Op.iLike]: `%${search}%` } },
-        { sku: { [Op.iLike]: `%${search}%` } }
+        { name: { [Op.like]: `%${search}%` } },
+        { sku: { [Op.like]: `%${search}%` } }
       ];
     }
 
