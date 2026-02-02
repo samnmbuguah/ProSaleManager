@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Expense } from "../models/index.js";
+import { Op } from "sequelize";
 import { sequelize } from "../config/database.js";
 import { storeScope } from "../utils/helpers.js";
 
@@ -11,7 +12,16 @@ export const getExpenses = async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const offset = (page - 1) * limit;
-    const where = storeScope(req.user!, {});
+
+    const { start_date, end_date } = req.query;
+    const where: any = storeScope(req.user!, {});
+
+    if (start_date && end_date) {
+      where.date = {
+        [Op.between]: [new Date(start_date as string), new Date(end_date as string)],
+      };
+    }
+
     const { count, rows: expenses } = await Expense.findAndCountAll({
       where,
       limit,

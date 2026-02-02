@@ -14,9 +14,13 @@ interface CreateExpenseData {
 }
 
 export const expenseService = {
-  getAll: async (storeId?: number): Promise<Expense[]> => {
+  getAll: async (storeId?: number, filters?: { start_date?: string; end_date?: string }): Promise<Expense[]> => {
     const headers = storeId ? { "x-store-id": storeId.toString() } : {};
-    const response = await api.get<ExpenseResponse>(API_ENDPOINTS.expenses.list, { headers });
+    const params = new URLSearchParams();
+    if (filters?.start_date) params.append("start_date", filters.start_date);
+    if (filters?.end_date) params.append("end_date", filters.end_date);
+
+    const response = await api.get<ExpenseResponse>(`${API_ENDPOINTS.expenses.list}?${params.toString()}`, { headers });
     return response.data.expenses;
   },
 

@@ -16,6 +16,8 @@ import { InventoryFilters, PerformanceFilters, ExpenseFilters } from "@/componen
 import DashboardOverview from "../components/reports/DashboardOverview";
 import { SalesTrendChart } from "../components/reports/SalesTrendChart";
 import { CategoryPerformanceChart } from "../components/reports/CategoryPerformanceChart";
+import StockValueReport from "../components/reports/StockValueReport";
+import { useStockValueReport } from "@/hooks/use-reports";
 
 // ErrorBoundary component
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
@@ -107,6 +109,11 @@ export default function ReportsPage() {
   });
 
   const { data: expensesSummary, isLoading: expensesSummaryLoading } = useExpensesSummary();
+  const { data: stockValueData, isLoading: stockValueLoading } = useStockValueReport({
+    startDate: summaryFilters?.startDate,
+    endDate: summaryFilters?.endDate
+  });
+
   const [tab, setTab] = useState("dashboard");
 
   // Top sellers (top 3 by revenue) - use dashboardPerformanceData for the overview tab
@@ -135,7 +142,7 @@ export default function ReportsPage() {
   // salesTrendData and categoryPerformanceData mocks removed
 
 
-  if (inventoryLoading || performanceLoading || salesSummaryLoading || expensesSummaryLoading) {
+  if (inventoryLoading || performanceLoading || salesSummaryLoading || expensesSummaryLoading || stockValueLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
@@ -242,6 +249,7 @@ export default function ReportsPage() {
             <TabsTrigger value="inventory">Inventory Status</TabsTrigger>
             <TabsTrigger value="performance">Product Performance</TabsTrigger>
             <TabsTrigger value="expenses">Expenses Summary</TabsTrigger>
+            <TabsTrigger value="stock-value">Stock Value</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
@@ -282,11 +290,16 @@ export default function ReportsPage() {
             />
           </TabsContent>
 
+
           <TabsContent value="expenses">
             <ExpensesSummary
               expenses={expensesData?.expenses || []}
               onFiltersChange={setExpenseFilters}
             />
+          </TabsContent>
+
+          <TabsContent value="stock-value">
+            <StockValueReport data={stockValueData || { total_value: 0, logs: [] }} />
           </TabsContent>
         </Tabs>
       </div>

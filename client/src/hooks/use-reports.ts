@@ -142,3 +142,24 @@ export function useExpensesSummary(filters?: {
   });
 }
 
+import { stockService } from "@/services/stockService";
+
+export function useStockValueReport(filters?: {
+  startDate?: Date;
+  endDate?: Date;
+}) {
+  const { currentStore, isLoading: isStoreLoading } = useStoreContext();
+
+  return useQuery({
+    queryKey: ["stock-value-report", currentStore?.id, filters?.startDate?.toISOString(), filters?.endDate?.toISOString()],
+    queryFn: async () => {
+      const apiFilters = {
+        start_date: filters?.startDate?.toISOString(),
+        end_date: filters?.endDate?.toISOString()
+      };
+      return stockService.getValueReport(currentStore?.id, apiFilters);
+    },
+    enabled: !!currentStore && !isStoreLoading,
+  });
+}
+

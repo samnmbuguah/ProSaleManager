@@ -142,6 +142,26 @@ export const createSale = async (req: Request, res: Response) => {
       }
     }
 
+    // Auto-create expense for delivery fee
+    if (delivery_fee && Number(delivery_fee) > 0) {
+      console.log(`Creating delivery expense for sale ${sale.id}...`);
+      await import("../models/Expense.js").then(async ({ default: Expense }) => {
+        await Expense.create(
+          {
+            description: `Delivery fee for Sale #${sale.id}`,
+            amount: delivery_fee,
+            category: "Delivery",
+            date: new Date(),
+            payment_method: payment_method || "cash", // Assume same method as sale or cash
+            user_id: user_id,
+            store_id: saleData.store_id,
+          },
+          { transaction: t }
+        );
+      });
+      console.log("Delivery expense created.");
+    }
+
     console.log("Inventory updated successfully");
 
     // Commit transaction
