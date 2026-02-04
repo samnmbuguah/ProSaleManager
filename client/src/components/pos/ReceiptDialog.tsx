@@ -77,6 +77,7 @@ function mapSaleToReceiptPreview(sale: unknown): import("@/hooks/use-pos").Recei
       }
       : undefined,
     total: (s.total_amount as number) ?? 0,
+    delivery_fee: (s.delivery_fee as number) ?? 0,
     payment_method: (s.payment_method as string) ?? "",
     payment_details: s.payment_details as { cash?: number; mpesa?: number } | null ?? null,
     timestamp: (s.createdAt as string) ?? "",
