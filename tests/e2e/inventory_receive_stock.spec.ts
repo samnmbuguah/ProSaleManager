@@ -10,7 +10,8 @@ test.describe('Inventory - Receive Stock', () => {
         await waitForPageLoad(page);
     });
 
-    test('admin should see Receive Stock tab and access it', async ({ page }) => {
+    test('admin should see Receive Stock tab and use bulk interface', async ({ page }) => {
+        page.on('console', msg => console.log(`BROWSER LOG: ${msg.text()}`));
         // Check for the tab
         const receiveStockTab = page.getByRole('tab', { name: 'Receive Stock' });
         await expect(receiveStockTab).toBeVisible();
@@ -18,38 +19,54 @@ test.describe('Inventory - Receive Stock', () => {
 
         // Check for content
         await expect(page.getByRole('heading', { name: 'Receive Stock' })).toBeVisible();
-        await expect(page.getByText('Quickly add inventory')).toBeVisible();
+        await expect(page.getByText('Add new inventory items in bulk')).toBeVisible();
 
-        // Check for the button that opens the dialog
-        const openDialogBtn = page.getByRole('button', { name: 'Quick Receive Stock' });
-        await expect(openDialogBtn).toBeVisible();
+        // Check for Search Input
+        const searchInput = page.getByPlaceholder('Search product to add...');
+        await expect(searchInput).toBeVisible();
 
-        // Open Dialog
-        await openDialogBtn.click();
-        await expect(page.getByRole('dialog')).toBeVisible();
-        await expect(page.getByRole('heading', { name: 'Receive New Stock' })).toBeVisible();
+        // Search and Select a Product (assuming 'Test Product' or similar exists from seed, or just search generic)
+        // In demo store seed, we have some products. Let's try searching for a common letter 'a' to get results
+        await searchInput.fill('a');
+        const firstResult = page.locator('.absolute.top-full > div').first();
+        await expect(firstResult).toBeVisible();
 
-        // Check form fields
-        await expect(page.locator('button[role="combobox"]', { hasText: 'Select a product' })).toBeVisible(); // Select trigger
-        await expect(page.locator('input[name="quantity"]')).toBeVisible();
-        await expect(page.locator('input[name="buying_price"]')).toBeVisible();
+        const productName = await firstResult.locator('.font-medium').textContent();
+        await firstResult.click();
+
+        // Verify row added to table
+        await expect(page.getByRole('cell', { name: productName! })).toBeVisible();
+
+        // Fill input
+        const quantityInput = page.locator('input[type="number"]').first();
+        await quantityInput.fill('10'); // Quantity
+
+        // Fill prices if empty (or just always fill to be safe)
+        const buyPriceInput = page.getByPlaceholder('Buy Price');
+        await buyPriceInput.fill('100');
+
+        const sellPriceInput = page.getByPlaceholder('Sell Price');
+        await sellPriceInput.fill('150');
+
+        // Submit
+        const processBtn = page.getByRole('button', { name: 'Process Receipt' });
+        await expect(processBtn).toBeEnabled();
+        await processBtn.click();
+
+        // Verify success
+        await expect(page.getByText(/Successfully received stock/)).toBeVisible();
     });
 });
 
 test.describe('Inventory - Receive Stock Permissions', () => {
-    test('sales user should see Access Denied', async ({ page }) => {
+    test('sales user should NOT see Receive Stock tab', async ({ page }) => {
         await loginAsSales(page);
         await page.goto('/inventory');
         await expect(page).toHaveURL(/.*inventory/);
         await waitForPageLoad(page);
 
-        // Click tab
+        // Tab should not exist
         const receiveStockTab = page.getByRole('tab', { name: 'Receive Stock' });
-        await expect(receiveStockTab).toBeVisible();
-        await receiveStockTab.click();
-
-        // Should see Access Denied message
-        await expect(page.getByText('Access Denied')).toBeVisible();
-        await expect(page.getByRole('button', { name: 'Quick Receive Stock' })).not.toBeVisible();
+        await expect(receiveStockTab).not.toBeVisible();
     });
 });

@@ -29,7 +29,7 @@ import {
   type ProductFilters,
 } from "@/hooks/use-products-query";
 import { useStoreContext } from "@/contexts/StoreContext";
-import { ReceiveStockDialog } from "@/components/inventory/ReceiveStockDialog";
+import ReceiveStock from "@/components/inventory/ReceiveStock";
 import { useAuthContext } from "@/contexts/AuthContext";
 
 const InventoryPage: React.FC = () => {
@@ -501,7 +501,7 @@ const InventoryPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4 mt-16">
-      <TabsNav activeTab={activeTab} setActiveTab={setActiveTab} />
+      <TabsNav activeTab={activeTab} setActiveTab={setActiveTab} userRole={user?.role} />
       <div className="flex justify-between items-center mb-4">
         {activeTab === "products" && (
           <>
@@ -667,28 +667,7 @@ const InventoryPage: React.FC = () => {
         <PurchaseOrders purchaseOrders={purchaseOrders || []} loading={purchaseOrdersLoading} />
       )}
       {activeTab === "stock-take" && <StockTake />}
-      {activeTab === "receive-stock" && (
-        <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-xl bg-gray-50 max-w-2xl mx-auto mt-8">
-          <div className="bg-white p-4 rounded-full shadow-sm mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold mb-2 text-gray-800">Receive Stock</h2>
-          <p className="text-gray-500 text-center mb-8 max-w-md">
-            Quickly add inventory without creating a formal purchase order.
-            This action will immediately increase stock levels.
-          </p>
-          {(user?.role === "admin" || user?.role === "super_admin") ? (
-            <ReceiveStockDialog products={products} />
-          ) : (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
-              <strong className="font-bold">Access Denied: </strong>
-              <span className="block sm:inline">Only Administrators and Super Admins can perform this action.</span>
-            </div>
-          )}
-        </div>
-      )}
+      {activeTab === "receive-stock" && <ReceiveStock />}
     </div>
   );
 };
