@@ -16,6 +16,7 @@
     "migrate:undo:all": "sequelize-cli db:migrate:undo:all",
     "migrate:status": "sequelize-cli db:migrate:status",
     "migrate:generate": "sequelize-cli migration:generate --name",
+    "db:verify": "tsx src/scripts/verify-schema.ts",
     "migrate:user-preferences": "node scripts/run-migrations.js",
     "seed:sync": "tsx scripts/db.ts sync",
     "seed:all": "sequelize-cli db:seed:all",

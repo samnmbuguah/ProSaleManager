@@ -130,7 +130,7 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
   echo "🚀 Running migrations on production server..."
   # Clean up stale .js migrations on remote (we now use .cjs, and rsync doesn't delete old files)
-  ssh -p 21098 elteijae@198.54.114.246 "source /home/elteijae/nodevenv/eltee.store/24/bin/activate && cd /home/elteijae/eltee.store && rm -f dist/src/database/migrations/*.js && export NODE_ENV=production && npm install --production && npx sequelize-cli db:migrate"
+  ssh -p 21098 elteijae@198.54.114.246 "source /home/elteijae/nodevenv/eltee.store/24/bin/activate && cd /home/elteijae/eltee.store && rm -f dist/src/database/migrations/*.js && export NODE_ENV=production && npx sequelize-cli db:migrate"
 else
   echo "⏩ Skipping database migrations."
 fi
