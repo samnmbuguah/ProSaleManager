@@ -13,7 +13,7 @@ export const CREDENTIALS = {
         password: 'ChangeMe123!',
     },
     sales: {
-        email: 'demo.sales@example.com',
+        email: 'demo.cashier@example.com',
         password: 'ChangeMe123!',
     },
     manager: {
