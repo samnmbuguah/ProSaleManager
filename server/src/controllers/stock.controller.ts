@@ -94,6 +94,105 @@ export const receiveStock = async (req: Request, res: Response) => {
     }
 };
 
+export const receiveStockBulk = async (req: Request, res: Response) => {
+    let t;
+    try {
+        const { items, store_id: bodyStoreId } = req.body;
+
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ message: "No items provided" });
+        }
+
+        const user_id = req.user?.id;
+        if (!user_id) {
+            return res.status(401).json({ message: "User not authenticated" });
+        }
+
+        // Determine store_id (Super Admin can specify, others use their assigned store)
+        const store_id = req.user?.role === "super_admin" ? (bodyStoreId || req.user?.store_id) : req.user?.store_id;
+
+        if (req.user?.role !== "super_admin" && !store_id) {
+            return res.status(400).json({ message: "Store context missing" });
+        }
+
+        t = await sequelize.transaction();
+        const results = [];
+
+        for (const item of items) {
+            const {
+                product_id,
+                quantity,
+                unit_type, // 'piece', 'pack', 'dozen'
+                buying_price,
+                selling_price,
+                notes
+            } = item;
+
+            if (!product_id || !quantity || !unit_type || buying_price === undefined || selling_price === undefined) {
+                // Skip invalid items or throw? Let's throw to fail the whole batch for safety
+                throw new Error(`Missing required fields for product ID ${product_id || 'unknown'}`);
+            }
+
+            const product = await Product.findByPk(product_id, { transaction: t });
+            if (!product) {
+                throw new Error(`Product with ID ${product_id} not found`);
+            }
+
+            // Calculate quantity in pieces based on unit_type
+            let quantityInPieces = Number(quantity);
+            if (unit_type === "pack") {
+                quantityInPieces = Number(quantity) * 3;
+            } else if (unit_type === "dozen") {
+                quantityInPieces = Number(quantity) * 12;
+            }
+
+            // Update product quantity
+            product.quantity += quantityInPieces;
+
+            // Update prices using the instance method
+            await product.updatePrices(unit_type, Number(buying_price), Number(selling_price));
+
+            // Explicitly save
+            await product.save({ transaction: t });
+
+            // Create StockLog entry
+            const total_cost = Number(buying_price) * Number(quantity);
+            const unit_cost = Number(buying_price) / (quantityInPieces / Number(quantity));
+
+            await StockLog.create({
+                product_id,
+                quantity_added: quantityInPieces,
+                unit_cost: unit_cost,
+                total_cost: total_cost,
+                user_id,
+                store_id, // Use the resolved store_id
+                type: "manual_receive",
+                notes: notes || `Bulk Receive: ${quantity} ${unit_type}(s)`,
+                date: new Date()
+            }, { transaction: t });
+
+            results.push({
+                id: product.id,
+                name: product.name,
+                new_quantity: product.quantity
+            });
+        }
+
+        await t.commit();
+
+        res.status(200).json({
+            message: "Stock received successfully",
+            count: results.length,
+            items: results
+        });
+
+    } catch (error: any) {
+        if (t) await t.rollback();
+        console.error("Bulk receive stock error:", error);
+        res.status(500).json({ message: error.message || "Failed to receive stock" });
+    }
+};
+
 export const getStockValueReport = async (req: Request, res: Response) => {
     try {
         const { start_date, end_date } = req.query;
