@@ -12,6 +12,7 @@ const TabsNav: React.FC<TabsNavProps> = ({ activeTab, setActiveTab }) => (
       <TabsTrigger value="products">Products</TabsTrigger>
       <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
       <TabsTrigger value="purchase-orders">Purchase Orders</TabsTrigger>
+      <TabsTrigger value="receive-stock">Receive Stock</TabsTrigger>
       <TabsTrigger value="stock-take">Stock Take</TabsTrigger>
     </TabsList>
   </Tabs>

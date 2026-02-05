@@ -29,7 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { API_ENDPOINTS } from "@/lib/api-endpoints";
+
 import { Product } from "@/types/product"; // Ensure you have this type or similar
 import { useStoreContext } from "@/contexts/StoreContext";
 
@@ -93,8 +93,7 @@ export function ReceiveStockDialog({ products }: ReceiveStockDialogProps) {
         mutation.mutate(payload);
     };
 
-    const selectedProductId = form.watch("product_id");
-    const selectedProduct = products.find(p => p.id.toString() === selectedProductId);
+
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
