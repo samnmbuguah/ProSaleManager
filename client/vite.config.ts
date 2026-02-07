@@ -16,19 +16,11 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      port: 5174,
-      host: true, // Allow connections from subdomains like demo.local
-      allowedHosts: [
-        "localhost",
-        "127.0.0.1",
-        ".local", // allow all *.local subdomains for local dev
-        "demo.local",
-        "branch.local",
-        "eltee.local",
-      ],
+      port: 3000,
+      host: true,
+      allowedHosts: true, // Allow all hosts for dev transport
       hmr: {
-        host: "localhost",
-        port: 5174,
+        clientPort: 3000, // Client should connect to the same port
       },
       proxy: {
         "/api": {

@@ -12,6 +12,12 @@ dotenv.config();
 
 const app = express();
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 // Trust proxy for production (needed for rate limiting behind reverse proxy)
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
@@ -77,6 +83,11 @@ const allowedOrigins = [
   "http://34.131.220.5:5173",
   "http://34.131.220.5:5174",
   "http://34.131.220.5:5000",
+  // New External IP
+  "http://35.221.172.95",
+  "http://35.221.172.95:5000",
+  "http://35.221.172.95:5173",
+  "http://35.221.172.95:5174",
   // Production domains
   "https://eltee.store",
   "https://www.eltee.store",
