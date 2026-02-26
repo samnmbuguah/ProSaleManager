@@ -152,21 +152,25 @@ export async function seedExpenses(): Promise<void> {
   try {
     console.log("💰 Starting expenses seeder...");
 
-    // Only seed expenses for Demo Store
-    const demoStore = await Store.findOne({ where: { name: "Demo Store" } });
-    if (!demoStore) {
-      throw new Error("Demo Store not found. Please seed stores first.");
+
+    // Clear existing expenses data ONLY for Demo Store and BYC Collections to avoid affecting other stores
+    const storesToSeed = await Store.findAll({
+      where: {
+        name: ["Demo Store", "BYC Collections"]
+      }
+    });
+
+    if (!storesToSeed.length) {
+      throw new Error("Target stores not found. Please seed stores first.");
     }
 
-    // Clear existing expenses data ONLY for Demo Store to avoid affecting other stores
-    await Expense.destroy({ where: { store_id: demoStore.id } });
-    console.log("🗑️ Cleared existing expenses data for Demo Store only");
-
-    const stores = [demoStore];
+    const storeIds = storesToSeed.map(s => s.id);
+    await Expense.destroy({ where: { store_id: storeIds } });
+    console.log(`🗑️ Cleared existing expenses data for ${storesToSeed.map(s => s.name).join(', ')}`);
 
     let totalExpensesCreated = 0;
 
-    for (const store of stores) {
+    for (const store of storesToSeed) {
       console.log(`🏪 Seeding expenses for store: ${store.name}`);
 
       // Get users (admins/managers) for this store who can create expenses

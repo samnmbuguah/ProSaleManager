@@ -67,30 +67,32 @@ export async function seedSales(): Promise<void> {
   try {
     console.log("🛒 Starting sales seeder...");
 
-    // Only seed sales for Demo Store
-    const demoStore = await Store.findOne({ where: { name: "Demo Store" } });
+    // Clear existing sales data ONLY for Demo Store and BYC Collections to avoid affecting other stores
+    const storesToSeed = await Store.findAll({
+      where: {
+        name: ["Demo Store", "BYC Collections"]
+      }
+    });
 
-    if (!demoStore) {
-      throw new Error("Demo Store not found. Please seed stores first.");
+    if (!storesToSeed.length) {
+      throw new Error("Target stores not found. Please seed stores first.");
     }
 
-    // Clear existing sales data ONLY for Demo Store to avoid affecting other stores
-    const demoStoreSales = await Sale.findAll({ where: { store_id: demoStore.id } });
+    const storeIds = storesToSeed.map(s => s.id);
+    const demoStoreSales = await Sale.findAll({ where: { store_id: storeIds } });
     const demoSaleIds = demoStoreSales.map((sale) => sale.id).filter((id): id is number => typeof id === "number");
 
     if (demoSaleIds.length > 0) {
       await SaleItem.destroy({ where: { sale_id: demoSaleIds } });
       await Sale.destroy({ where: { id: demoSaleIds } });
-      console.log("🗑️ Cleared existing sales data for Demo Store only");
+      console.log(`🗑️ Cleared existing sales data for ${storesToSeed.map(s => s.name).join(', ')}`);
     } else {
-      console.log("ℹ️ No existing sales for Demo Store to clear");
+      console.log("ℹ️ No existing sales for target stores to clear");
     }
-
-    const stores = [demoStore];
 
     let totalSalesCreated = 0;
 
-    for (const store of stores) {
+    for (const store of storesToSeed) {
       console.log(`🏪 Seeding sales for store: ${store.name}`);
 
       // Get products for this store

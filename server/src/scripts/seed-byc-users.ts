@@ -17,6 +17,8 @@ async function seedBYCUsers() {
       // Get passwords from environment variables with fallback to default values
       const managerPassword = process.env.BYC_MANAGER_PASSWORD || 'changeme!';
       const cashierPassword = process.env.BYC_CASHIER_PASSWORD || 'changeme!';
+      const demoAdminPassword = process.env.DEMO_ADMIN_PASSWORD || 'demoadmin123';
+      const demoCashierPassword = process.env.DEMO_CASHIER_PASSWORD || 'ChangeMe123!';
 
       const usersToCreate = [
         {
@@ -29,6 +31,18 @@ async function seedBYCUsers() {
           name: "BYC Cashier",
           email: "cashier@byccollections.com",
           password: cashierPassword,
+          role: "sales" as const,
+        },
+        {
+          name: "Demo Admin",
+          email: "demo.admin@prosale.com",
+          password: demoAdminPassword,
+          role: "admin" as const,
+        },
+        {
+          name: "Demo Cashier",
+          email: "demo.cashier@example.com",
+          password: demoCashierPassword,
           role: "sales" as const,
         },
       ];
