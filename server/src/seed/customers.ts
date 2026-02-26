@@ -1,8 +1,10 @@
 import { User, Store } from "../models/index.js";
 
 export async function seedCustomers() {
-  const stores = await Store.findAll();
-  if (!stores.length) throw new Error("No stores found");
+  const stores = await Store.findAll({
+    where: { name: ["Demo Store", "BYC Collections"] }
+  });
+  if (!stores.length) throw new Error("Target stores not found");
   const customers: Array<{
     name: string;
     email: string;

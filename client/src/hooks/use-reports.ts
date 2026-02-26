@@ -30,6 +30,8 @@ export function useInventoryReport(filters?: {
       return res.data.data;
     },
     enabled: !!currentStore && !isStoreLoading,
+    staleTime: 60_000,
+    gcTime: 300_000,
   });
 }
 
@@ -71,6 +73,8 @@ export function useProductPerformanceReport(filters?: {
       return res.data.data;
     },
     enabled: !!currentStore && !isStoreLoading,
+    staleTime: 60_000,
+    gcTime: 300_000,
   });
 }
 
@@ -93,6 +97,8 @@ export function useSalesSummary(
       return res.data.data;
     },
     enabled: !!currentStore && !isStoreLoading,
+    staleTime: 30_000,
+    gcTime: 180_000,
   });
 }
 
@@ -114,6 +120,8 @@ export function useCategoryPerformance(filters?: {
       return res.data.data;
     },
     enabled: !!currentStore && !isStoreLoading,
+    staleTime: 60_000,
+    gcTime: 300_000,
   });
 }
 
@@ -126,7 +134,7 @@ export function useExpensesSummary(filters?: {
   const { currentStore, isLoading: isStoreLoading } = useStoreContext();
 
   return useQuery({
-    queryKey: ["expenses-summary", currentStore?.id, filters],
+    queryKey: ["expenses-summary", currentStore?.id, filters?.startDate?.toISOString(), filters?.endDate?.toISOString(), filters?.category, filters?.paymentMethod],
     queryFn: async () => {
       const params: Record<string, string> = {};
       if (filters?.startDate) params.startDate = filters.startDate.toISOString();
@@ -139,6 +147,8 @@ export function useExpensesSummary(filters?: {
       return res.data.data;
     },
     enabled: !!currentStore && !isStoreLoading,
+    staleTime: 30_000,
+    gcTime: 180_000,
   });
 }
 

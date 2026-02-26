@@ -215,10 +215,12 @@ export const getStockValueReport = async (req: Request, res: Response) => {
             include: [
                 {
                     model: Product,
+                    as: "product",
                     attributes: ["name", "sku"]
                 },
                 {
                     model: User,
+                    as: "user",
                     attributes: ["name"]
                 }
             ],
