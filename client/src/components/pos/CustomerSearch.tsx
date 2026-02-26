@@ -20,13 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { CustomerForm } from "./CustomerForm";
 import { api, API_ENDPOINTS } from "@/lib/api";
-
-interface Customer {
-  id: number;
-  name: string;
-  email: string | null;
-  phone: string | null;
-}
+import type { Customer } from "@/types/customer";
 
 interface CustomerSearchProps {
   onSelect: (customer: Customer | null) => void;

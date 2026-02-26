@@ -5,6 +5,8 @@ export interface User {
   phone?: string | null;
   role: "super_admin" | "admin" | "manager" | "sales" | "client";
   store_id?: number | null;
+  is_active: boolean;
+  last_login?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -28,4 +30,12 @@ export interface AuthState {
   checkSession: () => Promise<void>;
 }
 
-export type AppRole = "admin" | "manager" | "user" | "super_admin" | "sales" | "client";
+export type AppRole = "super_admin" | "admin" | "manager" | "sales" | "client";
+
+export interface InsertUser {
+  email: string;
+  name: string;
+  password: string;
+  phone?: string;
+  role?: AppRole;
+}

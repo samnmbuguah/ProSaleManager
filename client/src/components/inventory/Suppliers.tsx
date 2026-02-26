@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,21 +20,21 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { useSelector, useDispatch } from "react-redux";
-import type { RootState, AppDispatch } from "@/store";
-import {
-  fetchSuppliers,
-  createSupplier,
-  updateSupplier,
-  deleteSupplier,
-} from "@/store/suppliersSlice";
 import type { Supplier } from "@/types/supplier";
 import Swal from "sweetalert2";
+import {
+  useSuppliersQuery,
+  useCreateSupplier,
+  useUpdateSupplier,
+  useDeleteSupplier,
+} from "@/hooks/use-suppliers-query";
 
 const Suppliers = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const suppliers = useSelector((state: RootState) => state.suppliers.items);
-  const suppliersStatus = useSelector((state: RootState) => state.suppliers.status);
+  const { data: suppliers = [], isLoading, error, refetch } = useSuppliersQuery();
+  const createSupplierMutation = useCreateSupplier();
+  const updateSupplierMutation = useUpdateSupplier();
+  const deleteSupplierMutation = useDeleteSupplier();
+
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
@@ -55,12 +55,6 @@ const Suppliers = () => {
   });
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (suppliersStatus === "idle") {
-      dispatch(fetchSuppliers());
-    }
-  }, [dispatch, suppliersStatus]);
-
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -73,8 +67,8 @@ const Suppliers = () => {
     e.preventDefault();
     try {
       if (selectedSupplier) {
-        await dispatch(updateSupplier({ id: selectedSupplier.id, data: formData })).unwrap();
-        setIsEditDialogOpen(false); // Close dialog first
+        await updateSupplierMutation.mutateAsync({ id: selectedSupplier.id, data: formData });
+        setIsEditDialogOpen(false);
         setSelectedSupplier(null);
         setFormData({
           name: "",
@@ -84,15 +78,14 @@ const Suppliers = () => {
           contact_person: "",
           status: "active" as const,
         });
-        dispatch(fetchSuppliers()); // Refresh supplier list
         await Swal.fire({
           icon: "success",
           title: "Success",
           text: "Supplier updated successfully",
         });
       } else {
-        await dispatch(createSupplier(formData)).unwrap();
-        setIsAddDialogOpen(false); // Close dialog first
+        await createSupplierMutation.mutateAsync(formData as Omit<Supplier, "id" | "createdAt" | "updatedAt">);
+        setIsAddDialogOpen(false);
         setFormData({
           name: "",
           email: "",
@@ -101,7 +94,6 @@ const Suppliers = () => {
           contact_person: "",
           status: "active" as const,
         });
-        dispatch(fetchSuppliers()); // Refresh supplier list
         await Swal.fire({
           icon: "success",
           title: "Success",
@@ -137,7 +129,7 @@ const Suppliers = () => {
     }
 
     try {
-      await dispatch(deleteSupplier(id)).unwrap();
+      await deleteSupplierMutation.mutateAsync(id);
       await Swal.fire({
         icon: "success",
         title: "Success",
@@ -153,11 +145,9 @@ const Suppliers = () => {
     }
   };
 
-  // Reset form when dialog closes (but not when opening, to avoid interfering with typing)
   const handleAddDialogClose = useCallback((open: boolean) => {
     setIsAddDialogOpen(open);
     if (!open) {
-      // Only reset when closing
       setSelectedSupplier(null);
       setFormData({
         name: "",
@@ -172,7 +162,6 @@ const Suppliers = () => {
 
   const handleEditDialogClose = useCallback((open: boolean) => {
     if (!open) {
-      // Only reset when closing
       setSelectedSupplier(null);
       setFormData({
         name: "",
@@ -190,9 +179,8 @@ const Suppliers = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Suppliers</h2>
-        <Button 
+        <Button
           onClick={() => {
-            // Reset form before opening dialog
             setSelectedSupplier(null);
             setFormData({
               name: "",
@@ -210,18 +198,18 @@ const Suppliers = () => {
       </div>
 
       <div className="rounded-md border">
-        {suppliersStatus === "loading" ? (
+        {isLoading ? (
           <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <Loader2 className="h-8 w-8 animate-spin mx-auto" />
             <p className="mt-2 text-sm text-gray-600">Loading suppliers...</p>
           </div>
-        ) : suppliersStatus === "failed" ? (
+        ) : error ? (
           <div className="p-8 text-center">
             <p className="text-red-600">Failed to load suppliers</p>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => dispatch(fetchSuppliers())}
+              onClick={() => refetch()}
               className="mt-2"
             >
               Retry
@@ -286,12 +274,12 @@ const Suppliers = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label htmlFor="add-name">Name</Label>
-              <Input 
-                id="add-name" 
-                name="name" 
-                value={formData.name} 
-                onChange={handleInputChange} 
-                required 
+              <Input
+                id="add-name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
               />
             </div>
 
@@ -340,7 +328,9 @@ const Suppliers = () => {
             </div>
 
             <DialogFooter>
-              <Button type="submit">Add Supplier</Button>
+              <Button type="submit" disabled={createSupplierMutation.isPending}>
+                {createSupplierMutation.isPending ? "Adding..." : "Add Supplier"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -357,12 +347,12 @@ const Suppliers = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label htmlFor="edit-name">Name</Label>
-              <Input 
-                id="edit-name" 
-                name="name" 
-                value={formData.name} 
-                onChange={handleInputChange} 
-                required 
+              <Input
+                id="edit-name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
               />
             </div>
 
@@ -411,7 +401,9 @@ const Suppliers = () => {
             </div>
 
             <DialogFooter>
-              <Button type="submit">Update Supplier</Button>
+              <Button type="submit" disabled={updateSupplierMutation.isPending}>
+                {updateSupplierMutation.isPending ? "Updating..." : "Update Supplier"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

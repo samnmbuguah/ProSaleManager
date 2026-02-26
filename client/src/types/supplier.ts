@@ -15,8 +15,9 @@ export interface Supplier {
   email: string;
   phone: string | null;
   address: string | null;
-  contact_person: string;
+  contact_person: string | null;
   status: "active" | "inactive";
+  store_id?: number;  // Set server-side
   created_at: string;
   updated_at: string;
 }

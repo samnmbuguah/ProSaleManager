@@ -13,6 +13,7 @@ export interface ProductSupplier extends Omit<ProductSupplierFormData, "is_prefe
   id: number;
   is_preferred: boolean;
   last_supply_date?: Date | null;
+  store_id: number;
   created_at: Date | null;
   updated_at: Date | null;
 }

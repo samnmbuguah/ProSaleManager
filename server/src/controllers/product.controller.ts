@@ -16,7 +16,9 @@ const roundPrice = (price: number): number => {
 
 export const getProducts = catchAsync(async (req: Request, res: Response) => {
   const where: Record<string, unknown> = {};
-  if (req.user?.role !== "super_admin") {
+  if (req.user?.store_id) {
+    where.store_id = req.user.store_id;
+  } else if (req.user?.role !== "super_admin") {
     if (!req.user?.store_id) {
       res.status(400).json({ success: false, message: "Store context missing" });
       return;
@@ -43,7 +45,9 @@ export const getProducts = catchAsync(async (req: Request, res: Response) => {
 export const getProduct = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const where: Record<string, unknown> = { id };
-  if (req.user?.role !== "super_admin") {
+  if (req.user?.store_id) {
+    where.store_id = req.user.store_id;
+  } else if (req.user?.role !== "super_admin") {
     if (!req.user?.store_id) {
       res.status(400).json({ success: false, message: "Store context missing" });
       return;

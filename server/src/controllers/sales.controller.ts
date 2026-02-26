@@ -57,7 +57,7 @@ export const createSale = async (req: Request, res: Response) => {
       payment_status: payment_status || "paid", // Explicitly track payment status
       delivery_fee: delivery_fee || 0,
       store_id:
-        req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id,
+        req.user?.role === "super_admin" ? (req.body.store_id || req.user?.store_id) : req.user?.store_id,
     };
 
     // If created_at is provided (for historical sales), use it
@@ -91,7 +91,7 @@ export const createSale = async (req: Request, res: Response) => {
           total: item.total,
           unit_type: item.unit_type,
           store_id:
-            req.user?.role === "super_admin" ? (req.body.store_id ?? null) : req.user?.store_id,
+            req.user?.role === "super_admin" ? (req.body.store_id || req.user?.store_id) : req.user?.store_id,
         };
 
         // If created_at is provided (for historical sales), use it for sale items too
@@ -140,6 +140,26 @@ export const createSale = async (req: Request, res: Response) => {
         await t.rollback();
         return res.status(404).json({ message: `Product with ID ${item.product_id} not found` });
       }
+    }
+
+    // Auto-create expense for delivery fee
+    if (delivery_fee && Number(delivery_fee) > 0) {
+      console.log(`Creating delivery expense for sale ${sale.id}...`);
+      await import("../models/Expense.js").then(async ({ default: Expense }) => {
+        await Expense.create(
+          {
+            description: `Delivery fee for Sale #${sale.id}`,
+            amount: delivery_fee,
+            category: "Delivery",
+            date: new Date(),
+            payment_method: payment_method || "cash", // Assume same method as sale or cash
+            user_id: user_id,
+            store_id: saleData.store_id,
+          },
+          { transaction: t }
+        );
+      });
+      console.log("Delivery expense created.");
     }
 
     console.log("Inventory updated successfully");
@@ -285,6 +305,7 @@ export const getSales = async (req: Request, res: Response) => {
       order: [["createdAt", "DESC"]],
       limit: pageSize,
       offset,
+      distinct: true,
     });
 
     res.json({

@@ -34,6 +34,13 @@ export const fetchCsrfToken = async () => {
 };
 
 // Add request interceptor for CSRF token, auth, and store_id for super admin
+// In-memory store ID for immediate switching without localStorage latency
+let activeStoreId: string | null = null;
+export const setApiStoreId = (id: string | null) => {
+  activeStoreId = id;
+};
+
+// Add request interceptor for CSRF token, auth, and store_id for super admin
 api.interceptors.request.use(async (config) => {
   // Skip CSRF token for:
   // 1. GET requests to non-auth endpoints
@@ -59,17 +66,30 @@ api.interceptors.request.use(async (config) => {
 
   // Add store_id for super admin if present
   try {
-    const store = localStorage.getItem("currentStore");
-    const user = JSON.parse(localStorage.getItem("user") || "null");
-    if (user && user.role === "super_admin" && store) {
-      const storeObj = JSON.parse(store);
-      if (storeObj && storeObj.id) {
-        config.headers["x-store-id"] = storeObj.id.toString();
+    // Priority 1: In-memory active store ID (set instantly by UI switch)
+    // Priority 1: In-memory active store ID (set instantly by UI switch)
+    if (activeStoreId && !config.headers["x-store-id"]) {
+      config.headers["x-store-id"] = activeStoreId;
+    } else if (!config.headers["x-store-id"]) {
+      // Priority 2: Fallback to localStorage (for initial load / refresh)
+      const store = localStorage.getItem("currentStore");
+      if (store) {
+        try {
+          const storeObj = JSON.parse(store);
+          if (storeObj && storeObj.id) {
+            config.headers["x-store-id"] = storeObj.id.toString();
+            // Hydrate memory cache
+            activeStoreId = storeObj.id.toString();
+          }
+        } catch {
+          // Ignore parse error
+        }
       }
     }
-  } catch {
-    // Ignore errors in store_id handling
+  } catch (error) {
+    console.error("Error setting headers:", error);
   }
+
   return config;
 });
 
@@ -92,8 +112,9 @@ api.interceptors.response.use(
       }
     }
 
-    // If we get a 403, clear the token and retry once
-    if (error.response?.status === 403 && error.config.method !== "get") {
+    // If we get a 403, clear the token and retry a failed request once
+    if (error.response?.status === 403 && error.config.method !== "get" && !error.config._retry) {
+      error.config._retry = true;
       csrfToken = null;
       const newToken = await fetchCsrfToken();
       if (newToken) {

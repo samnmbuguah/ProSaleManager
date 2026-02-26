@@ -1,10 +1,8 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { ReceiptSettings } from "@/components/pos/ReceiptSettings";
 import { format } from "date-fns";
 import { api } from "@/lib/api";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchSales, fetchOrders, deleteSale } from "@/store/salesSlice";
-import type { RootState, AppDispatch } from "@/store";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Table,
   TableBody,
@@ -26,6 +24,9 @@ import {
   PaginationContent,
   PaginationItem,
   PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
 } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,10 @@ import { Sale } from "@/types/sale";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useStoreContext } from "@/contexts/StoreContext";
+import { useSalesQuery, useOrdersQuery, useDeleteSale } from "@/hooks/use-sales-query";
+import { ReceiptDialog } from "@/components/pos/ReceiptDialog";
+import { EditSaleDialog } from "@/components/sales/EditSaleDialog";
 
 interface OrderItem {
   id: number;
@@ -49,7 +54,6 @@ interface Order {
   total_amount: number;
   items: OrderItem[];
 }
-import { ReceiptDialog } from "@/components/pos/ReceiptDialog";
 
 // OrderDetailsDialog: Separate component for order details in Orders tab
 function OrderDetailsDialog({
@@ -125,10 +129,10 @@ function OrderDetailsDialog({
 }
 
 export function SalesPage() {
-  const dispatch = useDispatch<AppDispatch>();
-  const [tab, setTab] = useState("sales");
+  const [tab, setTab] = useState<"sales" | "orders">("sales");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [editSaleOpen, setEditSaleOpen] = useState(false);
   const [ordersError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const pageSize = 10;
@@ -139,23 +143,16 @@ export function SalesPage() {
   const [viewReceiptOpen, setViewReceiptOpen] = useState(false);
   const [saleForReceipt, setSaleForReceipt] = useState<number | null>(null);
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
+  const { currentStore } = useStoreContext();
+  const queryClient = useQueryClient();
 
-  // Redux state
-  const { sales, orders, status, pagination } = useSelector(
-    (state: RootState) => state.sales
-  );
+  // React Query hooks for data fetching
+  const { sales, pagination: salesPagination, isLoading: salesLoading } = useSalesQuery(currentPage, pageSize);
+  const { orders, isLoading: ordersLoading } = useOrdersQuery(currentPage, pageSize);
+  const deleteSaleMutation = useDeleteSale();
 
-  // Fetch data when component mounts or page changes
-  useEffect(() => {
-    if (tab === "sales") {
-      dispatch(fetchSales({ page: currentPage, pageSize }));
-    } else if (tab === "orders") {
-      dispatch(fetchOrders({ page: currentPage, pageSize }));
-    }
-  }, [dispatch, tab, currentPage, pageSize]);
-
-  const totalPages = pagination.totalPages;
-  const isLoadingOrders = status === "loading" && tab === "orders";
+  const totalPages = salesPagination.totalPages;
+  const isLoadingOrders = ordersLoading && tab === "orders";
 
   const formatCurrency = (amount: string | number) => {
     return `KSh ${Number(amount).toLocaleString("en-KE", {
@@ -201,14 +198,14 @@ export function SalesPage() {
 
     setIsDeleting(true);
     try {
-      await dispatch(deleteSale(saleId)).unwrap();
+      await deleteSaleMutation.mutateAsync(saleId);
       toast({
         title: "Sale Deleted",
         description: "The sale has been successfully deleted and inventory restored.",
         variant: "default",
       });
 
-      // Close the dialog - Redux state is automatically updated
+      // Close the dialog
       setSelectedSale(null);
     } catch (error: unknown) {
       console.error("Error deleting sale:", error);
@@ -236,7 +233,6 @@ export function SalesPage() {
   };
 
   // Handlers for order actions
-
   const handleMarkFulfilled = useCallback(async () => {
     if (!selectedOrder) return;
 
@@ -258,8 +254,8 @@ export function SalesPage() {
       // Close the dialog
       setSelectedOrder(null);
 
-      // Refetch orders data
-      dispatch(fetchOrders({ page: currentPage, pageSize }));
+      // Invalidate orders query to refetch
+      queryClient.invalidateQueries({ queryKey: ["orders", currentStore?.id] });
     } catch (error: unknown) {
       console.error("Error marking order as fulfilled:", error);
       const errorMessage =
@@ -283,7 +279,7 @@ export function SalesPage() {
     } finally {
       setIsProcessingOrder(false);
     }
-  }, [selectedOrder, dispatch, currentPage, pageSize, toast]);
+  }, [selectedOrder, queryClient, currentStore?.id, toast]);
 
   return (
     <div className="container mx-auto p-4 mt-16">
@@ -304,95 +300,141 @@ export function SalesPage() {
           </DialogContent>
         </Dialog>
       </div>
-      <Tabs value={tab} onValueChange={setTab} className="w-full mb-4">
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "sales" | "orders")} className="w-full mb-4">
         <TabsList>
           <TabsTrigger value="sales">Sales</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
         </TabsList>
         <TabsContent value="sales">
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Cashier</TableHead>
-                  <TableHead>Payment Method</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Receipt Status</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sales?.map((sale) => (
-                  <TableRow key={sale.id}>
-                    <TableCell>{format(new Date(sale.createdAt), "PPp")}</TableCell>
-                    <TableCell>{sale.Customer?.name || "Walk-in Customer"}</TableCell>
-                    <TableCell>{sale.User?.name || sale.User?.email || "Unknown User"}</TableCell>
-                    <TableCell className="capitalize">{sale.payment_method}</TableCell>
-                    <TableCell>
-                      <Badge className={getPaymentStatusColor(sale.status)}>{sale.status}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {sale.receipt_status ? (
-                        <div className="flex gap-2">
-                          <Badge variant={sale.receipt_status?.sms ? "default" : "outline"}>
-                            SMS
-                          </Badge>
-                          <Badge variant={sale.receipt_status?.whatsapp ? "default" : "outline"}>
-                            WhatsApp
-                          </Badge>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">Not sent</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(sale.total_amount)}
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" onClick={() => setSelectedSale(sale)}>
-                        View Details
-                      </Button>
-                    </TableCell>
+          {salesLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Cashier</TableHead>
+                    <TableHead>Payment Method</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Receipt Status</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {sales?.map((sale) => (
+                    <TableRow key={sale.id}>
+                      <TableCell>{format(new Date(sale.createdAt), "PPp")}</TableCell>
+                      <TableCell>{sale.Customer?.name || "Walk-in Customer"}</TableCell>
+                      <TableCell>{sale.User?.name || sale.User?.email || "Unknown User"}</TableCell>
+                      <TableCell className="capitalize">{sale.payment_method}</TableCell>
+                      <TableCell>
+                        <Badge className={getPaymentStatusColor(sale.status)}>{sale.status}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {sale.receipt_status ? (
+                          <div className="flex gap-2">
+                            <Badge variant={sale.receipt_status?.sms ? "default" : "outline"}>
+                              SMS
+                            </Badge>
+                            <Badge variant={sale.receipt_status?.whatsapp ? "default" : "outline"}>
+                              WhatsApp
+                            </Badge>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">Not sent</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(sale.total_amount)}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" onClick={() => setSelectedSale(sale)}>
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
 
           <Pagination className="mt-4">
             <PaginationContent>
               <PaginationItem>
-                <Button
-                  variant="outline"
-                  size="sm"
+                <PaginationPrevious
                   onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
+                  aria-disabled={currentPage === 1}
+                  className={
+                    currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"
+                  }
+                />
               </PaginationItem>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    onClick={() => setCurrentPage(page)}
-                    isActive={currentPage === page}
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
+              {(() => {
+                const pages = [];
+                const maxVisiblePages = 5;
+
+                if (totalPages <= maxVisiblePages) {
+                  for (let i = 1; i <= totalPages; i++) {
+                    pages.push(i);
+                  }
+                } else {
+                  pages.push(1);
+                  if (currentPage > 3) {
+                    pages.push("...");
+                  }
+
+                  let startPage = Math.max(2, currentPage - 1);
+                  let endPage = Math.min(totalPages - 1, currentPage + 1);
+
+                  if (currentPage <= 3) {
+                    startPage = 2;
+                    endPage = 4;
+                  }
+
+                  if (currentPage >= totalPages - 2) {
+                    startPage = totalPages - 3;
+                    endPage = totalPages - 1;
+                  }
+
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(i);
+                  }
+
+                  if (currentPage < totalPages - 2) {
+                    pages.push("...");
+                  }
+                  pages.push(totalPages);
+                }
+
+                return pages.map((page, index) => (
+                  <PaginationItem key={index}>
+                    {page === "..." ? (
+                      <PaginationEllipsis />
+                    ) : (
+                      <PaginationLink
+                        onClick={() => setCurrentPage(page as number)}
+                        isActive={currentPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    )}
+                  </PaginationItem>
+                ));
+              })()}
               <PaginationItem>
-                <Button
-                  variant="outline"
-                  size="sm"
+                <PaginationNext
                   onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
+                  aria-disabled={currentPage === totalPages}
+                  className={
+                    currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"
+                  }
+                />
               </PaginationItem>
             </PaginationContent>
           </Pagination>
@@ -553,11 +595,7 @@ export function SalesPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        toast({
-                          title: "Edit Sale",
-                          description: "Edit functionality will be implemented in the next update.",
-                          variant: "default",
-                        });
+                        setEditSaleOpen(true);
                       }}
                       className="flex items-center gap-2"
                     >
@@ -582,11 +620,17 @@ export function SalesPage() {
         </DialogContent>
       </Dialog>
 
+      <EditSaleDialog
+        sale={selectedSale}
+        open={editSaleOpen}
+        onOpenChange={setEditSaleOpen}
+      />
+
       <ReceiptDialog
         open={viewReceiptOpen}
         onOpenChange={setViewReceiptOpen}
         currentSaleId={saleForReceipt}
       />
-    </div>
+    </div >
   );
 }

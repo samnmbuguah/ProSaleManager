@@ -1,4 +1,4 @@
-import type { LoyaltyPoints, LoyaltyTransaction } from "@/types/schema";
+import type { LoyaltyPoints, LoyaltyTransaction } from "@/types/loyalty";
 import { create } from "zustand";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
 import { api } from "@/lib/api";

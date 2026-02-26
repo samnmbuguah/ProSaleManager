@@ -23,14 +23,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useDispatch } from "react-redux";
-import { createSale } from "@/store/salesSlice";
-import type { AppDispatch } from "@/store";
+import { useCreateSale } from "@/hooks/use-sales-query";
 import { api } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
 
 const PosPage: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
+  const createSaleMutation = useCreateSale();
   const { toast } = useToast();
   const { user } = useAuthContext();
 
@@ -49,7 +47,7 @@ const PosPage: React.FC = () => {
     clearCart,
   } = useCart();
   const [selectedCustomer, setSelectedCustomer] = useState<number | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "mpesa" | "split">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "mpesa" | "split" | "paid_to_byc">("cash");
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
   const [isCheckoutDialogOpen, setIsCheckoutDialogOpen] = useState(false);
   const { customers, fetchCustomers } = useCustomers();
@@ -87,12 +85,10 @@ const PosPage: React.FC = () => {
     fetchData();
   }, [refetchProducts, fetchCustomers, refetchFavorites, isHistoricalMode, user]);
 
-  // Initialize displayed products when allProducts changes
+  // Initialize displayed products when allProducts changes (including empty arrays)
   useEffect(() => {
-    if (allProducts && allProducts.length > 0) {
-      console.log("Initializing displayed products:", allProducts.length, "products");
-      setDisplayedProducts(allProducts);
-    }
+    console.log("allProducts changed:", allProducts?.length, "products");
+    setDisplayedProducts(allProducts || []);
   }, [allProducts]);
 
   // Set Walk-in Customer as default when customers are loaded
@@ -157,16 +153,12 @@ const PosPage: React.FC = () => {
         created_at: historicalDate,
       };
 
-      const resultAction = await dispatch(createSale(saleData));
-      if (createSale.fulfilled.match(resultAction)) {
-        const saleId = resultAction.payload.id;
-        setCurrentSaleId(saleId);
-        setIsCheckoutDialogOpen(false);
-        setIsReceiptDialogOpen(true);
-        clearCart();
-      } else {
-        throw new Error("Failed to create sale");
-      }
+      const result = await createSaleMutation.mutateAsync(saleData);
+      const saleId = result.id;
+      setCurrentSaleId(saleId);
+      setIsCheckoutDialogOpen(false);
+      setIsReceiptDialogOpen(true);
+      clearCart();
     } catch (error) {
       console.error("Checkout error:", error);
       toast({
@@ -238,7 +230,7 @@ const PosPage: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 p-4 overflow-hidden">
-              {error && (
+              {!!error && (
                 <Alert variant="destructive" className="mb-4">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Connection Error</AlertTitle>

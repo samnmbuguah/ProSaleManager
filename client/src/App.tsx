@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Route, Switch } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
-import { useAuth } from "@/hooks/use-auth";
+
 import { RoleBasedRoute } from "@/components/auth/RoleBasedRoute";
 import MainNav from "@/components/layout/MainNav";
 import StoreNav from "@/components/layout/StoreNav";
@@ -83,11 +83,7 @@ function RootRedirect() {
 }
 
 function App() {
-  const { checkSession } = useAuth();
 
-  useEffect(() => {
-    checkSession();
-  }, [checkSession]);
 
   return (
     <>
@@ -106,6 +102,34 @@ function App() {
         <Route path="/inventory">
           <ProtectedRoute
             component={InventoryPage}
+            roles={["admin", "sales", "super_admin", "manager"]}
+          />
+        </Route>
+
+        <Route path="/sales">
+          <ProtectedRoute
+            component={SalesPage}
+            roles={["admin", "sales", "super_admin", "manager"]}
+          />
+        </Route>
+
+        <Route path="/customers">
+          <ProtectedRoute
+            component={CustomersPage}
+            roles={["admin", "sales", "super_admin", "manager"]}
+          />
+        </Route>
+
+        <Route path="/reports">
+          <ProtectedRoute
+            component={ReportsPage}
+            roles={["admin", "super_admin", "manager"]}
+          />
+        </Route>
+
+        <Route path="/expenses">
+          <ProtectedRoute
+            component={ExpensesPage}
             roles={["admin", "sales", "super_admin", "manager"]}
           />
         </Route>

@@ -68,9 +68,9 @@ router.get("/search", async (req, res) => {
       const searchQuery = q.toString().toLowerCase();
       where = {
         [Op.or]: [
-          { name: { [Op.iLike]: `%${searchQuery}%` } },
-          { email: { [Op.iLike]: `%${searchQuery}%` } },
-          { phone: { [Op.iLike]: `%${searchQuery}%` } },
+          { name: { [Op.like]: `%${searchQuery}%` } },
+          { email: { [Op.like]: `%${searchQuery}%` } },
+          { phone: { [Op.like]: `%${searchQuery}%` } },
         ],
       };
     }

@@ -29,6 +29,7 @@ export interface Sale {
   status: string;
   payment_status: string;
   delivery_fee: number;
+  store_id?: number;
   receipt_status?: {
     whatsapp?: boolean;
     sms?: boolean;

@@ -15,6 +15,7 @@ import Favorite from "./Favorite.js";
 import StockTakeSession from "./StockTakeSession.js";
 import StockTakeItem from "./StockTakeItem.js";
 import Notification from "./Notification.js";
+import StockLog from "./StockLog.js";
 
 let associationsSetup = false;
 
@@ -99,7 +100,7 @@ export function setupAssociations() {
 
   // Store associations
   Store.hasMany(User, { foreignKey: "store_id" });
-  User.belongsTo(Store, { foreignKey: "store_id" });
+  User.belongsTo(Store, { foreignKey: "store_id", as: "store" });
 
   Product.belongsTo(Store, { foreignKey: "store_id" });
 
@@ -152,6 +153,15 @@ export function setupAssociations() {
   // Notification associations
   User.hasMany(Notification, { foreignKey: "user_id", as: "notifications" });
   Notification.belongsTo(User, { foreignKey: "user_id", as: "user" });
+
+  // StockLog associations
+  StockLog.belongsTo(User, { foreignKey: "user_id", as: "user" });
+  StockLog.belongsTo(Store, { foreignKey: "store_id", as: "store" });
+  StockLog.belongsTo(Product, { foreignKey: "product_id", as: "product" });
+
+  User.hasMany(StockLog, { foreignKey: "user_id", as: "stockLogs" });
+  Store.hasMany(StockLog, { foreignKey: "store_id", as: "stockLogs" });
+  Product.hasMany(StockLog, { foreignKey: "product_id", as: "stockLogs" });
 
   // Mark associations as set up
   associationsSetup = true;

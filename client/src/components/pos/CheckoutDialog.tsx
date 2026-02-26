@@ -31,8 +31,8 @@ interface CheckoutDialogProps {
   cartTotal: number;
   deliveryFee: number;
   setDeliveryFee: (fee: number) => void;
-  paymentMethod: "cash" | "mpesa" | "split";
-  setPaymentMethod: (method: "cash" | "mpesa" | "split") => void;
+  paymentMethod: "cash" | "mpesa" | "split" | "paid_to_byc";
+  setPaymentMethod: (method: "cash" | "mpesa" | "split" | "paid_to_byc") => void;
   setPaymentDetails?: (details: PaymentDetails | null) => void;
   customers: Customer[];
   selectedCustomer: number | null;
@@ -73,7 +73,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   const [historicalDate, setHistoricalDate] = useState("");
   const [historicalTime, setHistoricalTime] = useState("");
 
-  // Split payment state
+  // Split logic shared for "split" and "paid_to_byc"
   const [isSplitPayment, setIsSplitPayment] = useState(false);
   const [cashAmount, setCashAmount] = useState("");
   const [mpesaAmount, setMpesaAmount] = useState("");
@@ -90,10 +90,13 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   // Calculate balance/change
   const balance = paymentMethod === "cash" && !isSplitPayment && !isNaN(tendered) ? tendered - total : 0;
 
+  // Logic for paid_to_byc (effectively a split payment forced)
+  const isPaidToByc = paymentMethod === "paid_to_byc";
+
   // Validation
   const canCheckoutSingle = paymentMethod === "cash" ? tendered >= total : true;
-  const canCheckoutSplit = isSplitPayment && splitTotal >= total;
-  const canCheckout = isSplitPayment ? canCheckoutSplit : canCheckoutSingle;
+  const canCheckoutSplit = (isSplitPayment || isPaidToByc) && splitTotal >= total;
+  const canCheckout = (isSplitPayment || isPaidToByc) ? canCheckoutSplit : canCheckoutSingle;
 
   // Reset when dialog opens/closes
   useEffect(() => {
@@ -107,6 +110,12 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
 
   useEffect(() => {
     if (paymentMethod !== "cash") setAmountTendered("");
+
+    // Auto-setup for paid_to_byc
+    if (paymentMethod === "paid_to_byc") {
+      setIsSplitPayment(false); // Disable valid toggle for normal split
+      // logic handled by isPaidToByc derived state
+    }
   }, [paymentMethod]);
 
   // Handle split payment toggle
@@ -127,14 +136,16 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
   }, [isSplitPayment, splitCash, splitMpesa, setPaymentMethod, setPaymentDetails, paymentMethod]);
 
   // Update payment details when amounts change
+  const shouldUseSplitLogic = isSplitPayment || paymentMethod === "paid_to_byc";
+
   useEffect(() => {
-    if (isSplitPayment && setPaymentDetails) {
+    if (shouldUseSplitLogic && setPaymentDetails) {
       const details: PaymentDetails = {};
       if (splitCash > 0) details.cash = splitCash;
       if (splitMpesa > 0) details.mpesa = splitMpesa;
       setPaymentDetails(Object.keys(details).length > 0 ? details : null);
     }
-  }, [splitCash, splitMpesa, isSplitPayment, setPaymentDetails]);
+  }, [shouldUseSplitLogic, splitCash, splitMpesa, setPaymentDetails]);
 
   // Auto-select Walk-in Customer if none is selected when dialog opens
   useEffect(() => {
@@ -214,38 +225,38 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
             </div>
           )}
 
-          {/* Split Payment Toggle */}
-          <div className="flex items-center justify-between p-3 rounded bg-blue-50 border border-blue-200">
-            <div>
-              <Label htmlFor="split-payment" className="text-sm font-medium">
-                Split Payment
-              </Label>
-              <p className="text-xs text-gray-500">Pay with Cash + M-Pesa</p>
-            </div>
-            <Switch
-              id="split-payment"
-              checked={isSplitPayment}
-              onCheckedChange={setIsSplitPayment}
-            />
+
+
+          <div className="space-y-2">
+            <Label>Payment Method</Label>
+            <Select
+              value={paymentMethod}
+              onValueChange={(v) => {
+                setPaymentMethod(v as "cash" | "mpesa" | "split" | "paid_to_byc");
+                // Reset amounts when switching methods
+                setCashAmount("");
+                setMpesaAmount("");
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select payment method" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cash" disabled={isSplitPayment}>Cash</SelectItem>
+                <SelectItem value="mpesa" disabled={isSplitPayment}>M-Pesa</SelectItem>
+                <SelectItem value="paid_to_byc" disabled={isSplitPayment}>Paid to Byc</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {!isSplitPayment ? (
-            /* Single Payment Mode */
-            <div className="space-y-2">
-              <Label>Payment Method</Label>
-              <Select value={paymentMethod === "split" ? "cash" : paymentMethod} onValueChange={(v) => setPaymentMethod(v as "cash" | "mpesa")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select payment method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="mpesa">M-Pesa</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          ) : (
-            /* Split Payment Mode */
-            <div className="space-y-3 p-3 rounded bg-green-50 border border-green-200">
+          {(isSplitPayment || paymentMethod === "paid_to_byc") ? (
+            /* Split Payment or Paid to Byc Mode */
+            <div className={`space-y-3 p-3 rounded border ${paymentMethod === 'paid_to_byc' ? 'bg-purple-50 border-purple-200' : 'bg-green-50 border-green-200'}`}>
+              {paymentMethod === 'paid_to_byc' && (
+                <div className="text-xs text-purple-700 font-medium mb-2">
+                  Enter the breakdown for Byc reconciliation:
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="cash-amount" className="text-sm">Cash Amount</Label>
@@ -299,7 +310,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
                 </div>
               )}
             </div>
-          )}
+          ) : null}
 
           <div className="space-y-2">
             <Label>Customer (Optional)</Label>
@@ -352,7 +363,7 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
               <span>Total Amount:</span>
               <span>KSh {total.toFixed(2)}</span>
             </div>
-            {paymentMethod === "cash" && !isSplitPayment && (
+            {paymentMethod === "cash" && !isSplitPayment && !isPaidToByc && (
               <div className="space-y-2 mt-2 p-3 rounded bg-blue-50 border">
                 <Label htmlFor="amount-tendered">Amount Tendered</Label>
                 <Input
@@ -391,8 +402,10 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
                 isHistoricalSale && historicalDate && historicalTime
                   ? `${historicalDate}T${historicalTime}:00`
                   : undefined;
-              const finalTendered = isSplitPayment ? splitTotal : tendered;
-              const finalChange = isSplitPayment ? Math.max(0, splitTotal - total) : balance;
+
+              const shouldUseSplitLogic = isSplitPayment || paymentMethod === "paid_to_byc";
+              const finalTendered = shouldUseSplitLogic ? splitTotal : tendered;
+              const finalChange = shouldUseSplitLogic ? Math.max(0, splitTotal - total) : balance;
               onCheckout(finalTendered, finalChange, historicalDateTime);
             }}
             disabled={
@@ -405,6 +418,6 @@ export const CheckoutDialog: React.FC<CheckoutDialogProps> = ({
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
+    </Dialog >
   );
 };

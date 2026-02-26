@@ -27,6 +27,7 @@ export interface ReceiptData {
     email?: string;
   };
   total: number;
+  delivery_fee?: number;
   payment_method: string;
   payment_details?: {
     cash?: number;

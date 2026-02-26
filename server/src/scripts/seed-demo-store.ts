@@ -35,6 +35,17 @@ async function seedDemoStore() {
 
     const baseUsers = [
       {
+        name: "Demo Super Admin",
+        email: "demo.superadmin@example.com",
+        password: "ChangeMe123!",
+        role: "super_admin" as const,
+        is_active: true,
+        // Super admin might not strictly need store_id, but it doesn't hurt to associate with demo store for now
+        // to avoid null issues in some legacy checks if any. 
+        // Although auth middleware handles it.
+        store_id: null,
+      },
+      {
         name: "Demo Admin",
         email: demoAdminEmail,
         password: demoAdminPassword,

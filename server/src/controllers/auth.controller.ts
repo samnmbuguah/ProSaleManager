@@ -61,6 +61,7 @@ export const register = catchAsync(async (req: Request, res: Response) => {
   res.status(201).json({
     success: true,
     data: userData,
+    token, // Return token for mobile clients
   });
 });
 
@@ -119,7 +120,7 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   res.json({
     success: true,
     data: userData2,
-    token: token,
+    token, // Return token for mobile clients
   });
 });
 

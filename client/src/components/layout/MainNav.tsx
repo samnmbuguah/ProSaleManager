@@ -35,6 +35,8 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
+import { useNotifications } from "@/hooks/use-notifications";
+
 
 type AppRole = "admin" | "manager" | "user" | "super_admin" | "sales" | "client";
 
@@ -93,13 +95,7 @@ const ROLE_ROUTES: Record<AppRole, Route[]> = {
   ],
 };
 
-type NotificationItem = {
-  id: number;
-  title: string;
-  message: string;
-  is_read: boolean;
-  createdAt?: string;
-};
+
 
 export default function MainNav() {
   const [location, setLocation] = useLocation();
@@ -109,10 +105,7 @@ export default function MainNav() {
   const { cart } = useCart();
   const [cartOpen, setCartOpen] = useState(false);
   const { currentStore, setCurrentStore, stores, isLoading } = useStoreContext();
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notificationsLoading, setNotificationsLoading] = useState(false);
-  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const { setTheme, theme } = useTheme();
 
   const routes = user ? (ROLE_ROUTES[user.role as AppRole] || ROLE_ROUTES.user) : [];
@@ -154,59 +147,22 @@ export default function MainNav() {
     }
   }, []);
 
-  const fetchNotifications = useCallback(async () => {
-    if (!user) return;
-    try {
-      setNotificationsLoading(true);
-      const [notifsRes, ordersRes] = await Promise.all([
-        api.get(API_ENDPOINTS.notifications.list),
-        api.get('/orders?status=pending') // Fetch pending orders
-      ]);
+  // Use the new hook for notifications
+  const { data: notifData, isLoading: isNotifLoading, refetch: refetchNotifications } = useNotifications();
 
-      let loadedParams: NotificationItem[] = [];
-      if (notifsRes.data) {
-        if (Array.isArray(notifsRes.data)) {
-          loadedParams = notifsRes.data;
-        } else if (notifsRes.data.data && Array.isArray(notifsRes.data.data)) {
-          loadedParams = notifsRes.data.data;
-        }
-      }
+  const notifications = notifData?.notifications || [];
+  const pendingOrdersCount = notifData?.pendingOrdersCount || 0;
 
-      // Process pending orders
-      const pendingOrders = ordersRes.data && Array.isArray(ordersRes.data) ? ordersRes.data :
-        (ordersRes.data?.data && Array.isArray(ordersRes.data.data) ? ordersRes.data.data : []);
+  // fetchNotifications is no longer needed manually as useQuery handles it
 
-      const pCount = pendingOrders.length;
-      setPendingOrdersCount(pCount);
+  // NOTE: Original code had logic for "setNotificationsLoading", "setPendingOrdersCount" etc.
+  // We need to map the hook result to the component state or just use the hook result directly.
+  // The component mostly uses `notifications` and `pendingOrdersCount`.
 
-      if (pCount > 0) {
-        // Synthesize a notification for pending orders
-        const orderNotif: NotificationItem = {
-          id: -1, // Virtual ID
-          title: "Pending Orders",
-          message: `You have ${pCount} uncompleted order${pCount !== 1 ? 's' : ''} waiting for action.`,
-          is_read: false,
-          createdAt: new Date().toISOString()
-        };
-        // Add to top list
-        loadedParams = [orderNotif, ...loadedParams];
-      }
+  // We can remove the old state if we replace usages.
+  // But to be safe with minimal changes, let's sync them or just shadow variables.
+  // Shadowing/Replacing variables is better.
 
-      setNotifications(loadedParams);
-    } catch (error) {
-      console.error("Failed to fetch notifications:", error);
-    } finally {
-      setNotificationsLoading(false);
-    }
-  }, [user]);
-
-  // Poll for notifications and pending orders every minute
-  useEffect(() => {
-    if (!user) return;
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 60000);
-    return () => clearInterval(interval);
-  }, [fetchNotifications, user]);
 
   // Hourly sound notification if there are pending orders
   useEffect(() => {
@@ -257,9 +213,7 @@ export default function MainNav() {
       }
 
       await api.patch(API_ENDPOINTS.notifications.markRead(id));
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
-      );
+      await refetchNotifications(); // Refresh data from server instead of local state
     } catch (error) {
       console.error("Failed to mark notification as read:", error);
     }
@@ -319,11 +273,12 @@ export default function MainNav() {
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6">
         <div className="h-14 sm:h-16 min-h-14 sm:min-h-16 flex items-center justify-between w-full">
           {/* Left logo linking to homepage */}
+          {/* Left logo linking to homepage */}
           <div className="flex items-center">
             <Link href={`${storePrefix}` || "/"}>
-              <Button variant="ghost" className="flex items-center gap-2 px-1 sm:px-2">
+              <div className="flex items-center gap-2 px-1 sm:px-2 cursor-pointer">
                 <img src="/logo.png" alt="Eltee Store Logo" className="w-10 h-10 sm:w-14 sm:h-14 object-contain" />
-              </Button>
+              </div>
             </Link>
           </div>
 
@@ -372,14 +327,30 @@ export default function MainNav() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={fetchNotifications}
-                    disabled={notificationsLoading}
+                    onClick={() => refetchNotifications()}
+                    disabled={isNotifLoading}
+                    className="mr-1"
                   >
                     Refresh
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
+                    onClick={async () => {
+                      try {
+                        await api.post(API_ENDPOINTS.notifications.markAllRead);
+                        await refetchNotifications();
+                      } catch (e) {
+                        console.error("Failed to mark all read", e);
+                      }
+                    }}
+                  >
+                    Mark all read
+                  </Button>
                 </div>
                 <div className="max-h-80 overflow-y-auto">
-                  {notificationsLoading ? (
+                  {isNotifLoading ? (
                     <div className="px-3 py-4 text-sm text-muted-foreground">Loading...</div>
                   ) : notifications.length === 0 ? (
                     <div className="px-3 py-4 text-sm text-muted-foreground">
@@ -389,9 +360,27 @@ export default function MainNav() {
                     notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`px-3 py-2 text-sm border-b last:border-b-0 ${notification.is_read ? "bg-white" : "bg-blue-50"
-                          } ${notification.id === -1 ? "cursor-pointer hover:bg-blue-100" : ""}`}
-                        onClick={() => handleMarkAsRead(notification.id)}
+                        className={`px-3 py-2 text-sm border-b last:border-b-0 cursor-pointer hover:bg-muted/50 transition-colors ${notification.is_read ? "bg-white" : "bg-blue-50"
+                          } ${notification.id === -1 ? "bg-blue-50" : ""}`}
+                        onClick={() => {
+                          handleMarkAsRead(notification.id);
+                          // Navigate if link exists
+                          if (notification.data?.link) {
+                            // If link starts with /, append to store prefix if needed or just use as is
+                            // Our store routing usually puts store name first.
+                            // If link is absolute path like /inventory, we might need to prepend store name.
+                            let targetLink = notification.data.link;
+                            if (currentStore?.name && !targetLink.startsWith(`/${currentStore.name}`) && targetLink.startsWith('/')) {
+                              targetLink = `/${encodeURIComponent(currentStore.name)}${targetLink}`;
+                            }
+                            setLocation(targetLink);
+                            setNotificationsOpen(false);
+                          } else if (notification.id === -1) {
+                            // Default pending order behavior
+                            setLocation(`${storePrefix}/sales?tab=orders`);
+                            setNotificationsOpen(false);
+                          }
+                        }}
                       >
                         <div className="font-semibold">{notification.title}</div>
                         <div className="text-muted-foreground">{notification.message}</div>
@@ -455,22 +444,35 @@ export default function MainNav() {
                   onValueChange={(value) => {
                     const store = stores.find((s) => s.id === Number(value));
                     if (store) {
+                      // Synchronously update localStorage so API interceptor sees it immediately
+                      localStorage.setItem("currentStore", JSON.stringify(store));
                       setCurrentStore(store);
+                      // Note: Query cache is now cleared centrally by StoreContext when store changes
 
-                      // Redirect to new store path while preserving current route suffix if possible
+                      // Preserve current route, just update the store prefix in URL
                       const currentPath = location;
                       const pathParts = currentPath.split('/').filter(Boolean);
 
-                      // Assuming path is like /storeName/route or /route
-                      // If we have a store context in URL, replace it
-                      if (currentStore?.name && pathParts[0] === encodeURIComponent(currentStore.name)) {
-                        pathParts[0] = encodeURIComponent(store.name);
-                        setLocation(`/${pathParts.join('/')}`);
-                      } else {
-                        // If we were on specific route (like /users) that didn't have store prefix,
-                        // or root, just go to new store dashboard
-                        setLocation(`/${encodeURIComponent(store.name)}/pos`);
+                      // Get the route part (everything after store name)
+                      let routePart = 'pos'; // default fallback
+
+                      // Check if the first path segment is ANY store name (not just currentStore)
+                      const firstSegmentDecoded = decodeURIComponent(pathParts[0] || '');
+                      const isFirstSegmentAStore = stores.some(s => s.name === firstSegmentDecoded);
+
+                      if (isFirstSegmentAStore && pathParts.length > 1) {
+                        // Current URL has a store prefix, get only the route part (everything after store name)
+                        routePart = pathParts.slice(1).join('/');
+                      } else if (isFirstSegmentAStore && pathParts.length === 1) {
+                        // Just the store name, default to pos
+                        routePart = 'pos';
+                      } else if (pathParts.length > 0) {
+                        // No store prefix in URL, use the first segment as the route
+                        routePart = pathParts[0];
                       }
+
+                      // Navigate to new store with same route
+                      setLocation(`/${encodeURIComponent(store.name)}/${routePart}`);
 
                       toast({
                         title: "Store Switched",

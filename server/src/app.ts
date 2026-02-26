@@ -12,6 +12,12 @@ dotenv.config();
 
 const app = express();
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 // Trust proxy for production (needed for rate limiting behind reverse proxy)
 if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
@@ -57,16 +63,36 @@ app.use(
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
+  "http://localhost:5174",
   "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
   "http://127.0.0.1:3000",
   "http://localhost:5000",
   "http://127.0.0.1:5000",
-  "http://34.131.30.62:5000", // Allow external server
-  "https://34.131.30.62:5000", // Allow HTTPS external server
+  // Internal network IPs (GCP VM internal addresses)
+  "http://10.190.0.2:5173",
+  "http://10.190.0.2:5174",
+  "http://10.190.0.2:5000",
+  "http://172.18.0.1:5173",
+  "http://172.18.0.1:5174",
+  "http://172.18.0.1:5000",
+  // External IPs
+  "http://34.131.30.62:5000", // Allow external server (old IP)
+  "https://34.131.30.62:5000",
+  "http://34.131.220.5", // Current external IP
+  "http://34.131.220.5:5173",
+  "http://34.131.220.5:5174",
+  "http://34.131.220.5:5000",
+  // New External IP
+  "http://35.221.172.95",
+  "http://35.221.172.95:5000",
+  "http://35.221.172.95:5173",
+  "http://35.221.172.95:5174",
+  // Production domains
   "https://eltee.store",
-  "https://www.eltee.store", // Allow both root and www subdomain
+  "https://www.eltee.store",
   "https://byccollections.com",
-  "https://www.byccollections.com", // Allow both root and www subdomain
+  "https://www.byccollections.com",
 ];
 
 // Helper to allow *.local:5173 in dev
@@ -77,8 +103,8 @@ function isAllowedOrigin(origin: string) {
   if (/^https?:\/\/([a-z0-9-]+\.)*eltee\.store$/.test(origin)) return true;
   // Allow any subdomain of byccollections.com (http or https)
   if (/^https?:\/\/([a-z0-9-]+\.)*byccollections\.com$/.test(origin)) return true;
-  // Allow any subdomain of .local:5173 in dev
-  if (/^http:\/\/[a-z0-9-]+\.local:5173$/.test(origin)) return true;
+  // Allow any subdomain of .local:5173 or .local:5174 in dev
+  if (/^http:\/\/[a-z0-9-]+\.local:517(3|4)$/.test(origin)) return true;
   return false;
 }
 

@@ -152,6 +152,12 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
           </div>
 
           <div className="border-t pt-1 print:pt-1">
+            {receipt.delivery_fee && receipt.delivery_fee > 0 ? (
+              <div className="flex justify-between text-[11px] print:text-[10px] mb-1">
+                <span>Delivery Fee</span>
+                <span>{formatCurrency(receipt.delivery_fee)}</span>
+              </div>
+            ) : null}
             <div className="flex justify-between font-medium text-[12px] print:text-[11px]">
               <span>Total</span>
               <span>{formatCurrency(receipt.total)}</span>

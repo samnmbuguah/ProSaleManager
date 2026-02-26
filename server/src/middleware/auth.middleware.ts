@@ -9,6 +9,7 @@ declare global {
       user?: {
         id: number;
         email: string;
+        name: string;
         role: string;
         store_id?: number | null;
       };
@@ -76,32 +77,30 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
 
   const jwtSecret = process.env.JWT_SECRET || "fallback-secret";
 
-  jwt.verify(
-    token,
-    jwtSecret,
-    async (err: jwt.VerifyErrors | null, decoded: jwt.JwtPayload | string | undefined) => {
-      if (err) {
-        return res.status(403).json({ message: "Invalid or expired token" });
-      }
-      if (
-        typeof decoded === "object" &&
-        decoded &&
-        "id" in decoded &&
-        "email" in decoded &&
-        "role" in decoded
-      ) {
-        // Fetch user from DB to get store_id
-        const user = await User.findByPk((decoded as jwt.JwtPayload).id);
-        req.user = {
-          id: (decoded as jwt.JwtPayload).id,
-          email: (decoded as jwt.JwtPayload).email,
-          role: (decoded as jwt.JwtPayload).role,
-          store_id: user?.role === "super_admin" ? null : user?.store_id,
-        };
-      }
-      await next();
-    },
-  );
+  try {
+    const decoded = jwt.verify(token, jwtSecret) as jwt.JwtPayload;
+
+    if (
+      typeof decoded === "object" &&
+      decoded &&
+      "id" in decoded &&
+      "email" in decoded &&
+      "role" in decoded
+    ) {
+      // Fetch user from DB to get store_id
+      const user = await User.findByPk(decoded.id);
+      req.user = {
+        id: decoded.id,
+        email: decoded.email,
+        name: user?.name || "User",
+        role: user?.role || decoded.role,
+        store_id: user?.role === "super_admin" ? null : user?.store_id,
+      };
+    }
+    next();
+  } catch (err) {
+    return res.status(403).json({ message: "Invalid or expired token" });
+  }
 };
 
 export const requireRole = (roles: string[]) => {
@@ -128,48 +127,45 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
 
   const jwtSecret = process.env.JWT_SECRET || "fallback-secret";
 
-  jwt.verify(
-    token,
-    jwtSecret,
-    async (err: jwt.VerifyErrors | null, decoded: jwt.JwtPayload | string | undefined) => {
-      // If token is invalid, just proceed without user context
-      if (err) {
-        return next();
-      }
+  try {
+    const decoded = jwt.verify(token, jwtSecret) as jwt.JwtPayload;
 
-      if (
-        typeof decoded === "object" &&
-        decoded &&
-        "id" in decoded &&
-        "email" in decoded &&
-        "role" in decoded
-      ) {
-        try {
-          // Fetch user from DB to get store_id
-          const user = await User.findByPk((decoded as jwt.JwtPayload).id);
-          if (user) {
-            req.user = {
-              id: (decoded as jwt.JwtPayload).id,
-              email: (decoded as jwt.JwtPayload).email,
-              role: (decoded as jwt.JwtPayload).role,
-              store_id: user.role === "super_admin" ? null : user.store_id,
-            };
+    if (
+      typeof decoded === "object" &&
+      decoded &&
+      "id" in decoded &&
+      "email" in decoded &&
+      "role" in decoded
+    ) {
+      try {
+        // Fetch user from DB to get store_id
+        const user = await User.findByPk(decoded.id);
+        if (user) {
+          req.user = {
+            id: decoded.id,
+            email: decoded.email,
+            name: user.name,
+            role: user.role || decoded.role,
+            store_id: user.role === "super_admin" ? null : user.store_id,
+          };
 
-            // Allow super_admin to impersonate a store via header
-            if (req.user.role === "super_admin" && req.headers["x-store-id"]) {
-              const requestedStoreId = parseInt(req.headers["x-store-id"] as string);
-              if (!isNaN(requestedStoreId)) {
-                req.user.store_id = requestedStoreId;
-              }
+          // Allow super_admin to impersonate a store via header
+          if (req.user?.role === "super_admin" && req.headers["x-store-id"]) {
+            const requestedStoreId = parseInt(req.headers["x-store-id"] as string);
+            if (!isNaN(requestedStoreId) && req.user) {
+              req.user.store_id = requestedStoreId;
             }
           }
-        } catch {
-          // Ignore DB errors during optional auth
         }
+      } catch {
+        // Ignore DB errors during optional auth
       }
-      return next();
-    },
-  );
+    }
+    next();
+  } catch (err) {
+    // If token is invalid, just proceed without user context
+    next();
+  }
 };
 
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
@@ -181,42 +177,38 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
 
   const jwtSecret = process.env.JWT_SECRET || "fallback-secret";
 
-  jwt.verify(
-    token,
-    jwtSecret,
-    async (err: jwt.VerifyErrors | null, decoded: jwt.JwtPayload | string | undefined) => {
-      if (err) {
-        return res.status(401).json({ message: "Invalid token" });
-      }
-      if (
-        typeof decoded === "object" &&
-        decoded &&
-        "id" in decoded &&
-        "email" in decoded &&
-        "role" in decoded
-      ) {
-        // Fetch user from DB to get store_id
-        const user = await User.findByPk((decoded as jwt.JwtPayload).id);
-        req.user = {
-          id: (decoded as jwt.JwtPayload).id,
-          email: (decoded as jwt.JwtPayload).email,
-          role: (decoded as jwt.JwtPayload).role,
-          store_id: user?.role === "super_admin" ? null : user?.store_id,
-        };
+  try {
+    const decoded = jwt.verify(token, jwtSecret) as jwt.JwtPayload;
 
-        // Allow super_admin to impersonate a store via header
-        if (req.user.role === "super_admin" && req.headers["x-store-id"]) {
-          const requestedStoreId = parseInt(req.headers["x-store-id"] as string);
-          if (!isNaN(requestedStoreId)) {
-            req.user.store_id = requestedStoreId;
-          }
+    if (
+      typeof decoded === "object" &&
+      decoded &&
+      "id" in decoded &&
+      "email" in decoded &&
+      "role" in decoded
+    ) {
+      // Fetch user from DB to get store_id
+      const user = await User.findByPk(decoded.id);
+      req.user = {
+        id: decoded.id,
+        email: decoded.email,
+        name: user?.name || "User",
+        role: user?.role || decoded.role,
+        store_id: user?.role === "super_admin" ? null : user?.store_id,
+      };
+
+      // Allow super_admin to impersonate a store via header
+      if (req.user?.role === "super_admin" && req.headers["x-store-id"]) {
+        const requestedStoreId = parseInt(req.headers["x-store-id"] as string);
+        if (!isNaN(requestedStoreId) && req.user) {
+          req.user.store_id = requestedStoreId;
         }
-        // Reduced logging noise
-        // console.log(`requireAuth: user_id=${req.user.id}, role=${req.user.role}, store_id=${req.user.store_id}, db_user_store_id=${user?.store_id}`);
       }
-      await next();
-    },
-  );
+    }
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid token" });
+  }
 };
 
 // Middleware to sync req.user.store_id with req.store.id for non-super_admins

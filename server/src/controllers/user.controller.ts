@@ -17,8 +17,8 @@ export const getUsers = catchAsync(async (req: Request, res: Response) => {
   if (store_id) whereClause.store_id = store_id;
   if (search) {
     (whereClause as any)[Op.or] = [
-      { name: { [Op.iLike]: `%${search}%` } },
-      { email: { [Op.iLike]: `%${search}%` } }
+      { name: { [Op.like]: `%${search}%` } },
+      { email: { [Op.like]: `%${search}%` } }
     ];
   }
 

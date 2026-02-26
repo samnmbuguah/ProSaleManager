@@ -105,6 +105,10 @@ export const API_ENDPOINTS = {
     stockTakeApprove: (id: number | string) => `${API_BASE_URL}/reports/stock-take/${id}/approve`,
     stockTakeReject: (id: number | string) => `${API_BASE_URL}/reports/stock-take/${id}/reject`,
   },
+  stock: {
+    receive: `${API_BASE_URL}/stock/receive`,
+    receiveBulk: `${API_BASE_URL}/stock/receive-bulk`,
+  },
   notifications: {
     list: `${API_BASE_URL}/notifications`,
     markRead: (id: number | string) => `${API_BASE_URL}/notifications/${id}/read`,
