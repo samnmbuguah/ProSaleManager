@@ -228,10 +228,52 @@ export const getStockValueReport = async (req: Request, res: Response) => {
         });
 
         const totalValue = logs.reduce((sum, log) => sum + Number(log.total_cost), 0);
+        const totalQuantity = logs.reduce((sum, log) => sum + Number(log.quantity_added), 0);
+
+        // Group by day for trend analysis
+        const byDayMap = new Map<string, { date: string; value: number; quantity: number }>();
+        // Group by product for performance analysis
+        const productMap = new Map<string, { id: number; name: string; sku: string; value: number; quantity: number }>();
+
+        logs.forEach(log => {
+            const dateStr = log.date.toISOString().slice(0, 10);
+            const val = Number(log.total_cost);
+            const qty = Number(log.quantity_added);
+
+            // Daily aggregation
+            if (!byDayMap.has(dateStr)) {
+                byDayMap.set(dateStr, { date: dateStr, value: 0, quantity: 0 });
+            }
+            const dayData = byDayMap.get(dateStr)!;
+            dayData.value += val;
+            dayData.quantity += qty;
+
+            // Product aggregation
+            const productId = log.product_id.toString();
+            if (!productMap.has(productId)) {
+                productMap.set(productId, {
+                    id: log.product_id,
+                    name: (log as any).product?.name || "Unknown",
+                    sku: (log as any).product?.sku || "N/A",
+                    value: 0,
+                    quantity: 0
+                });
+            }
+            const prodData = productMap.get(productId)!;
+            prodData.value += val;
+            prodData.quantity += qty;
+        });
+
+        const byDay = Array.from(byDayMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+        const topProducts = Array.from(productMap.values()).sort((a, b) => b.value - a.value);
 
         res.json({
             total_value: totalValue,
+            total_quantity: totalQuantity,
+            unique_products: productMap.size,
             count: logs.length,
+            byDay,
+            topProducts,
             logs
         });
 

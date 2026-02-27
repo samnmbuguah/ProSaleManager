@@ -22,6 +22,11 @@ export interface StockLog {
 
 export interface StockValueReportResponse {
     total_value: number;
+    total_quantity: number;
+    unique_products: number;
+    count: number;
+    byDay: Array<{ date: string; value: number; quantity: number }>;
+    topProducts: Array<{ id: number; name: string; sku: string; value: number; quantity: number }>;
     logs: StockLog[];
 }
 
