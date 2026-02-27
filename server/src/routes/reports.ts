@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { Op } from "sequelize";
 import * as XLSX from "xlsx";
+import { format } from "date-fns";
 import { sequelize } from "../config/database.js";
 import Product from "../models/Product.js";
 import Sale from "../models/Sale.js";
