@@ -22,7 +22,7 @@ ssh -p 21098 elteijae@198.54.114.246 "
   # 1. Backup MySQL Database
   echo 'Backing up MySQL database...'
   if [ ! -z \"\$DB_NAME\" ]; then
-    mysqldump -u \$DB_USER -p\$DB_PASSWORD \$DB_NAME > \$BACKUP_ROOT/db_\$TIMESTAMP.sql
+    mariadb-dump -u \$DB_USER -p\$DB_PASSWORD \$DB_NAME > \$BACKUP_ROOT/db_\$TIMESTAMP.sql
     echo \"Database backup created: \$BACKUP_ROOT/db_\$TIMESTAMP.sql\"
   else
     echo 'Could not find DB_NAME in .env, skipping DB backup.'
