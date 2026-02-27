@@ -158,3 +158,27 @@ export const deleteExpense = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Failed to delete expense" });
   }
 };
+export const getExpenseCategories = async (req: Request, res: Response) => {
+  try {
+    const store_id = req.user?.store_id;
+    if (req.user?.role !== "super_admin" && !store_id) {
+      return res.status(400).json({ message: "Store context missing" });
+    }
+
+    const where = storeScope(req.user!, {});
+
+    const categories = await Expense.findAll({
+      where,
+      attributes: [[sequelize.fn('DISTINCT', sequelize.col('category')), 'category']],
+      raw: true
+    });
+
+    res.json({
+      success: true,
+      data: categories.map((c: any) => c.category).filter(Boolean)
+    });
+  } catch (error) {
+    console.error("Error fetching expense categories:", error);
+    res.status(500).json({ message: "Failed to fetch expense categories" });
+  }
+};

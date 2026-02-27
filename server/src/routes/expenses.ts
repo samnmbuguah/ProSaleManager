@@ -6,6 +6,7 @@ import {
   createExpense,
   updateExpense,
   deleteExpense,
+  getExpenseCategories,
 } from "../controllers/expenses.controller.js";
 
 const router = express.Router();
@@ -16,6 +17,9 @@ router.use(requireStoreContext);
 
 // Get all expenses with pagination
 router.get("/", getExpenses);
+
+// Get unique categories
+router.get("/categories", getExpenseCategories);
 
 // Create a new expense
 router.post("/", createExpense);

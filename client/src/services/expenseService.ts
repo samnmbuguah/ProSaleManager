@@ -10,6 +10,7 @@ interface CreateExpenseData {
   description: string;
   amount: number;
   date: string;
+  category: string;
   payment_method?: string;
 }
 
@@ -36,5 +37,11 @@ export const expenseService = {
   delete: async (id: number, storeId?: number): Promise<void> => {
     const headers = storeId ? { "x-store-id": storeId.toString() } : {};
     await api.delete(API_ENDPOINTS.expenses.delete(id), { headers });
+  },
+
+  getCategories: async (storeId?: number): Promise<string[]> => {
+    const headers = storeId ? { "x-store-id": storeId.toString() } : {};
+    const response = await api.get<{ success: boolean; data: string[] }>(`${API_ENDPOINTS.expenses.list}/categories`, { headers });
+    return response.data.data;
   },
 };

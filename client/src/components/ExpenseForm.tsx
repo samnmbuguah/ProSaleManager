@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,16 +24,10 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import type { Expense } from "@/types/expense";
-
-const expenseCategories = [
-  "Lunch",
-  "Delivery",
-  "Marketing",
-  "New Stock",
-  "Transport",
-  "Salary",
-  "Other",
-] as const;
+import { useQuery } from "@tanstack/react-query";
+import { expenseService } from "@/services/expenseService";
+import { useStoreContext } from "@/contexts/StoreContext";
+import { useState } from "react";
 
 const paymentMethods = ["Cash", "Card", "Mobile Money", "Other"] as const;
 
@@ -43,9 +37,8 @@ const formSchema = z.object({
     .number()
     .min(0.01, "Amount must be greater than 0")
     .max(1000000, "Amount must be less than 1,000,000"),
-  category: z.enum(expenseCategories, {
-    required_error: "Please select a category",
-  }),
+  category: z.string().min(1, "Please select or enter a category"),
+  custom_category: z.string().optional(),
   date: z.date({
     required_error: "Date is required",
   }),
@@ -61,35 +54,56 @@ interface ExpenseFormProps {
 }
 
 export default function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
+  const { currentStore } = useStoreContext();
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+
+  const { data: serverCategories = [] } = useQuery({
+    queryKey: ["expense-categories", currentStore?.id],
+    queryFn: () => expenseService.getCategories(currentStore?.id),
+    enabled: !!currentStore?.id,
+  });
+
+  const defaultCategories = ["Lunch", "Delivery", "Marketing", "Transport", "Salary", "Other"];
+  const categories = Array.from(new Set([...defaultCategories, ...serverCategories]));
+
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       description: "",
       amount: 0,
-      category: "Other" as const,
+      category: "Other",
+      custom_category: "",
       date: new Date(),
       payment_method: "Cash" as const,
     },
   });
 
   const onSubmit = (data: ExpenseFormValues) => {
+    const category = isCustomCategory ? data.custom_category : data.category;
+    if (!category) return;
+
     onAddExpense({
       ...data,
+      category,
       date: format(data.date, "yyyy-MM-dd"),
     });
+
     form.reset({
       description: "",
       amount: 0,
-      category: "Other" as const,
+      category: "Other",
+      custom_category: "",
       date: new Date(),
       payment_method: "Cash" as const,
     });
+    setIsCustomCategory(false);
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 bg-card p-6 rounded-lg border shadow-sm">
+        <h3 className="text-lg font-semibold mb-4">Add New Expense</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <FormField
             control={form.control}
             name="description"
@@ -97,7 +111,7 @@ export default function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter expense description" {...field} />
+                  <Input placeholder="What was this for?" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -133,20 +147,59 @@ export default function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {expenseCategories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  {!isCustomCategory ? (
+                    <Select
+                      onValueChange={(value) => {
+                        if (value === "NEW") {
+                          setIsCustomCategory(true);
+                          field.onChange("");
+                        } else {
+                          field.onChange(value);
+                        }
+                      }}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="NEW" className="text-primary font-bold">
+                          <Plus className="inline-block w-4 h-4 mr-1 text-emerald-500" /> New Category...
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="flex gap-2">
+                      <FormField
+                        control={form.control}
+                        name="custom_category"
+                        render={({ field: customField }) => (
+                          <div className="flex-1">
+                            <FormControl>
+                              <Input placeholder="Enter new category name" {...customField} autoFocus />
+                            </FormControl>
+                          </div>
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsCustomCategory(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -212,11 +265,13 @@ export default function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
               </FormItem>
             )}
           />
-        </div>
 
-        <Button type="submit" className="w-full">
-          Add Expense
-        </Button>
+          <div className="flex items-end">
+            <Button type="submit" className="w-full">
+              Add Expense
+            </Button>
+          </div>
+        </div>
       </form>
     </Form>
   );
