@@ -7,10 +7,10 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { 
-  Download, 
-  FileSpreadsheet, 
-  FileText, 
+import {
+  Download,
+  FileSpreadsheet,
+  FileText,
   Image,
   ChevronDown,
   Loader2
@@ -20,13 +20,13 @@ import { toast } from "@/components/ui/use-toast";
 interface ExportOptionsProps {
   onExport: (format: 'csv' | 'excel' | 'pdf' | 'image') => Promise<void>;
   disabled?: boolean;
-  exportType?: 'inventory' | 'stock-take';
+  exportType?: 'inventory' | 'stock-take' | 'sales' | 'expenses';
   className?: string;
 }
 
-export function ExportOptions({ 
-  onExport, 
-  disabled = false, 
+export function ExportOptions({
+  onExport,
+  disabled = false,
   exportType = 'inventory',
   className = ""
 }: ExportOptionsProps) {
@@ -38,14 +38,14 @@ export function ExportOptions({
       setIsExporting(true);
       setExportFormat(format);
       await onExport(format);
-      
+
       const formatNames = {
         csv: 'CSV',
         excel: 'Excel',
         pdf: 'PDF',
         image: 'Image'
       };
-      
+
       toast({
         title: "Export Complete",
         description: `${formatNames[format]} file exported successfully`,
@@ -81,7 +81,11 @@ export function ExportOptions({
   const getExportLabel = (format: string) => {
     switch (format) {
       case 'csv':
-        return exportType === 'inventory' ? 'Inventory CSV' : 'Stock Take CSV';
+        if (exportType === 'inventory') return 'Inventory CSV';
+        if (exportType === 'stock-take') return 'Stock Take CSV';
+        if (exportType === 'sales') return 'Detailed Sales CSV';
+        if (exportType === 'expenses') return 'Expenses CSV';
+        return 'CSV Export';
       case 'excel':
         return 'Excel Spreadsheet';
       case 'pdf':
@@ -116,33 +120,33 @@ export function ExportOptions({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem 
+        <DropdownMenuItem
           onClick={() => handleExport('csv')}
           disabled={isExporting}
         >
           {getExportIcon('csv')}
           <span className="ml-2">{getExportLabel('csv')}</span>
         </DropdownMenuItem>
-        
-        <DropdownMenuItem 
+
+        <DropdownMenuItem
           onClick={() => handleExport('excel')}
           disabled={isExporting}
         >
           {getExportIcon('excel')}
           <span className="ml-2">{getExportLabel('excel')}</span>
         </DropdownMenuItem>
-        
+
         <DropdownMenuSeparator />
-        
-        <DropdownMenuItem 
+
+        <DropdownMenuItem
           onClick={() => handleExport('pdf')}
           disabled={isExporting}
         >
           {getExportIcon('pdf')}
           <span className="ml-2">{getExportLabel('pdf')}</span>
         </DropdownMenuItem>
-        
-        <DropdownMenuItem 
+
+        <DropdownMenuItem
           onClick={() => handleExport('image')}
           disabled={isExporting}
         >

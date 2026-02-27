@@ -149,9 +149,10 @@ export default function ReportsPage() {
   const { data: expensesTabData } = useExpensesSummary(expenseFilters as any);
 
   // ── Computed KPIs ─────────────────────────────────────────────────────────
-  const totalRevenue = salesSummary?.current?.totalRevenue ?? salesSummary?.current?.total ?? 0;
+  const totalRevenue = salesSummary?.current?.totalRevenue ?? 0;
+  const grossProfit = salesSummary?.current?.totalProfit ?? 0;
   const totalExpenses = expensesSummary?.totalExpenses ?? 0;
-  const netProfit = totalRevenue - totalExpenses;
+  const netProfit = grossProfit - totalExpenses;
   const grossMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : "0.0";
   const salesCount = salesSummary?.current?.count ?? 0;
   const isKpiLoading = salesLoading || expensesLoading;
@@ -407,7 +408,7 @@ export default function ReportsPage() {
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
               </div>
             ) : (
-              <StockValueReport data={stockValueData || { total_value: 0, logs: [] }} />
+              <StockValueReport data={stockValueData || { total_value: 0, total_quantity: 0, unique_products: 0, count: 0, byDay: [], topProducts: [], logs: [] }} />
             )}
           </TabsContent>
         </Tabs>

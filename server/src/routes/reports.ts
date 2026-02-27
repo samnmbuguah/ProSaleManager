@@ -81,6 +81,11 @@ async function getSummary(
     0,
   );
 
+  const totalDeliveryFees = sales.reduce(
+    (sum, sale) => sum + parseFloat(String(sale.delivery_fee || "0")),
+    0,
+  );
+
   let totalProfit = 0;
   const totalItems = sales.reduce((sum, sale) => sum + (sale.items?.length || 0), 0);
 
@@ -104,7 +109,7 @@ async function getSummary(
   );
 
   // Group by day for trends
-  const salesByDay: Record<string, { revenue: number; profit: number; sales: number; orders: number; date: string }> = {};
+  const salesByDay: Record<string, { revenue: number; profit: number; sales: number; orders: number; deliveryFees: number; date: string }> = {};
 
   sales.forEach((sale) => {
     const date = sale.createdAt.toISOString().slice(0, 10);
@@ -131,14 +136,16 @@ async function getSummary(
       saleProfit += (itemRevenue - totalCost);
     });
 
+    saleProfit += parseFloat(String(sale.delivery_fee || 0));
     totalProfit += saleProfit;
 
     if (!salesByDay[date]) {
-      salesByDay[date] = { revenue: 0, profit: 0, sales: 0, orders: 0, date };
+      salesByDay[date] = { revenue: 0, profit: 0, sales: 0, orders: 0, deliveryFees: 0, date };
     }
 
     salesByDay[date].revenue += amount;
     salesByDay[date].profit += saleProfit;
+    salesByDay[date].deliveryFees += parseFloat(String(sale.delivery_fee || 0));
     salesByDay[date].sales += saleItemsCount; // Total quantity of items
     salesByDay[date].orders += 1; // Transaction count
   });
@@ -147,6 +154,7 @@ async function getSummary(
     totalSales, // Total Orders
     totalRevenue,
     totalProfit,
+    totalDeliveryFees,
     totalItems,
     paymentMethods,
     salesByDay: Object.values(salesByDay).sort((a, b) => a.date.localeCompare(b.date)),
@@ -732,6 +740,62 @@ router.get(
         count: data.count,
         percentage: totalExpenses > 0 ? (data.amount / totalExpenses) * 100 : 0,
       })).sort((a, b) => b.amount - a.amount);
+
+      // Add delivery fees from sales to expenses summary if no specific categories are filtered
+      if (!category || category === "all") {
+        const sDate = startDate ? new Date(startDate as string) : undefined;
+        const eDate = endDate ? new Date(endDate as string) : undefined;
+        const salesSummary = await getSummary(req, sDate, eDate);
+        const deliveryFees = salesSummary.totalDeliveryFees;
+
+        if (deliveryFees > 0) {
+          categoryBreakdown.push({
+            category: "System: Delivery Fees (Collected)",
+            amount: deliveryFees,
+            count: salesSummary.totalSales,
+            percentage: (totalExpenses + deliveryFees) > 0 ? (deliveryFees / (totalExpenses + deliveryFees)) * 100 : 0
+          });
+
+          // Update total expenses to include delivery fees
+          const finalTotalExpenses = totalExpenses + deliveryFees;
+
+          // Recalculate percentages
+          categoryBreakdown.forEach(item => {
+            item.percentage = (item.amount / finalTotalExpenses) * 100;
+          });
+
+          return res.json({
+            success: true,
+            data: {
+              expenses: [
+                ...expenses.map(expense => ({
+                  id: expense.id,
+                  description: expense.description,
+                  amount: parseFloat(String(expense.amount || 0)),
+                  category: expense.category,
+                  date: expense.date,
+                  payment_method: expense.payment_method,
+                  user: (expense as any).user,
+                })),
+                ...salesSummary.salesByDay
+                  .filter((day: any) => day.deliveryFees > 0)
+                  .map((day: any) => ({
+                    id: `delivery-fees-${day.date}`,
+                    description: `Delivery fees collected on ${day.date}`,
+                    amount: day.deliveryFees,
+                    category: 'System: Delivery Fees (Collected)',
+                    date: day.date,
+                    payment_method: 'N/A',
+                    user: { name: 'System' }
+                  }))
+              ],
+              totalExpenses: finalTotalExpenses,
+              count: expenses.length + salesSummary.salesByDay.filter((day: any) => day.deliveryFees > 0).length,
+              categoryBreakdown: categoryBreakdown.sort((a, b) => b.amount - a.amount),
+            },
+          });
+        }
+      }
 
       res.json({
         success: true,
@@ -1358,7 +1422,7 @@ router.get(
   requireStoreContext,
   async (req, res) => {
     try {
-      const { type, format } = req.params;
+      const { type, format: exportFormat } = req.params;
       const {
         search,
         category,
@@ -1369,176 +1433,215 @@ router.get(
         endDate
       } = req.query;
 
-      // Build where clause for filtering
-      const where: Record<string, any> = storeScope(req.user!, { is_active: true });
-
-      if (category && category !== "all") {
-        where.category_id = category;
-      }
-
-      if (minPrice || maxPrice) {
-        where.piece_selling_price = {};
-        if (minPrice) where.piece_selling_price[Op.gte] = parseFloat(minPrice as string);
-        if (maxPrice) where.piece_selling_price[Op.lte] = parseFloat(maxPrice as string);
-      }
-
-      if (startDate && endDate) {
-        where.createdAt = {
-          [Op.between]: [new Date(startDate as string), new Date(endDate as string)],
-        };
-      }
-
-      const products = await Product.findAll({
-        where,
-        include: [
-          {
-            model: Category,
-            as: "Category",
-            attributes: ["name"],
-          },
-        ],
-        order: [["name", "ASC"]],
-      });
-
-      let filteredProducts = products.map((product: any) => ({
-        id: product.id,
-        name: product.name,
-        sku: product.sku,
-        category: product.Category?.name || "Unknown",
-        piece_selling_price: product.piece_selling_price,
-        piece_buying_price: product.piece_buying_price,
-        quantity: product.quantity,
-        min_quantity: product.min_quantity,
-        is_active: product.is_active,
-        created_at: product.createdAt,
-      }));
-
-      // Apply additional filters
-      if (search) {
-        const searchTerm = (search as string).toLowerCase();
-        filteredProducts = filteredProducts.filter(
-          (product) =>
-            product.name.toLowerCase().includes(searchTerm) ||
-            product.sku.toLowerCase().includes(searchTerm)
-        );
-      }
-
-      if (stockStatus && stockStatus !== "all") {
-        switch (stockStatus) {
-          case "instock":
-            filteredProducts = filteredProducts.filter((p) => (p.quantity || 0) >= (p.min_quantity || 10));
-            break;
-          case "lowstock":
-            filteredProducts = filteredProducts.filter((p) => (p.quantity || 0) > 0 && (p.quantity || 0) < (p.min_quantity || 10));
-            break;
-          case "outofstock":
-            filteredProducts = filteredProducts.filter((p) => (p.quantity || 0) <= 0);
-            break;
-        }
-      }
-
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      const storeId = req.user!.store_id;
 
-      if (format === 'excel') {
-        // Create Excel workbook
-        const workbook = XLSX.utils.book_new();
+      if (type === 'inventory' || type === 'stock-take') {
+        // Build where clause for filtering
+        const where: Record<string, any> = storeScope(req.user!, { is_active: true });
 
-        if (type === 'inventory') {
-          const worksheetData = filteredProducts.map(product => ({
-            'Product Name': product.name,
-            'SKU': product.sku,
-            'Category': product.category,
-            'Selling Price': product.piece_selling_price || 0,
-            'Buying Price': product.piece_buying_price || 0,
-            'Current Quantity': product.quantity || 0,
-            'Min Quantity': product.min_quantity || 0,
-            'Status': product.is_active ? 'Active' : 'Inactive',
-            'Created Date': new Date(product.created_at).toLocaleDateString()
-          }));
-
-          const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-          XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory');
-        } else if (type === 'stock-take') {
-          const worksheetData = filteredProducts.map(product => ({
-            'Product Name': product.name,
-            'SKU': product.sku,
-            'Category': product.category,
-            'Current Quantity': product.quantity || 0,
-            'New Quantity': '',
-            'Variance': '',
-            'Notes': ''
-          }));
-
-          const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-          XLSX.utils.book_append_sheet(workbook, worksheet, 'Stock Take');
+        if (category && category !== "all") {
+          where.category_id = category;
         }
 
-        const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        if (minPrice || maxPrice) {
+          where.piece_selling_price = {};
+          if (minPrice) where.piece_selling_price[Op.gte] = parseFloat(minPrice as string);
+          if (maxPrice) where.piece_selling_price[Op.lte] = parseFloat(maxPrice as string);
+        }
 
-        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        res.setHeader("Content-Disposition", `attachment; filename="${type}-export-${timestamp}.xlsx"`);
-        res.send(excelBuffer);
+        if (startDate && endDate) {
+          where.createdAt = {
+            [Op.between]: [new Date(startDate as string), new Date(endDate as string)],
+          };
+        }
 
-      } else if (format === 'pdf') {
-        // For PDF, we'll return a simple text-based response
-        // In a real implementation, you might use a PDF library like jsPDF or pdfkit
-        const pdfContent = `
-INVENTORY REPORT
-Generated: ${new Date().toLocaleString()}
-Total Products: ${filteredProducts.length}
-
-${filteredProducts.map(product =>
-          `${product.name} (${product.sku}) - Qty: ${product.quantity} - Price: KSh ${product.piece_selling_price || 0}`
-        ).join('\n')}
-        `;
-
-        res.setHeader("Content-Type", "application/pdf");
-        res.setHeader("Content-Disposition", `attachment; filename="${type}-export-${timestamp}.pdf"`);
-        res.send(pdfContent);
-
-      } else {
-        // Default to CSV
-        const headers = type === 'inventory'
-          ? ["Product Name", "SKU", "Category", "Selling Price", "Buying Price", "Current Quantity", "Min Quantity", "Status"]
-          : ["Product Name", "SKU", "Category", "Current Quantity", "New Quantity", "Variance", "Notes"];
-
-        let csvContent = headers.join(",") + "\n";
-
-        filteredProducts.forEach((product) => {
-          const csvRow = type === 'inventory'
-            ? [
-              `"${product.name.replace(/"/g, '""')}"`,
-              `"${product.sku.replace(/"/g, '""')}"`,
-              `"${product.category.replace(/"/g, '""')}"`,
-              product.piece_selling_price || 0,
-              product.piece_buying_price || 0,
-              product.quantity || 0,
-              product.min_quantity || 0,
-              product.is_active ? "Active" : "Inactive"
-            ]
-            : [
-              `"${product.name.replace(/"/g, '""')}"`,
-              `"${product.sku.replace(/"/g, '""')}"`,
-              `"${product.category.replace(/"/g, '""')}"`,
-              product.quantity || 0,
-              "",
-              "",
-              ""
-            ];
-          csvContent += csvRow.join(",") + "\n";
+        const products = await Product.findAll({
+          where,
+          include: [{ model: Category, as: "Category", attributes: ["name"] }],
+          order: [["name", "ASC"]],
         });
 
-        res.setHeader("Content-Type", "text/csv");
-        res.setHeader("Content-Disposition", `attachment; filename="${type}-export-${timestamp}.csv"`);
-        res.send(csvContent);
+        let filteredProducts = products.map((product: any) => ({
+          id: product.id,
+          name: product.name,
+          sku: product.sku,
+          category: product.Category?.name || "Unknown",
+          piece_selling_price: product.piece_selling_price,
+          piece_buying_price: product.piece_buying_price,
+          quantity: product.quantity,
+          min_quantity: product.min_quantity,
+          is_active: product.is_active,
+          created_at: product.createdAt,
+        }));
+
+        if (search) {
+          const searchTerm = (search as string).toLowerCase();
+          filteredProducts = filteredProducts.filter(
+            (product) =>
+              product.name.toLowerCase().includes(searchTerm) ||
+              product.sku.toLowerCase().includes(searchTerm)
+          );
+        }
+
+        if (stockStatus && stockStatus !== "all") {
+          switch (stockStatus) {
+            case "instock":
+              filteredProducts = filteredProducts.filter((p) => (p.quantity || 0) >= (p.min_quantity || 10));
+              break;
+            case "lowstock":
+              filteredProducts = filteredProducts.filter((p) => (p.quantity || 0) > 0 && (p.quantity || 0) < (p.min_quantity || 10));
+              break;
+            case "outofstock":
+              filteredProducts = filteredProducts.filter((p) => (p.quantity || 0) <= 0);
+              break;
+          }
+        }
+
+        if (exportFormat === 'excel') {
+          const workbook = XLSX.utils.book_new();
+          const worksheetData = type === 'inventory'
+            ? filteredProducts.map(p => ({
+              'Product Name': p.name, 'SKU': p.sku, 'Category': p.category,
+              'Selling Price': p.piece_selling_price || 0, 'Buying Price': p.piece_buying_price || 0,
+              'Current Quantity': p.quantity || 0, 'Min Quantity': p.min_quantity || 0,
+              'Status': p.is_active ? 'Active' : 'Inactive',
+              'Created Date': new Date(p.created_at).toLocaleDateString()
+            }))
+            : filteredProducts.map(p => ({
+              'Product Name': p.name, 'SKU': p.sku, 'Category': p.category,
+              'Current Quantity': p.quantity || 0, 'New Quantity': '', 'Variance': '', 'Notes': ''
+            }));
+
+          const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+          XLSX.utils.book_append_sheet(workbook, worksheet, type === 'inventory' ? 'Inventory' : 'Stock Take');
+          const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+          res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+          res.setHeader("Content-Disposition", `attachment; filename="${type}-export-${timestamp}.xlsx"`);
+          return res.send(excelBuffer);
+        } else {
+          const headers = type === 'inventory'
+            ? ["Product Name", "SKU", "Category", "Selling Price", "Buying Price", "Current Quantity", "Min Quantity", "Status"]
+            : ["Product Name", "SKU", "Category", "Current Quantity", "New Quantity", "Variance", "Notes"];
+
+          let csvContent = headers.join(",") + "\n";
+          filteredProducts.forEach((p) => {
+            const row = type === 'inventory'
+              ? [`"${p.name.replace(/"/g, '""')}"`, `"${p.sku.replace(/"/g, '""')}"`, `"${p.category.replace(/"/g, '""')}"`, p.piece_selling_price || 0, p.piece_buying_price || 0, p.quantity || 0, p.min_quantity || 0, p.is_active ? "Active" : "Inactive"]
+              : [`"${p.name.replace(/"/g, '""')}"`, `"${p.sku.replace(/"/g, '""')}"`, `"${p.category.replace(/"/g, '""')}"`, p.quantity || 0, "", "", ""];
+            csvContent += row.join(",") + "\n";
+          });
+          res.setHeader("Content-Type", "text/csv");
+          res.setHeader("Content-Disposition", `attachment; filename="${type}-export-${timestamp}.csv"`);
+          return res.send(csvContent);
+        }
+
+      } else if (type === 'sales') {
+        const where: Record<string, any> = storeScope(req.user!);
+        if (startDate && endDate) {
+          where.createdAt = { [Op.between]: [new Date(startDate as string), new Date(endDate as string)] };
+        }
+
+        const sales = await Sale.findAll({
+          where,
+          include: [
+            { model: SaleItem, as: "items", include: [{ model: Product, attributes: ["name", "sku", "piece_buying_price"] }] },
+            { model: User, as: "User", attributes: ["name"] }
+          ],
+          order: [["createdAt", "DESC"]],
+        });
+
+        const worksheetData = sales.flatMap((sale: any) =>
+          sale.items.map((item: any) => ({
+            'Sale ID': sale.id,
+            'Date': format(sale.createdAt, "yyyy-MM-dd HH:mm"),
+            'Cashier': sale.User?.name || 'Unknown',
+            'Product': item.Product?.name || 'Deleted Product',
+            'SKU': item.Product?.sku || 'N/A',
+            'Qty': item.quantity,
+            'Unit Price': parseFloat(String(item.unit_price)),
+            'Total': parseFloat(String(item.total)),
+            'Buying Price': parseFloat(String(item.Product?.piece_buying_price || 0)),
+            'Gross Profit': parseFloat(String(item.total)) - (parseFloat(String(item.Product?.piece_buying_price || 0)) * item.quantity),
+            'Payment': sale.payment_method,
+            'Delivery Fee': parseFloat(String(sale.delivery_fee || 0))
+          }))
+        );
+
+        if (exportFormat === 'excel') {
+          const workbook = XLSX.utils.book_new();
+          const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+          XLSX.utils.book_append_sheet(workbook, worksheet, 'Sales');
+          const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+          res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+          res.setHeader("Content-Disposition", `attachment; filename="sales-export-${timestamp}.xlsx"`);
+          return res.send(excelBuffer);
+        } else {
+          const headers = ['Sale ID', 'Date', 'Cashier', 'Product', 'SKU', 'Qty', 'Unit Price', 'Total', 'Buying Price', 'Gross Profit', 'Payment', 'Delivery Fee'];
+          let csvContent = headers.join(",") + "\n";
+          worksheetData.forEach((row: any) => {
+            const csvRow = [
+              row['Sale ID'], row['Date'], `"${row['Cashier']}"`, `"${row['Product'].replace(/"/g, '""')}"`, `"${row['SKU']}"`,
+              row['Qty'], row['Unit Price'], row['Total'], row['Buying Price'], row['Gross Profit'], row['Payment'], row['Delivery Fee']
+            ];
+            csvContent += csvRow.join(",") + "\n";
+          });
+          res.setHeader("Content-Type", "text/csv");
+          res.setHeader("Content-Disposition", `attachment; filename="sales-export-${timestamp}.csv"`);
+          return res.send(csvContent);
+        }
+
+      } else if (type === 'expenses') {
+        const where: Record<string, any> = storeScope(req.user!);
+        if (startDate && endDate) {
+          where.date = { [Op.between]: [new Date(startDate as string), new Date(endDate as string)] };
+        }
+        if (category && category !== "all") {
+          where.category = category;
+        }
+
+        const expenses = await Expense.findAll({
+          where,
+          include: [{ model: User, as: "user", attributes: ["name"] }],
+          order: [["date", "DESC"]],
+        });
+
+        const worksheetData = expenses.map((e: any) => ({
+          'Date': format(e.date, "yyyy-MM-dd"),
+          'Description': e.description,
+          'Category': e.category,
+          'Amount': parseFloat(String(e.amount)),
+          'Payment Method': e.payment_method,
+          'Staff': e.user?.name || 'Unknown'
+        }));
+
+        if (exportFormat === 'excel') {
+          const workbook = XLSX.utils.book_new();
+          const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+          XLSX.utils.book_append_sheet(workbook, worksheet, 'Expenses');
+          const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+          res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+          res.setHeader("Content-Disposition", `attachment; filename="expenses-export-${timestamp}.xlsx"`);
+          return res.send(excelBuffer);
+        } else {
+          const headers = ['Date', 'Description', 'Category', 'Amount', 'Payment Method', 'Staff'];
+          let csvContent = headers.join(",") + "\n";
+          worksheetData.forEach((row: any) => {
+            const csvRow = [
+              row['Date'], `"${row['Description'].replace(/"/g, '""')}"`, `"${row['Category'].replace(/"/g, '""')}"`,
+              row['Amount'], row['Payment Method'], `"${row['Staff']}"`
+            ];
+            csvContent += csvRow.join(",") + "\n";
+          });
+          res.setHeader("Content-Type", "text/csv");
+          res.setHeader("Content-Disposition", `attachment; filename="expenses-export-${timestamp}.csv"`);
+          return res.send(csvContent);
+        }
       }
 
     } catch (error) {
       console.error("Error exporting data:", error);
-      res.status(500).json({
-        success: false,
-        message: "Failed to export data",
-      });
+      res.status(500).json({ success: false, message: "Failed to export data" });
     }
   },
 );

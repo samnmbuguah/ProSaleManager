@@ -21,11 +21,11 @@ interface SalesExpensesChartProps {
 }
 
 // Normalise both array-of-objects and plain Record formats to Record<string, number>
-function toKv(data: DayEntry[] | Record<string, number> | undefined): Record<string, number> {
+function toKv(data: DayEntry[] | Record<string, number> | undefined, valueField: string = "revenue"): Record<string, number> {
     if (!data) return {};
     if (Array.isArray(data)) {
         return Object.fromEntries(
-            (data as Array<{ date: string; revenue: number }>).map((d) => [d.date, d.revenue ?? 0])
+            (data as Array<any>).map((d) => [d.date, d[valueField] ?? 0])
         );
     }
     return data as Record<string, number>;
@@ -65,8 +65,9 @@ export function SalesExpensesChart({
     compareData = [],
     isLoading = false,
 }: SalesExpensesChartProps) {
-    const salesKv = toKv(salesData);
-    const compareKv = toKv(compareData);
+    const salesKv = toKv(salesData, "revenue");
+    const profitKv = toKv(salesData, "profit");
+    const compareKv = toKv(compareData, "revenue");
 
     const allDates = Array.from(
         new Set([
@@ -78,12 +79,13 @@ export function SalesExpensesChart({
 
     const chartData = allDates.map((date) => {
         const sales = salesKv[date] || 0;
+        const grossProfit = profitKv[date] || 0;
         const expenses = expensesData[date] || 0;
         return {
             date,
             Sales: sales,
             Expenses: expenses,
-            "Net Profit": Math.max(sales - expenses, 0),
+            "Net Profit": grossProfit - expenses,
             "Prev. Sales": compareKv[date] || 0,
         };
     });

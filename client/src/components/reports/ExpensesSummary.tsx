@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { ReportFilters, ExpenseFilters } from "./ReportFilters";
 import { ExpensePieChart } from "./ExpensePieChart";
 import { TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { api } from "@/lib/api";
+import { ExportOptions } from "./ExportOptions";
 
 interface ExpenseData {
     id: number;
@@ -151,6 +153,36 @@ export default function ExpensesSummary({ expenses, onFiltersChange }: ExpensesS
                     <h2 className="text-2xl font-bold">Expenses Summary</h2>
                     <p className="text-muted-foreground">Showing {filteredExpenses.length} expenses</p>
                 </div>
+                <ExportOptions
+                    onExport={async (format) => {
+                        const params: Record<string, string> = {};
+                        if (filters.category && filters.category !== "all") params.category = filters.category;
+                        if (filters.dateRange?.start) params.startDate = filters.dateRange.start.toISOString();
+                        if (filters.dateRange?.end) params.endDate = filters.dateRange.end.toISOString();
+
+                        const response = await api.get(`/reports/export/expenses/${format}`, {
+                            params,
+                            responseType: "blob",
+                        });
+
+                        const url = window.URL.createObjectURL(new Blob([response.data]));
+                        const link = document.createElement("a");
+                        link.href = url;
+                        const contentDisposition = response.headers["content-disposition"];
+                        let filename = `expenses-export.${format}`;
+                        if (contentDisposition) {
+                            const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                            if (filenameMatch) filename = filenameMatch[1];
+                        }
+                        link.setAttribute("download", filename);
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                        window.URL.revokeObjectURL(url);
+                    }}
+                    disabled={filteredExpenses.length === 0}
+                    exportType="expenses"
+                />
             </div>
 
             <ReportFilters

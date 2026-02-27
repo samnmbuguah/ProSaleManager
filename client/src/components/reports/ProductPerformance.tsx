@@ -8,6 +8,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ReportFilters, PerformanceFilters } from "./ReportFilters";
+import { api } from "@/lib/api";
+import { ExportOptions } from "./ExportOptions";
 
 interface ProductPerformanceData {
   productId: number;
@@ -81,24 +83,57 @@ export default function ProductPerformance({
           <h2 className="text-2xl font-bold">Product Performance</h2>
           <p className="text-muted-foreground">Showing {safeProducts.length} products</p>
         </div>
-        <div className="text-right">
-          <p className="text-lg">
-            Total Revenue:{" "}
-            <span className="font-bold">
-              KSh{" "}
-              {(summary?.totalRevenue || 0).toLocaleString("en-KE", {
+        <div className="flex items-center gap-4">
+          <ExportOptions
+            onExport={async (format) => {
+              const params: Record<string, string> = {};
+              if (filters.search) params.search = filters.search;
+              if (filters.category && filters.category !== "all") params.category = filters.category;
+              if (filters.dateRange?.start) params.startDate = filters.dateRange.start.toISOString();
+              if (filters.dateRange?.end) params.endDate = filters.dateRange.end.toISOString();
+
+              const response = await api.get(`/reports/export/sales/${format}`, {
+                params,
+                responseType: "blob",
+              });
+
+              const url = window.URL.createObjectURL(new Blob([response.data]));
+              const link = document.createElement("a");
+              link.href = url;
+              const contentDisposition = response.headers["content-disposition"];
+              let filename = `sales-export.${format}`;
+              if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                if (filenameMatch) filename = filenameMatch[1];
+              }
+              link.setAttribute("download", filename);
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+              window.URL.revokeObjectURL(url);
+            }}
+            disabled={safeProducts.length === 0}
+            exportType="sales"
+          />
+          <div className="text-right">
+            <p className="text-lg">
+              Total Revenue:{" "}
+              <span className="font-bold">
+                KSh{" "}
+                {(summary?.totalRevenue || 0).toLocaleString("en-KE", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Total Profit: KSh{" "}
+              {(summary?.totalProfit || 0).toLocaleString("en-KE", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
-            </span>
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Total Profit: KSh{" "}
-            {(summary?.totalProfit || 0).toLocaleString("en-KE", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </p>
+            </p>
+          </div>
         </div>
       </div>
 
