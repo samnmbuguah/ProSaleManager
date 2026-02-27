@@ -12,7 +12,10 @@ import {
   useSalesSummary,
   useExpensesSummary,
   useStockValueReport,
+  useSalesHistory,
 } from "@/hooks/use-reports";
+import ReportCenter from "../components/reports/ReportCenter";
+import SalesHistoryTable from "../components/reports/SalesHistoryTable";
 import { getDatesFromPeriod } from "@/lib/utils";
 import { SalesExpensesChart } from "../components/reports/SalesExpensesChart";
 import { InventoryFilters, PerformanceFilters, ExpenseFilters } from "@/components/reports/ReportFilters";
@@ -143,6 +146,10 @@ export default function ReportsPage() {
     endDate: summaryFilters?.endDate,
   });
   const { data: stockValueData, isLoading: stockValueLoading } = useStockValueReport({
+    startDate: summaryFilters?.startDate,
+    endDate: summaryFilters?.endDate,
+  });
+  const { data: salesHistoryData, isLoading: historyLoading } = useSalesHistory({
     startDate: summaryFilters?.startDate,
     endDate: summaryFilters?.endDate,
   });
@@ -360,6 +367,7 @@ export default function ReportsPage() {
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="inventory">Inventory Status</TabsTrigger>
             <TabsTrigger value="performance">Product Performance</TabsTrigger>
+            <TabsTrigger value="sales-history">Sales History</TabsTrigger>
             <TabsTrigger value="expenses">Expenses Summary</TabsTrigger>
             <TabsTrigger value="stock-value">Stock Value</TabsTrigger>
           </TabsList>
@@ -369,6 +377,13 @@ export default function ReportsPage() {
               metrics={dashboardMetrics}
               period={period}
               isLoading={inventoryLoading || performanceLoading}
+            />
+
+            <ReportCenter
+              salesSummary={salesSummary?.current}
+              expensesSummary={expensesSummary}
+              salesHistory={salesHistoryData || []}
+              periodLabel={formatPeriodLabel(period)}
             />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white p-6 rounded-lg border">
@@ -392,6 +407,13 @@ export default function ReportsPage() {
               products={performanceData?.products || []}
               summary={performanceData?.summary}
               onFiltersChange={setPerformanceFilters}
+            />
+          </TabsContent>
+
+          <TabsContent value="sales-history">
+            <SalesHistoryTable
+              sales={salesHistoryData || []}
+              isLoading={historyLoading}
             />
           </TabsContent>
 

@@ -32,6 +32,8 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
+    "jspdf": "^4.2.0",
+    "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.511.0",
     "react": "^18.2.0",
     "react-day-picker": "^9.7.0",
@@ -92,6 +94,7 @@
     "input-otp": "^1.4.2",
     "jsdom": "^26.1.0",
     "postcss": "^8.4.35",
+    "prettier": "^3.6.2",
     "react-resizable-panels": "^3.0.2",
     "recharts": "^2.15.3",
     "stylelint-config-tailwindcss": "^1.0.0",
@@ -100,8 +103,7 @@
     "typescript-eslint": "^8.32.1",
     "vaul": "^1.1.2",
     "vite": "^5.1.4",
-    "vitest": "^3.1.4",
-    "prettier": "^3.6.2"
+    "vitest": "^3.1.4"
   },
   "main": "postcss.config.js",
   "keywords": [],

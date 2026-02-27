@@ -1415,6 +1415,97 @@ router.post(
   },
 );
 
+// Get detailed sales history
+router.get(
+  "/sales-history",
+  requireAuth,
+  attachStoreIdToUser,
+  requireStoreContext,
+  async (req, res) => {
+    try {
+      const { startDate, endDate, customerId, userId, paymentMethod } = req.query;
+
+      const where: Record<string, any> = storeScope(req.user!, {
+        status: "completed",
+      });
+
+      if (startDate && endDate) {
+        where.createdAt = {
+          [Op.between]: [new Date(startDate as string), new Date(endDate as string)],
+        };
+      }
+
+      if (customerId && customerId !== "all") where.customer_id = customerId;
+      if (userId && userId !== "all") where.user_id = userId;
+      if (paymentMethod && paymentMethod !== "all") where.payment_method = paymentMethod;
+
+      const sales = await Sale.findAll({
+        where,
+        include: [
+          {
+            model: SaleItem,
+            as: "items",
+            include: [
+              {
+                model: Product,
+                attributes: ["id", "name", "piece_buying_price", "pack_buying_price", "dozen_buying_price"],
+              },
+            ],
+          },
+          { model: User, as: "User", attributes: ["id", "name"] },
+        ],
+        order: [["createdAt", "DESC"]],
+      });
+
+      const salesHistory = sales.map((sale: any) => {
+        let saleProfit = 0;
+        sale.items?.forEach((item: any) => {
+          let unitCost = 0;
+          if (item.Product) {
+            if (item.unit_type === "pack") unitCost = item.Product.pack_buying_price || 0;
+            else if (item.unit_type === "dozen") unitCost = item.Product.dozen_buying_price || 0;
+            else unitCost = item.Product.piece_buying_price || 0;
+          }
+          const totalCost = unitCost * (item.quantity || 0);
+          saleProfit += (parseFloat(String(item.total || 0)) - totalCost);
+        });
+
+        // Add delivery fee to profit (it's income for the business)
+        saleProfit += parseFloat(String(sale.delivery_fee || 0));
+
+        return {
+          id: sale.id,
+          date: sale.createdAt,
+          totalAmount: parseFloat(String(sale.total_amount || 0)),
+          deliveryFee: parseFloat(String(sale.delivery_fee || 0)),
+          paymentMethod: sale.payment_method,
+          customerName: sale.Customer?.name || "Walk-in Customer",
+          staffName: sale.User?.name || "System",
+          itemsCount: sale.items?.length || 0,
+          profit: saleProfit,
+          items: sale.items.map((item: any) => ({
+            name: item.Product?.name || "Deleted Product",
+            quantity: item.quantity,
+            unitPrice: parseFloat(String(item.unit_price)),
+            total: parseFloat(String(item.total)),
+          })),
+        };
+      });
+
+      res.json({
+        success: true,
+        data: salesHistory,
+      });
+    } catch (error) {
+      console.error("Error fetching sales history:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to fetch sales history",
+      });
+    }
+  },
+);
+
 // Enhanced export endpoint with multiple formats
 router.get(
   "/export/:type/:format",

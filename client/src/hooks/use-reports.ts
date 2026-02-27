@@ -173,3 +173,31 @@ export function useStockValueReport(filters?: {
   });
 }
 
+export function useSalesHistory(filters?: {
+  startDate?: Date;
+  endDate?: Date;
+  customerId?: string;
+  userId?: string;
+  paymentMethod?: string;
+}) {
+  const { currentStore, isLoading: isStoreLoading } = useStoreContext();
+
+  return useQuery({
+    queryKey: ["sales-history", currentStore?.id, filters],
+    queryFn: async () => {
+      const params: Record<string, string> = {};
+      if (filters?.startDate) params.startDate = filters.startDate.toISOString();
+      if (filters?.endDate) params.endDate = filters.endDate.toISOString();
+      if (filters?.customerId && filters.customerId !== "all") params.customerId = filters.customerId;
+      if (filters?.userId && filters.userId !== "all") params.userId = filters.userId;
+      if (filters?.paymentMethod && filters.paymentMethod !== "all") params.paymentMethod = filters.paymentMethod;
+
+      const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
+      const res = await api.get("/reports/sales-history", { params, headers });
+      return res.data.data;
+    },
+    enabled: !!currentStore && !isStoreLoading,
+    staleTime: 60_000,
+  });
+}
+
