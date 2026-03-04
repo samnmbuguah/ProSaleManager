@@ -414,6 +414,8 @@ export default function ReportsPage() {
             <SalesHistoryTable
               sales={salesHistoryData || []}
               isLoading={historyLoading}
+              startDate={summaryFilters?.startDate}
+              endDate={summaryFilters?.endDate}
             />
           </TabsContent>
 

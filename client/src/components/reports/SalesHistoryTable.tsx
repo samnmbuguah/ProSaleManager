@@ -12,6 +12,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, ChevronDown, ChevronRight, User, CreditCard, Banknote } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ExportOptions } from "./ExportOptions";
+import { api } from "@/lib/api";
 
 interface SaleTransaction {
     id: number;
@@ -34,9 +36,11 @@ interface SaleTransaction {
 interface SalesHistoryTableProps {
     sales: SaleTransaction[];
     isLoading: boolean;
+    startDate?: Date;
+    endDate?: Date;
 }
 
-export default function SalesHistoryTable({ sales, isLoading }: SalesHistoryTableProps) {
+export default function SalesHistoryTable({ sales, isLoading, startDate, endDate }: SalesHistoryTableProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
@@ -70,8 +74,40 @@ export default function SalesHistoryTable({ sales, isLoading }: SalesHistoryTabl
 
     return (
         <Card className="overflow-hidden">
-            <div className="p-4 border-b bg-slate-50/50 flex items-center justify-between">
-                <h3 className="font-semibold text-slate-700">Detailed Sales Audit Log</h3>
+            <div className="p-4 border-b bg-slate-50/50 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <h3 className="font-semibold text-slate-700">Detailed Sales Audit Log</h3>
+                    <ExportOptions
+                        onExport={async (format) => {
+                            const params: Record<string, string> = {};
+                            if (startDate) params.startDate = startDate.toISOString();
+                            if (endDate) params.endDate = endDate.toISOString();
+                            if (searchTerm) params.search = searchTerm;
+
+                            const response = await api.get(`/reports/export/sales/${format}`, {
+                                params,
+                                responseType: "blob",
+                            });
+
+                            const url = window.URL.createObjectURL(new Blob([response.data]));
+                            const link = document.createElement("a");
+                            link.href = url;
+                            const contentDisposition = response.headers["content-disposition"];
+                            let filename = `sales-history-export.${format}`;
+                            if (contentDisposition) {
+                                const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                                if (filenameMatch) filename = filenameMatch[1];
+                            }
+                            link.setAttribute("download", filename);
+                            document.body.appendChild(link);
+                            link.click();
+                            link.remove();
+                            window.URL.revokeObjectURL(url);
+                        }}
+                        disabled={filteredSales.length === 0}
+                        exportType="sales"
+                    />
+                </div>
                 <div className="relative w-64">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
                     <Input
