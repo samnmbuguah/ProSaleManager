@@ -94,12 +94,21 @@ async function getSummary(
     (acc, sale) => {
       const amount = parseFloat(String(sale.total_amount || 0));
 
-      // Handle split payments
-      if (sale.payment_method === "split" && sale.payment_details) {
+      // Handle split payments and paid_to_byc breakdown records
+      const isSplit = sale.payment_method === "split";
+      const isPaidToByc = sale.payment_method === "paid_to_byc";
+
+      if ((isSplit || isPaidToByc) && sale.payment_details) {
         const details = sale.payment_details as { cash?: number; mpesa?: number; card?: number };
         if (details.cash && details.cash > 0) acc["cash"] = (acc["cash"] || 0) + details.cash;
         if (details.mpesa && details.mpesa > 0) acc["mpesa"] = (acc["mpesa"] || 0) + details.mpesa;
         if (details.card && details.card > 0) acc["card"] = (acc["card"] || 0) + details.card;
+
+        // Still keep record of the total in the main method bucket if needed
+        const method = sale.payment_method || "unknown";
+        if (!["cash", "mpesa", "card"].includes(method)) {
+          acc[method] = (acc[method] || 0) + amount;
+        }
       } else {
         const method = sale.payment_method || "unknown";
         acc[method] = (acc[method] || 0) + amount;

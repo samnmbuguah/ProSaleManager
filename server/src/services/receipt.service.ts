@@ -179,6 +179,21 @@ export class ReceiptService {
       })}\n\n`;
 
       receiptText += `Payment Method: ${sale.payment_method.toUpperCase()}\n`;
+      if (sale.payment_details) {
+        const details = sale.payment_details as any;
+        if (details.cash > 0) {
+          receiptText += `- CASH:        KSh ${parseFloat(details.cash).toLocaleString("en-KE", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}\n`;
+        }
+        if (details.mpesa > 0) {
+          receiptText += `- M-PESA:      KSh ${parseFloat(details.mpesa).toLocaleString("en-KE", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}\n`;
+        }
+      }
 
       if (sale.payment_method === "cash" && sale.amount_paid) {
         const change = sale.amount_paid - sale.total_amount;

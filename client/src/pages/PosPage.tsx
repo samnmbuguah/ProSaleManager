@@ -148,7 +148,9 @@ const PosPage: React.FC = () => {
         payment_details: paymentMethod === "split" ? paymentDetails : null,
         status: "completed",
         payment_status: "paid",
-        amount_paid: paymentMethod === "cash" ? Number(amountTendered) || 0 : total,
+        amount_paid: (paymentMethod === "cash" || paymentMethod === "split" || paymentMethod === "paid_to_byc") 
+          ? Number(amountTendered) || 0 
+          : total,
         change_amount: Number(change) || 0,
         created_at: historicalDate,
       };

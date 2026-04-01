@@ -163,8 +163,8 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
               <span>{formatCurrency(receipt.total)}</span>
             </div>
             <div className="text-muted-foreground text-[11px] print:text-[10px] print:text-black">
-              {receipt.payment_method === "split" && receipt.payment_details ? (
-                /* Split Payment Display */
+              {((receipt.payment_method === "split") || (receipt.payment_method === "paid_to_byc")) && receipt.payment_details ? (
+                /* Split Payment or Paid to Byc Breakdown Display */
                 <div className="mt-1 print:mt-1">
                   <div className="font-medium mb-1">Paid via Split Payment:</div>
                   {receipt.payment_details.cash && receipt.payment_details.cash > 0 && (
