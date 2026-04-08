@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { sequelize, Product, User } from "../models/index.js";
 import StockLog from "../models/StockLog.js";
 import { Op } from "sequelize";
+import { calculateWeightedAveragePricesForAllUnits } from "../utils/priceCalculations.js";
 
 export const receiveStock = async (req: Request, res: Response) => {
     let t;
@@ -49,10 +50,18 @@ export const receiveStock = async (req: Request, res: Response) => {
         // Update product quantity and prices
         product.quantity += quantityInPieces;
 
-        // Update prices using the instance method
-        await product.updatePrices(unit_type, Number(buying_price), Number(selling_price));
+        // Calculate weighted average prices based on existing stock and new purchase
+        const weightedPrices = calculateWeightedAveragePricesForAllUnits(
+            product,
+            Number(quantity),
+            Number(buying_price),
+            unit_type
+        );
 
-        // Explicitly save the updated quantity (updatePrices saves prices, but let's ensure quantity is saved)
+        // Apply blended prices + selling price via instance method (no save)
+        product.updatePrices(unit_type, weightedPrices.piece_buying_price, Number(selling_price));
+
+        // Save all changes (quantity + prices) atomically within the transaction
         await product.save({ transaction: t });
 
         // Create StockLog entry
@@ -149,10 +158,18 @@ export const receiveStockBulk = async (req: Request, res: Response) => {
             // Update product quantity
             product.quantity += quantityInPieces;
 
-            // Update prices using the instance method
-            await product.updatePrices(unit_type, Number(buying_price), Number(selling_price));
+            // Calculate weighted average prices based on existing stock and new purchase
+            const weightedPrices = calculateWeightedAveragePricesForAllUnits(
+                product,
+                Number(quantity),
+                Number(buying_price),
+                unit_type
+            );
 
-            // Explicitly save
+            // Apply blended prices + selling price via instance method (no save)
+            product.updatePrices(unit_type, weightedPrices.piece_buying_price, Number(selling_price));
+
+            // Save all changes (quantity + prices) atomically within the transaction
             await product.save({ transaction: t });
 
             // Create StockLog entry
