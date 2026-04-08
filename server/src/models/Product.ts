@@ -290,7 +290,8 @@ const Product = sequelize.define<ProductInstance>(
       );
     }
 
-    await this.save();
+    // Note: Do NOT save here. The caller (controller) is responsible for saving
+    // within its own transaction to avoid lock timeouts.
   };
 
 export default Product;
