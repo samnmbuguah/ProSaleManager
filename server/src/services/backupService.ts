@@ -67,13 +67,13 @@ class BackupService {
     const backupFile = path.join(this.backupDir, `backup-${date}.sql`);
 
     try {
-      // Using --no-tablespaces to avoid SUPER privilege requirements
-      // Using single quotes properly escaped for password
-      const command = `mysqldump --no-tablespaces -h ${this.config.host} -u ${this.config.username} -p'${this.config.password}' ${this.config.database} > ${backupFile}`;
+      // Use mariadb-dump if available (preferred on MariaDB servers), fallback to mysqldump
+      const dumpBin = '/usr/bin/mariadb-dump';
+      const command = `${dumpBin} --no-tablespaces -h ${this.config.host} -u ${this.config.username} -p'${this.config.password}' ${this.config.database} > ${backupFile}`;
 
       const { stderr } = await execAsync(command);
 
-      if (stderr && !stderr.includes('mysqldump: [Warning]')) {
+      if (stderr && !stderr.includes('mysqldump: [Warning]') && !stderr.includes('Deprecated program name')) {
         console.warn('Backup stderr:', stderr);
       }
 
