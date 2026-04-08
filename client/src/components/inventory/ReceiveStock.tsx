@@ -21,11 +21,11 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { useStoreContext } from "@/contexts/StoreContext";
-import { api } from "@/lib/api";
+import { stockService } from "@/services/stockService";
 import type { Product as FullProduct } from "@/types/product";
 
 // Local subset type
-type Product = Pick<FullProduct, "id" | "name" | "sku" | "quantity" | "Category" | "piece_buying_price" | "piece_selling_price">;
+type Product = Pick<FullProduct, "id" | "name" | "sku" | "quantity" | "Category" | "piece_buying_price" | "piece_selling_price" | "pack_buying_price" | "pack_selling_price" | "dozen_buying_price" | "dozen_selling_price">;
 
 interface ReceiveStockItem {
     id: string; // Temporary ID for the row
@@ -40,6 +40,7 @@ interface ReceiveStockItem {
     buyingPrice: string;
     sellingPrice: string;
     notes: string;
+    baseProduct: Product;
 }
 
 export default function ReceiveStock() {
@@ -55,10 +56,13 @@ export default function ReceiveStock() {
     const fetchProducts = useCallback(async () => {
         try {
             setLoading(true);
+            await stockService.getValueReport(currentStore?.id);
+            // Fall back to direct product fetch
+            const { api } = await import("@/lib/api");
             const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
             const response = await api.get("/products?limit=1000", { headers });
-            const data = response.data?.data || response.data?.products || [];
-            setProducts(Array.isArray(data) ? data : []);
+            const products = response.data?.data || response.data?.products || [];
+            setProducts(Array.isArray(products) ? products : []);
         } catch (error) {
             toast({
                 title: "Error",
@@ -98,7 +102,8 @@ export default function ReceiveStock() {
             unitType: "piece",
             buyingPrice: product.piece_buying_price?.toString() || "",
             sellingPrice: product.piece_selling_price?.toString() || "",
-            notes: ""
+            notes: "",
+            baseProduct: product
         };
 
         setReceiveItems(prev => [...prev, newItem]);
@@ -112,7 +117,23 @@ export default function ReceiveStock() {
     const updateItem = (id: string, field: keyof ReceiveStockItem, value: string) => {
         setReceiveItems(prev => prev.map(item => {
             if (item.id === id) {
-                return { ...item, [field]: value };
+                const updated = { ...item, [field]: value };
+                
+                // Auto-update prices when unit type changes
+                if (field === "unitType") {
+                    if (value === "piece") {
+                        updated.buyingPrice = updated.baseProduct.piece_buying_price?.toString() || "";
+                        updated.sellingPrice = updated.baseProduct.piece_selling_price?.toString() || "";
+                    } else if (value === "pack") {
+                        updated.buyingPrice = updated.baseProduct.pack_buying_price?.toString() || "";
+                        updated.sellingPrice = updated.baseProduct.pack_selling_price?.toString() || "";
+                    } else if (value === "dozen") {
+                        updated.buyingPrice = updated.baseProduct.dozen_buying_price?.toString() || "";
+                        updated.sellingPrice = updated.baseProduct.dozen_selling_price?.toString() || "";
+                    }
+                }
+                
+                return updated;
             }
             return item;
         }));
@@ -138,21 +159,17 @@ export default function ReceiveStock() {
 
         try {
             setSubmitting(true);
-            const payload = {
-                items: receiveItems.map(item => ({
+            await stockService.receiveStockBulk(
+                receiveItems.map(item => ({
                     product_id: item.productId,
                     quantity: parseFloat(item.quantity),
                     unit_type: item.unitType,
                     buying_price: parseFloat(item.buyingPrice),
                     selling_price: parseFloat(item.sellingPrice),
                     notes: item.notes
-                }))
-            };
-
-            const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
-
-            // Use relative path to avoid double /api prefix with axios instance
-            await api.post("/stock/receive-bulk", payload, { headers });
+                })),
+                currentStore?.id
+            );
 
             toast({
                 title: "Success",

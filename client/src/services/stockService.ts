@@ -30,6 +30,15 @@ export interface StockValueReportResponse {
     logs: StockLog[];
 }
 
+export interface ReceiveStockItemPayload {
+    product_id: number;
+    quantity: number;
+    unit_type: "piece" | "pack" | "dozen";
+    buying_price: number;
+    selling_price: number;
+    notes?: string;
+}
+
 export const stockService = {
     getValueReport: async (storeId?: number, filters?: { start_date?: string; end_date?: string }) => {
         const headers = storeId ? { "x-store-id": storeId.toString() } : {};
@@ -41,9 +50,16 @@ export const stockService = {
         return response.data;
     },
 
-    receiveStock: async (data: any, storeId?: number) => {
+    receiveStock: async (data: ReceiveStockItemPayload, storeId?: number) => {
         const headers = storeId ? { "x-store-id": storeId.toString() } : {};
         const response = await api.post("/stock/receive", data, { headers });
         return response.data;
-    }
+    },
+
+    receiveStockBulk: async (items: ReceiveStockItemPayload[], storeId?: number) => {
+        const headers = storeId ? { "x-store-id": storeId.toString() } : {};
+        const response = await api.post("/stock/receive-bulk", { items }, { headers });
+        return response.data;
+    },
 };
+

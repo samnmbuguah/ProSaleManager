@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,17 +28,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+
+import { stockService } from "@/services/stockService";
 
 import { Product } from "@/types/product"; // Ensure you have this type or similar
 import { useStoreContext } from "@/contexts/StoreContext";
-
-// Define the API call - should probably be in a service but for speed inline here or move later
-const receiveStockApi = async (data: any, storeId?: number) => {
-    const headers = storeId ? { "x-store-id": storeId.toString() } : {};
-    const response = await api.post("/api/stock/receive", data, { headers });
-    return response.data;
-};
 
 interface ReceiveStockDialogProps {
     products: Product[]; // Pass products to select from
@@ -61,8 +55,35 @@ export function ReceiveStockDialog({ products }: ReceiveStockDialogProps) {
         },
     });
 
+    const watchedProductId = form.watch("product_id");
+    const watchedUnitType = form.watch("unit_type");
+
+    useEffect(() => {
+        if (!watchedProductId) return;
+        
+        const selectedProduct = products.find(p => p.id.toString() === watchedProductId);
+        if (selectedProduct) {
+            let buyingPrice = "";
+            let sellingPrice = "";
+            
+            if (watchedUnitType === "piece") {
+                buyingPrice = selectedProduct.piece_buying_price?.toString() || "";
+                sellingPrice = selectedProduct.piece_selling_price?.toString() || "";
+            } else if (watchedUnitType === "pack") {
+                buyingPrice = selectedProduct.pack_buying_price?.toString() || "";
+                sellingPrice = selectedProduct.pack_selling_price?.toString() || "";
+            } else if (watchedUnitType === "dozen") {
+                buyingPrice = selectedProduct.dozen_buying_price?.toString() || "";
+                sellingPrice = selectedProduct.dozen_selling_price?.toString() || "";
+            }
+
+            form.setValue("buying_price", buyingPrice);
+            form.setValue("selling_price", sellingPrice);
+        }
+    }, [watchedProductId, watchedUnitType, products, form]);
+
     const mutation = useMutation({
-        mutationFn: (data: any) => receiveStockApi(data, currentStore?.id),
+        mutationFn: (data: any) => stockService.receiveStock(data, currentStore?.id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["products"] });
             toast({
