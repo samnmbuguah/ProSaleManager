@@ -46,6 +46,8 @@ interface PendingItem {
   system_quantity: number;
   counted_quantity: number;
   variance: number;
+  unit_cost?: number;
+  variance_value?: number;
 }
 
 interface PendingSession {
@@ -79,6 +81,7 @@ export default function StockTake() {
   const [submitting, setSubmitting] = useState(false);
 
   const [pendingSessions, setPendingSessions] = useState<PendingSession[]>([]);
+  const [pendingSummary, setPendingSummary] = useState<{ totalVarianceValue?: number } | null>(null);
   const [pendingLoading, setPendingLoading] = useState(false);
 
   const fetchProducts = useCallback(async () => {
@@ -106,6 +109,7 @@ export default function StockTake() {
       const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
       const response = await api.get(API_ENDPOINTS.reports.stockTakePending, { headers });
       setPendingSessions(response.data?.data?.sessions || []);
+      setPendingSummary(response.data?.data?.summary || null);
     } catch (error) {
       console.error("Error loading pending stock takes:", error);
       toast({
@@ -395,6 +399,21 @@ export default function StockTake() {
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
+            {pendingSummary && pendingSessions.length > 0 && (
+              <div className="bg-muted p-4 rounded-lg flex items-center justify-between">
+                <div>
+                  <h4 className="font-semibold">Pending Variance Summary</h4>
+                  <p className="text-sm text-muted-foreground">Total discrepancy value across all pending sessions</p>
+                </div>
+                <div className="text-right">
+                  <div className={`text-xl font-bold ${Number(pendingSummary.totalVarianceValue || 0) > 0 ? "text-green-600" : Number(pendingSummary.totalVarianceValue || 0) < 0 ? "text-red-600" : ""}`}>
+                    {Number(pendingSummary.totalVarianceValue || 0) > 0 ? "+" : ""}
+                    {Number(pendingSummary.totalVarianceValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} Kes
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {pendingLoading ? (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <RefreshCw className="h-4 w-4 animate-spin" />
@@ -442,7 +461,8 @@ export default function StockTake() {
                           <TableHead>Category</TableHead>
                           <TableHead className="text-right">System</TableHead>
                           <TableHead className="text-right">Counted</TableHead>
-                          <TableHead className="text-right">Variance</TableHead>
+                          <TableHead className="text-right">Unit Cost (Kes)</TableHead>
+                          <TableHead className="text-right">Variance Value (Kes)</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -454,6 +474,12 @@ export default function StockTake() {
                               : tone === "negative"
                                 ? "text-red-600"
                                 : "text-muted-foreground";
+                          
+                          // Format variance value with sign
+                          const val = Number(item.variance_value || 0);
+                          const valPrefix = val > 0 ? "+" : "";
+                          const valToneClass = val > 0 ? "text-green-600" : val < 0 ? "text-red-600" : "text-muted-foreground";
+
                           return (
                             <TableRow key={item.id}>
                               <TableCell className="font-medium">{item.product_name}</TableCell>
@@ -463,6 +489,12 @@ export default function StockTake() {
                               <TableCell className="text-right">{item.counted_quantity}</TableCell>
                               <TableCell className={`text-right font-semibold ${toneClass}`}>
                                 {label}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {Number(item.unit_cost || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              </TableCell>
+                              <TableCell className={`text-right font-semibold ${valToneClass}`}>
+                                {valPrefix}{val.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                               </TableCell>
                             </TableRow>
                           );

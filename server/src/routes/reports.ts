@@ -1162,6 +1162,8 @@ router.post(
         const systemQty = product.quantity || 0;
         const countedQty = Number(item.countedQuantity || 0);
         const variance = countedQty - systemQty;
+        const unitCost = Number(product.piece_buying_price) || 0;
+        const varianceValue = Number((variance * unitCost).toFixed(2));
         return {
           session_id: session.id!,
           product_id: product.id,
@@ -1171,6 +1173,8 @@ router.post(
           system_quantity: systemQty,
           counted_quantity: countedQty,
           variance,
+          unit_cost: unitCost,
+          variance_value: varianceValue,
           notes: item.note || null,
         };
       });
@@ -1182,7 +1186,7 @@ router.post(
       await notifyAdminsOfStockTake(req.user.store_id, {
         title: "New stock take submitted",
         message: `Stock take #${session.id} is awaiting review (${itemsToCreate.length} items).`,
-        data: { sessionId: session.id, storeId },
+        data: { sessionId: session.id, storeId, link: "/inventory?tab=stock-take" },
         type: "stock_take",
       });
 
@@ -1232,9 +1236,13 @@ router.get(
           (sum: number, i: StockTakeItemInstance) => sum + i.variance,
           0,
         );
+        acc.totalVarianceValue += items.reduce(
+          (sum: number, i: StockTakeItemInstance) => sum + Number(i.variance_value || 0),
+          0,
+        );
         return acc;
       },
-      { totalSessions: 0, totalItems: 0, totalVariance: 0 },
+      { totalSessions: 0, totalItems: 0, totalVariance: 0, totalVarianceValue: 0 },
     );
 
     res.json({

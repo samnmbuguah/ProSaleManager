@@ -11,6 +11,8 @@ interface StockTakeItemAttributes {
   system_quantity: number;
   counted_quantity: number;
   variance: number;
+  unit_cost: number;
+  variance_value: number;
   notes?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
@@ -18,7 +20,7 @@ interface StockTakeItemAttributes {
 
 type StockTakeItemCreationAttributes = Optional<
   StockTakeItemAttributes,
-  "id" | "product_id" | "sku" | "category_name" | "variance" | "notes"
+  "id" | "product_id" | "sku" | "category_name" | "variance" | "unit_cost" | "variance_value" | "notes"
 >;
 
 export interface StockTakeItemInstance
@@ -65,6 +67,16 @@ const StockTakeItem = sequelize.define<StockTakeItemInstance>(
     },
     variance: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    unit_cost: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0,
+    },
+    variance_value: {
+      type: DataTypes.DECIMAL(12, 2),
       allowNull: false,
       defaultValue: 0,
     },
