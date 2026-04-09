@@ -6,6 +6,7 @@ export interface SaleItem {
   unit_price: number;
   total: number;
   unit_type: string;
+  buying_price?: number | null;
   createdAt: string;
   updatedAt: string;
   Product: {
