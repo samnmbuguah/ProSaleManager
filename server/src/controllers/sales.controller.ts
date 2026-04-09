@@ -79,67 +79,56 @@ export const createSale = async (req: Request, res: Response) => {
       unit_type: string;
     }
 
-    console.log("Creating sale items...");
-    // Create sale items
-    await Promise.all(
-      (items as SaleItemInput[]).map((item) => {
-        const saleItemData: any = {
-          sale_id: sale.id,
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          total: item.total,
-          unit_type: item.unit_type,
-          store_id:
-            req.user?.role === "super_admin" ? (req.body.store_id || req.user?.store_id) : req.user?.store_id,
-        };
-
-        // If created_at is provided (for historical sales), use it for sale items too
-        if (created_at) {
-          saleItemData.createdAt = new Date(created_at);
-          saleItemData.updatedAt = new Date(created_at);
-        }
-
-        return SaleItem.create(saleItemData, { transaction: t });
-      }),
-    );
-
-    console.log("Sale items created successfully");
-
-    // Update inventory - reduce product quantities
-    console.log("Updating inventory...");
+    console.log("Creating sale items and updating inventory...");
+    // Create sale items and update inventory
     for (const item of items as SaleItemInput[]) {
       const product = await Product.findByPk(item.product_id, { transaction: t });
-      if (product) {
-        // Convert sale quantity to base units (pieces) based on unit_type
-        let quantityToReduce = item.quantity;
-
-        if (item.unit_type === "pack") {
-          // 1 pack = 3 pieces
-          quantityToReduce = item.quantity * 3;
-        } else if (item.unit_type === "dozen") {
-          // Assuming 1 dozen = 12 pieces
-          quantityToReduce = item.quantity * 12;
-        }
-        // For "piece" unit_type, quantityToReduce remains as item.quantity
-
-        // Check if there's enough stock
-        if (product.quantity < quantityToReduce) {
-          await t.rollback();
-          return res.status(400).json({
-            message: `Insufficient stock for ${product.name}. Available: ${product.quantity}, Required: ${quantityToReduce}`
-          });
-        }
-
-        // Reduce the quantity
-        product.quantity -= quantityToReduce;
-        await product.save({ transaction: t });
-
-        console.log(`Reduced ${product.name} quantity by ${quantityToReduce} (${item.quantity} ${item.unit_type})`);
-      } else {
+      
+      if (!product) {
         await t.rollback();
         return res.status(404).json({ message: `Product with ID ${item.product_id} not found` });
       }
+
+      // 1. Determine buying price based on unit type
+      let snapshotBuyingPrice = product.piece_buying_price;
+      if (item.unit_type === "pack") snapshotBuyingPrice = product.pack_buying_price;
+      else if (item.unit_type === "dozen") snapshotBuyingPrice = product.dozen_buying_price;
+
+      const saleItemData: any = {
+        sale_id: sale.id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        buying_price: snapshotBuyingPrice, // Snapshot the current cost
+        total: item.total,
+        unit_type: item.unit_type,
+        store_id:
+          req.user?.role === "super_admin" ? (req.body.store_id || req.user?.store_id) : req.user?.store_id,
+      };
+
+      if (created_at) {
+        saleItemData.createdAt = new Date(created_at);
+        saleItemData.updatedAt = new Date(created_at);
+      }
+
+      await SaleItem.create(saleItemData, { transaction: t });
+
+      // 2. Reduce inventory
+      let quantityToReduce = item.quantity;
+      if (item.unit_type === "pack") quantityToReduce = item.quantity * 3;
+      else if (item.unit_type === "dozen") quantityToReduce = item.quantity * 12;
+
+      if (product.quantity < quantityToReduce) {
+        await t.rollback();
+        return res.status(400).json({
+          message: `Insufficient stock for ${product.name}. Available: ${product.quantity}, Required: ${quantityToReduce}`
+        });
+      }
+
+      product.quantity -= quantityToReduce;
+      await product.save({ transaction: t });
+
+      console.log(`Processed ${product.name}: Reduced by ${quantityToReduce}, Saved Cost: ${snapshotBuyingPrice}`);
     }
 
     // Auto-create expense for delivery fee
@@ -540,35 +529,6 @@ export const updateSale = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "No items provided for sale" });
     }
 
-    // Check stock for new items and reduce inventory
-    for (const item of items) {
-      const product = await Product.findByPk(item.product_id, { transaction: t });
-      if (product) {
-        // Convert sale quantity to base units (pieces) based on unit_type
-        let quantityToReduce = item.quantity;
-        if (item.unit_type === "pack") {
-          quantityToReduce = item.quantity * 3;
-        } else if (item.unit_type === "dozen") {
-          quantityToReduce = item.quantity * 12;
-        }
-
-        // Check if there's enough stock
-        if (product.quantity < quantityToReduce) {
-          await t.rollback();
-          return res.status(400).json({
-            message: `Insufficient stock for ${product.name}. Available: ${product.quantity}, Required: ${quantityToReduce}`
-          });
-        }
-
-        // Reduce the quantity
-        product.quantity -= quantityToReduce;
-        await product.save({ transaction: t });
-      } else {
-        await t.rollback();
-        return res.status(404).json({ message: `Product with ID ${item.product_id} not found` });
-      }
-    }
-
     // Update sale record
     const updateData: any = {};
     if (total !== undefined) updateData.total_amount = total;
@@ -581,19 +541,47 @@ export const updateSale = async (req: Request, res: Response) => {
 
     await sale.update(updateData, { transaction: t });
 
-    // Create new sale items
+    // 4. Create new sale items and reduce stock
     for (const item of items) {
+      const product = await Product.findByPk(item.product_id, { transaction: t });
+      if (!product) {
+        await t.rollback();
+        return res.status(404).json({ message: `Product with ID ${item.product_id} not found` });
+      }
+
+      // Determine buying price based on unit type
+      let snapshotBuyingPrice = product.piece_buying_price;
+      if (item.unit_type === "pack") snapshotBuyingPrice = product.pack_buying_price;
+      else if (item.unit_type === "dozen") snapshotBuyingPrice = product.dozen_buying_price;
+
+      // Create new sale item with cost snapshot
       await SaleItem.create(
         {
           sale_id: saleId,
           product_id: item.product_id,
           quantity: item.quantity,
           unit_price: item.unit_price,
+          buying_price: snapshotBuyingPrice,
           total: item.total,
           unit_type: item.unit_type,
         },
         { transaction: t }
       );
+
+      // Reduce stock
+      let quantityToReduce = item.quantity;
+      if (item.unit_type === "pack") quantityToReduce = item.quantity * 3;
+      else if (item.unit_type === "dozen") quantityToReduce = item.quantity * 12;
+
+      if (product.quantity < quantityToReduce) {
+        await t.rollback();
+        return res.status(400).json({
+          message: `Insufficient stock for ${product.name}. Available: ${product.quantity}, Required: ${quantityToReduce}`
+        });
+      }
+
+      product.quantity -= quantityToReduce;
+      await product.save({ transaction: t });
     }
 
     await t.commit();

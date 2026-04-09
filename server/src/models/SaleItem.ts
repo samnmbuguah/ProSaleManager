@@ -9,6 +9,7 @@ class SaleItem extends Model {
   declare unit_price: number;
   declare total: number;
   declare unit_type: string;
+  declare buying_price: number;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -51,6 +52,10 @@ SaleItem.init(
     unit_type: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    buying_price: {
+      type: DataTypes.DECIMAL(12, 5),
+      allowNull: true,
     },
   },
   {

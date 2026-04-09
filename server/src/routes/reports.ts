@@ -133,15 +133,21 @@ async function getSummary(
       const quantity = item.quantity || 0;
       saleItemsCount += quantity;
 
-      // Calculate item cost based on unit type
-      let unitCost = 0;
-      if (item.Product) {
-        if (item.unit_type === 'pack') unitCost = item.Product.pack_buying_price || 0;
-        else if (item.unit_type === 'dozen') unitCost = item.Product.dozen_buying_price || 0;
-        else unitCost = item.Product.piece_buying_price || 0;
+      // Calculate item cost based on the snapshotted buying_price
+      // Fallback to current product price only if buying_price is missing (for very old records)
+      let unitCost = item.buying_price;
+      
+      if (unitCost === null || unitCost === undefined) {
+        if (item.Product) {
+          if (item.unit_type === 'pack') unitCost = item.Product.pack_buying_price || 0;
+          else if (item.unit_type === 'dozen') unitCost = item.Product.dozen_buying_price || 0;
+          else unitCost = item.Product.piece_buying_price || 0;
+        } else {
+          unitCost = 0;
+        }
       }
 
-      const totalCost = unitCost * quantity;
+      const totalCost = Number(unitCost) * quantity;
       const itemRevenue = parseFloat(String(item.total || 0));
       saleProfit += (itemRevenue - totalCost);
     });
@@ -573,13 +579,17 @@ router.get(
           const quantity = parseFloat(String(item.quantity || 0));
 
           // Calculate item cost
-          let unitCost = 0;
-          if (product) {
-            if (item.unit_type === 'pack') unitCost = product.pack_buying_price || 0;
-            else if (item.unit_type === 'dozen') unitCost = product.dozen_buying_price || 0;
-            else unitCost = product.piece_buying_price || 0;
+          let unitCost = item.buying_price;
+          if (unitCost === null || unitCost === undefined) {
+            if (product) {
+              if (item.unit_type === 'pack') unitCost = product.pack_buying_price || 0;
+              else if (item.unit_type === 'dozen') unitCost = product.dozen_buying_price || 0;
+              else unitCost = product.piece_buying_price || 0;
+            } else {
+              unitCost = 0;
+            }
           }
-          const totalCost = unitCost * quantity;
+          const totalCost = Number(unitCost) * quantity;
           const itemProfit = itemRevenue - totalCost;
 
           catData.revenue += itemRevenue;
