@@ -163,7 +163,7 @@ export function ReceiveStockDialog({ products }: ReceiveStockDialogProps) {
                                     <FormItem>
                                         <FormLabel>Quantity</FormLabel>
                                         <FormControl>
-                                            <Input type="number" {...field} />
+                                            <Input type="number" step="any" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -201,7 +201,7 @@ export function ReceiveStockDialog({ products }: ReceiveStockDialogProps) {
                                     <FormItem>
                                         <FormLabel>Buying Price (per unit)</FormLabel>
                                         <FormControl>
-                                            <Input type="number" step="0.01" {...field} />
+                                            <Input type="number" step="any" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -214,7 +214,7 @@ export function ReceiveStockDialog({ products }: ReceiveStockDialogProps) {
                                     <FormItem>
                                         <FormLabel>Selling Price (per unit)</FormLabel>
                                         <FormControl>
-                                            <Input type="number" step="0.01" {...field} />
+                                            <Input type="number" step="any" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

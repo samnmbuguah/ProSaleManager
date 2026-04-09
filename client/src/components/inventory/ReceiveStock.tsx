@@ -286,6 +286,7 @@ export default function ReceiveStock() {
                                         <TableCell>
                                             <Input
                                                 type="number"
+                                                step="any"
                                                 min="1"
                                                 value={item.quantity}
                                                 onChange={(e) => updateItem(item.id, "quantity", e.target.value)}
@@ -310,6 +311,7 @@ export default function ReceiveStock() {
                                         <TableCell>
                                             <Input
                                                 type="number"
+                                                step="any"
                                                 min="0"
                                                 placeholder="Buy Price"
                                                 value={item.buyingPrice}
@@ -320,6 +322,7 @@ export default function ReceiveStock() {
                                         <TableCell>
                                             <Input
                                                 type="number"
+                                                step="any"
                                                 min="0"
                                                 placeholder="Sell Price"
                                                 value={item.sellingPrice}
