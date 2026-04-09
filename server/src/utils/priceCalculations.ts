@@ -28,15 +28,16 @@ export function calculateWeightedAveragePrice(
 }
 
 /**
- * Calculates weighted average buying prices for all unit types (piece, pack, dozen)
- * @param product - The product instance
- * @param newQuantity - New quantity being added (in pieces)
+ * @param currentQuantity - Current quantity in pieces
+ * @param currentPiecePrice - Current buying price per piece
+ * @param newQuantity - New quantity being added (in units specified by unitType)
  * @param newUnitPrice - New buying price per unit
  * @param unitType - The unit type of the new purchase
  * @returns Object with updated buying prices for all unit types
  */
 export function calculateWeightedAveragePricesForAllUnits(
-    product: any,
+    currentQuantity: number = 0,
+    currentPiecePrice: number = 0,
     newQuantity: number,
     newUnitPrice: number,
     unitType: 'piece' | 'pack' | 'dozen'
@@ -60,10 +61,6 @@ export function calculateWeightedAveragePricesForAllUnits(
     } else if (unitType === 'dozen') {
         newPiecePrice = newUnitPrice / 12; // Convert dozen price to piece price
     }
-
-    // Get current values
-    const currentQuantity = product.quantity || 0;
-    const currentPiecePrice = Number(product.piece_buying_price) || 0;
 
     // Calculate weighted average piece price
     const newPieceBuyingPrice = calculateWeightedAveragePrice(

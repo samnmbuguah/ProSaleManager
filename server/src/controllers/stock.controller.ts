@@ -47,16 +47,17 @@ export const receiveStock = async (req: Request, res: Response) => {
             quantityInPieces = Number(quantity) * 12;
         }
 
-        // Update product quantity and prices
-        product.quantity += quantityInPieces;
-
-        // Calculate weighted average prices based on existing stock and new purchase
+        // Calculate weighted average prices based on existing stock and new purchase (BEFORE incrementing quantity)
         const weightedPrices = calculateWeightedAveragePricesForAllUnits(
-            product,
+            Number(product.quantity),
+            Number(product.piece_buying_price),
             Number(quantity),
             Number(buying_price),
             unit_type
         );
+
+        // Update product quantity and prices
+        product.quantity += quantityInPieces;
 
         // Apply blended prices + selling price via instance method (no save)
         product.updatePrices(unit_type, weightedPrices.piece_buying_price, Number(selling_price));
@@ -117,76 +118,101 @@ export const receiveStockBulk = async (req: Request, res: Response) => {
             return res.status(401).json({ message: "User not authenticated" });
         }
 
-        // Determine store_id (Super Admin can specify, others use their assigned store)
         const store_id = req.user?.role === "super_admin" ? (bodyStoreId || req.user?.store_id) : req.user?.store_id;
 
         if (req.user?.role !== "super_admin" && !store_id) {
             return res.status(400).json({ message: "Store context missing" });
         }
 
+        // Group items by product_id to handle repeats correctly (e.g. Cap C at different prices)
+        const groupedItems = new Map<number, typeof items>();
+        for (const item of items) {
+            const pid = Number(item.product_id);
+            if (!groupedItems.has(pid)) {
+                groupedItems.set(pid, []);
+            }
+            groupedItems.get(pid)!.push(item);
+        }
+
         t = await sequelize.transaction();
         const results = [];
 
-        for (const item of items) {
-            const {
-                product_id,
-                quantity,
-                unit_type, // 'piece', 'pack', 'dozen'
-                buying_price,
-                selling_price,
-                notes
-            } = item;
-
-            if (!product_id || !quantity || !unit_type || buying_price === undefined || selling_price === undefined) {
-                // Skip invalid items or throw? Let's throw to fail the whole batch for safety
-                throw new Error(`Missing required fields for product ID ${product_id || 'unknown'}`);
-            }
-
+        // Process each unique product once
+        for (const [product_id, productItems] of groupedItems) {
             const product = await Product.findByPk(product_id, { transaction: t });
             if (!product) {
                 throw new Error(`Product with ID ${product_id} not found`);
             }
 
-            // Calculate quantity in pieces based on unit_type
-            let quantityInPieces = Number(quantity);
-            if (unit_type === "pack") {
-                quantityInPieces = Number(quantity) * 3;
-            } else if (unit_type === "dozen") {
-                quantityInPieces = Number(quantity) * 12;
+            // Capture initial state for math
+            const initialQuantity = Number(product.quantity);
+            const initialPiecePrice = Number(product.piece_buying_price);
+
+            let totalBatchQuantityInPieces = 0;
+            let totalBatchCost = 0;
+            let finalSellingPrice = -1;
+            let finalUnitType: 'piece' | 'pack' | 'dozen' = 'piece';
+
+            // First, process all items in the batch for this product
+            for (const item of productItems) {
+                const {
+                    quantity,
+                    unit_type,
+                    buying_price,
+                    selling_price,
+                    notes
+                } = item;
+
+                if (!quantity || !unit_type || buying_price === undefined || selling_price === undefined) {
+                    throw new Error(`Missing required fields for product ${product.name}`);
+                }
+
+                let qInPieces = Number(quantity);
+                let multiplier = 1;
+                if (unit_type === "pack") {
+                    qInPieces = Number(quantity) * 3;
+                    multiplier = 3;
+                } else if (unit_type === "dozen") {
+                    qInPieces = Number(quantity) * 12;
+                    multiplier = 12;
+                }
+
+                totalBatchQuantityInPieces += qInPieces;
+                totalBatchCost += Number(buying_price) * Number(quantity);
+                
+                // Track the final selling price and its unit type provided in the batch
+                finalSellingPrice = Number(selling_price);
+                finalUnitType = unit_type as 'piece' | 'pack' | 'dozen';
+
+                // Create individual StockLog entry for this line item
+                await StockLog.create({
+                    product_id,
+                    quantity_added: qInPieces,
+                    unit_cost: Number(buying_price) / multiplier,
+                    total_cost: Number(buying_price) * Number(quantity),
+                    user_id,
+                    store_id,
+                    type: "manual_receive",
+                    notes: notes || `Bulk Receive: ${quantity} ${unit_type}(s)`,
+                    date: new Date()
+                }, { transaction: t });
             }
 
-            // Update product quantity
-            product.quantity += quantityInPieces;
+            // Now calculate the actual weighted average price using the TOTAL batch
+            const totalQuantityAfterBatch = initialQuantity + totalBatchQuantityInPieces;
+            const totalValueAfterBatch = (initialQuantity * initialPiecePrice) + totalBatchCost;
+            
+            const newPieceBuyingPrice = totalQuantityAfterBatch > 0 
+                ? Number((totalValueAfterBatch / totalQuantityAfterBatch).toFixed(5)) 
+                : initialPiecePrice;
 
-            // Calculate weighted average prices based on existing stock and new purchase
-            const weightedPrices = calculateWeightedAveragePricesForAllUnits(
-                product,
-                Number(quantity),
-                Number(buying_price),
-                unit_type
-            );
+            // Update product once with the final cumulative values
+            product.quantity = totalQuantityAfterBatch;
+            
+            // Use instance method to update prices safely using the last provided unit type/price
+            product.updatePrices(finalUnitType, newPieceBuyingPrice, finalSellingPrice);
 
-            // Apply blended prices + selling price via instance method (no save)
-            product.updatePrices(unit_type, weightedPrices.piece_buying_price, Number(selling_price));
-
-            // Save all changes (quantity + prices) atomically within the transaction
             await product.save({ transaction: t });
-
-            // Create StockLog entry
-            const total_cost = Number(buying_price) * Number(quantity);
-            const unit_cost = Number(buying_price) / (quantityInPieces / Number(quantity));
-
-            await StockLog.create({
-                product_id,
-                quantity_added: quantityInPieces,
-                unit_cost: unit_cost,
-                total_cost: total_cost,
-                user_id,
-                store_id, // Use the resolved store_id
-                type: "manual_receive",
-                notes: notes || `Bulk Receive: ${quantity} ${unit_type}(s)`,
-                date: new Date()
-            }, { transaction: t });
 
             results.push({
                 id: product.id,
