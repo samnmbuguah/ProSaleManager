@@ -22,6 +22,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useStoreContext } from "@/contexts/StoreContext";
 import { stockService } from "@/services/stockService";
+import { api } from "@/lib/api";
 import type { Product as FullProduct } from "@/types/product";
 
 // Local subset type
@@ -57,8 +58,7 @@ export default function ReceiveStock() {
         try {
             setLoading(true);
             await stockService.getValueReport(currentStore?.id);
-            // Fall back to direct product fetch
-            const { api } = await import("@/lib/api");
+            // Fall back to direct product fetch (now using static import)
             const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
             const response = await api.get("/products?limit=1000", { headers });
             const products = response.data?.data || response.data?.products || [];
