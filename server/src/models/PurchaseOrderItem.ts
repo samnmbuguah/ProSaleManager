@@ -39,7 +39,7 @@ PurchaseOrderItem.init(
       },
     },
     quantity: {
-      type: DataTypes.DECIMAL(10, 3),
+      type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 1,
     },

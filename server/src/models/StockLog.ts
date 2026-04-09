@@ -32,7 +32,7 @@ StockLog.init(
             },
         },
         quantity_added: {
-            type: DataTypes.DECIMAL(10, 3),
+            type: DataTypes.INTEGER,
             allowNull: false,
         },
         unit_cost: {

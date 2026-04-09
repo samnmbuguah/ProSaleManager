@@ -37,7 +37,7 @@ SaleItem.init(
       },
     },
     quantity: {
-      type: DataTypes.DECIMAL(10, 3),
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     unit_price: {

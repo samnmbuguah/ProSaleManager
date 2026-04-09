@@ -88,12 +88,12 @@ const Product = sequelize.define<ProductInstance>(
       allowNull: false,
     },
     quantity: {
-      type: DataTypes.DECIMAL(10, 3),
+      type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
     },
     min_quantity: {
-      type: DataTypes.DECIMAL(10, 3),
+      type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
     },
