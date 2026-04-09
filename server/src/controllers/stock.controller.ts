@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { sequelize, Product, User } from "../models/index.js";
+import { sequelize, Product, User, StockReceipt } from "../models/index.js";
 import StockLog from "../models/StockLog.js";
 import { Op } from "sequelize";
 import { calculateWeightedAveragePricesForAllUnits } from "../utils/priceCalculations.js";
@@ -135,9 +135,29 @@ export const receiveStockBulk = async (req: Request, res: Response) => {
         }
 
         t = await sequelize.transaction();
+        
+        // 1. Create the parent StockReceipt record first to get an ID
+        let totalOverallCost = 0;
+        let totalItemsCount = 0;
+        
+        // Quick pass to calculate totals for the receipt header
+        for (const item of items) {
+            totalOverallCost += Number(item.buying_price) * Number(item.quantity);
+            totalItemsCount += 1;
+        }
+
+        const receipt = await StockReceipt.create({
+            user_id,
+            store_id,
+            total_cost: totalOverallCost,
+            items_count: totalItemsCount,
+            date: new Date(),
+            notes: req.body.notes || `Bulk receive of ${totalItemsCount} products`
+        }, { transaction: t });
+
         const results = [];
 
-        // Process each unique product once
+        // 2. Process each unique product once
         for (const [product_id, productItems] of groupedItems) {
             const product = await Product.findByPk(product_id, { transaction: t });
             if (!product) {
@@ -192,6 +212,7 @@ export const receiveStockBulk = async (req: Request, res: Response) => {
                     total_cost: Number(buying_price) * Number(quantity),
                     user_id,
                     store_id,
+                    receipt_id: receipt.id, // Link to the batch receipt
                     type: "manual_receive",
                     notes: notes || `Bulk Receive: ${quantity} ${unit_type}(s)`,
                     date: new Date()
@@ -323,5 +344,67 @@ export const getStockValueReport = async (req: Request, res: Response) => {
     } catch (error: any) {
         console.error("Stock report error:", error);
         res.status(500).json({ message: "Failed to fetch stock value report", error: error.message });
+    }
+};
+
+export const getStockReceipts = async (req: Request, res: Response) => {
+    try {
+        const store_id = req.user?.role === "super_admin" ? (req.query.store_id || req.user?.store_id) : req.user?.store_id;
+        
+        const receipts = await StockReceipt.findAll({
+            where: { store_id },
+            include: [
+                {
+                    model: User,
+                    as: "user",
+                    attributes: ["name"]
+                }
+            ],
+            order: [["date", "DESC"]],
+            limit: 50
+        });
+
+        res.json(receipts);
+    } catch (error: any) {
+        console.error("Error fetching stock receipts:", error);
+        res.status(500).json({ message: "Failed to fetch stock receipts" });
+    }
+};
+
+export const getStockReceiptById = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const store_id = req.user?.role === "super_admin" ? (req.query.store_id || req.user?.store_id) : req.user?.store_id;
+
+        const receipt = await StockReceipt.findOne({
+            where: { id, store_id },
+            include: [
+                {
+                    model: StockLog,
+                    as: "items",
+                    include: [
+                        {
+                            model: Product,
+                            as: "product",
+                            attributes: ["name", "sku"]
+                        }
+                    ]
+                },
+                {
+                    model: User,
+                    as: "user",
+                    attributes: ["name"]
+                }
+            ]
+        });
+
+        if (!receipt) {
+            return res.status(404).json({ message: "Stock receipt not found" });
+        }
+
+        res.json(receipt);
+    } catch (error: any) {
+        console.error("Error fetching stock receipt details:", error);
+        res.status(500).json({ message: "Failed to fetch stock receipt details" });
     }
 };

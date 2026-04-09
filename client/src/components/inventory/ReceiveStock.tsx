@@ -1,8 +1,22 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Search, RefreshCw, Trash2 } from "lucide-react";
+import { Search, RefreshCw, Trash2, History, ChevronRight, Eye, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
     Table,
@@ -21,8 +35,10 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { useStoreContext } from "@/contexts/StoreContext";
-import { stockService } from "@/services/stockService";
+import { stockService, StockReceipt } from "@/services/stockService";
 import { api } from "@/lib/api";
+import { format } from "date-fns";
+import { formatCurrency } from "@/utils/formatters";
 import type { Product as FullProduct } from "@/types/product";
 
 // Local subset type
@@ -54,6 +70,24 @@ export default function ReceiveStock() {
     const [receiveItems, setReceiveItems] = useState<ReceiveStockItem[]>([]);
     const [submitting, setSubmitting] = useState(false);
 
+    // History states
+    const [receipts, setReceipts] = useState<StockReceipt[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+    const [selectedReceipt, setSelectedReceipt] = useState<StockReceipt | null>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+    const fetchHistory = useCallback(async () => {
+        try {
+            setLoadingHistory(true);
+            const data = await stockService.getReceipts(currentStore?.id);
+            setReceipts(data);
+        } catch (error) {
+            console.error("Failed to fetch receipt history", error);
+        } finally {
+            setLoadingHistory(false);
+        }
+    }, [currentStore?.id]);
+
     const fetchProducts = useCallback(async () => {
         try {
             setLoading(true);
@@ -76,7 +110,8 @@ export default function ReceiveStock() {
 
     useEffect(() => {
         fetchProducts();
-    }, [fetchProducts]);
+        fetchHistory();
+    }, [fetchProducts, fetchHistory]);
 
     const searchResults = useMemo(() => {
         if (!searchQuery.trim()) return [];
@@ -139,6 +174,20 @@ export default function ReceiveStock() {
         }));
     };
 
+    const handleViewDetails = async (receiptId: number) => {
+        try {
+            const data = await stockService.getReceiptDetails(receiptId, currentStore?.id);
+            setSelectedReceipt(data);
+            setIsDetailOpen(true);
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Failed to load receipt details",
+                variant: "destructive"
+            });
+        }
+    };
+
     const handleSubmit = async () => {
         if (receiveItems.length === 0) {
             toast({ title: "No items", description: "Add items to receive stock.", variant: "destructive" });
@@ -178,6 +227,7 @@ export default function ReceiveStock() {
 
             setReceiveItems([]);
             fetchProducts(); // Refresh quantities
+            fetchHistory(); // Refresh history
         } catch (error: any) {
             console.error("Bulk receive error", error);
             toast({
@@ -350,6 +400,147 @@ export default function ReceiveStock() {
                     </Table>
                 </CardContent>
             </Card>
+
+            {/* Receipt History Section */}
+            <div className="pt-8 border-t">
+                <div className="flex items-center gap-2 mb-4">
+                    <History className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold">Recent Activity History</h3>
+                </div>
+
+                <Card>
+                    <CardContent className="p-0">
+                        {loadingHistory ? (
+                            <div className="p-8 text-center text-muted-foreground">
+                                <RefreshCw className="h-4 w-4 animate-spin mx-auto mb-2" />
+                                Loading history...
+                            </div>
+                        ) : receipts.length === 0 ? (
+                            <div className="p-8 text-center text-muted-foreground">
+                                No recent activity found.
+                            </div>
+                        ) : (
+                            <Accordion type="single" collapsible className="w-full">
+                                {receipts.map((receipt) => (
+                                    <AccordionItem key={receipt.id} value={`receipt-${receipt.id}`}>
+                                        <AccordionTrigger className="px-6 hover:no-underline hover:bg-muted/50 transition-colors">
+                                            <div className="flex flex-1 items-center justify-between text-left pr-4">
+                                                <div className="space-y-1">
+                                                    <div className="font-semibold flex items-center gap-2">
+                                                        <span>{format(new Date(receipt.date), "PPP p")}</span>
+                                                        <Badge variant="outline" className="font-normal">
+                                                            ID: #{receipt.id}
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        Received by {receipt.user?.name || "Unknown User"}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-8">
+                                                    <div className="text-right">
+                                                        <div className="text-xs text-muted-foreground">Items</div>
+                                                        <div className="font-medium text-sm">{receipt.items_count} products</div>
+                                                    </div>
+                                                    <div className="text-right min-w-[100px]">
+                                                        <div className="text-xs text-muted-foreground">Total Value</div>
+                                                        <div className="font-bold text-sm text-green-600">
+                                                            {formatCurrency(receipt.total_cost)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </AccordionTrigger>
+                                        <AccordionContent className="px-6 pb-4 pt-2">
+                                            <div className="bg-muted/30 rounded-lg p-4 space-y-4">
+                                                {receipt.notes && (
+                                                    <div className="text-sm">
+                                                        <span className="font-semibold">Notes:</span> {receipt.notes}
+                                                    </div>
+                                                )}
+                                                <div className="flex justify-start">
+                                                    <Button 
+                                                        variant="secondary" 
+                                                        size="sm" 
+                                                        onClick={() => handleViewDetails(receipt.id)}
+                                                    >
+                                                        <Eye className="h-4 w-4 mr-2" />
+                                                        Expand Detailed Line Items
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                ))}
+                            </Accordion>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Receipt Details Dialog */}
+            <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+                <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Package className="h-5 w-5" />
+                            Receipt Details # {selectedReceipt?.id}
+                        </DialogTitle>
+                        <DialogDescription>
+                            Processed on {selectedReceipt && format(new Date(selectedReceipt.date), "PPP p")} by {selectedReceipt?.user?.name}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {selectedReceipt && (
+                        <div className="flex-1 overflow-auto mt-4 px-1">
+                            <Table>
+                                <TableHeader className="sticky top-0 bg-background z-10 shadow-sm">
+                                    <TableRow>
+                                        <TableHead>Product</TableHead>
+                                        <TableHead className="text-right">Quantity</TableHead>
+                                        <TableHead className="text-right">Unit Price (Pieces)</TableHead>
+                                        <TableHead className="text-right">Total Line Cost</TableHead>
+                                        <TableHead>Notes</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {selectedReceipt.items?.map((item) => (
+                                        <TableRow key={item.id}>
+                                            <TableCell>
+                                                <div className="font-medium">{item.product?.name}</div>
+                                                <div className="text-xs text-muted-foreground">SKU: {item.product?.sku}</div>
+                                            </TableCell>
+                                            <TableCell className="text-right font-mono">
+                                                {item.quantity_added}
+                                            </TableCell>
+                                            <TableCell className="text-right font-mono text-xs">
+                                                {formatCurrency(item.unit_cost)}
+                                            </TableCell>
+                                            <TableCell className="text-right font-bold text-sm">
+                                                {formatCurrency(item.total_cost)}
+                                            </TableCell>
+                                            <TableCell className="max-w-[200px] truncate text-xs italic">
+                                                {item.notes || "-"}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    )}
+                    
+                    <div className="mt-6 flex justify-between items-center bg-muted/50 p-4 rounded-lg">
+                        <div className="text-sm text-muted-foreground">
+                            {selectedReceipt?.items?.length} items in this batch
+                        </div>
+                        <div className="text-right">
+                            <div className="text-xs text-muted-foreground uppercase tracking-wider font-bold">Grand Total Value</div>
+                            <div className="text-2xl font-black text-green-600">
+                                {selectedReceipt && formatCurrency(selectedReceipt.total_cost)}
+                            </div>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

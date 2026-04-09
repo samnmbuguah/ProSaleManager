@@ -16,6 +16,7 @@ import StockTakeSession from "./StockTakeSession.js";
 import StockTakeItem from "./StockTakeItem.js";
 import Notification from "./Notification.js";
 import StockLog from "./StockLog.js";
+import StockReceipt from "./StockReceipt.js";
 
 let associationsSetup = false;
 
@@ -157,11 +158,17 @@ export function setupAssociations() {
   // StockLog associations
   StockLog.belongsTo(User, { foreignKey: "user_id", as: "user" });
   StockLog.belongsTo(Store, { foreignKey: "store_id", as: "store" });
+  Product.hasMany(StockLog, { foreignKey: "product_id", as: "stockLogs" });
   StockLog.belongsTo(Product, { foreignKey: "product_id", as: "product" });
 
-  User.hasMany(StockLog, { foreignKey: "user_id", as: "stockLogs" });
-  Store.hasMany(StockLog, { foreignKey: "store_id", as: "stockLogs" });
-  Product.hasMany(StockLog, { foreignKey: "product_id", as: "stockLogs" });
+  // StockReceipt associations
+  StockReceipt.belongsTo(User, { foreignKey: "user_id", as: "user" });
+  StockReceipt.belongsTo(Store, { foreignKey: "store_id", as: "store" });
+  StockReceipt.hasMany(StockLog, { foreignKey: "receipt_id", as: "items" });
+  
+  User.hasMany(StockReceipt, { foreignKey: "user_id", as: "stockReceipts" });
+  Store.hasMany(StockReceipt, { foreignKey: "store_id", as: "stockReceipts" });
+  StockLog.belongsTo(StockReceipt, { foreignKey: "receipt_id", as: "receipt" });
 
   // Mark associations as set up
   associationsSetup = true;

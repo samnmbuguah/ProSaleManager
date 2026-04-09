@@ -11,6 +11,7 @@ class StockLog extends Model {
     declare store_id: number;
     declare type: string; // 'manual_receive', 'purchase_order', etc.
     declare notes?: string;
+    declare receipt_id?: number | null;
     declare date: Date;
     declare readonly createdAt: Date;
     declare readonly updatedAt: Date;
@@ -67,6 +68,14 @@ StockLog.init(
         notes: {
             type: DataTypes.TEXT,
             allowNull: true,
+        },
+        receipt_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: "stock_receipts",
+                key: "id",
+            },
         },
         date: {
             type: DataTypes.DATE,

@@ -30,6 +30,20 @@ export interface StockValueReportResponse {
     logs: StockLog[];
 }
 
+export interface StockReceipt {
+    id: number;
+    user_id: number;
+    store_id: number;
+    total_cost: number;
+    items_count: number;
+    notes?: string;
+    date: string;
+    user?: {
+        name: string;
+    };
+    items?: StockLog[];
+}
+
 export interface ReceiveStockItemPayload {
     product_id: number;
     quantity: number;
@@ -59,6 +73,18 @@ export const stockService = {
     receiveStockBulk: async (items: ReceiveStockItemPayload[], storeId?: number) => {
         const headers = storeId ? { "x-store-id": storeId.toString() } : {};
         const response = await api.post("/stock/receive-bulk", { items }, { headers });
+        return response.data;
+    },
+
+    getReceipts: async (storeId?: number) => {
+        const headers = storeId ? { "x-store-id": storeId.toString() } : {};
+        const response = await api.get<StockReceipt[]>("/stock/receipts", { headers });
+        return response.data;
+    },
+
+    getReceiptDetails: async (id: number, storeId?: number) => {
+        const headers = storeId ? { "x-store-id": storeId.toString() } : {};
+        const response = await api.get<StockReceipt>(`/stock/receipts/${id}`, { headers });
         return response.data;
     },
 };

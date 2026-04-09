@@ -18,6 +18,7 @@ import StockTakeSession from "./StockTakeSession.js";
 import StockTakeItem from "./StockTakeItem.js";
 import Notification from "./Notification.js";
 import StockLog from "./StockLog.js";
+import StockReceipt from "./StockReceipt.js";
 import { setupAssociations } from "./associations.js";
 
 // Set up all model associations
@@ -44,4 +45,5 @@ export {
   StockTakeItem,
   Notification,
   StockLog,
+  StockReceipt,
 };

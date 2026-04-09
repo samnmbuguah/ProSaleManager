@@ -280,7 +280,8 @@ router.put(
             // Calculate weighted average buying prices for all unit types
             if (item.unit_type && item.unit_price !== undefined) {
               const newPrices = calculateWeightedAveragePricesForAllUnits(
-                product,
+                Number(product.quantity),
+                Number(product.piece_buying_price),
                 item.quantity,
                 Number(item.unit_price),
                 item.unit_type as 'piece' | 'pack' | 'dozen'
