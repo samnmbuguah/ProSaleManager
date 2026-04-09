@@ -32,15 +32,15 @@ StockLog.init(
             },
         },
         quantity_added: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.DECIMAL(10, 3),
             allowNull: false,
         },
         unit_cost: {
-            type: DataTypes.DECIMAL(10, 2),
+            type: DataTypes.DECIMAL(12, 5),
             allowNull: false,
         },
         total_cost: {
-            type: DataTypes.DECIMAL(10, 2),
+            type: DataTypes.DECIMAL(12, 5),
             allowNull: false,
         },
         user_id: {

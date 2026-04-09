@@ -39,22 +39,22 @@ PurchaseOrderItem.init(
       },
     },
     quantity: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DECIMAL(10, 3),
       allowNull: false,
       defaultValue: 1,
     },
     unit_price: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(12, 5),
       allowNull: false,
       defaultValue: 0,
     },
     selling_price: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(12, 5),
       allowNull: true,
       defaultValue: null,
     },
     total_price: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(12, 5),
       allowNull: false,
       defaultValue: 0,
     },

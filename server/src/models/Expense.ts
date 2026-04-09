@@ -26,7 +26,7 @@ Expense.init(
       allowNull: false,
     },
     amount: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(12, 5),
       allowNull: false,
     },
     date: {

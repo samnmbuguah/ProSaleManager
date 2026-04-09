@@ -50,7 +50,7 @@ PurchaseOrder.init(
       defaultValue: "pending",
     },
     total_amount: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(12, 5),
       allowNull: false,
       defaultValue: 0,
     },

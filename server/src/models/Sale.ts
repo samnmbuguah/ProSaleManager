@@ -49,7 +49,7 @@ Sale.init(
       },
     },
     total_amount: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(12, 5),
       allowNull: false,
       defaultValue: 0,
     },
@@ -65,7 +65,7 @@ Sale.init(
       // Structure: { cash?: number, mpesa?: number }
     },
     amount_paid: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(12, 5),
       allowNull: false,
       defaultValue: 0,
     },
@@ -80,7 +80,7 @@ Sale.init(
       defaultValue: "pending",
     },
     delivery_fee: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(12, 5),
       allowNull: false,
       defaultValue: 0,
     },

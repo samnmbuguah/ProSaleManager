@@ -64,36 +64,36 @@ const Product = sequelize.define<ProductInstance>(
       allowNull: false,
     },
     piece_buying_price: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(12, 5),
       allowNull: false,
     },
     piece_selling_price: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(12, 5),
       allowNull: false,
     },
     pack_buying_price: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(12, 5),
       allowNull: false,
     },
     pack_selling_price: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(12, 5),
       allowNull: false,
     },
     dozen_buying_price: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(12, 5),
       allowNull: false,
     },
     dozen_selling_price: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(12, 5),
       allowNull: false,
     },
     quantity: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DECIMAL(10, 3),
       allowNull: false,
       defaultValue: 0,
     },
     min_quantity: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DECIMAL(10, 3),
       allowNull: false,
       defaultValue: 0,
     },

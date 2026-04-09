@@ -56,27 +56,27 @@ const StockTakeItem = sequelize.define<StockTakeItemInstance>(
       allowNull: true,
     },
     system_quantity: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DECIMAL(10, 3),
       allowNull: false,
       defaultValue: 0,
     },
     counted_quantity: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DECIMAL(10, 3),
       allowNull: false,
       defaultValue: 0,
     },
     variance: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DECIMAL(10, 3),
       allowNull: false,
       defaultValue: 0,
     },
     unit_cost: {
-      type: DataTypes.DECIMAL(10, 2),
+      type: DataTypes.DECIMAL(12, 5),
       allowNull: false,
       defaultValue: 0,
     },
     variance_value: {
-      type: DataTypes.DECIMAL(12, 2),
+      type: DataTypes.DECIMAL(12, 5),
       allowNull: false,
       defaultValue: 0,
     },
