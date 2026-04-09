@@ -461,6 +461,7 @@ export default function StockTake() {
                           <TableHead>Category</TableHead>
                           <TableHead className="text-right">System</TableHead>
                           <TableHead className="text-right">Counted</TableHead>
+                          <TableHead className="text-right font-bold text-primary">Qty Variance</TableHead>
                           <TableHead className="text-right">Unit Cost (Kes)</TableHead>
                           <TableHead className="text-right">Variance Value (Kes)</TableHead>
                         </TableRow>
@@ -487,7 +488,7 @@ export default function StockTake() {
                               <TableCell>{item.category_name || "—"}</TableCell>
                               <TableCell className="text-right">{item.system_quantity}</TableCell>
                               <TableCell className="text-right">{item.counted_quantity}</TableCell>
-                              <TableCell className={`text-right font-semibold ${toneClass}`}>
+                              <TableCell className={`text-right font-bold text-lg bg-muted/50 ${toneClass}`}>
                                 {label}
                               </TableCell>
                               <TableCell className="text-right">
