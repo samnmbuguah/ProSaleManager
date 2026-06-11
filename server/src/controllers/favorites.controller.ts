@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Favorite, Product, Category } from "../models/index.js";
 import { catchAsync } from "../utils/catch-async.js";
 import { ApiError } from "../utils/api-error.js";
+import { param } from "../utils/params.js";
 
 // Get user's favorites
 export const getUserFavorites = catchAsync(async (req: Request, res: Response) => {
@@ -37,7 +38,7 @@ export const getUserFavorites = catchAsync(async (req: Request, res: Response) =
 // Add product to favorites
 export const addToFavorites = catchAsync(async (req: Request, res: Response) => {
     const userId = req.user?.id;
-    const { productId } = req.params;
+    const productId = param(req.params.productId);
 
     if (!userId) {
         throw new ApiError(401, "User not authenticated");
@@ -131,7 +132,7 @@ export const checkFavorite = catchAsync(async (req: Request, res: Response) => {
 // Toggle favorite status
 export const toggleFavorite = catchAsync(async (req: Request, res: Response) => {
     const userId = req.user?.id;
-    const { productId } = req.params;
+    const productId = param(req.params.productId);
 
     if (!userId) {
         throw new ApiError(401, "User not authenticated");

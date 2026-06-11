@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import { ReceiptSettings } from "../models/index.js";
+import { param } from "../utils/params.js";
 
 // Get receipt settings for a store
 export const getReceiptSettings = async (req: Request, res: Response) => {
-  const storeId = parseInt(req.params.storeId);
+  const storeId = parseInt(param(req.params.storeId));
   if (isNaN(storeId)) {
     return res.status(400).json({ message: "Invalid store ID" });
   }
@@ -39,7 +40,7 @@ export const getReceiptSettings = async (req: Request, res: Response) => {
 
 // Create receipt settings for a store
 export const createReceiptSettings = async (req: Request, res: Response) => {
-  const storeId = parseInt(req.params.storeId);
+  const storeId = parseInt(param(req.params.storeId));
   if (isNaN(storeId)) {
     return res.status(400).json({ message: "Invalid store ID" });
   }
@@ -63,7 +64,7 @@ export const createReceiptSettings = async (req: Request, res: Response) => {
 
 // Update receipt settings for a store
 export const updateReceiptSettings = async (req: Request, res: Response) => {
-  const storeId = parseInt(req.params.storeId);
+  const storeId = parseInt(param(req.params.storeId));
   if (isNaN(storeId)) {
     return res.status(400).json({ message: "Invalid store ID" });
   }

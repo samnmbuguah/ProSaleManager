@@ -67,7 +67,7 @@ describe("Service Utilities", () => {
         { password: "short", valid: true }, // In real app, would check length
       ];
 
-      passwords.forEach(({ password, valid }) => {
+      passwords.forEach(({ password }) => {
         expect(password.length).toBeGreaterThan(0);
         expect(typeof password).toBe("string");
       });

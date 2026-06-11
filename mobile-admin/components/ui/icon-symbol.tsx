@@ -30,7 +30,7 @@ const MAPPING = {
   'person.circle': 'account-circle',
   'person.2.fill': 'people',
   'rectangle.portrait.and.arrow.right': 'logout',
-} as IconMapping;
+} as unknown as IconMapping;
 
 /**
  * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.

@@ -13,7 +13,6 @@ import { Store, User, Category, Product, sequelize as seq } from "../models/inde
 import * as fs from 'fs';
 import * as path from 'path';
 import * as csv from 'fast-csv';
-import bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 
 interface ProductCSV {

@@ -33,7 +33,7 @@ const paymentMethods = ["Cash", "Card", "Mobile Money", "Other"] as const;
 
 const formSchema = z.object({
   description: z.string().min(1, "Description is required"),
-  amount: z.coerce
+  amount: z
     .number()
     .min(0.01, "Amount must be greater than 0")
     .max(1000000, "Amount must be less than 1,000,000"),
@@ -131,7 +131,7 @@ export default function ExpenseForm({ onAddExpense }: ExpenseFormProps) {
                     placeholder="0.00"
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value === "" ? "0" : e.target.value;
+                      const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
                       field.onChange(value);
                     }}
                   />

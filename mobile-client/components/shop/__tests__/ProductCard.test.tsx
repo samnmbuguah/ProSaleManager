@@ -1,9 +1,9 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import ProductCard from '../ProductCard';
+import { ProductCard } from '../ProductCard';
 import { Product } from '../../../types/product';
 
-const mockProduct = {
+const mockProduct: Product = {
   id: 1,
   name: 'Test Product',
   piece_selling_price: 150,
@@ -20,7 +20,7 @@ describe('ProductCard Component', () => {
     );
 
     expect(getByText('Test Product')).toBeTruthy();
-    expect(getByText('KES 150')).toBeTruthy();
+    expect(getByText('$150.00')).toBeTruthy();
   });
 
   it('should call onPress when pressed', () => {
@@ -39,7 +39,7 @@ describe('ProductCard Component', () => {
       <ProductCard product={zeroPriceProduct} onPress={jest.fn()} />
     );
 
-    expect(getByText('KES 0')).toBeTruthy();
+    expect(getByText('$0.00')).toBeTruthy();
   });
 
   it('should handle product with low stock', () => {

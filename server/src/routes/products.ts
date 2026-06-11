@@ -8,6 +8,7 @@ import { requireAuth, requireRole } from "../middleware/auth.middleware.js";
 // Cloudinary import commented out for testing
 // import cloudinary from "../config/cloudinary.js";
 import PurchaseOrderItem from "../models/PurchaseOrderItem.js";
+import { param } from "../utils/params.js";
 
 const router = Router();
 
@@ -468,7 +469,7 @@ router.post("/", requireAuth, requireRole(["admin", "manager", "super_admin"]), 
 router.put("/:id", requireAuth, requireRole(["admin", "manager", "super_admin"]), upload.array("images", 10), async (req, res) => {
   try {
     const productData = req.body;
-    const product = await Product.findByPk(req.params.id);
+    const product = await Product.findByPk(param(req.params.id));
 
     if (!product) {
       return res.status(404).json({
@@ -681,7 +682,7 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager", "super_admin"])
 // Delete a product
 router.delete("/:id", requireAuth, requireRole(["admin", "manager", "super_admin"]), async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id);
+    const product = await Product.findByPk(param(req.params.id));
     if (product) {
       // Check if user has access to this product's store
       if (req.user && req.user.role !== 'super_admin' && product.store_id !== req.user.store_id) {
@@ -734,7 +735,7 @@ router.delete("/:id", requireAuth, requireRole(["admin", "manager", "super_admin
 // Get product pricing information
 router.get("/:id/pricing", requireAuth, async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id);
+    const product = await Product.findByPk(param(req.params.id));
 
     if (!product) {
       return res.status(404).json({
@@ -782,7 +783,7 @@ router.get("/:id/pricing", requireAuth, async (req, res) => {
 router.post("/:id/adjust-stock", requireAuth, requireRole(["admin", "manager", "super_admin"]), async (req, res) => {
   try {
     const { quantity_change, reason } = req.body;
-    const product = await Product.findByPk(req.params.id);
+    const product = await Product.findByPk(param(req.params.id));
 
     if (!product) {
       return res.status(404).json({
@@ -839,7 +840,7 @@ router.post("/:id/adjust-stock", requireAuth, requireRole(["admin", "manager", "
 // Get a single product - must come after all specific routes
 router.get("/:id", async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id);
+    const product = await Product.findByPk(param(req.params.id));
 
     if (!product) {
       return res.status(404).json({

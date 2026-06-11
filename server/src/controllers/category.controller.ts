@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Op } from "sequelize";
 import Category from "../models/Category.js";
+import { param } from "../utils/params.js";
 
 export const getCategories = async (req: Request, res: Response) => {
   try {
@@ -31,7 +32,7 @@ export const getCategories = async (req: Request, res: Response) => {
 
 export const getCategory = async (req: Request, res: Response) => {
   try {
-    const category = await Category.findByPk(req.params.id);
+    const category = await Category.findByPk(param(req.params.id));
 
     if (!category) {
       return res.status(404).json({
@@ -74,7 +75,7 @@ export const createCategory = async (req: Request, res: Response) => {
 export const updateCategory = async (req: Request, res: Response) => {
   try {
     const { name, description } = req.body;
-    const category = await Category.findByPk(req.params.id);
+    const category = await Category.findByPk(param(req.params.id));
 
     if (!category) {
       return res.status(404).json({
@@ -121,7 +122,7 @@ export const updateCategory = async (req: Request, res: Response) => {
 
 export const deleteCategory = async (req: Request, res: Response) => {
   try {
-    const category = await Category.findByPk(req.params.id);
+    const category = await Category.findByPk(param(req.params.id));
 
     if (!category) {
       return res.status(404).json({

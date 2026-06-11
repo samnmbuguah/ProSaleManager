@@ -8,6 +8,7 @@ import { requireAuth, requireRole } from "../middleware/auth.middleware.js";
 import { requireStoreContext } from "../middleware/store-context.middleware.js";
 import { calculateWeightedAveragePricesForAllUnits } from "../utils/priceCalculations.js";
 import { notifyUsersOfPurchaseOrder } from "../services/notification.service.js";
+import { param } from "../utils/params.js";
 
 const router = Router();
 
@@ -136,7 +137,7 @@ router.get("/:id", async (req, res) => {
 // Update purchase order details (items, dates, etc.)
 router.put("/:id", requireAuth, requireRole(["admin", "manager", "super_admin"]), async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = param(req.params.id);
     const { supplier_id, expected_delivery_date, notes, items } = req.body;
 
     const order = await PurchaseOrder.findByPk(id);
@@ -235,7 +236,7 @@ router.put(
   async (req, res) => {
     try {
       const { status } = req.body;
-      const order = await PurchaseOrder.findByPk(req.params.id);
+      const order = await PurchaseOrder.findByPk(param(req.params.id));
 
       if (!order) {
         return res.status(404).json({ error: "Purchase order not found" });
@@ -335,7 +336,7 @@ router.put(
 // Delete purchase order
 router.delete("/:id", requireAuth, requireRole(["admin", "super_admin"]), async (req, res) => {
   try {
-    const order = await PurchaseOrder.findByPk(req.params.id);
+    const order = await PurchaseOrder.findByPk(param(req.params.id));
 
     if (!order) {
       return res.status(404).json({ error: "Purchase order not found" });

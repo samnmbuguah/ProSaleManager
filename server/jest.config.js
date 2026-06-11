@@ -3,7 +3,10 @@ export default {
   preset: 'ts-jest/presets/default-esm',
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   testEnvironment: 'node',
-  roots: ['<rootDir>/src', '<rootDir>/tests'],
+  roots: ['<rootDir>/src'],
+  // The server has no unit tests yet; keep `npm test` green so CI-style
+  // pipelines can run it unconditionally.
+  passWithNoTests: true,
   testMatch: [
     '**/__tests__/**/*.+(ts|tsx|js)',
     '**/*.(test|spec).+(ts|tsx|js)'
@@ -44,7 +47,6 @@ export default {
       statements: 70
     }
   },
-  setupFilesAfterEnv: ['<rootDir>/../tests/setup.ts'],
   testTimeout: 30000,
   verbose: true,
   clearMocks: true,

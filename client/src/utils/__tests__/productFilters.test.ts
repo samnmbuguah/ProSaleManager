@@ -105,7 +105,7 @@ describe("productFilters", () => {
       const filters = {
         categoryId: null,
         stockStatus: "all" as const,
-        stockUnit: "pack",
+        stockUnit: "pack" as const,
         isActive: null,
         priceRange: { min: null, max: null },
         quantityRange: { min: null, max: null },

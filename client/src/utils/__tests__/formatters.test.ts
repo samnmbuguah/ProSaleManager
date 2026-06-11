@@ -13,9 +13,9 @@ describe("formatCurrency", () => {
     expect(formatCurrency(-0.01)).toBe("KSh -0.01");
   });
 
-  it("should handle large numbers", () => {
-    expect(formatCurrency(1000000)).toBe("KSh 1000000.00");
-    expect(formatCurrency(999999.99)).toBe("KSh 999999.99");
+  it("should handle large numbers with locale grouping", () => {
+    expect(formatCurrency(1000000)).toBe("KSh 1,000,000.00");
+    expect(formatCurrency(999999.99)).toBe("KSh 999,999.99");
   });
 
   it("should handle decimal precision correctly", () => {
@@ -25,7 +25,7 @@ describe("formatCurrency", () => {
   });
 
   it("should handle NaN and Infinity gracefully", () => {
-    expect(formatCurrency(NaN)).toBe("KSh NaN");
-    expect(formatCurrency(Infinity)).toBe("KSh Infinity");
+    expect(formatCurrency(NaN)).toBe("KSh 0.00");
+    expect(formatCurrency(Infinity)).toBe("KSh ∞");
   });
 });

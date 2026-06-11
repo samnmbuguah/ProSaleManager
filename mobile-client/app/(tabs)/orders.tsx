@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { StyleSheet, FlatList, RefreshControl, View } from 'react-native';
-import { ActivityIndicator, Button, Card, Chip, Text, useTheme, MD3Theme } from 'react-native-paper';
+import { ActivityIndicator, Button, Card, Chip, MD3Theme, Text, useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 

@@ -3,6 +3,7 @@ import { Sale, SaleItem, Product, User } from "../models/index.js";
 import { sequelize } from "../config/database.js";
 import { storeScope } from "../utils/helpers.js";
 import { Op } from "sequelize";
+import { param } from "../utils/params.js";
 
 export const getOrders = async (req: Request, res: Response) => {
   try {
@@ -131,7 +132,7 @@ export const createOrder = async (req: Request, res: Response) => {
 export const updateOrder = async (req: Request, res: Response) => {
   const t = await sequelize.transaction();
   try {
-    const { id } = req.params;
+    const id = param(req.params.id);
     const { status, payment_status } = req.body;
 
     const order = await Sale.findByPk(id, {

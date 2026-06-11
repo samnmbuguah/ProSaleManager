@@ -5,6 +5,7 @@ import User from "../models/User.js";
 import UserPreference from "../models/UserPreference.js";
 import Store from "../models/Store.js";
 import { Op } from "sequelize";
+import { param } from "../utils/params.js";
 
 // Get all users (with pagination and filtering)
 export const getUsers = catchAsync(async (req: Request, res: Response) => {
@@ -55,7 +56,7 @@ export const getUsers = catchAsync(async (req: Request, res: Response) => {
 
 // Get single user by ID
 export const getUser = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = param(req.params.id);
 
   const user = await User.findByPk(id, {
     include: [
@@ -149,7 +150,7 @@ export const createUser = catchAsync(async (req: Request, res: Response) => {
 
 // Update user
 export const updateUser = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = param(req.params.id);
   const { name, email, role, store_id, is_active } = req.body;
 
   const user = await User.findByPk(id);
@@ -205,7 +206,7 @@ export const updateUser = catchAsync(async (req: Request, res: Response) => {
 
 // Delete user
 export const deleteUser = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = param(req.params.id);
 
   const user = await User.findByPk(id);
   if (!user) {

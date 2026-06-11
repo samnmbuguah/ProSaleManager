@@ -3,6 +3,7 @@ import { Expense } from "../models/index.js";
 import { Op } from "sequelize";
 import { sequelize } from "../config/database.js";
 import { storeScope } from "../utils/helpers.js";
+import { param } from "../utils/params.js";
 
 export const getExpenses = async (req: Request, res: Response) => {
   try {
@@ -91,7 +92,7 @@ export const updateExpense = async (req: Request, res: Response) => {
   const t = await sequelize.transaction();
 
   try {
-    const { id } = req.params;
+    const id = param(req.params.id);
     const { description, amount, date, category, payment_method } = req.body;
     const user_id = req.user?.id;
 

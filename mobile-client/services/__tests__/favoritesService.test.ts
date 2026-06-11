@@ -92,7 +92,7 @@ describe('Favorites Service', () => {
       const result = await favoritesService.toggleFavorite(1);
 
       expect(api.patch).toHaveBeenCalledWith('/favorites/1/toggle');
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual(mockResponse.data);
     });
 
     it('should handle toggle to non-favorite', async () => {

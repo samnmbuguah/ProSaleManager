@@ -15,7 +15,7 @@ const mockProduct: Product = {
   piece_buying_price: 80,
   stock: 50,
   min_stock: 10,
-} as Product;
+} as unknown as Product;
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <POSCartProvider>{children}</POSCartProvider>

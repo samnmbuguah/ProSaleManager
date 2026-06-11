@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import type { Transaction } from "sequelize";
 import { Sale, SaleItem, User, Product, sequelize } from "../models/index.js";
 import { storeScope } from "../utils/helpers.js";
+import { param } from "../utils/params.js";
 
 export const createSale = async (req: Request, res: Response) => {
   let t: Transaction | undefined;
@@ -315,7 +316,7 @@ export const getSales = async (req: Request, res: Response) => {
 
 export const getSaleItems = async (req: Request, res: Response) => {
   try {
-    const saleId = parseInt(req.params.id);
+    const saleId = parseInt(param(req.params.id));
     if (isNaN(saleId)) {
       return res.status(400).json({ message: "Invalid sale ID" });
     }
@@ -398,7 +399,7 @@ export const checkout = async (req: Request, res: Response) => {
 
 export const getSaleById = async (req: Request, res: Response) => {
   try {
-    const saleId = parseInt(req.params.id);
+    const saleId = parseInt(param(req.params.id));
     if (isNaN(saleId)) {
       return res.status(400).json({ message: "Invalid sale ID" });
     }
@@ -452,7 +453,7 @@ export const getSaleById = async (req: Request, res: Response) => {
 export const updateSale = async (req: Request, res: Response) => {
   let t: Transaction | undefined;
   try {
-    const saleId = parseInt(req.params.id);
+    const saleId = parseInt(param(req.params.id));
     if (isNaN(saleId)) {
       return res.status(400).json({ message: "Invalid sale ID" });
     }
@@ -651,7 +652,7 @@ export const updateSale = async (req: Request, res: Response) => {
 export const deleteSale = async (req: Request, res: Response) => {
   let t: Transaction | undefined;
   try {
-    const saleId = parseInt(req.params.id);
+    const saleId = parseInt(param(req.params.id));
     if (isNaN(saleId)) {
       return res.status(400).json({ message: "Invalid sale ID" });
     }

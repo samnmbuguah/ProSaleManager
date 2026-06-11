@@ -4,7 +4,7 @@ import { Product } from '../../types/product';
 
 jest.mock('../api');
 
-const mockProduct = {
+const mockProduct: Product = {
   id: 1,
   name: 'Test Product',
   piece_selling_price: 100,

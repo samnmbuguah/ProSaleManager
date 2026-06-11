@@ -23,9 +23,8 @@ module.exports = {
     '**/*.spec.{ts,tsx}',
   ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest',
-  },
+  // No transform override: the jest-expo preset's babel-jest handles TS/TSX
+  // (ts-jest preserves JSX under Expo's tsconfig and breaks component tests).
   testEnvironment: 'node',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',

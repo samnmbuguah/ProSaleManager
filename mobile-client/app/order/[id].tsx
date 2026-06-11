@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, ScrollView, RefreshControl, View } from 'react-native';
-import { ActivityIndicator, Appbar, Button, Card, Chip, Divider, Text, useTheme, MD3Theme } from 'react-native-paper';
+import { ActivityIndicator, Appbar, Button, Card, Chip, Divider, MD3Theme, Text, useTheme } from 'react-native-paper';
 import { router, useLocalSearchParams } from 'expo-router';
 
 import { ThemedView } from '@/components/themed-view';

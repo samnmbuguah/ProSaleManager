@@ -10,16 +10,17 @@ interface ProductCardProps {
     onAddToCart?: () => void;
     isFavorite?: boolean;
     onToggleFavorite?: () => void;
+    testID?: string;
 }
 
-export const ProductCard = ({ product, onPress, onAddToCart, isFavorite, onToggleFavorite }: ProductCardProps) => {
+export const ProductCard = ({ product, onPress, onAddToCart, isFavorite, onToggleFavorite, testID }: ProductCardProps) => {
     const theme = useTheme();
 
     const price = Number(product.piece_selling_price) || 0;
     const imageUrl = product.image_url || 'https://via.placeholder.com/150';
 
     return (
-        <Card style={styles.card} onPress={onPress}>
+        <Card style={styles.card} onPress={onPress} testID={testID}>
             <View>
                 <Card.Cover source={{ uri: imageUrl }} style={styles.cover} />
                 {onToggleFavorite && (

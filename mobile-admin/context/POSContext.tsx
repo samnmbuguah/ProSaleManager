@@ -53,8 +53,11 @@ const cartReducer = (state: POSCart, action: Action): POSCart => {
                 );
             } else {
                 const price = product.piece_selling_price || 0;
+                // Date.now() collides when two products are added in the same
+                // millisecond, making remove/update hit both items.
+                const nextId = state.items.reduce((max, item) => Math.max(max, item.id), 0) + 1;
                 newItems = [...state.items, {
-                    id: Date.now(),
+                    id: nextId,
                     product_id: product.id,
                     product,
                     quantity,
