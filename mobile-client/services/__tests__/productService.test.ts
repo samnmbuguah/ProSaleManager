@@ -4,7 +4,7 @@ import { Product } from '../../types/product';
 
 jest.mock('../api');
 
-const mockProduct: Product = {
+const mockProduct = {
   id: 1,
   name: 'Test Product',
   piece_selling_price: 100,
@@ -13,7 +13,7 @@ const mockProduct: Product = {
   piece_buying_price: 80,
   stock: 50,
   min_stock: 10,
-} as Product;
+} as unknown as Product;
 
 describe('Product Service', () => {
   beforeEach(() => {

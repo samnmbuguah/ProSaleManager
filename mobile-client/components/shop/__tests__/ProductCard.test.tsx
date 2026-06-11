@@ -1,9 +1,9 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import ProductCard from '../../components/shop/ProductCard';
-import { Product } from '../../types/product';
+import ProductCard from '../ProductCard';
+import { Product } from '../../../types/product';
 
-const mockProduct: Product = {
+const mockProduct = {
   id: 1,
   name: 'Test Product',
   piece_selling_price: 150,
@@ -11,7 +11,7 @@ const mockProduct: Product = {
   dozen_selling_price: 1800,
   stock: 50,
   min_stock: 10,
-} as Product;
+} as unknown as Product;
 
 describe('ProductCard Component', () => {
   it('should render product name and price correctly', () => {

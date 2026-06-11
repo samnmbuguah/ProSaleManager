@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, ScrollView, RefreshControl, View } from 'react-native';
-import { ActivityIndicator, Appbar, Button, Card, Chip, Divider, Text, useTheme } from 'react-native-paper';
+import { ActivityIndicator, Appbar, Button, Card, Chip, Divider, Text, useTheme, MD3Theme } from 'react-native-paper';
 import { router, useLocalSearchParams } from 'expo-router';
 
 import { ThemedView } from '@/components/themed-view';
@@ -8,7 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { orderService } from '@/services/orderService';
 import { Sale } from '@/types/sale';
 
-const getStatusColor = (status: string, theme: ReturnType<typeof useTheme>) => {
+const getStatusColor = (status: string, theme: MD3Theme) => {
     switch (status?.toLowerCase()) {
         case 'completed':
         case 'fulfilled':

@@ -3,7 +3,8 @@ import * as SecureStore from 'expo-secure-store';
 
 jest.mock('expo-secure-store');
 jest.mock('axios', () => {
-  const mockAxios = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mockAxios: any = {
     create: jest.fn(() => ({
       ...mockAxios,
       defaults: {

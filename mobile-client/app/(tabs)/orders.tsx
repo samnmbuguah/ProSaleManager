@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { StyleSheet, FlatList, RefreshControl, View } from 'react-native';
-import { ActivityIndicator, Button, Card, Chip, Text, useTheme } from 'react-native-paper';
+import { ActivityIndicator, Button, Card, Chip, Text, useTheme, MD3Theme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 
@@ -11,7 +11,7 @@ import { Sale } from '@/types/sale';
 import { useAuth } from '@/context/AuthContext';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
-const getStatusColor = (status: string, theme: ReturnType<typeof useTheme>) => {
+const getStatusColor = (status: string, theme: MD3Theme) => {
     switch (status?.toLowerCase()) {
         case 'completed':
         case 'fulfilled':

@@ -4,14 +4,14 @@ import { Sale } from '../../types/sale';
 
 jest.mock('../api');
 
-const mockSale: Sale = {
+const mockSale = {
   id: 1,
   customer_name: 'Test Customer',
   total: 500,
   payment_method: 'cash',
   status: 'completed',
   created_at: '2026-04-11T10:00:00Z',
-} as Sale;
+} as unknown as Sale;
 
 describe('Order Service', () => {
   beforeEach(() => {
