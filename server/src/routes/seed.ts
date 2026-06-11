@@ -4,8 +4,19 @@ import Supplier from "../models/Supplier.js";
 import Customer from "../models/Customer.js";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
+import { requireAuth, requireRole } from "../middleware/auth.middleware.js";
 
 const router = Router();
+
+// Destructive seeding: development-only, super admins only
+router.use((req, res, next) => {
+  if (process.env.NODE_ENV === "production") {
+    return res.status(403).json({ message: "Seeding is disabled in production" });
+  }
+  next();
+});
+router.use(requireAuth);
+router.use(requireRole(["super_admin"]));
 
 router.post("/", async (req, res) => {
   try {

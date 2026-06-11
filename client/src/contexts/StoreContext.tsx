@@ -35,13 +35,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setIsLoading(true);
     hasFetchedStores.current = true;
 
-    console.log("[StoreContext] Fetching stores...");
     api.get("/stores")
       .then((res) => {
         const data = res.data;
-        console.log("[StoreContext] API response:", data);
         if (data.success && Array.isArray(data.data)) {
-          console.log("[StoreContext] Stores fetched:", data.data.length, "stores");
           setStores(data.data);
 
           // If no store selected yet, derive from URL or default to first
@@ -53,13 +50,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             const pathParts = window.location.pathname.split("/").filter(Boolean);
             const urlStoreSegment = pathParts[0];
 
-            console.log("[StoreContext] URL path parts:", pathParts, "First segment:", urlStoreSegment);
 
             if (urlStoreSegment) {
               const decodedName = decodeURIComponent(urlStoreSegment);
               const matchedStore = data.data.find((store: Store) => store.name === decodedName);
               if (matchedStore) {
-                console.log("[StoreContext] Matched store from URL:", matchedStore.name);
                 initialStore = matchedStore;
               }
             } else if (storedStr) {
@@ -68,7 +63,6 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 const parsed = JSON.parse(storedStr);
                 const matchedStore = data.data.find((store: Store) => store.id === parsed.id);
                 if (matchedStore) {
-                  console.log("[StoreContext] Matched store from localStorage:", matchedStore.name);
                   initialStore = matchedStore;
                 }
               } catch {
@@ -76,14 +70,11 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               }
             }
 
-            console.log("[StoreContext] Setting currentStore to:", initialStore.name);
             setCurrentStore(initialStore);
             localStorage.setItem("currentStore", JSON.stringify(initialStore));
           } else {
-            console.log("[StoreContext] No stores returned from API!");
           }
         } else {
-          console.log("[StoreContext] API response not successful or data not array:", data);
         }
       })
       .catch((err) => {
@@ -102,12 +93,10 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (currentStore) {
       // Clear all caches when store CHANGES (not on initial load)
       if (previousStoreIdRef.current !== null && previousStoreIdRef.current !== currentStore.id) {
-        console.log("[StoreContext] Store changed from", previousStoreIdRef.current, "to", currentStore.id);
 
         // Clear React Query cache and refetch all active queries
         queryClient.invalidateQueries();
 
-        console.log("[StoreContext] Cleared all React Query caches");
       }
       previousStoreIdRef.current = currentStore.id;
 

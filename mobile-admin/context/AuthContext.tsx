@@ -8,6 +8,7 @@ interface User {
     name: string;
     email: string;
     role: string;
+    store_id?: number | null;
 }
 
 interface AuthContextType {
@@ -16,7 +17,14 @@ interface AuthContextType {
     login: (data: any) => Promise<void>;
     register: (data: any) => Promise<void>;
     logout: () => Promise<void>;
+    refreshUser: () => Promise<void>;
 }
+
+// The API wraps auth payloads: { success, data, token?, authenticated? }
+const extractUser = (payload: any): User | null => {
+    if (!payload) return null;
+    return payload.data ?? payload.user ?? null;
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -33,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             try {
                 await initAuth();
                 const response = await api.get('/auth/me');
-                setUser(response.data);
+                setUser(extractUser(response.data));
             } catch (error) {
                 // No valid session
             } finally {
@@ -69,18 +77,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const login = async (data: any) => {
         const response = await api.post('/auth/login', data);
-        const { user, token } = response.data;
-        setUser(user);
+        const { token } = response.data;
+        setUser(extractUser(response.data));
         if (token) await setAuthToken(token);
         router.replace('/(tabs)');
     };
 
     const register = async (data: any) => {
         const response = await api.post('/auth/register', data);
-        const { user, token } = response.data;
-        setUser(user);
+        const { token } = response.data;
+        setUser(extractUser(response.data));
         if (token) await setAuthToken(token);
         router.replace('/(tabs)');
+    };
+
+    const refreshUser = async () => {
+        try {
+            const response = await api.get('/auth/me');
+            setUser(extractUser(response.data));
+        } catch (e) {
+            // Keep the existing user on refresh failure
+        }
     };
 
     const logout = async () => {
@@ -104,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+        <AuthContext.Provider value={{ user, isLoading, login, register, logout, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );

@@ -9,22 +9,25 @@ import App from "./App";
 import { StoreProvider } from "@/contexts/StoreContext";
 import { StoreDataProvider } from "@/contexts/StoreDataContext";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const root = document.getElementById("root") as HTMLElement;
 createRoot(root).render(
   <StrictMode>
-    <AuthProvider>
-      <QueryClientProvider client={queryClient}>
-        <StoreProvider>
-          <StoreDataProvider>
-            <CartProvider>
-              <ThemeProvider defaultTheme="light" storageKey="app-ui-theme">
-                <App />
-              </ThemeProvider>
-            </CartProvider>
-          </StoreDataProvider>
-        </StoreProvider>
-      </QueryClientProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <StoreProvider>
+            <StoreDataProvider>
+              <CartProvider>
+                <ThemeProvider defaultTheme="light" storageKey="app-ui-theme">
+                  <App />
+                </ThemeProvider>
+              </CartProvider>
+            </StoreDataProvider>
+          </StoreProvider>
+        </QueryClientProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   </StrictMode>
 );

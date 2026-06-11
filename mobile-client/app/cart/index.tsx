@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { api } from '@/services/api';
+import { orderService } from '@/services/orderService';
 
 export default function CartScreen() {
     const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -97,17 +97,16 @@ export default function CartScreen() {
 
         setLoading(true);
         try {
-            const orderData = {
-                items: cart.items.map(item => ({
-                    product_id: item.product.id,
-                    quantity: item.quantity,
-                    unit_type: item.unit_type,
-                    unit_price: item.unit_price
-                }))
-            };
+            const items = cart.items.map(item => ({
+                product_id: item.product.id,
+                quantity: item.quantity,
+                unit_type: item.unit_type,
+                unit_price: item.unit_price
+            }));
 
-            await api.post('/orders', orderData);
-            Alert.alert('Success', 'Order placed successfully!');
+            // POST /api/orders responds with { message, orderId }
+            const { orderId } = await orderService.createOrder(items);
+            Alert.alert('Success', `Order #${orderId} placed successfully!`);
             clearCart();
             router.replace('/(tabs)/orders');
         } catch (e: any) {

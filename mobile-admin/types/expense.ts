@@ -1,11 +1,18 @@
-export type ExpenseCategory =
-    | "Lunch"
-    | "Delivery"
-    | "Marketing"
-    | "New Stock"
-    | "Transport"
-    | "Salary"
-    | "Other";
+export const EXPENSE_CATEGORIES = [
+    "Lunch",
+    "Delivery",
+    "Marketing",
+    "New Stock",
+    "Transport",
+    "Salary",
+    "Other",
+] as const;
+
+export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
+
+export const EXPENSE_PAYMENT_METHODS = ["Cash", "Card", "Mobile Money", "Other"] as const;
+
+export type ExpensePaymentMethod = (typeof EXPENSE_PAYMENT_METHODS)[number];
 
 export interface Expense {
     id: number;
@@ -29,4 +36,11 @@ export interface InsertExpense {
     category: ExpenseCategory;
     payment_method: string;
     date?: string;
+}
+
+export interface ExpensesResponse {
+    expenses: Expense[];
+    total: number;
+    totalPages: number;
+    currentPage: number;
 }

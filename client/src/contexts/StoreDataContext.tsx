@@ -35,10 +35,8 @@ export const StoreDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } = useQuery<Product[]>({
         queryKey: ["products", currentStore?.id],
         queryFn: async () => {
-            console.log("[StoreData] Fetching products for store:", currentStore);
             // Explicitly pass x-store-id to avoid race conditions with global interceptor
             const headers = currentStore?.id ? { "x-store-id": currentStore.id.toString() } : {};
-            console.log("[StoreData] Sending headers:", headers);
             const response = await api.get(`${API_ENDPOINTS.products.list}?limit=1000`, { headers });
 
             if (Array.isArray(response.data)) return response.data;

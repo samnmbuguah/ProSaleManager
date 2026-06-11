@@ -40,10 +40,10 @@ const formSchema = z.object({
   category: z.string().min(1, "Please select or enter a category"),
   custom_category: z.string().optional(),
   date: z.date({
-    required_error: "Date is required",
+    error: "Date is required",
   }),
   payment_method: z.enum(paymentMethods, {
-    required_error: "Please select a payment method",
+    error: "Please select a payment method",
   }),
 });
 

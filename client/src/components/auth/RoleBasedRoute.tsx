@@ -55,7 +55,6 @@ export const RoleBasedRoute = ({
       if (!hasStorePrefix && pathParts.length > 0 &&
         !["auth", "unauthorized"].includes(firstSegment)) {
         const newPath = `/${encodeURIComponent(currentStore.name)}/${pathParts.join("/")}`;
-        console.log("[RoleBasedRoute] Redirecting to store-prefixed URL:", newPath);
         setLocation(newPath);
       }
     }

@@ -1,4 +1,5 @@
 import express from "express";
+import crypto from "crypto";
 import { Op } from "sequelize";
 import User from "../models/User.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
@@ -39,7 +40,7 @@ router.get("/", async (req, res) => {
             email: `walkin.${storeId}@example.com`,
             phone: "N/A",
             role: "client",
-            password: Math.random().toString(36).slice(2),
+            password: crypto.randomBytes(24).toString("base64url"),
             is_active: true,
             store_id: storeId,
           });
@@ -100,7 +101,7 @@ router.post("/", async (req, res) => {
       email,
       phone,
       role: "client",
-      password: Math.random().toString(36).slice(2),
+      password: crypto.randomBytes(24).toString("base64url"),
       is_active: true,
       store_id: req.user?.role === "super_admin" ? (req.body.store_id ?? null) : (req.user?.store_id || req.store?.id),
     });

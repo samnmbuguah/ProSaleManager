@@ -22,6 +22,14 @@ const MAPPING = {
   'chart.bar.fill': 'bar-chart',
   'archivebox.fill': 'inventory',
   'ellipsis.circle.fill': 'more-horiz',
+  'circle.dollar': 'attach-money',
+  'creditcard.fill': 'credit-card',
+  'exclamationmark.triangle.fill': 'warning',
+  'xmark.circle.fill': 'cancel',
+  'banknote': 'payments',
+  'person.circle': 'account-circle',
+  'person.2.fill': 'people',
+  'rectangle.portrait.and.arrow.right': 'logout',
 } as IconMapping;
 
 /**

@@ -31,7 +31,7 @@ export default function ProfileScreen() {
                     <Text variant="bodyLarge">{user.email}</Text>
                 </View>
 
-                <Button mode="contained" style={styles.button} onPress={() => { }}>
+                <Button mode="contained" style={styles.button} onPress={() => router.push('/features/profile/edit')}>
                     Edit Profile
                 </Button>
             </View>

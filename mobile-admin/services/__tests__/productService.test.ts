@@ -11,9 +11,12 @@ const mockProduct: Product = {
   pack_selling_price: 1100,
   dozen_selling_price: 1200,
   piece_buying_price: 80,
-  stock: 50,
-  min_stock: 10,
+  quantity: 50,
+  min_quantity: 10,
 } as Product;
+
+// The API wraps product payloads in { success, data }
+const wrap = <T,>(data: T) => ({ data: { success: true, data } });
 
 describe('Product Service (Mobile Admin)', () => {
   beforeEach(() => {
@@ -22,19 +25,16 @@ describe('Product Service (Mobile Admin)', () => {
 
   describe('getAll', () => {
     it('should fetch all products successfully', async () => {
-      const mockResponse = {
-        data: [mockProduct],
-      };
-      (api.get as jest.Mock).mockResolvedValue(mockResponse);
+      (api.get as jest.Mock).mockResolvedValue(wrap([mockProduct]));
 
       const products = await productService.getAll();
 
-      expect(api.get).toHaveBeenCalledWith('/products');
+      expect(api.get).toHaveBeenCalledWith('/products', { params: { limit: 1000 } });
       expect(products).toEqual([mockProduct]);
     });
 
     it('should handle empty product list', async () => {
-      (api.get as jest.Mock).mockResolvedValue({ data: [] });
+      (api.get as jest.Mock).mockResolvedValue(wrap([]));
 
       const products = await productService.getAll();
 
@@ -50,10 +50,7 @@ describe('Product Service (Mobile Admin)', () => {
 
   describe('getById', () => {
     it('should fetch a single product by ID', async () => {
-      const mockResponse = {
-        data: mockProduct,
-      };
-      (api.get as jest.Mock).mockResolvedValue(mockResponse);
+      (api.get as jest.Mock).mockResolvedValue(wrap(mockProduct));
 
       const product = await productService.getById(1);
 
@@ -70,10 +67,7 @@ describe('Product Service (Mobile Admin)', () => {
 
   describe('search', () => {
     it('should search products by query', async () => {
-      const mockResponse = {
-        data: [mockProduct],
-      };
-      (api.get as jest.Mock).mockResolvedValue(mockResponse);
+      (api.get as jest.Mock).mockResolvedValue(wrap([mockProduct]));
 
       const products = await productService.search('Test');
 
@@ -82,7 +76,7 @@ describe('Product Service (Mobile Admin)', () => {
     });
 
     it('should handle empty search results', async () => {
-      (api.get as jest.Mock).mockResolvedValue({ data: [] });
+      (api.get as jest.Mock).mockResolvedValue(wrap([]));
 
       const products = await productService.search('Nonexistent');
 
@@ -92,17 +86,14 @@ describe('Product Service (Mobile Admin)', () => {
 
   describe('create', () => {
     it('should create a new product', async () => {
-      const newProduct: ProductInsert = {
+      const newProduct = {
         name: 'New Product',
         piece_selling_price: 150,
         piece_buying_price: 100,
-        stock: 100,
-        min_stock: 20,
-      };
-      const mockResponse = {
-        data: { ...newProduct, id: 2 },
-      };
-      (api.post as jest.Mock).mockResolvedValue(mockResponse);
+        quantity: 100,
+        min_quantity: 20,
+      } as ProductInsert;
+      (api.post as jest.Mock).mockResolvedValue(wrap({ ...newProduct, id: 2 }));
 
       const product = await productService.create(newProduct);
 
@@ -111,13 +102,13 @@ describe('Product Service (Mobile Admin)', () => {
     });
 
     it('should handle validation errors', async () => {
-      const invalidProduct: ProductInsert = {
+      const invalidProduct = {
         name: '',
         piece_selling_price: -10,
         piece_buying_price: 0,
-        stock: 0,
-        min_stock: 0,
-      };
+        quantity: 0,
+        min_quantity: 0,
+      } as ProductInsert;
       (api.post as jest.Mock).mockRejectedValue(new Error('Validation error'));
 
       await expect(productService.create(invalidProduct)).rejects.toThrow('Validation error');
@@ -130,10 +121,7 @@ describe('Product Service (Mobile Admin)', () => {
         name: 'Updated Product',
         piece_selling_price: 200,
       };
-      const mockResponse = {
-        data: { ...mockProduct, ...updates },
-      };
-      (api.put as jest.Mock).mockResolvedValue(mockResponse);
+      (api.put as jest.Mock).mockResolvedValue(wrap({ ...mockProduct, ...updates }));
 
       const product = await productService.update(1, updates);
 
@@ -143,25 +131,19 @@ describe('Product Service (Mobile Admin)', () => {
 
     it('should handle partial updates', async () => {
       const updates: ProductUpdate = {
-        stock: 75,
+        quantity: 75,
       };
-      const mockResponse = {
-        data: { ...mockProduct, stock: 75 },
-      };
-      (api.put as jest.Mock).mockResolvedValue(mockResponse);
+      (api.put as jest.Mock).mockResolvedValue(wrap({ ...mockProduct, quantity: 75 }));
 
       const product = await productService.update(1, updates);
 
-      expect(product.stock).toBe(75);
+      expect(product.quantity).toBe(75);
     });
   });
 
   describe('delete', () => {
     it('should delete a product', async () => {
-      const mockResponse = {
-        data: { message: 'Product deleted' },
-      };
-      (api.delete as jest.Mock).mockResolvedValue(mockResponse);
+      (api.delete as jest.Mock).mockResolvedValue({ data: { message: 'Product deleted' } });
 
       await productService.delete(1);
 

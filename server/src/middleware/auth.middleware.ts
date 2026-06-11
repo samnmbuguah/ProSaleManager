@@ -2,6 +2,14 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { Store, User } from "../models/index.js";
 
+const getJwtSecret = (): string => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("JWT_SECRET environment variable is not set");
+  }
+  return secret;
+};
+
 // Extend Express Request interface
 declare global {
   namespace Express {
@@ -75,7 +83,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
     return res.status(401).json({ message: "Access token required" });
   }
 
-  const jwtSecret = process.env.JWT_SECRET || "fallback-secret";
+  const jwtSecret = getJwtSecret();
 
   try {
     const decoded = jwt.verify(token, jwtSecret) as jwt.JwtPayload;
@@ -125,7 +133,7 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
     return next();
   }
 
-  const jwtSecret = process.env.JWT_SECRET || "fallback-secret";
+  const jwtSecret = getJwtSecret();
 
   try {
     const decoded = jwt.verify(token, jwtSecret) as jwt.JwtPayload;
@@ -175,7 +183,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
     return res.status(401).json({ message: "Authentication required" });
   }
 
-  const jwtSecret = process.env.JWT_SECRET || "fallback-secret";
+  const jwtSecret = getJwtSecret();
 
   try {
     const decoded = jwt.verify(token, jwtSecret) as jwt.JwtPayload;

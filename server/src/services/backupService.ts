@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs';
@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 interface DatabaseConfig {
   dialect: string;
@@ -69,9 +69,17 @@ class BackupService {
     try {
       // Use mariadb-dump if available (preferred on MariaDB servers), fallback to mysqldump
       const dumpBin = '/usr/bin/mariadb-dump';
-      const command = `${dumpBin} --no-tablespaces -h ${this.config.host} -u ${this.config.username} -p'${this.config.password}' ${this.config.database} > ${backupFile}`;
-
-      const { stderr } = await execAsync(command);
+      // execFile with an args array avoids shell interpolation of credentials;
+      // the password is passed via MYSQL_PWD so it never appears in the process list.
+      const { stdout, stderr } = await execFileAsync(
+        dumpBin,
+        ['--no-tablespaces', '-h', this.config.host, '-u', this.config.username, this.config.database],
+        {
+          env: { ...process.env, MYSQL_PWD: this.config.password },
+          maxBuffer: 1024 * 1024 * 512,
+        }
+      );
+      fs.writeFileSync(backupFile, stdout);
 
       if (stderr && !stderr.includes('mysqldump: [Warning]') && !stderr.includes('Deprecated program name')) {
         console.warn('Backup stderr:', stderr);

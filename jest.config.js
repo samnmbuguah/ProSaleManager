@@ -45,17 +45,15 @@ export default {
       statements: 70
     }
   },
-  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   testTimeout: 60000, // Increased to 60 seconds
   verbose: true,
-  clearMocks: true,
-  restoreMocks: true,
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   testPathIgnorePatterns: [
     '/node_modules/',
     '/dist/',
     '/build/',
-    '/coverage/'
+    '/coverage/',
+    '<rootDir>/tests/e2e/' // Playwright specs — run via `npm run test:e2e`
   ],
   transformIgnorePatterns: [
     'node_modules/(?!(.*\\.mjs$|@babel/runtime|@jest/globals))'
@@ -72,8 +70,6 @@ export default {
   clearMocks: true,
   // Restore mocks between tests
   restoreMocks: true,
-  // Better logging
-  logHeapUsage: true,
   // Show console output during tests
   silent: false
 };

@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, FlatList, RefreshControl, View } from 'react-native';
 import { Searchbar, ActivityIndicator, Snackbar } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { productService } from '@/services/productService';
+import { favoritesService } from '@/services/favoritesService';
 import { Product } from '@/types/product';
 import { ProductCard } from '@/components/shop/ProductCard';
 import { CartIcon } from '@/components/shop/CartIcon';
@@ -22,6 +23,8 @@ export default function ShopScreen() {
   const { user } = useAuth();
   const { addToCart } = useCart();
   const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [favoriteIds, setFavoriteIds] = useState<Set<number>>(new Set());
 
   const insets = useSafeAreaInsets();
 
@@ -38,9 +41,29 @@ export default function ShopScreen() {
     }
   };
 
+  const loadFavorites = useCallback(async () => {
+    if (!user) {
+      setFavoriteIds(new Set());
+      return;
+    }
+    try {
+      const favorites = await favoritesService.getFavorites();
+      setFavoriteIds(new Set((favorites || []).map(p => p.id)));
+    } catch (error) {
+      console.error('Failed to load favorites', error);
+    }
+  }, [user]);
+
   useEffect(() => {
     loadProducts();
   }, []);
+
+  // Refresh favorite state when returning to this tab (e.g. after removing in Favorites)
+  useFocusEffect(
+    useCallback(() => {
+      loadFavorites();
+    }, [loadFavorites])
+  );
 
   useEffect(() => {
     if (searchQuery) {
@@ -57,13 +80,50 @@ export default function ShopScreen() {
   const onRefresh = () => {
     setRefreshing(true);
     loadProducts();
+    loadFavorites();
   };
 
   const onChangeSearch = (query: string) => setSearchQuery(query);
 
   const handleAddToCart = (product: Product) => {
     addToCart(product, 1);
+    setSnackbarMessage('Item added to cart');
     setSnackbarVisible(true);
+  };
+
+  const handleToggleFavorite = async (product: Product) => {
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+    const wasFavorite = favoriteIds.has(product.id);
+    // Optimistic update
+    setFavoriteIds(prev => {
+      const next = new Set(prev);
+      if (wasFavorite) {
+        next.delete(product.id);
+      } else {
+        next.add(product.id);
+      }
+      return next;
+    });
+    try {
+      await favoritesService.toggleFavorite(product.id);
+      setSnackbarMessage(wasFavorite ? 'Removed from favorites' : 'Added to favorites');
+      setSnackbarVisible(true);
+    } catch (error) {
+      console.error('Failed to toggle favorite', error);
+      // Revert on failure
+      setFavoriteIds(prev => {
+        const next = new Set(prev);
+        if (wasFavorite) {
+          next.add(product.id);
+        } else {
+          next.delete(product.id);
+        }
+        return next;
+      });
+    }
   };
 
   if (loading) {
@@ -100,6 +160,8 @@ export default function ShopScreen() {
             <ProductCard
               product={item}
               onAddToCart={() => handleAddToCart(item)}
+              isFavorite={favoriteIds.has(item.id)}
+              onToggleFavorite={() => handleToggleFavorite(item)}
             />
           </View>
         )}
@@ -120,13 +182,13 @@ export default function ShopScreen() {
         onDismiss={() => setSnackbarVisible(false)}
         duration={2000}
         style={{ marginBottom: 20 }}
-        action={{
+        action={snackbarMessage === 'Item added to cart' ? {
           label: 'View Cart',
           onPress: () => {
             router.push('/cart');
           },
-        }}>
-        Item added to cart
+        } : undefined}>
+        {snackbarMessage}
       </Snackbar>
     </ThemedView>
   );

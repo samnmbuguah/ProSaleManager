@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Card, Text, Button, useTheme, Chip } from 'react-native-paper';
+import { Card, Text, Button, useTheme, Chip, IconButton } from 'react-native-paper';
 import { Product } from '@/types/product';
 import { ThemedText } from '../themed-text';
 
@@ -8,17 +8,31 @@ interface ProductCardProps {
     product: Product;
     onPress?: () => void;
     onAddToCart?: () => void;
+    isFavorite?: boolean;
+    onToggleFavorite?: () => void;
 }
 
-export const ProductCard = ({ product, onPress, onAddToCart }: ProductCardProps) => {
+export const ProductCard = ({ product, onPress, onAddToCart, isFavorite, onToggleFavorite }: ProductCardProps) => {
     const theme = useTheme();
 
-    const price = product.piece_selling_price || 0;
+    const price = Number(product.piece_selling_price) || 0;
     const imageUrl = product.image_url || 'https://via.placeholder.com/150';
 
     return (
         <Card style={styles.card} onPress={onPress}>
-            <Card.Cover source={{ uri: imageUrl }} style={styles.cover} />
+            <View>
+                <Card.Cover source={{ uri: imageUrl }} style={styles.cover} />
+                {onToggleFavorite && (
+                    <IconButton
+                        icon={isFavorite ? 'heart' : 'heart-outline'}
+                        iconColor={isFavorite ? theme.colors.error : theme.colors.onSurfaceVariant}
+                        size={20}
+                        style={styles.favoriteButton}
+                        onPress={onToggleFavorite}
+                        accessibilityLabel={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                    />
+                )}
+            </View>
             <Card.Content style={styles.content}>
                 <ThemedText type="defaultSemiBold" numberOfLines={1}>{product.name}</ThemedText>
                 <Text variant="bodySmall" numberOfLines={2} style={styles.description}>
@@ -58,6 +72,13 @@ const styles = StyleSheet.create({
         height: 160,
         borderTopLeftRadius: 12,
         borderTopRightRadius: 12,
+    },
+    favoriteButton: {
+        position: 'absolute',
+        top: 4,
+        right: 4,
+        margin: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.85)',
     },
     content: {
         padding: 12,

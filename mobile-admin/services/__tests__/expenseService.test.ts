@@ -1,6 +1,6 @@
 import { expenseService } from '../expenseService';
 import { api } from '../api';
-import { Expense, InsertExpense } from '../../types/expense';
+import { Expense, ExpensesResponse, InsertExpense } from '../../types/expense';
 
 jest.mock('../api');
 
@@ -10,7 +10,16 @@ const mockExpense: Expense = {
   amount: 500,
   category: 'Delivery',
   date: '2026-04-11',
+  payment_method: 'Cash',
+  user_id: 1,
   created_at: '2026-04-11T10:00:00Z',
+};
+
+const mockListResponse: ExpensesResponse = {
+  expenses: [mockExpense],
+  total: 1,
+  totalPages: 1,
+  currentPage: 1,
 };
 
 describe('Expense Service (Mobile Admin)', () => {
@@ -19,24 +28,32 @@ describe('Expense Service (Mobile Admin)', () => {
   });
 
   describe('getAll', () => {
-    it('should fetch all expenses successfully', async () => {
-      const mockResponse = {
-        data: [mockExpense],
-      };
-      (api.get as jest.Mock).mockResolvedValue(mockResponse);
+    it('should fetch paginated expenses successfully', async () => {
+      (api.get as jest.Mock).mockResolvedValue({ data: mockListResponse });
 
-      const expenses = await expenseService.getAll();
+      const result = await expenseService.getAll();
 
-      expect(api.get).toHaveBeenCalledWith('/expenses');
-      expect(expenses).toEqual([mockExpense]);
+      expect(api.get).toHaveBeenCalledWith('/expenses', { params: { page: 1, limit: 20 } });
+      expect(result.expenses).toEqual([mockExpense]);
+      expect(result.total).toBe(1);
+    });
+
+    it('should pass custom pagination params', async () => {
+      (api.get as jest.Mock).mockResolvedValue({ data: mockListResponse });
+
+      await expenseService.getAll(3, 50);
+
+      expect(api.get).toHaveBeenCalledWith('/expenses', { params: { page: 3, limit: 50 } });
     });
 
     it('should handle empty expenses list', async () => {
-      (api.get as jest.Mock).mockResolvedValue({ data: [] });
+      (api.get as jest.Mock).mockResolvedValue({
+        data: { expenses: [], total: 0, totalPages: 0, currentPage: 1 },
+      });
 
-      const expenses = await expenseService.getAll();
+      const result = await expenseService.getAll();
 
-      expect(expenses).toEqual([]);
+      expect(result.expenses).toEqual([]);
     });
 
     it('should handle API errors', async () => {
@@ -52,31 +69,33 @@ describe('Expense Service (Mobile Admin)', () => {
         description: 'Marketing Campaign',
         amount: 1000,
         category: 'Marketing',
+        payment_method: 'Cash',
         date: '2026-04-11',
       };
-      const mockResponse = {
-        data: { ...newExpense, id: 2, created_at: '2026-04-11T10:00:00Z' },
-      };
-      (api.post as jest.Mock).mockResolvedValue(mockResponse);
+      const created = { ...newExpense, id: 2, user_id: 1, created_at: '2026-04-11T10:00:00Z' };
+      (api.post as jest.Mock).mockResolvedValue({
+        data: { message: 'Expense created successfully', data: created },
+      });
 
       const expense = await expenseService.create(newExpense);
 
       expect(api.post).toHaveBeenCalledWith('/expenses', newExpense);
-      expect(expense).toEqual({ ...newExpense, id: 2, created_at: '2026-04-11T10:00:00Z' });
+      expect(expense).toEqual(created);
     });
 
     it('should handle different expense categories', async () => {
       const categories = ['Lunch', 'Delivery', 'Marketing', 'New Stock', 'Transport', 'Salary', 'Other'];
-      
+
       for (const category of categories) {
         const newExpense: InsertExpense = {
           description: `${category} Expense`,
           amount: 100,
-          category: category as any,
+          category: category as Expense['category'],
+          payment_method: 'Cash',
           date: '2026-04-11',
         };
         (api.post as jest.Mock).mockResolvedValue({
-          data: { ...newExpense, id: 1 },
+          data: { message: 'Expense created successfully', data: { ...newExpense, id: 1, user_id: 1 } },
         });
 
         const expense = await expenseService.create(newExpense);
@@ -90,6 +109,7 @@ describe('Expense Service (Mobile Admin)', () => {
         description: '',
         amount: -100,
         category: 'Other',
+        payment_method: 'Cash',
         date: '2026-04-11',
       };
       (api.post as jest.Mock).mockRejectedValue(new Error('Validation error'));

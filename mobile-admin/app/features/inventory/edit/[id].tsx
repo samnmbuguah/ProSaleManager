@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, View, Alert } from 'react-native';
-import { Appbar, TextInput, Button, HelperText, ActivityIndicator } from 'react-native-paper';
+import { Appbar, TextInput, Button, HelperText, ActivityIndicator, Menu } from 'react-native-paper';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ThemedView } from '@/components/themed-view';
 import { productService } from '@/services/productService';
+import { categoryService } from '@/services/categoryService';
 import { ProductUpdate, STOCK_UNITS } from '@/types/product';
+import { Category } from '@/types/category';
 
 const formSchema = z.object({
     name: z.string().min(1, 'Name is required'),
@@ -19,6 +21,7 @@ const formSchema = z.object({
     piece_buying_price: z.string().min(1, 'Required'),
     piece_selling_price: z.string().min(1, 'Required'),
     stock_unit: z.enum(STOCK_UNITS),
+    category_id: z.number().min(1, 'Category is required'),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -27,6 +30,8 @@ export default function EditProductScreen() {
     const { id } = useLocalSearchParams();
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [categoryMenuVisible, setCategoryMenuVisible] = useState(false);
 
     const { control, handleSubmit, formState: { errors }, reset } = useForm<FormData>({
         resolver: zodResolver(formSchema),
@@ -35,6 +40,18 @@ export default function EditProductScreen() {
     useEffect(() => {
         loadProduct();
     }, [id]);
+
+    useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                const data = await categoryService.getAll();
+                setCategories(data);
+            } catch (e) {
+                console.error('Failed to load categories', e);
+            }
+        };
+        loadCategories();
+    }, []);
 
     const loadProduct = async () => {
         try {
@@ -49,6 +66,7 @@ export default function EditProductScreen() {
                 piece_buying_price: String(product.piece_buying_price),
                 piece_selling_price: String(product.piece_selling_price),
                 stock_unit: product.stock_unit,
+                category_id: product.category_id ?? 0,
             });
         } catch (e) {
             Alert.alert('Error', 'Failed to load product');
@@ -71,6 +89,7 @@ export default function EditProductScreen() {
                 min_quantity: Number(data.min_quantity) || 0,
                 piece_buying_price: Number(data.piece_buying_price) || 0,
                 piece_selling_price: Number(data.piece_selling_price) || 0,
+                category_id: data.category_id,
             };
             await productService.update(Number(id), payload);
             Alert.alert('Success', 'Product updated successfully');
@@ -128,6 +147,46 @@ export default function EditProductScreen() {
                 />
                 <HelperText type="error" visible={!!errors.sku}>
                     {errors.sku?.message}
+                </HelperText>
+
+                <Controller
+                    control={control}
+                    name="category_id"
+                    render={({ field: { onChange, value } }) => (
+                        <Menu
+                            visible={categoryMenuVisible}
+                            onDismiss={() => setCategoryMenuVisible(false)}
+                            anchor={
+                                <TextInput
+                                    label="Category"
+                                    value={categories.find((c) => c.id === value)?.name ?? ''}
+                                    mode="outlined"
+                                    editable={false}
+                                    error={!!errors.category_id}
+                                    style={styles.input}
+                                    right={<TextInput.Icon icon="menu-down" onPress={() => setCategoryMenuVisible(true)} />}
+                                    onPressIn={() => setCategoryMenuVisible(true)}
+                                />
+                            }
+                        >
+                            {categories.length === 0 && (
+                                <Menu.Item title="No categories available" disabled />
+                            )}
+                            {categories.map((category) => (
+                                <Menu.Item
+                                    key={category.id}
+                                    title={category.name}
+                                    onPress={() => {
+                                        onChange(category.id);
+                                        setCategoryMenuVisible(false);
+                                    }}
+                                />
+                            ))}
+                        </Menu>
+                    )}
+                />
+                <HelperText type="error" visible={!!errors.category_id}>
+                    {errors.category_id?.message}
                 </HelperText>
 
                 <View style={styles.row}>

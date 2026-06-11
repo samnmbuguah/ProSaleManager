@@ -64,13 +64,7 @@ export function ProductForm({ initialData, onSubmit, isSubmitting }: ProductForm
     }
   }, [categories, form]);
 
-  // Debug: log form state on every render
-  React.useEffect(() => {
-    console.log("ProductForm form state:", form.getValues());
-  });
-
   const handleSubmit = async (data: z.infer<typeof productSchema>) => {
-    console.log("Submitting product form data:", data);
     await onSubmit(data);
   };
 

@@ -4,8 +4,12 @@ export default function FeaturesLayout() {
     return (
         <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="users/index" />
+            <Stack.Screen name="users/add/index" />
+            <Stack.Screen name="users/edit/[id]" />
             <Stack.Screen name="expenses/index" />
+            <Stack.Screen name="expenses/add" />
             <Stack.Screen name="profile/index" />
+            <Stack.Screen name="profile/edit" />
             <Stack.Screen name="reports/index" />
         </Stack>
     );

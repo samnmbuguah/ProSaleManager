@@ -32,7 +32,7 @@ describe('Product Service', () => {
 
       const products = await productService.getAll();
 
-      expect(api.get).toHaveBeenCalledWith('/products');
+      expect(api.get).toHaveBeenCalledWith('/products?limit=1000');
       expect(products).toEqual([mockProduct]);
     });
 

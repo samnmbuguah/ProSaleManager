@@ -93,19 +93,6 @@ export default function ProfileScreen() {
                         right={props => <List.Icon {...props} icon="chevron-right" />}
                         onPress={() => setThemeDialogVisible(true)}
                     />
-                    <List.Item
-                        title="Notifications"
-                        left={props => <List.Icon {...props} icon="bell-outline" />}
-                        right={props => <List.Icon {...props} icon="chevron-right" />}
-                        onPress={() => { }}
-                    />
-                    <List.Item
-                        title="Language"
-                        description="English"
-                        left={props => <List.Icon {...props} icon="translate" />}
-                        right={props => <List.Icon {...props} icon="chevron-right" />}
-                        onPress={() => { }}
-                    />
                 </List.Section>
 
                 <View style={styles.logoutContainer}>

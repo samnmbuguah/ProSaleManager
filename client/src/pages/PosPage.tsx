@@ -87,7 +87,6 @@ const PosPage: React.FC = () => {
 
   // Initialize displayed products when allProducts changes (including empty arrays)
   useEffect(() => {
-    console.log("allProducts changed:", allProducts?.length, "products");
     setDisplayedProducts(allProducts || []);
   }, [allProducts]);
 

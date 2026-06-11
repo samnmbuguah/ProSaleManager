@@ -1,6 +1,5 @@
 /**
- * Format a number as currency (KSh)
+ * Re-exported from lib/utils so the whole app shares one robust
+ * currency formatter (handles strings, null, and locale grouping).
  */
-export const formatCurrency = (amount: number): string => {
-  return `KSh ${amount.toFixed(2)}`;
-};
+export { formatCurrency } from "@/lib/utils";

@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, ScrollView, View, Alert } from 'react-native';
-import { Appbar, TextInput, Button, HelperText, ActivityIndicator } from 'react-native-paper';
+import { Appbar, TextInput, Button, HelperText, Menu } from 'react-native-paper';
 import { router } from 'expo-router';
 import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ThemedView } from '@/components/themed-view';
 import { productService } from '@/services/productService';
+import { categoryService } from '@/services/categoryService';
 import { ProductInsert, STOCK_UNITS } from '@/types/product';
+import { Category } from '@/types/category';
 
 // Schema for form validation - keep as strings for input handling
 const formSchema = z.object({
@@ -20,12 +22,15 @@ const formSchema = z.object({
     piece_buying_price: z.string().min(1, 'Required'),
     piece_selling_price: z.string().min(1, 'Required'),
     stock_unit: z.enum(STOCK_UNITS),
+    category_id: z.number().min(1, 'Category is required'),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function AddProductScreen() {
     const [loading, setLoading] = useState(false);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [categoryMenuVisible, setCategoryMenuVisible] = useState(false);
 
     const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
         resolver: zodResolver(formSchema),
@@ -39,8 +44,21 @@ export default function AddProductScreen() {
             piece_buying_price: '0',
             piece_selling_price: '0',
             stock_unit: 'piece',
+            category_id: 0,
         }
     });
+
+    useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                const data = await categoryService.getAll();
+                setCategories(data);
+            } catch (e) {
+                console.error('Failed to load categories', e);
+            }
+        };
+        loadCategories();
+    }, []);
 
     const onSubmit: SubmitHandler<FormData> = async (data) => {
         setLoading(true);
@@ -57,7 +75,7 @@ export default function AddProductScreen() {
                 piece_buying_price: Number(data.piece_buying_price) || 0,
                 piece_selling_price: Number(data.piece_selling_price) || 0,
 
-                category_id: 1, // Default Category for now
+                category_id: data.category_id,
                 pack_buying_price: 0,
                 pack_selling_price: 0,
                 dozen_buying_price: 0,
@@ -119,6 +137,46 @@ export default function AddProductScreen() {
                 />
                 <HelperText type="error" visible={!!errors.sku}>
                     {errors.sku?.message}
+                </HelperText>
+
+                <Controller
+                    control={control}
+                    name="category_id"
+                    render={({ field: { onChange, value } }) => (
+                        <Menu
+                            visible={categoryMenuVisible}
+                            onDismiss={() => setCategoryMenuVisible(false)}
+                            anchor={
+                                <TextInput
+                                    label="Category"
+                                    value={categories.find((c) => c.id === value)?.name ?? ''}
+                                    mode="outlined"
+                                    editable={false}
+                                    error={!!errors.category_id}
+                                    style={styles.input}
+                                    right={<TextInput.Icon icon="menu-down" onPress={() => setCategoryMenuVisible(true)} />}
+                                    onPressIn={() => setCategoryMenuVisible(true)}
+                                />
+                            }
+                        >
+                            {categories.length === 0 && (
+                                <Menu.Item title="No categories available" disabled />
+                            )}
+                            {categories.map((category) => (
+                                <Menu.Item
+                                    key={category.id}
+                                    title={category.name}
+                                    onPress={() => {
+                                        onChange(category.id);
+                                        setCategoryMenuVisible(false);
+                                    }}
+                                />
+                            ))}
+                        </Menu>
+                    )}
+                />
+                <HelperText type="error" visible={!!errors.category_id}>
+                    {errors.category_id?.message}
                 </HelperText>
 
                 <View style={styles.row}>

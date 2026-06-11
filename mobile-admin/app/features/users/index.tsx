@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { FlatList, StyleSheet } from 'react-native';
 import { Appbar, List, FAB, ActivityIndicator, IconButton, useTheme, Divider } from 'react-native-paper';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { userService } from '@/services/userService';
 import { User } from '@/types/user';
@@ -11,9 +11,11 @@ export default function UsersScreen() {
     const [loading, setLoading] = useState(true);
     const theme = useTheme();
 
-    useEffect(() => {
-        loadUsers();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            loadUsers();
+        }, [])
+    );
 
     const loadUsers = async () => {
         try {
@@ -45,7 +47,14 @@ export default function UsersScreen() {
                         title={item.name}
                         description={`${item.role} • ${item.email}`}
                         left={(props) => <List.Icon {...props} icon="account" />}
-                        right={(props) => <IconButton {...props} icon="pencil" onPress={() => { }} />}
+                        right={(props) => (
+                            <IconButton
+                                {...props}
+                                icon="pencil"
+                                onPress={() => router.push({ pathname: '/features/users/edit/[id]', params: { id: item.id } })}
+                            />
+                        )}
+                        onPress={() => router.push({ pathname: '/features/users/edit/[id]', params: { id: item.id } })}
                         style={{ backgroundColor: theme.colors.surface }}
                     />
                 )}
@@ -55,7 +64,7 @@ export default function UsersScreen() {
             <FAB
                 icon="plus"
                 style={styles.fab}
-                onPress={() => { }}
+                onPress={() => router.push('/features/users/add')}
             />
         </ThemedView>
     );
