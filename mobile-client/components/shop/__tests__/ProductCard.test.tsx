@@ -20,7 +20,7 @@ describe('ProductCard Component', () => {
     );
 
     expect(getByText('Test Product')).toBeTruthy();
-    expect(getByText('$150.00')).toBeTruthy();
+    expect(getByText('KSh 150.00')).toBeTruthy();
   });
 
   it('should call onPress when pressed', () => {
@@ -39,7 +39,7 @@ describe('ProductCard Component', () => {
       <ProductCard product={zeroPriceProduct} onPress={jest.fn()} />
     );
 
-    expect(getByText('$0.00')).toBeTruthy();
+    expect(getByText('KSh 0.00')).toBeTruthy();
   });
 
   it('should handle product with low stock', () => {

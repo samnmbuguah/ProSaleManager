@@ -6,6 +6,7 @@ import { productService } from '@/services/productService';
 import { Product } from '@/types/product';
 import { usePOSCart } from '@/context/POSContext';
 import { api } from '@/services/api';
+import { formatCurrency } from '@/utils/currency';
 
 export default function POSScreen() {
     const theme = useTheme();
@@ -111,7 +112,7 @@ export default function POSScreen() {
                     <View style={styles.totalRow}>
                         <Text variant="titleLarge">Total:</Text>
                         <Text variant="headlineMedium" style={{ fontWeight: 'bold', color: theme.colors.primary }}>
-                            ${cart.total.toFixed(2)}
+                            {formatCurrency(cart.total)}
                         </Text>
                     </View>
                     <Button
@@ -133,7 +134,7 @@ export default function POSScreen() {
             <Appbar.Header>
                 <Appbar.Content title="Point of Sale" />
                 <Appbar.Action icon="cart" onPress={() => setShowCart(true)} />
-                {cart.items.length > 0 && <Appbar.Content title={`$${cart.total.toFixed(2)}`} style={styles.totalHeader} titleStyle={{ fontSize: 16, fontWeight: 'bold' }} />}
+                {cart.items.length > 0 && <Appbar.Content title={formatCurrency(cart.total)} style={styles.totalHeader} titleStyle={{ fontSize: 16, fontWeight: 'bold' }} />}
             </Appbar.Header>
 
             <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>

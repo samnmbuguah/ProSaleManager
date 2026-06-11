@@ -11,6 +11,7 @@ import { Product } from '@/types/product';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { formatCurrency } from '@/utils/currency';
 
 export default function FavoritesScreen() {
     const [favorites, setFavorites] = useState<Product[]>([]);
@@ -121,7 +122,7 @@ export default function FavoritesScreen() {
                                     </Text>
                                 )}
                                 <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: 'bold', marginTop: 4 }}>
-                                    ${(Number(item.piece_selling_price) || 0).toFixed(2)}
+                                    {formatCurrency(item.piece_selling_price)}
                                 </Text>
                             </View>
                             <View style={styles.itemActions}>

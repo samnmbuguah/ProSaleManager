@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Card, Text, Button, useTheme, Chip, IconButton } from 'react-native-paper';
 import { Product } from '@/types/product';
 import { ThemedText } from '../themed-text';
+import { formatCurrency } from '@/utils/currency';
 
 interface ProductCardProps {
     product: Product;
@@ -41,7 +42,7 @@ export const ProductCard = ({ product, onPress, onAddToCart, isFavorite, onToggl
                 </Text>
                 <View style={styles.footer}>
                     <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
-                        ${price.toFixed(2)}
+                        {formatCurrency(price)}
                     </Text>
                     {product.quantity <= 0 ? (
                         <Chip icon="alert-circle" style={styles.chip}>Out of Stock</Chip>

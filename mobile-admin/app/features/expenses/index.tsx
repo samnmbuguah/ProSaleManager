@@ -5,6 +5,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { ThemedView } from '@/components/themed-view';
 import { expenseService } from '@/services/expenseService';
 import { Expense } from '@/types/expense';
+import { formatCurrency } from '@/utils/currency';
 
 const PAGE_SIZE = 20;
 
@@ -78,7 +79,7 @@ export default function ExpensesScreen() {
                     <List.Item
                         title={item.description}
                         description={`${item.category} • ${new Date(item.date).toLocaleDateString()}`}
-                        right={() => <Text style={styles.amount}>${Number(item.amount).toFixed(2)}</Text>}
+                        right={() => <Text style={styles.amount}>{formatCurrency(item.amount)}</Text>}
                     />
                 )}
                 ItemSeparatorComponent={() => <Divider />}

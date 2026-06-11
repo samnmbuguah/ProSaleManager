@@ -7,6 +7,7 @@ import { DashboardData } from '@/types/dashboard';
 import { useFocusEffect } from 'expo-router';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAuth } from '@/context/AuthContext';
+import { formatCurrency } from '@/utils/currency';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -130,7 +131,7 @@ export default function HomeScreen() {
           <View style={styles.col}>
             <StatCard
               title="Avg Order"
-              value={`$${data?.metrics.averageOrderValue.toFixed(2) ?? '0'}`}
+              value={formatCurrency(data?.metrics.averageOrderValue)}
               icon="creditcard.fill"
               color="#9C27B0"
             />

@@ -10,6 +10,7 @@ import { orderService } from '@/services/orderService';
 import { Sale } from '@/types/sale';
 import { useAuth } from '@/context/AuthContext';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { formatCurrency } from '@/utils/currency';
 
 const getStatusColor = (status: string, theme: MD3Theme) => {
     switch (status?.toLowerCase()) {
@@ -104,7 +105,7 @@ export default function OrdersScreen() {
                             <View style={styles.row}>
                                 <Text variant="titleMedium">Order #{item.id}</Text>
                                 <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.primary }}>
-                                    ${(Number(item.total_amount) || 0).toFixed(2)}
+                                    {formatCurrency(item.total_amount)}
                                 </Text>
                             </View>
                             <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginTop: 2 }}>

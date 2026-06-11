@@ -7,6 +7,7 @@ import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { orderService } from '@/services/orderService';
 import { Sale } from '@/types/sale';
+import { formatCurrency } from '@/utils/currency';
 
 const getStatusColor = (status: string, theme: MD3Theme) => {
     switch (status?.toLowerCase()) {
@@ -143,11 +144,11 @@ export default function OrderDetailsScreen() {
                                             {item.Product?.name || `Product #${item.product_id}`}
                                         </Text>
                                         <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                                            {item.quantity} x ${(Number(item.unit_price) || 0).toFixed(2)} / {item.unit_type}
+                                            {item.quantity} x {formatCurrency(item.unit_price)} / {item.unit_type}
                                         </Text>
                                     </View>
                                     <Text variant="bodyLarge" style={{ fontWeight: 'bold' }}>
-                                        ${(Number(item.total) || 0).toFixed(2)}
+                                        {formatCurrency(item.total)}
                                     </Text>
                                 </View>
                             </View>
@@ -156,13 +157,13 @@ export default function OrderDetailsScreen() {
                         {Number(order.delivery_fee) > 0 && (
                             <View style={styles.row}>
                                 <Text variant="bodyMedium">Delivery fee</Text>
-                                <Text variant="bodyMedium">${Number(order.delivery_fee).toFixed(2)}</Text>
+                                <Text variant="bodyMedium">{formatCurrency(order.delivery_fee)}</Text>
                             </View>
                         )}
                         <View style={styles.row}>
                             <Text variant="titleMedium">Total</Text>
                             <Text variant="titleLarge" style={{ fontWeight: 'bold', color: theme.colors.primary }}>
-                                ${(Number(order.total_amount) || 0).toFixed(2)}
+                                {formatCurrency(order.total_amount)}
                             </Text>
                         </View>
                     </Card.Content>

@@ -6,6 +6,7 @@ import { ThemedView } from '@/components/themed-view';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { orderService } from '@/services/orderService';
+import { formatCurrency } from '@/utils/currency';
 
 export default function CartScreen() {
     const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
@@ -154,10 +155,10 @@ export default function CartScreen() {
                         <Card.Content style={styles.cardContent}>
                             <View style={styles.itemInfo}>
                                 <Text variant="titleMedium">{item.product.name}</Text>
-                                <Text variant="bodyMedium">${item.unit_price.toFixed(2)} / {item.unit_type}</Text>
+                                <Text variant="bodyMedium">{formatCurrency(item.unit_price)} / {item.unit_type}</Text>
                             </View>
                             <View style={styles.totalInfo}>
-                                <Text variant="titleLarge" style={styles.price}>${item.total.toFixed(2)}</Text>
+                                <Text variant="titleLarge" style={styles.price}>{formatCurrency(item.total)}</Text>
                             </View>
                         </Card.Content>
                         <Divider />
@@ -177,7 +178,7 @@ export default function CartScreen() {
             <View style={styles.footer}>
                 <View style={styles.totalRow}>
                     <Text variant="titleLarge">Total:</Text>
-                    <Text variant="headlineMedium" style={styles.totalAmount}>${cart.total.toFixed(2)}</Text>
+                    <Text variant="headlineMedium" style={styles.totalAmount}>{formatCurrency(cart.total)}</Text>
                 </View>
                 <Button
                     mode="contained"
