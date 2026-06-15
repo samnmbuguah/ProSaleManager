@@ -198,6 +198,49 @@ Effort: ~4–6 dev-days spread out; none block Phases 1–5.
 
 ---
 
+## Phase 7 — AI assistant (OpenRouter, provider-agnostic)
+
+**Status: first ticket SHIPPED** — staff NL analytics over live store data.
+
+Architecture (all under `server/src/services/ai/`):
+- `aiClient.ts` — OpenAI-compatible client → OpenRouter, env-driven
+  (`AI_ENABLED/AI_BASE_URL/AI_API_KEY/AI_MODEL/AI_MODEL_FALLBACK/...`),
+  per-request timeout, primary→fallback model chain, **gracefully disabled when
+  no key** (endpoints return 503; dev/CI unaffected).
+- `tools/` — `get_sales_summary`, `get_top_products`, `get_inventory_status`,
+  `get_expenses_summary`. Each wraps Sequelize queries **scoped through
+  `storeScope(req.user)`** — the model cannot reach another store's data
+  regardless of prompt. `period.ts` resolves named windows in Nairobi time.
+- `agent.ts` — tool-calling loop, max 5 iterations, tool errors fed back to the
+  model (never crash), completion fn injectable for tests.
+- `guardrails.ts` — role gating (`STAFF_ROLES`, clients excluded) + a system
+  prompt that forbids inventing numbers and scopes the user to their store.
+- `routes/ai.ts` — `GET /api/ai/status`, `POST /api/ai/chat`
+  (requireAuth + store context + staff role, Zod-validated, dedicated 20/min
+  rate limit, PII-minimised audit log).
+- Web: `client/src/components/ai/AssistantWidget.tsx` — floating, staff-only,
+  status-gated chat; `services/aiService.ts`.
+- 21 server tests (period math, role gating, prompt, agent loop). `.env.example`
+  documents all `AI_*` vars.
+
+**Next tickets (not built):**
+1. Reorder suggestions tool (sales velocity + StockLog + Supplier).
+2. Product description / auto-categorisation on add (good free-model job).
+3. Daily insight push via the Notification model (cron → summary).
+4. Customer-facing assistant in mobile-client — separate, higher guardrails:
+   catalog RAG, `getMyOrders` tool, strict refusal of off-catalog requests.
+5. Mobile-admin assistant reusing the same `/api/ai/chat` endpoint.
+
+**Operational notes:** free OpenRouter models log/train on prompts and have weak
+tool-calling — use them only for low-stakes internal generation; point
+`AI_MODEL` at a reliable paid model for the tool-calling agent and anything
+customer-facing. Depends on Phase 1 (the validated, tested service layer the
+tools wrap) and synergises with Phase 5 (report services become tools).
+
+Effort to date: ~1.5 dev-days. Remaining tickets ~1–2 days each.
+
+---
+
 ## Sequencing
 
 ```

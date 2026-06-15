@@ -109,6 +109,10 @@ export const API_ENDPOINTS = {
     receive: `${API_BASE_URL}/stock/receive`,
     receiveBulk: `${API_BASE_URL}/stock/receive-bulk`,
   },
+  ai: {
+    status: `${API_BASE_URL}/ai/status`,
+    chat: `${API_BASE_URL}/ai/chat`,
+  },
   notifications: {
     list: `${API_BASE_URL}/notifications`,
     markRead: (id: number | string) => `${API_BASE_URL}/notifications/${id}/read`,

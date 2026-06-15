@@ -18,6 +18,7 @@ import posRoutes from "./pos.routes.js";
 import printingRoutes from "./printing.routes.js";
 import notificationRoutes from "./notifications.js";
 import stockRoutes from "./stock.js";
+import aiRoutes from "./ai.js";
 import { ApiError } from "../utils/api-error.js";
 
 const router = express.Router();
@@ -45,5 +46,6 @@ router.use("/pos", posRoutes);
 router.use("/printing", printingRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/stock", stockRoutes);
+router.use("/ai", aiRoutes);
 
 export default router;

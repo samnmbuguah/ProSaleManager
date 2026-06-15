@@ -3,6 +3,7 @@ import { Route, Switch } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 
 import { RoleBasedRoute } from "@/components/auth/RoleBasedRoute";
+import { AssistantWidget } from "@/components/ai/AssistantWidget";
 import MainNav from "@/components/layout/MainNav";
 import StoreNav from "@/components/layout/StoreNav";
 // Import your pages
@@ -224,6 +225,7 @@ function App() {
 
         <Route path="/admin" component={RootRedirect} />
       </Switch>
+      <AssistantWidget />
       <Toaster />
     </>
   );
