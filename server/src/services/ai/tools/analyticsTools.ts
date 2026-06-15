@@ -1,5 +1,12 @@
 import { Op } from "sequelize";
-import { Sale, SaleItem, Product, Expense } from "../../../models/index.js";
+import {
+  Sale,
+  SaleItem,
+  Product,
+  Expense,
+  ProductSupplier,
+  Supplier,
+} from "../../../models/index.js";
 import { storeScope } from "../../../utils/helpers.js";
 import { resolvePeriod, PERIOD_NAMES } from "./period.js";
 import type { ToolDefinition } from "../aiClient.js";
@@ -245,10 +252,159 @@ export const getExpensesSummary: AiTool = {
   },
 };
 
+export interface ReorderInput {
+  name: string;
+  sku: string;
+  quantity: number;
+  minimum: number;
+  buyingPrice: number;
+}
+
+export interface ReorderRow {
+  name: string;
+  sku: string;
+  currentStock: number;
+  minimum: number;
+  soldInPeriod: number;
+  dailyVelocity: number;
+  daysOfStockLeft: number | null;
+  suggestedReorderQty: number;
+  estimatedCost: number;
+  needsReorder: boolean;
+}
+
+/**
+ * Pure reorder maths for one product. `sold` is units sold over `days` days;
+ * `coverageDays` is how long the reorder should last. Exported for unit tests.
+ */
+export function computeReorderRow(
+  p: ReorderInput,
+  sold: number,
+  days: number,
+  coverageDays: number,
+): ReorderRow {
+  const span = Math.max(days, 1);
+  const velocity = sold / span;
+  const daysLeft = velocity > 0 ? p.quantity / velocity : null;
+  const target = Math.ceil(velocity * coverageDays);
+  const suggestedReorderQty = Math.max(Math.max(target, p.minimum) - p.quantity, 0);
+  const needsReorder = p.quantity <= p.minimum || (daysLeft !== null && daysLeft <= coverageDays);
+  return {
+    name: p.name,
+    sku: p.sku,
+    currentStock: p.quantity,
+    minimum: p.minimum,
+    soldInPeriod: sold,
+    dailyVelocity: Math.round(velocity * 100) / 100,
+    daysOfStockLeft: daysLeft === null ? null : Math.round(daysLeft * 10) / 10,
+    suggestedReorderQty,
+    estimatedCost: Math.round(suggestedReorderQty * p.buyingPrice * 100) / 100,
+    needsReorder,
+  };
+}
+
+export const getReorderSuggestions: AiTool = {
+  definition: {
+    type: "function",
+    function: {
+      name: "get_reorder_suggestions",
+      description:
+        "Products that should be restocked, based on recent sales velocity and current stock. Returns days of stock left, a suggested reorder quantity to cover the target days, estimated cost (KES) and the preferred supplier. Use this for purchasing decisions.",
+      parameters: {
+        type: "object",
+        properties: {
+          period: {
+            type: "string",
+            enum: PERIOD_NAMES,
+            description: "Window used to measure sales velocity. Default last_30_days.",
+          },
+          coverageDays: {
+            type: "number",
+            description: "Target days of stock the reorder should cover. Default 14.",
+          },
+          limit: { type: "number", description: "Max suggestions (default 15, max 30)." },
+          includeAll: {
+            type: "boolean",
+            description: "If true, include products that don't need reordering. Default false.",
+          },
+        },
+      },
+    },
+  },
+  run: async (args, ctx) => {
+    const period = (args.period as string) || "last_30_days";
+    const { start, end, label } = resolvePeriod(period);
+    const coverageDays = Math.min(Math.max(num(args.coverageDays) || 14, 1), 120);
+    const limit = Math.min(Math.max(num(args.limit) || 15, 1), 30);
+    const includeAll = args.includeAll === true;
+    const days = Math.max((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000), 1);
+
+    // Units sold per product over the window (completed sales only).
+    const sales = await loadCompletedSales(ctx, start, end);
+    const soldByProduct = new Map<number, number>();
+    for (const sale of sales)
+      for (const item of sale.items || [])
+        soldByProduct.set(item.product_id, (soldByProduct.get(item.product_id) || 0) + num(item.quantity));
+
+    const products = await Product.findAll({
+      where: storeScope(ctx, { is_active: true }),
+      attributes: ["id", "name", "sku", "quantity", "min_quantity", "piece_buying_price"],
+    });
+
+    // Preferred supplier per product (falls back to any supplier link).
+    const links = (await ProductSupplier.findAll({
+      where: storeScope(ctx, { product_id: { [Op.in]: products.map((p) => p.id!) } }),
+      include: [{ model: Supplier, attributes: ["id", "name"] }],
+    })) as Array<ProductSupplier & { Supplier?: { name?: string } }>;
+    const supplierByProduct = new Map<number, string>();
+    for (const link of links) {
+      const name = link.Supplier?.name;
+      if (!name) continue;
+      if (link.is_preferred || !supplierByProduct.has(link.product_id)) {
+        supplierByProduct.set(link.product_id, name);
+      }
+    }
+
+    const rows = products.map((p) => {
+      const sold = soldByProduct.get(p.id!) || 0;
+      const row = computeReorderRow(
+        {
+          name: p.name,
+          sku: p.sku,
+          quantity: num(p.quantity),
+          minimum: num(p.min_quantity),
+          buyingPrice: num(p.piece_buying_price),
+        },
+        sold,
+        days,
+        coverageDays,
+      );
+      return { ...row, supplier: supplierByProduct.get(p.id!) || null };
+    });
+
+    const selected = (includeAll ? rows : rows.filter((r) => r.needsReorder))
+      .sort((a, b) => {
+        const da = a.daysOfStockLeft ?? Number.MAX_SAFE_INTEGER;
+        const db = b.daysOfStockLeft ?? Number.MAX_SAFE_INTEGER;
+        return da - db || a.currentStock - b.currentStock;
+      })
+      .slice(0, limit);
+
+    return {
+      period: label,
+      coverageDays,
+      currency: "KES",
+      count: selected.length,
+      suggestions: selected,
+    };
+  },
+};
+
 /** All analytics tools, keyed by function name. */
 export const ANALYTICS_TOOLS: Record<string, AiTool> = {
   get_sales_summary: getSalesSummary,
   get_top_products: getTopProducts,
   get_inventory_status: getInventoryStatus,
   get_expenses_summary: getExpensesSummary,
+  get_reorder_suggestions: getReorderSuggestions,
 };

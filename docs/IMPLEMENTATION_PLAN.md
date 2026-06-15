@@ -223,8 +223,11 @@ Architecture (all under `server/src/services/ai/`):
 - 21 server tests (period math, role gating, prompt, agent loop). `.env.example`
   documents all `AI_*` vars.
 
-**Next tickets (not built):**
-1. Reorder suggestions tool (sales velocity + StockLog + Supplier).
+**Next tickets:**
+1. ~~Reorder suggestions tool (sales velocity + Supplier).~~ **SHIPPED** —
+   `get_reorder_suggestions`: velocity over a window → days of stock left,
+   suggested reorder qty to a coverage target, estimated cost, preferred
+   supplier. Pure maths extracted to `computeReorderRow` + 5 unit tests.
 2. Product description / auto-categorisation on add (good free-model job).
 3. Daily insight push via the Notification model (cron → summary).
 4. Customer-facing assistant in mobile-client — separate, higher guardrails:
