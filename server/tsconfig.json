@@ -16,5 +16,5 @@
     "typeRoots": ["./node_modules/@types", "./src/types"]
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "dist", "scripts", "src/scripts"]
+  "exclude": ["node_modules", "dist", "scripts", "src/scripts/recreate-eltee-db.ts", "src/scripts/seed-production.ts"]
 }

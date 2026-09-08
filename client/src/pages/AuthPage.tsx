@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff, ShieldCheck, Store, UserRoundCog, ScanLine, ShoppingBag } from "lucide-react";
 import { useLocation } from "wouter";
 
 const loginSchema = z.object({
@@ -18,6 +18,14 @@ const loginSchema = z.object({
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
+
+const demoAccounts = [
+  { role: "Super Admin", email: "demo.superadmin@prosale.com", password: "Demo123!", icon: ShieldCheck, description: "Platform-wide administration" },
+  { role: "Store Admin", email: "demo.admin@prosale.com", password: "Demo123!", icon: Store, description: "Complete store management" },
+  { role: "Manager", email: "demo.manager@prosale.com", password: "Demo123!", icon: UserRoundCog, description: "Operations and reporting" },
+  { role: "Cashier", email: "demo.cashier@prosale.com", password: "Demo123!", icon: ScanLine, description: "Point of sale workflow" },
+  { role: "Customer", email: "demo.customer@prosale.com", password: "Demo123!", icon: ShoppingBag, description: "Customer storefront view" },
+] as const;
 
 export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -112,14 +120,44 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4 py-10">
+      <Card className="w-full max-w-4xl shadow-lg">
         <CardHeader>
-          <CardTitle>Login</CardTitle>
-          <CardDescription>{"Welcome back! Please login to continue."}</CardDescription>
+          <CardTitle className="text-2xl">ProSaleManager Demo</CardTitle>
+          <CardDescription>Choose a demo role to explore, or enter credentials manually.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={loginForm.handleSubmit(onSubmit)} className="space-y-4">
+        <CardContent className="grid gap-8 md:grid-cols-[1.25fr_1fr]">
+          <section aria-labelledby="demo-roles-title">
+            <h2 id="demo-roles-title" className="mb-3 text-sm font-semibold">Explore as a demo user</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {demoAccounts.map((account) => {
+                const Icon = account.icon;
+                return (
+                  <Button
+                    key={account.role}
+                    type="button"
+                    variant="outline"
+                    className="h-auto justify-start gap-3 p-4 text-left"
+                    disabled={isLoading}
+                    onClick={() => {
+                      loginForm.setValue("email", account.email, { shouldValidate: true });
+                      loginForm.setValue("password", account.password, { shouldValidate: true });
+                      void loginForm.handleSubmit(onSubmit)();
+                    }}
+                  >
+                    <Icon className="h-5 w-5 shrink-0 text-primary" />
+                    <span>
+                      <span className="block font-semibold">{account.role}</span>
+                      <span className="block text-xs font-normal text-muted-foreground">{account.description}</span>
+                    </span>
+                  </Button>
+                );
+              })}
+            </div>
+            <p className="mt-4 text-xs text-muted-foreground">Demo accounts contain fictional data and may be reset periodically.</p>
+          </section>
+          <form onSubmit={loginForm.handleSubmit(onSubmit)} className="space-y-4 border-t pt-6 md:border-l md:border-t-0 md:pl-8 md:pt-0">
+            <h2 className="text-sm font-semibold">Manual login</h2>
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
                 Email

@@ -1,37 +1,45 @@
-version: "3.8"
-
 services:
   app:
     build: .
+    container_name: prosale_app
+    restart: unless-stopped
     environment:
-      - DATABASE_URL=postgresql://prosalemanager:prosalepassword@db:5432/prosaledatabase
+      - NODE_ENV=production
+      - PORT=5000
       - DB_HOST=db
-      - DB_PORT=5432
+      - DB_PORT=3306
       - DB_USER=prosalemanager
-      - DB_PASSWORD=prosalepassword
+      - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=prosaledatabase
-    volumes:
-      - .:/app
+      - JWT_SECRET=${JWT_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - CLIENT_URL=https://prosale.169-58-102-217.sslip.io
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - default
+      - caddy_default
 
   db:
-    image: postgres:17
-    ports:
-      - "5432:5432"
+    image: mariadb:11
+    restart: unless-stopped
     environment:
-      - POSTGRES_USER=prosalemanager
-      - POSTGRES_PASSWORD=prosalepassword
-      - POSTGRES_DB=prosaledatabase
+      - MARIADB_USER=prosalemanager
+      - MARIADB_PASSWORD=${DB_PASSWORD}
+      - MARIADB_DATABASE=prosaledatabase
+      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U prosalemanager -d prosaledatabase"]
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
 
 volumes:
   postgres_data:
+
+networks:
+  caddy_default:
+    external: true

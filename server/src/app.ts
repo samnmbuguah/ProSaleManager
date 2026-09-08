@@ -93,6 +93,7 @@ const allowedOrigins = [
   "https://www.eltee.store",
   "https://byccollections.com",
   "https://www.byccollections.com",
+  "https://prosale.169-58-102-217.sslip.io",
 ];
 
 // Helper to allow *.local:5173 in dev
@@ -103,6 +104,7 @@ function isAllowedOrigin(origin: string) {
   if (/^https?:\/\/([a-z0-9-]+\.)*eltee\.store$/.test(origin)) return true;
   // Allow any subdomain of byccollections.com (http or https)
   if (/^https?:\/\/([a-z0-9-]+\.)*byccollections\.com$/.test(origin)) return true;
+  if (/^https:\/\/[a-z0-9-]+\.169-58-102-217\.sslip\.io$/.test(origin)) return true;
   // Allow any subdomain of .local:5173 or .local:5174 in dev
   if (/^http:\/\/[a-z0-9-]+\.local:517(3|4)$/.test(origin)) return true;
   return false;

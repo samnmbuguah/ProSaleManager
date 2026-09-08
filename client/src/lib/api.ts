@@ -2,7 +2,7 @@ import axios from "axios";
 import { API_ENDPOINTS } from "./api-endpoints";
 import { toast } from "@/components/ui/use-toast";
 
-const isDevelopment = process.env.NODE_ENV === "development";
+const isDevelopment = import.meta.env.DEV;
 
 // API Configuration
 const API_CONFIG = {
