@@ -6,9 +6,11 @@ import { api } from "@/lib/api";
 import type { Customer } from "@/types/customer";
 import CustomerFormDialog from "../components/customers/CustomerFormDialog";
 import { useCustomers } from "@/hooks/useCustomers";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 const CustomersPage = () => {
   const { toast } = useToast();
+  const confirm = useConfirm();
   // Replace Redux with useCustomers hook
   const { customers, isLoading, fetchCustomers } = useCustomers();
 
@@ -129,7 +131,13 @@ const CustomersPage = () => {
   };
 
   const handleDeleteCustomer = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this customer?")) {
+    const confirmed = await confirm({
+      title: "Delete customer?",
+      description: "Are you sure you want to delete this customer? This action cannot be undone.",
+      confirmText: "Delete",
+      destructive: true,
+    });
+    if (!confirmed) {
       return;
     }
     await deleteCustomerMutation.mutateAsync(id);

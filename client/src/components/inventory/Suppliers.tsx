@@ -28,12 +28,14 @@ import {
   useUpdateSupplier,
   useDeleteSupplier,
 } from "@/hooks/use-suppliers-query";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 const Suppliers = () => {
   const { data: suppliers = [], isLoading, error, refetch } = useSuppliersQuery();
   const createSupplierMutation = useCreateSupplier();
   const updateSupplierMutation = useUpdateSupplier();
   const deleteSupplierMutation = useDeleteSupplier();
+  const confirm = useConfirm();
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -124,7 +126,13 @@ const Suppliers = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this supplier?")) {
+    const confirmed = await confirm({
+      title: "Delete supplier?",
+      description: "Are you sure you want to delete this supplier? This action cannot be undone.",
+      confirmText: "Delete",
+      destructive: true,
+    });
+    if (!confirmed) {
       return;
     }
 

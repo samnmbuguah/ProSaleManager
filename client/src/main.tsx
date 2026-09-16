@@ -10,6 +10,7 @@ import { StoreProvider } from "@/contexts/StoreContext";
 import { StoreDataProvider } from "@/contexts/StoreDataContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ConfirmDialogProvider } from "@/components/ui/confirm-dialog";
 
 const root = document.getElementById("root") as HTMLElement;
 createRoot(root).render(
@@ -21,7 +22,9 @@ createRoot(root).render(
             <StoreDataProvider>
               <CartProvider>
                 <ThemeProvider defaultTheme="light" storageKey="app-ui-theme">
-                  <App />
+                  <ConfirmDialogProvider>
+                    <App />
+                  </ConfirmDialogProvider>
                 </ThemeProvider>
               </CartProvider>
             </StoreDataProvider>

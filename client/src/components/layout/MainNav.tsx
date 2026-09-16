@@ -312,10 +312,20 @@ export default function MainNav() {
               onOpenChange={setNotificationsOpen}
             >
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative"
+                  aria-label={
+                    unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"
+                  }
+                >
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] sm:text-xs px-1">
+                    <span
+                      aria-live="polite"
+                      className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] sm:text-xs px-1"
+                    >
                       {unreadCount}
                     </span>
                   )}
@@ -401,10 +411,14 @@ export default function MainNav() {
               size="icon"
               onClick={() => setCartOpen(true)}
               className="relative"
+              aria-label={`Open cart, ${cart.items.length} item${cart.items.length === 1 ? "" : "s"}`}
             >
               <ShoppingCart className="h-5 w-5" />
               {cart.items.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] sm:text-xs px-1">
+                <span
+                  aria-live="polite"
+                  className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[10px] sm:text-xs px-1"
+                >
                   {cart.items.length}
                 </span>
               )}

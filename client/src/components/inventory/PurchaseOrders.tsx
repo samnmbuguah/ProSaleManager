@@ -25,6 +25,7 @@ import { PurchaseOrderDetails } from "./PurchaseOrderDetails";
 import type { Supplier } from "@/types/supplier";
 import { AppRole } from "@/types/user";
 import { CreatePurchaseOrder } from "./CreatePurchaseOrder";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 
 export function PurchaseOrders({
@@ -38,6 +39,7 @@ export function PurchaseOrders({
   const { user } = useAuthContext();
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
+  const confirm = useConfirm();
 
   const [markingReceivedId, setMarkingReceivedId] = useState<number | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
@@ -70,12 +72,12 @@ export function PurchaseOrders({
   };
 
   const handleMarkReceived = async (orderId: number) => {
-    if (
-      !window.confirm(
-        "Are you sure you want to mark this order as received? This will update inventory quantities."
-      )
-    )
-      return;
+    const confirmed = await confirm({
+      title: "Mark order as received?",
+      description: "This will update inventory quantities based on the received order.",
+      confirmText: "Mark received",
+    });
+    if (!confirmed) return;
     setMarkingReceivedId(orderId);
     try {
       await updatePurchaseOrderStatus({ id: orderId, status: "received" });
@@ -105,7 +107,13 @@ export function PurchaseOrders({
 
   // Delete order handler
   const handleDeleteOrder = async (orderId: number) => {
-    if (!window.confirm("Are you sure you want to delete this purchase order? This action cannot be undone.")) return;
+    const confirmed = await confirm({
+      title: "Delete purchase order?",
+      description: "Are you sure you want to delete this purchase order? This action cannot be undone.",
+      confirmText: "Delete",
+      destructive: true,
+    });
+    if (!confirmed) return;
 
     try {
       await api.delete(API_ENDPOINTS.purchaseOrders.delete(orderId));

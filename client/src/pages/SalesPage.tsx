@@ -38,6 +38,7 @@ import { useStoreContext } from "@/contexts/StoreContext";
 import { useSalesQuery, useOrdersQuery, useDeleteSale } from "@/hooks/use-sales-query";
 import { ReceiptDialog } from "@/components/pos/ReceiptDialog";
 import { EditSaleDialog } from "@/components/sales/EditSaleDialog";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 interface OrderItem {
   id: number;
@@ -138,6 +139,7 @@ export function SalesPage() {
   const pageSize = 10;
   const { user } = useAuthContext();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [receiptSettingsOpen, setReceiptSettingsOpen] = useState(false);
   const [viewReceiptOpen, setViewReceiptOpen] = useState(false);
@@ -190,9 +192,13 @@ export function SalesPage() {
       return;
     }
 
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this sale? This action cannot be undone and will restore inventory."
-    );
+    const confirmed = await confirm({
+      title: "Delete sale?",
+      description:
+        "This action cannot be undone and will restore inventory for the sold items.",
+      confirmText: "Delete",
+      destructive: true,
+    });
 
     if (!confirmed) return;
 
