@@ -57,6 +57,14 @@ const registerSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 type RegisterFormData = z.infer<typeof registerSchema>;
 
+const demoAccounts = [
+  { label: "Super Admin", email: "demo.superadmin@prosale.com" },
+  { label: "Store Admin", email: "demo.admin@prosale.com" },
+  { label: "Manager", email: "demo.manager@prosale.com" },
+  { label: "Cashier", email: "demo.cashier@prosale.com" },
+  { label: "Customer", email: "demo.customer@prosale.com" },
+] as const;
+
 export default function HomePage() {
   const { products: rawProducts, isLoading, refetch: refetchProducts } = useProducts();
   const products = Array.isArray(rawProducts) ? rawProducts : [];
@@ -594,7 +602,7 @@ export default function HomePage() {
 
       {/* Auth Dialog */}
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
-        <DialogContent className="max-w-md border-0 shadow-2xl">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto border-0 shadow-2xl">
           <DialogHeader className="text-center pb-4">
             <div className="mx-auto w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-4">
               <User className="w-6 h-6 text-white" />
@@ -608,6 +616,34 @@ export default function HomePage() {
                 : "Join us to complete your order and enjoy exclusive benefits"}
             </DialogDescription>
           </DialogHeader>
+
+          {isLogin && (
+            <section className="rounded-xl border border-blue-100 bg-blue-50/60 p-4" aria-labelledby="demo-login-title">
+              <div className="mb-3">
+                <h3 id="demo-login-title" className="font-semibold text-gray-900">Quick demo login</h3>
+                <p className="text-sm text-gray-600">Choose a role to explore the demo instantly.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {demoAccounts.map((account) => (
+                  <Button
+                    key={account.label}
+                    type="button"
+                    variant="outline"
+                    className="h-auto min-h-11 whitespace-normal bg-white px-3 py-2 text-sm"
+                    disabled={isSubmitting}
+                    onClick={() => {
+                      loginForm.setValue("email", account.email, { shouldValidate: true });
+                      loginForm.setValue("password", "Demo123!", { shouldValidate: true });
+                      void loginForm.handleSubmit(onSubmit)();
+                    }}
+                  >
+                    {account.label}
+                  </Button>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-gray-500">Fictional demo data · accounts may reset periodically</p>
+            </section>
+          )}
 
           <form
             onSubmit={

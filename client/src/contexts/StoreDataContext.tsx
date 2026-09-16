@@ -43,7 +43,7 @@ export const StoreDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             if (Array.isArray(response.data.data)) return response.data.data;
             return [];
         },
-        enabled: !!currentStore && isAuthenticated && !isStoreLoading,
+        enabled: !!currentStore && !isStoreLoading,
     });
 
     // Customers Query

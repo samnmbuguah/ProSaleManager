@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import path from "path";
 import process from "process";
+import { resolveStore } from "./middleware/auth.middleware.js";
 
 // Load environment variables
 dotenv.config();
@@ -127,6 +128,7 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
+app.use(resolveStore);
 
 // Rate limiting
 const limiter = rateLimit({
