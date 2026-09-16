@@ -2,8 +2,9 @@ import multer from "multer";
 import { Request } from "express";
 import path from "path";
 import fs from "fs";
+import { isCloudinaryConfigured } from "../config/cloudinary.js";
 
-const useCloudinary = !!process.env.CLOUDINARY_URL;
+const useCloudinary = isCloudinaryConfigured();
 
 // Configure multer for memory or disk storage
 const storage = useCloudinary

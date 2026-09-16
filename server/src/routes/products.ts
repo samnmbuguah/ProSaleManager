@@ -4,9 +4,8 @@ import Category from "../models/Category.js";
 import { Op, Sequelize } from "sequelize";
 import upload, { getImageUrl } from "../middleware/upload.js";
 import { requireStoreContext } from "../middleware/store-context.middleware.js";
-import { requireAuth, requireRole } from "../middleware/auth.middleware.js";
-// Cloudinary import commented out for testing
-// import cloudinary from "../config/cloudinary.js";
+import { optionalAuth, requireAuth, requireRole } from "../middleware/auth.middleware.js";
+import { isCloudinaryConfigured, uploadImage } from "../services/image.service.js";
 import PurchaseOrderItem from "../models/PurchaseOrderItem.js";
 import { param } from "../utils/params.js";
 
@@ -14,12 +13,11 @@ const router = Router();
 
 // Helper function to upload image to Cloudinary
 async function uploadToCloudinary(file: Express.Multer.File): Promise<string> {
-  // For testing, just return a placeholder URL
-  return `https://example.com/products/${file.originalname}`;
+  return uploadImage(file);
 }
 
 // Get all products with filtering and pagination
-router.get("/", requireAuth, requireStoreContext, async (req, res) => {
+router.get("/", optionalAuth, requireStoreContext, async (req, res) => {
   try {
     const {
       page = 1,
@@ -51,6 +49,8 @@ router.get("/", requireAuth, requireStoreContext, async (req, res) => {
     if (req.user && req.user.store_id) {
       console.log(`[Products] Filtering by store_id: ${req.user.store_id}`);
       where.store_id = req.user.store_id;
+    } else if (req.store?.id) {
+      where.store_id = req.store.id;
     } else {
       console.log(`[Products] NO store_id filter applied! User Role: ${req.user?.role}, StoreID: ${req.user?.store_id}`);
     }
@@ -320,7 +320,7 @@ router.post("/", requireAuth, requireRole(["admin", "manager", "super_admin"]), 
       for (const file of req.files) {
         try {
           let imageUrl;
-          if (process.env.CLOUDINARY_URL) {
+          if (isCloudinaryConfigured()) {
             imageUrl = await uploadToCloudinary(file);
           } else {
             imageUrl = getImageUrl(file);
@@ -343,7 +343,7 @@ router.post("/", requireAuth, requireRole(["admin", "manager", "super_admin"]), 
     } else if (req.file) {
       // Handle single image (backward compatibility)
       try {
-        if (process.env.CLOUDINARY_URL) {
+        if (isCloudinaryConfigured()) {
           image_url = await uploadToCloudinary(req.file);
         } else {
           image_url = getImageUrl(req.file);
@@ -525,7 +525,7 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager", "super_admin"])
       for (const file of req.files) {
         try {
           let imageUrl;
-          if (process.env.CLOUDINARY_URL) {
+          if (isCloudinaryConfigured()) {
             imageUrl = await uploadToCloudinary(file);
           } else {
             imageUrl = getImageUrl(file);
@@ -557,7 +557,7 @@ router.put("/:id", requireAuth, requireRole(["admin", "manager", "super_admin"])
       // Handle single image (backward compatibility)
       try {
         let imageUrl;
-        if (process.env.CLOUDINARY_URL) {
+        if (isCloudinaryConfigured()) {
           imageUrl = await uploadToCloudinary(req.file);
         } else {
           imageUrl = getImageUrl(req.file);
