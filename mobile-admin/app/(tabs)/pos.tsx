@@ -4,9 +4,12 @@ import { Appbar, Searchbar, List, FAB, Button, Text, Divider, IconButton, Activi
 import { ThemedView } from '@/components/themed-view';
 import { productService } from '@/services/productService';
 import { Product } from '@/types/product';
+import { Sale } from '@/types/sale';
 import { usePOSCart } from '@/context/POSContext';
 import { api } from '@/services/api';
 import { formatCurrency } from '@/utils/currency';
+import { hardware, saleToReceipt, setupDefaultHardware } from '@/services/hardware';
+import { useBarcodeWedgeScanner } from '@/hooks/use-barcode-wedge-scanner';
 
 export default function POSScreen() {
     const theme = useTheme();
@@ -20,6 +23,7 @@ export default function POSScreen() {
     const [checkoutLoading, setCheckoutLoading] = useState(false);
 
     useEffect(() => {
+        setupDefaultHardware();
         loadProducts();
     }, []);
 
@@ -37,15 +41,34 @@ export default function POSScreen() {
 
     useEffect(() => {
         if (searchQuery) {
+            const q = searchQuery.toLowerCase();
             const filtered = products.filter(p =>
-                p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                p.sku.toLowerCase().includes(searchQuery.toLowerCase())
+                p.name.toLowerCase().includes(q) ||
+                p.sku.toLowerCase().includes(q) ||
+                (p.barcode ?? '').toLowerCase().includes(q)
             );
             setFilteredProducts(filtered);
         } else {
             setFilteredProducts(products);
         }
     }, [searchQuery, products]);
+
+    const handleBarcodeScan = (code: string) => {
+        const normalized = code.trim().toLowerCase();
+        const match = products.find(
+            (p) =>
+                (p.barcode ?? '').toLowerCase() === normalized ||
+                p.sku.toLowerCase() === normalized
+        );
+        if (match) {
+            addToCart(match);
+        } else {
+            Alert.alert('Not found', `No product matches barcode "${code}".`);
+        }
+        setSearchQuery('');
+    };
+
+    const scanner = useBarcodeWedgeScanner(handleBarcodeScan);
 
     const handleCheckout = async () => {
         if (cart.items.length === 0) return;
@@ -64,9 +87,22 @@ export default function POSScreen() {
             };
 
             const response = await api.post('/sales', orderData);
-            Alert.alert('Success', 'Sale completed successfully');
+            const sale = response.data?.data as Sale | undefined;
+
             clearCart();
             setShowCart(false);
+
+            if (sale) {
+                const result = await hardware.printReceipt(saleToReceipt(sale));
+                Alert.alert(
+                    'Success',
+                    result.printed
+                        ? 'Sale completed and receipt sent to the printer.'
+                        : 'Sale completed successfully'
+                );
+            } else {
+                Alert.alert('Success', 'Sale completed successfully');
+            }
         } catch (e: any) {
             Alert.alert('Error', e.message || 'Failed to complete sale');
         } finally {
@@ -93,7 +129,7 @@ export default function POSScreen() {
                     renderItem={({ item }) => (
                         <List.Item
                             title={item.product.name}
-                            description={`$${item.unit_price} x ${item.quantity} ${item.unit_type}`}
+                            description={`${formatCurrency(Number(item.unit_price))} x ${item.quantity} ${item.unit_type}`}
                             left={props => <List.Icon {...props} icon="package-variant" />}
                             right={() => (
                                 <View style={styles.cartActions}>
@@ -139,8 +175,12 @@ export default function POSScreen() {
 
             <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface }]}>
                 <Searchbar
-                    placeholder="Search products..."
-                    onChangeText={setSearchQuery}
+                    placeholder="Search products or scan barcode..."
+                    onChangeText={(text) => {
+                        setSearchQuery(text);
+                        scanner.handleChange(text);
+                    }}
+                    onSubmitEditing={() => scanner.handleSubmit(searchQuery)}
                     value={searchQuery}
                     style={[styles.searchBar, { backgroundColor: theme.colors.surfaceVariant }]}
                 />
@@ -152,7 +192,7 @@ export default function POSScreen() {
                 renderItem={({ item }) => (
                     <List.Item
                         title={item.name}
-                        description={`Stock: ${item.quantity} | $${item.piece_selling_price}`}
+                        description={`Stock: ${item.quantity} | ${formatCurrency(item.piece_selling_price)}`}
                         left={(props) => <List.Icon {...props} icon="tag" />}
                         right={(props) => <IconButton {...props} icon="plus-circle" onPress={() => addToCart(item)} />}
                         onPress={() => addToCart(item)}
