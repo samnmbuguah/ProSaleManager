@@ -7,6 +7,8 @@ import {
   updateCategory,
   deleteCategory,
 } from "../controllers/category.controller.js";
+import { validate } from "../middleware/validate.js";
+import { createCategorySchema, updateCategorySchema } from "../validation/schemas.js";
 
 const router = Router();
 
@@ -17,8 +19,8 @@ router.get("/:id", getCategory);
 // Only admin and manager can modify categories
 router.use(requireAuth);
 router.use(requireRole(["admin", "manager"]));
-router.post("/", createCategory);
-router.put("/:id", updateCategory);
+router.post("/", validate(createCategorySchema), createCategory);
+router.put("/:id", validate(updateCategorySchema), updateCategory);
 router.delete("/:id", deleteCategory);
 
 export default router;

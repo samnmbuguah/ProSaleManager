@@ -5,6 +5,8 @@ import User from "../models/User.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import { requireStoreContext } from "../middleware/store-context.middleware.js";
 import { storeScope } from "../utils/helpers.js";
+import { validate } from "../middleware/validate.js";
+import { createCustomerSchema, updateCustomerSchema } from "../validation/schemas.js";
 
 const router = express.Router();
 
@@ -90,7 +92,7 @@ router.get("/search", async (req, res) => {
 });
 
 // Create a new customer
-router.post("/", async (req, res) => {
+router.post("/", validate(createCustomerSchema), async (req, res) => {
   try {
     const { name, email, phone } = req.body;
     if (!name || !phone) {
@@ -118,7 +120,7 @@ router.post("/", async (req, res) => {
 });
 
 // Update a customer
-router.put("/:id", async (req, res) => {
+router.put("/:id", validate(updateCustomerSchema), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, phone } = req.body;

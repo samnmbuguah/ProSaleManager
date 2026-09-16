@@ -8,6 +8,8 @@ import {
   deleteExpense,
   getExpenseCategories,
 } from "../controllers/expenses.controller.js";
+import { validate } from "../middleware/validate.js";
+import { createExpenseSchema, updateExpenseSchema } from "../validation/schemas.js";
 
 const router = express.Router();
 
@@ -22,10 +24,10 @@ router.get("/", getExpenses);
 router.get("/categories", getExpenseCategories);
 
 // Create a new expense
-router.post("/", createExpense);
+router.post("/", validate(createExpenseSchema), createExpense);
 
 // Update an expense
-router.put("/:id", updateExpense);
+router.put("/:id", validate(updateExpenseSchema), updateExpense);
 
 // Delete an expense
 router.delete("/:id", deleteExpense);
