@@ -16,6 +16,7 @@ interface AuthContextType {
     login: (data: any) => Promise<void>;
     register: (data: any) => Promise<void>;
     logout: () => Promise<void>;
+    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -88,6 +89,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.replace('/(tabs)');
     };
 
+    const refreshUser = async () => {
+        try {
+            // GET /auth/me returns { success, data: user | null, authenticated }
+            const response = await api.get('/auth/me');
+            if (response.data?.authenticated && response.data.data) {
+                setUser(response.data.data);
+            }
+        } catch (error) {
+            // Keep the existing user on refresh failure
+        }
+    };
+
     const logout = async () => {
         try {
             await api.post('/auth/logout');
@@ -109,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+        <AuthContext.Provider value={{ user, isLoading, login, register, logout, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );

@@ -1,86 +1,90 @@
 import { StyleSheet, View, ScrollView, Alert } from 'react-native';
-import { TextInput, Button, Text, ActivityIndicator, useTheme } from 'react-native-paper';
-import { useState, useEffect } from 'react';
+import { TextInput, Button, Text, HelperText } from 'react-native-paper';
+import { useEffect, useState } from 'react';
+import { useForm, Controller, SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { ThemedView } from '@/components/themed-view';
-import { profileService, UserProfile } from '@/services/profileService';
+import { profileService } from '@/services/profileService';
 import { useAuth } from '@/context/AuthContext';
-import { router } from 'expo-router';
 
-// Assuming useAuth provides setUser to update local state
-// If explicitly typed, verify AuthContext types.
+const profileSchema = z.object({
+    name: z.string().min(1, 'Name is required'),
+    email: z.string().min(1, 'Email is required').email('Invalid email address'),
+});
 
-export default function EditProfileScreen() {
-    const theme = useTheme();
-    const { user } = useAuth();
-    const [loading, setLoading] = useState(false);
-
-    const [profileData, setProfileData] = useState<UserProfile>({
-        name: '',
-        email: '',
+const passwordSchema = z
+    .object({
+        currentPassword: z.string().min(1, 'Current password is required'),
+        newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+        confirmPassword: z.string().min(1, 'Please confirm the new password'),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+        message: 'Passwords do not match',
+        path: ['confirmPassword'],
     });
 
-    const [passwordData, setPasswordData] = useState({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
+type ProfileFormData = z.infer<typeof profileSchema>;
+type PasswordFormData = z.infer<typeof passwordSchema>;
+
+export default function EditProfileScreen() {
+    const { user, refreshUser } = useAuth();
+
+    const [savingProfile, setSavingProfile] = useState(false);
+    const [savingPassword, setSavingPassword] = useState(false);
+
+    const profileForm = useForm<ProfileFormData>({
+        resolver: zodResolver(profileSchema),
+        defaultValues: {
+            name: user?.name ?? '',
+            email: user?.email ?? '',
+        },
+    });
+
+    const passwordForm = useForm<PasswordFormData>({
+        resolver: zodResolver(passwordSchema),
+        defaultValues: {
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: '',
+        },
     });
 
     useEffect(() => {
         if (user) {
-            setProfileData({
+            profileForm.reset({
                 name: user.name || '',
                 email: user.email || '',
             });
         }
     }, [user]);
 
-    const handleUpdateProfile = async () => {
-        if (!profileData.name || !profileData.email) {
-            Alert.alert('Error', 'Name and Email are required');
-            return;
-        }
-
-        setLoading(true);
+    const handleUpdateProfile: SubmitHandler<ProfileFormData> = async (data) => {
+        setSavingProfile(true);
         try {
-            // Need to adjust if updateProfile returns something specific
-            const updatedUser = await profileService.updateProfile(profileData);
-            // Assuming API returns updated user object in response.data or similar
-            if (updatedUser && updatedUser.data) {
-                // If useAuth exposes a way to update user, do it. 
-                // For now, relies on next fetch or we can manually update if setUser is exposed.
-                // Since I don't recall seeing setUser in the basic auth context dump earlier, I'll assume aggressive refresh or re-fetch.
-                // But usually we want to update context.
-            }
+            await profileService.updateProfile({ name: data.name, email: data.email });
+            await refreshUser();
             Alert.alert('Success', 'Profile updated successfully');
         } catch (error: any) {
             Alert.alert('Error', error.response?.data?.message || 'Failed to update profile');
         } finally {
-            setLoading(false);
+            setSavingProfile(false);
         }
     };
 
-    const handleChangePassword = async () => {
-        if (!passwordData.currentPassword || !passwordData.newPassword) {
-            Alert.alert('Error', 'Current and New Password are required');
-            return;
-        }
-        if (passwordData.newPassword !== passwordData.confirmPassword) {
-            Alert.alert('Error', 'Passwords do not match');
-            return;
-        }
-
-        setLoading(true);
+    const handleChangePassword: SubmitHandler<PasswordFormData> = async (data) => {
+        setSavingPassword(true);
         try {
             await profileService.changePassword({
-                currentPassword: passwordData.currentPassword,
-                newPassword: passwordData.newPassword,
+                currentPassword: data.currentPassword,
+                newPassword: data.newPassword,
             });
             Alert.alert('Success', 'Password changed successfully');
-            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            passwordForm.reset();
         } catch (error: any) {
             Alert.alert('Error', error.response?.data?.message || 'Failed to change password');
         } finally {
-            setLoading(false);
+            setSavingPassword(false);
         }
     };
 
@@ -89,27 +93,49 @@ export default function EditProfileScreen() {
             <ScrollView contentContainerStyle={styles.content}>
                 <Text variant="titleLarge" style={styles.sectionTitle}>Personal Information</Text>
 
-                <TextInput
-                    label="Full Name"
-                    value={profileData.name}
-                    onChangeText={(text) => setProfileData(prev => ({ ...prev, name: text }))}
-                    mode="outlined"
-                    style={styles.input}
+                <Controller
+                    control={profileForm.control}
+                    name="name"
+                    render={({ field: { onChange, value } }) => (
+                        <TextInput
+                            label="Full Name"
+                            value={value}
+                            onChangeText={onChange}
+                            mode="outlined"
+                            error={!!profileForm.formState.errors.name}
+                            style={styles.input}
+                        />
+                    )}
                 />
-                <TextInput
-                    label="Email"
-                    value={profileData.email}
-                    onChangeText={(text) => setProfileData(prev => ({ ...prev, email: text }))}
-                    mode="outlined"
-                    keyboardType="email-address"
-                    style={styles.input}
-                    autoCapitalize="none"
+                <HelperText type="error" visible={!!profileForm.formState.errors.name}>
+                    {profileForm.formState.errors.name?.message}
+                </HelperText>
+
+                <Controller
+                    control={profileForm.control}
+                    name="email"
+                    render={({ field: { onChange, value } }) => (
+                        <TextInput
+                            label="Email"
+                            value={value}
+                            onChangeText={onChange}
+                            mode="outlined"
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            error={!!profileForm.formState.errors.email}
+                            style={styles.input}
+                        />
+                    )}
                 />
+                <HelperText type="error" visible={!!profileForm.formState.errors.email}>
+                    {profileForm.formState.errors.email?.message}
+                </HelperText>
 
                 <Button
                     mode="contained"
-                    onPress={handleUpdateProfile}
-                    loading={loading}
+                    onPress={profileForm.handleSubmit(handleUpdateProfile)}
+                    loading={savingProfile}
+                    disabled={savingProfile}
                     style={styles.button}
                 >
                     Update Profile
@@ -119,35 +145,71 @@ export default function EditProfileScreen() {
 
                 <Text variant="titleLarge" style={styles.sectionTitle}>Change Password</Text>
 
-                <TextInput
-                    label="Current Password"
-                    value={passwordData.currentPassword}
-                    onChangeText={(text) => setPasswordData(prev => ({ ...prev, currentPassword: text }))}
-                    mode="outlined"
-                    secureTextEntry
-                    style={styles.input}
+                <Controller
+                    control={passwordForm.control}
+                    name="currentPassword"
+                    render={({ field: { onChange, value } }) => (
+                        <TextInput
+                            label="Current Password"
+                            value={value}
+                            onChangeText={onChange}
+                            mode="outlined"
+                            secureTextEntry
+                            autoCapitalize="none"
+                            error={!!passwordForm.formState.errors.currentPassword}
+                            style={styles.input}
+                        />
+                    )}
                 />
-                <TextInput
-                    label="New Password"
-                    value={passwordData.newPassword}
-                    onChangeText={(text) => setPasswordData(prev => ({ ...prev, newPassword: text }))}
-                    mode="outlined"
-                    secureTextEntry
-                    style={styles.input}
+                <HelperText type="error" visible={!!passwordForm.formState.errors.currentPassword}>
+                    {passwordForm.formState.errors.currentPassword?.message}
+                </HelperText>
+
+                <Controller
+                    control={passwordForm.control}
+                    name="newPassword"
+                    render={({ field: { onChange, value } }) => (
+                        <TextInput
+                            label="New Password"
+                            value={value}
+                            onChangeText={onChange}
+                            mode="outlined"
+                            secureTextEntry
+                            autoCapitalize="none"
+                            error={!!passwordForm.formState.errors.newPassword}
+                            style={styles.input}
+                        />
+                    )}
                 />
-                <TextInput
-                    label="Confirm New Password"
-                    value={passwordData.confirmPassword}
-                    onChangeText={(text) => setPasswordData(prev => ({ ...prev, confirmPassword: text }))}
-                    mode="outlined"
-                    secureTextEntry
-                    style={styles.input}
+                <HelperText type="error" visible={!!passwordForm.formState.errors.newPassword}>
+                    {passwordForm.formState.errors.newPassword?.message}
+                </HelperText>
+
+                <Controller
+                    control={passwordForm.control}
+                    name="confirmPassword"
+                    render={({ field: { onChange, value } }) => (
+                        <TextInput
+                            label="Confirm New Password"
+                            value={value}
+                            onChangeText={onChange}
+                            mode="outlined"
+                            secureTextEntry
+                            autoCapitalize="none"
+                            error={!!passwordForm.formState.errors.confirmPassword}
+                            style={styles.input}
+                        />
+                    )}
                 />
+                <HelperText type="error" visible={!!passwordForm.formState.errors.confirmPassword}>
+                    {passwordForm.formState.errors.confirmPassword?.message}
+                </HelperText>
 
                 <Button
                     mode="outlined"
-                    onPress={handleChangePassword}
-                    loading={loading}
+                    onPress={passwordForm.handleSubmit(handleChangePassword)}
+                    loading={savingPassword}
+                    disabled={savingPassword}
                     style={styles.button}
                 >
                     Change Password
@@ -171,8 +233,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     input: {
-        marginBottom: 12,
-        // backgroundColor: 'white',
+        marginBottom: 4,
     },
     button: {
         marginTop: 8,
