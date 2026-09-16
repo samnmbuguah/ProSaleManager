@@ -1,6 +1,17 @@
+/**
+ * Root-level test runner.
+ *
+ * Each package owns its own test suite (server, client, mobile-admin,
+ * mobile-client). This root config only runs the cross-cutting tests under
+ * `tests/` (feature-parity checks). It is deliberately lean:
+ *   - ts-jest in CommonJS mode with `isolatedModules` so it does not type-check
+ *     the entire monorepo (which previously caused out-of-memory crashes).
+ *   - no coverage collection here; each package reports its own coverage.
+ *
+ * Playwright specs live under tests/e2e and run via `npm run test:e2e`.
+ */
 export default {
-  preset: 'ts-jest/presets/default-esm',
-  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/tests'],
   testMatch: [
@@ -9,67 +20,34 @@ export default {
   ],
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
-      useESM: true,
+      isolatedModules: true,
+      diagnostics: false,
       tsconfig: {
-        module: 'ESNext',
+        module: 'CommonJS',
         target: 'ES2020',
-        moduleResolution: 'bundler',
+        moduleResolution: 'node',
         esModuleInterop: true,
         allowSyntheticDefaultImports: true,
-        moduleDetection: 'force'
-      }
+        jsx: 'react-jsx',
+        skipLibCheck: true,
+      },
     }],
   },
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
-  collectCoverageFrom: [
-    'server/src/**/*.{ts,tsx}',
-    'client/src/**/*.{ts,tsx}',
-    '!**/*.d.ts',
-    '!**/node_modules/**',
-    '!**/dist/**',
-    '!**/build/**',
-    '!**/coverage/**',
-    '!**/*.config.{js,ts}',
-    '!**/scripts/**',
-    '!**/migrations/**'
-  ],
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html', 'json'],
-  coverageThreshold: {
-    global: {
-      branches: 70,
-      functions: 70,
-      lines: 70,
-      statements: 70
-    }
-  },
-  testTimeout: 60000, // Increased to 60 seconds
+  testTimeout: 30000,
   verbose: true,
+  clearMocks: true,
+  restoreMocks: true,
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   testPathIgnorePatterns: [
     '/node_modules/',
     '/dist/',
-    '/build/',
     '/coverage/',
+    '/build/',
     '<rootDir>/tests/e2e/' // Playwright specs — run via `npm run test:e2e`
   ],
-  transformIgnorePatterns: [
-    'node_modules/(?!(.*\\.mjs$|@babel/runtime|@jest/globals))'
-  ],
-  moduleDirectories: ['node_modules', 'src'],
-  testEnvironmentOptions: {
-    url: 'http://localhost'
-  },
-  // Force exit to prevent hanging
+  moduleDirectories: ['node_modules'],
   forceExit: true,
-  // Detect open handles
-  detectOpenHandles: true,
-  // Clear mocks between tests
-  clearMocks: true,
-  // Restore mocks between tests
-  restoreMocks: true,
-  // Show console output during tests
-  silent: false
 };

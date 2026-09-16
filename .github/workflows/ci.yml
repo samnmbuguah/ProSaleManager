@@ -6,25 +6,78 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  # Lint currently has a large amount of pre-existing debt (notably the client's
+  # prettier backlog), so it is reported but does not block the pipeline yet.
+  lint:
+    name: Lint (non-blocking)
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [22.x]
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js 22.x
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-      - name: Install root dependencies
-        run: npm install
-      - name: Install server dependencies
-        run: cd server && npm install
-      - name: Install client dependencies
-        run: cd client && npm install
-      - name: Type-check
+          node-version: 22.x
+          cache: npm
+      - name: Install dependencies
+        run: |
+          npm install
+          npm --prefix server install
+          npm --prefix client install
+      - name: Lint
+        run: npm run lint
+
+  ci:
+    name: Type-check, test & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npm --prefix server install
+          npm --prefix client install
+          npm --prefix mobile-admin install
+          npm --prefix mobile-client install
+
+      - name: Type-check server & client
         run: npm run type-check
-      - name: Run tests
+
+      - name: Type-check mobile apps
+        run: |
+          npm --prefix mobile-admin run type-check
+          npm --prefix mobile-client run type-check
+
+      - name: Test server
+        run: npm --prefix server test
+
+      - name: Test client
+        run: npm --prefix client test
+
+      - name: Test mobile-admin
+        run: npm --prefix mobile-admin test -- --ci
+
+      - name: Test mobile-client
+        run: npm --prefix mobile-client test -- --ci
+
+      - name: Test root (feature parity)
         run: npm test
+
+      - name: Build server & client
+        run: npm run build
+
+  # End-to-end tests are intentionally not run here: the Playwright suite starts
+  # the full dev stack and needs a seeded database. Run locally with
+  # `npm run test:e2e` against a seeded environment, or wire up a dedicated
+  # seeded service + database in CI.
