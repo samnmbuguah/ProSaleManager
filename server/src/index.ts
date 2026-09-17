@@ -10,6 +10,7 @@ import env from "./config/env.js";
 import { resolveStore, attachStoreIdToUser } from "./middleware/auth.middleware.js";
 import cron from "node-cron";
 import { backupService } from "./services/backupService.js";
+import { runDailyBriefings } from "./services/agent/briefing.js";
 
 const PORT = env.PORT || 5000;
 
@@ -80,6 +81,29 @@ function initializeBackupScheduler() {
   }
 }
 
+// Initialize the proactive agent briefing (alert-only, off by default)
+function initializeAgentBriefingScheduler() {
+  if (process.env.NODE_ENV === 'production' && process.env.AGENT_BRIEFING_ENABLED === 'true') {
+    // Daily briefing at 07:00
+    cron.schedule('0 7 * * *', async () => {
+      console.log('🤖 Agent daily briefing starting...');
+      try {
+        const result = await runDailyBriefings();
+        console.log(`✅ Agent briefing sent for ${result.stores} store(s)`);
+      } catch (error) {
+        console.error('❌ Agent briefing failed:', error);
+      }
+    }, {
+      timezone: process.env.AGENT_BRIEFING_TIMEZONE || 'UTC',
+    });
+
+    console.log('🤖 Agent briefing scheduler initialized: Daily at 07:00');
+    console.log(`   Timezone: ${process.env.AGENT_BRIEFING_TIMEZONE || 'UTC'}`);
+  } else {
+    console.log('🤖 Agent briefing scheduler: Disabled (set AGENT_BRIEFING_ENABLED=true in production)');
+  }
+}
+
 // Start server
 async function startServer() {
   try {
@@ -87,6 +111,9 @@ async function startServer() {
 
     // Initialize backup scheduler
     initializeBackupScheduler();
+
+    // Initialize agent briefing scheduler
+    initializeAgentBriefingScheduler();
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

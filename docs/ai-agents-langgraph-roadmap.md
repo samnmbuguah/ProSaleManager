@@ -22,7 +22,11 @@
   migration; role gates mirroring the REST endpoints; approver notifications;
   `/api/agent/resume` with store-ownership and role re-checks; approval card
   in the web panel.
-- **Not yet:** proactive briefings, multi-agent supervisor, pgvector RAG.
+- **Phase 3 (done):** least-privilege reads (clients get order tracking +
+  product search; revenue/inventory are staff-only), `get_my_orders` tool,
+  proactive daily briefing job (`runDailyBriefings`, flag-gated 07:00 cron),
+  24-case eval golden set.
+- **Not yet:** multi-agent supervisor, pgvector RAG.
 
 ## 1. Executive summary
 

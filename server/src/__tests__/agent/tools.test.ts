@@ -1,7 +1,9 @@
 import {
   agentFetchers,
   getInventoryReportTool,
+  getMyOrdersTool,
   getSalesSummaryTool,
+  myOrdersSchema,
   productSearchSchema,
   salesPeriodSchema,
   searchProductsTool,
@@ -35,6 +37,10 @@ describe("agent input schemas", () => {
 
   it("rejects an empty product search", () => {
     expect(productSearchSchema.safeParse({ q: "   " }).success).toBe(false);
+  });
+
+  it("accepts an empty my-orders input", () => {
+    expect(myOrdersSchema.safeParse({}).success).toBe(true);
   });
 });
 
@@ -77,5 +83,25 @@ describe("search_products", () => {
   it("returns matching products", async () => {
     const raw = await searchProductsTool.invoke({ q: "sug" }, { configurable: {} });
     expect(JSON.parse(raw)).toEqual([{ id: 1, name: "Sugar" }]);
+  });
+});
+
+describe("get_my_orders", () => {
+  it("returns the user's orders and forwards user scope", async () => {
+    let seen: { storeId: number | null; userId: number } | undefined;
+    agentFetchers.myOrders = async (storeId, userId) => {
+      seen = { storeId, userId };
+      return [{ id: 12, status: "pending", total: 500, payment_method: "cash", date: "2026-01-01", items: 2 }];
+    };
+
+    const raw = await getMyOrdersTool.invoke(
+      {},
+      { configurable: { storeId: 3, userId: 9 } },
+    );
+
+    expect(JSON.parse(raw)).toEqual([
+      { id: 12, status: "pending", total: 500, payment_method: "cash", date: "2026-01-01", items: 2 },
+    ]);
+    expect(seen).toEqual({ storeId: 3, userId: 9 });
   });
 });

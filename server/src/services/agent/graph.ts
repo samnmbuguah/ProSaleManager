@@ -22,6 +22,7 @@ import { getChatModel } from "./llm.js";
 import {
   agentFetchers,
   getInventoryReportTool,
+  getMyOrdersTool,
   getSalesSummaryTool,
   searchProductsTool,
 } from "./tools.js";
@@ -56,10 +57,11 @@ function lastUserText(state: AgentStateType): string {
   return "";
 }
 
-function detectIntent(text: string): "sales" | "inventory" | "search" | "chat" {
+function detectIntent(text: string): "sales" | "inventory" | "orders" | "search" | "chat" {
   const lower = text.toLowerCase();
   if (/(sale|revenue|sold|report|profit)/.test(lower)) return "sales";
   if (/(stock|inventory|low|out of stock|restock)/.test(lower)) return "inventory";
+  if (/\borders?\b|purchase histor|where.+order|deliver/.test(lower)) return "orders";
   if (/^(hi|hello|hey|thanks|thank you|bye)\b/.test(lower.trim())) return "chat";
   return "search";
 }
@@ -98,11 +100,18 @@ function detectWriteIntent(text: string): WriteActionName | null {
 
 async function routerNode(state: AgentStateType) {
   if (state.draft) return { intent: "continue" };
-  const write = detectWriteIntent(lastUserText(state));
+  const text = lastUserText(state);
+  const write = detectWriteIntent(text);
   if (write) {
     return { intent: canPerformWrite(write, state.role) ? `write:${write}` : "denied" };
   }
-  return { intent: detectIntent(lastUserText(state)) };
+  const read = detectIntent(text);
+  // Least privilege: clients may track their own orders and search products,
+  // but store revenue and inventory health are staff-only.
+  if ((read === "sales" || read === "inventory") && state.role === "client") {
+    return { intent: "denied" };
+  }
+  return { intent: read };
 }
 
 const STOPWORDS = new Set([
@@ -209,6 +218,21 @@ async function toolCallNode(state: AgentStateType, config: RunnableConfig) {
       messages: [
         new AIMessage(
           `Inventory: ${report.total} product(s), ${report.lowStock} low stock, ${report.outOfStock} out of stock.${names}`,
+        ),
+      ],
+    };
+  }
+
+  if (state.intent === "orders") {
+    const raw = await getMyOrdersTool.invoke({}, toolConfig);
+    const orders = JSON.parse(raw) as Array<{ id: number; status: string; total: number }>;
+    if (orders.length === 0) {
+      return { messages: [new AIMessage("You have no recent orders.")] };
+    }
+    return {
+      messages: [
+        new AIMessage(
+          `Your recent orders: ${orders.map((o) => `#${o.id} (${o.status}) — KSh ${Number(o.total).toFixed(2)}`).join("; ")}.`,
         ),
       ],
     };
@@ -590,7 +614,12 @@ function buildGraphInternal(checkpointer?: BaseCheckpointSaver) {
       "router",
       (state: AgentStateType) => {
         if (state.intent === "chat" || state.intent === "denied") return "respond";
-        if (state.intent === "sales" || state.intent === "inventory" || state.intent === "search") {
+        if (
+          state.intent === "sales" ||
+          state.intent === "inventory" ||
+          state.intent === "orders" ||
+          state.intent === "search"
+        ) {
           return "toolCall";
         }
         return "propose";

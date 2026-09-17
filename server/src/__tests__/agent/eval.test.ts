@@ -7,7 +7,7 @@ import { agentFetchers } from "../../services/agent/tools.js";
  * key) against fixture data and asserts each answer contains the expected
  * facts. Extend this table — not the graph — to lock in new behaviours.
  */
-const CASES: Array<{ question: string; expect: string[] }> = [
+const CASES: Array<{ question: string; expect: string[]; role?: string }> = [
   { question: "How were sales today?", expect: ["Sales (today)", "3 sale(s)", "4500.00"] },
   { question: "Show me sales this week", expect: ["Sales (week)", "3 sale(s)"] },
   { question: "Monthly sales report", expect: ["Sales (month)"] },
@@ -28,6 +28,10 @@ const CASES: Array<{ question: string; expect: string[] }> = [
   { question: "thank you", expect: ["thank you"] },
   { question: "bye", expect: ["bye"] },
   { question: "revenue year to date", expect: ["Sales (year)"] },
+  { question: "Where is my order?", expect: ["#12", "pending"], role: "client" },
+  { question: "Find sugar", expect: ["sugar"], role: "client" },
+  { question: "How were sales this week?", expect: ["cannot perform"], role: "client" },
+  { question: "What is low in stock?", expect: ["cannot perform"], role: "client" },
 ];
 
 const originalFetchers = { ...agentFetchers };
@@ -43,6 +47,9 @@ beforeEach(() => {
     lowStockProducts: ["Sugar", "Rice"],
   });
   agentFetchers.searchProducts = async (_storeId, q) => [{ id: 1, name: q }];
+  agentFetchers.myOrders = async () => [
+    { id: 12, status: "pending", total: 500, payment_method: "cash", date: "2026-01-01", items: 2 },
+  ];
 });
 
 afterEach(() => {
@@ -50,16 +57,15 @@ afterEach(() => {
 });
 
 describe("agent eval golden set", () => {
-  it.each(CASES.map((c) => [c.question, c.expect] as [string, string[]]))(
-    "answers %p",
-    async (question, expected) => {
-      const result = await runAgent({ message: question, storeId: 1, userId: 2, role: "admin" });
-      if (result.status !== "replied") {
-        throw new Error(`Expected a reply for "${question}", got status: ${result.status}`);
-      }
-      for (const fragment of expected) {
-        expect(result.reply).toContain(fragment);
-      }
-    },
-  );
+  it.each(
+    CASES.map((c) => [c.question, c.expect, c.role ?? "admin"] as [string, string[], string]),
+  )("answers %p", async (question, expected, role) => {
+    const result = await runAgent({ message: question, storeId: 1, userId: 2, role });
+    if (result.status !== "replied") {
+      throw new Error(`Expected a reply for "${question}", got status: ${result.status}`);
+    }
+    for (const fragment of expected) {
+      expect(result.reply).toContain(fragment);
+    }
+  });
 });

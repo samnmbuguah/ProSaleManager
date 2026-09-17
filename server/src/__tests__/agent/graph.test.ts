@@ -55,4 +55,33 @@ describe("runAgent (stub mode)", () => {
     const result = await runAgent({ message: "Hello", threadId: "t-1", ...base });
     expect(result.threadId).toBe("t-1");
   });
+
+  it("denies store revenue questions for clients", async () => {
+    const result = await runAgent({
+      message: "How were sales this week?",
+      storeId: 1,
+      userId: 9,
+      role: "client",
+    });
+    expect(result.status).toBe("replied");
+    if (result.status !== "replied") throw new Error("expected reply");
+    expect(result.reply).toContain("cannot perform");
+  });
+
+  it("denies inventory questions for clients", async () => {
+    expect(
+      await replyFor({ message: "What is low in stock?", storeId: 1, userId: 9, role: "client" }),
+    ).toContain("cannot perform");
+  });
+
+  it("lets clients search products and track orders", async () => {
+    agentFetchers.myOrders = async () => [
+      { id: 12, status: "pending", total: 500, payment_method: "cash", date: "2026-01-01", items: 2 },
+    ];
+    const client = { storeId: 1, userId: 9, role: "client" };
+    expect(await replyFor({ message: "Sugar", ...client })).toContain("Sugar");
+    const orders = await replyFor({ message: "Where is my order?", ...client });
+    expect(orders).toContain("#12");
+    expect(orders).toContain("pending");
+  });
 });

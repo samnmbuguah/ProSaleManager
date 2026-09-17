@@ -1,7 +1,7 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { Op } from "sequelize";
-import { Product, Sale } from "../../models/index.js";
+import { Product, Sale, SaleItem } from "../../models/index.js";
 
 export interface AgentToolContext {
   storeId: number | null;
@@ -20,6 +20,8 @@ export const inventoryInputSchema = z.object({
 export const productSearchSchema = z.object({
   q: z.string().trim().min(1, "Search query is required").max(100),
 });
+
+export const myOrdersSchema = z.object({});
 
 export type SalesPeriod = z.infer<typeof salesPeriodSchema>["period"];
 
@@ -91,6 +93,34 @@ export const agentFetchers = {
       outOfStock: out.length,
       lowStockProducts: low.slice(0, 10).map((p) => p.name),
     };
+  },
+
+  async myOrders(storeId: number | null, userId: number) {
+    const orders = await Sale.findAll({
+      where: { ...scopedWhere(storeId), user_id: userId },
+      attributes: ["id", "status", "total_amount", "payment_method", "createdAt"],
+      include: [{ model: SaleItem, as: "items", attributes: ["id"] }],
+      order: [["createdAt", "DESC"]],
+      limit: 10,
+    });
+    return orders.map((o) => {
+      const row = o.toJSON() as {
+        id: number;
+        status: string;
+        total_amount: number | string;
+        payment_method: string;
+        createdAt: string;
+        items?: Array<{ id: number }>;
+      };
+      return {
+        id: row.id,
+        status: row.status,
+        total: Number(row.total_amount),
+        payment_method: row.payment_method,
+        date: row.createdAt,
+        items: (row.items ?? []).length,
+      };
+    });
   },
 
   async searchProducts(storeId: number | null, q: string): Promise<ProductHit[]> {
@@ -176,4 +206,22 @@ export const searchProductsTool = tool(
   },
 );
 
-export const agentTools = [getSalesSummaryTool, getInventoryReportTool, searchProductsTool];
+/** The current user's recent orders with statuses. Read-only. */
+export const getMyOrdersTool = tool(
+  async (_input, config) => {
+    const ctx = toolContext(config);
+    return JSON.stringify(await agentFetchers.myOrders(ctx.storeId, ctx.userId));
+  },
+  {
+    name: "get_my_orders",
+    description: "Get the current user's recent orders and their statuses. Use for order tracking questions.",
+    schema: myOrdersSchema,
+  },
+);
+
+export const agentTools = [
+  getSalesSummaryTool,
+  getInventoryReportTool,
+  searchProductsTool,
+  getMyOrdersTool,
+];
