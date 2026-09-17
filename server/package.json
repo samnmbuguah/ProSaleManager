@@ -48,6 +48,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "overrides": {
+    "uuid": "^11.1.1"
+  },
   "dependencies": {
     "@types/node-cron": "^3.0.11",
     "axios": "^1.10.0",
@@ -58,6 +61,7 @@
     "cors": "^2.8.5",
     "date-fns-tz": "^3.2.0",
     "dotenv": "^16.5.0",
+    "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "express-rate-limit": "^7.5.0",
     "fast-csv": "^5.0.5",
@@ -74,12 +78,11 @@
     "sequelize-cli": "^6.6.3",
     "sqlite3": "^5.1.7",
     "twilio": "^5.6.1",
-    "xlsx": "^0.18.5",
+    "exceljs": "^4.4.0",
     "zod": "^3.25.28"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.9.0",
-    "csv-parse": "^6.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.18",
@@ -95,6 +98,7 @@
     "@types/twilio": "^3.19.2",
     "@typescript-eslint/eslint-plugin": "^8.32.1",
     "@typescript-eslint/parser": "^8.32.1",
+    "csv-parse": "^6.0.0",
     "eslint": "^9.31.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.4.0",

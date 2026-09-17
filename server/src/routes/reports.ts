@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { Op } from "sequelize";
-import * as XLSX from "xlsx";
 import { format } from "date-fns";
+import { buildExcelBuffer } from "../utils/excel.js";
 import { sequelize } from "../config/database.js";
 import Product from "../models/Product.js";
 import Sale from "../models/Sale.js";
@@ -1618,7 +1618,6 @@ router.get(
         }
 
         if (exportFormat === 'excel') {
-          const workbook = XLSX.utils.book_new();
           const worksheetData = type === 'inventory'
             ? filteredProducts.map(p => ({
               'Product Name': p.name, 'SKU': p.sku, 'Category': p.category,
@@ -1632,9 +1631,10 @@ router.get(
               'Current Quantity': p.quantity || 0, 'New Quantity': '', 'Variance': '', 'Notes': ''
             }));
 
-          const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-          XLSX.utils.book_append_sheet(workbook, worksheet, type === 'inventory' ? 'Inventory' : 'Stock Take');
-          const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+          const excelBuffer = await buildExcelBuffer(
+            worksheetData,
+            type === 'inventory' ? 'Inventory' : 'Stock Take',
+          );
           res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
           res.setHeader("Content-Disposition", `attachment; filename="${type}-export-${timestamp}.xlsx"`);
           return res.send(excelBuffer);
@@ -1688,10 +1688,7 @@ router.get(
         );
 
         if (exportFormat === 'excel') {
-          const workbook = XLSX.utils.book_new();
-          const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-          XLSX.utils.book_append_sheet(workbook, worksheet, 'Sales');
-          const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+          const excelBuffer = await buildExcelBuffer(worksheetData, 'Sales');
           res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
           res.setHeader("Content-Disposition", `attachment; filename="sales-export-${timestamp}.xlsx"`);
           return res.send(excelBuffer);
@@ -1735,10 +1732,7 @@ router.get(
         }));
 
         if (exportFormat === 'excel') {
-          const workbook = XLSX.utils.book_new();
-          const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-          XLSX.utils.book_append_sheet(workbook, worksheet, 'Expenses');
-          const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+          const excelBuffer = await buildExcelBuffer(worksheetData, 'Expenses');
           res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
           res.setHeader("Content-Disposition", `attachment; filename="expenses-export-${timestamp}.xlsx"`);
           return res.send(excelBuffer);
