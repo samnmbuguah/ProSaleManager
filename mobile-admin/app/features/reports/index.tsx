@@ -20,8 +20,9 @@ import {
     SalesSummaryResponse,
 } from '@/types/report';
 
-const formatMoney = (value: number | null | undefined) =>
-    `$${Number(value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+import { formatCurrency } from '@/utils/currency';
+
+const formatMoney = (value: number | null | undefined) => formatCurrency(value);
 
 const formatLabel = (value: string) =>
     value ? value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' ') : 'Unknown';

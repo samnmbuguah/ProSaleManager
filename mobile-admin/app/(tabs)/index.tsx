@@ -104,7 +104,7 @@ export default function HomeScreen() {
           <View style={styles.col}>
             <StatCard
               title="Revenue"
-              value={`$${data?.metrics.totalRevenue.toLocaleString() ?? '0'}`}
+              value={formatCurrency(data?.metrics.totalRevenue)}
               icon="circle.dollar"
               color="#4CAF50"
             />
@@ -112,7 +112,7 @@ export default function HomeScreen() {
           <View style={styles.col}>
             <StatCard
               title="Profit"
-              value={`$${data?.metrics.totalProfit.toLocaleString() ?? '0'}`}
+              value={formatCurrency(data?.metrics.totalProfit)}
               icon="chart.bar.fill"
               color="#2196F3"
             />
@@ -172,7 +172,7 @@ export default function HomeScreen() {
                 <Text variant="bodySmall">{product.quantity} units sold</Text>
               </View>
               <Text variant="titleMedium" style={{ fontWeight: 'bold' }}>
-                ${product.revenue.toLocaleString()}
+                {formatCurrency(product.revenue)}
               </Text>
             </Card.Content>
           </Card>

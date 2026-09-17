@@ -8,10 +8,11 @@ import { saleService } from '@/services/saleService';
 import { Sale } from '@/types/sale';
 import { useAuth } from '@/context/AuthContext';
 
+import { formatCurrency } from '@/utils/currency';
+
 const PAGE_SIZE = 20;
 
-const formatMoney = (value: number | string | null | undefined) =>
-    `$${Number(value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const formatMoney = (value: number | string | null | undefined) => formatCurrency(value);
 
 const formatDate = (value: string) => {
     const date = new Date(value);
