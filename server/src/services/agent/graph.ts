@@ -1,7 +1,9 @@
-import { END, MemorySaver, START, StateGraph } from "@langchain/langgraph";
+import { END, START, StateGraph } from "@langchain/langgraph";
+import type { BaseCheckpointSaver } from "@langchain/langgraph";
 import type { RunnableConfig } from "@langchain/core/runnables";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { AgentState, type AgentStateType } from "./state.js";
+import { getCheckpointer } from "./checkpointer.js";
 import { getChatModel } from "./llm.js";
 import {
   getInventoryReportTool,
@@ -16,8 +18,6 @@ export interface RunAgentInput {
   userId: number;
   role: string;
 }
-
-const saver = new MemorySaver();
 
 function lastUserText(state: AgentStateType): string {
   for (let i = state.messages.length - 1; i >= 0; i--) {
@@ -39,9 +39,9 @@ function detectIntent(text: string): "sales" | "inventory" | "search" | "chat" {
 
 function detectPeriod(text: string): "today" | "week" | "month" | "year" {
   const lower = text.toLowerCase();
-  if (/\btoday\b/.test(lower)) return "today";
-  if (/\bmonth\b/.test(lower)) return "month";
-  if (/\byear\b/.test(lower)) return "year";
+  if (lower.includes("today")) return "today";
+  if (lower.includes("month")) return "month";
+  if (lower.includes("year")) return "year";
   return "week";
 }
 
@@ -117,7 +117,7 @@ async function respondNode(state: AgentStateType) {
   return { messages: [reply] };
 }
 
-function buildGraph() {
+function buildGraph(checkpointer?: BaseCheckpointSaver) {
   return new StateGraph(AgentState)
     .addNode("router", routerNode)
     .addNode("toolCall", toolCallNode)
@@ -130,14 +130,14 @@ function buildGraph() {
     )
     .addEdge("toolCall", END)
     .addEdge("respond", END)
-    .compile({ checkpointer: saver });
+    .compile(checkpointer ? { checkpointer } : {});
 }
 
 /** Runs one agent turn. Works offline (stub mode) when no model key is set. */
 export async function runAgent(input: RunAgentInput): Promise<{ reply: string; threadId: string }> {
   const threadId =
     input.threadId ?? `thread-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-  const result = await buildGraph().invoke(
+  const result = await buildGraph(await getCheckpointer()).invoke(
     {
       messages: [new HumanMessage(input.message)],
       storeId: input.storeId,
