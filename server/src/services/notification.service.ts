@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { createTransport, type Transporter } from "nodemailer";
 import { Op } from "sequelize";
 import env from "../config/env.js";
 import Notification, { NotificationType } from "../models/Notification.js";
@@ -11,13 +11,13 @@ type NotificationPayload = {
   data?: Record<string, unknown>;
 };
 
-let cachedTransporter: nodemailer.Transporter | null = null;
+let cachedTransporter: Transporter | null = null;
 
 function getMailer() {
   if (cachedTransporter) return cachedTransporter;
   if (!env.SMTP_HOST || !env.SMTP_PORT || !env.SMTP_USER || !env.SMTP_PASS) return null;
 
-  cachedTransporter = nodemailer.createTransport({
+  cachedTransporter = createTransport({
     host: env.SMTP_HOST,
     port: env.SMTP_PORT,
     secure: env.SMTP_PORT === 465,
