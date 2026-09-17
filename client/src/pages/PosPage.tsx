@@ -12,15 +12,9 @@ import { ReceiptDialog } from "@/components/pos/ReceiptDialog";
 import { useProducts } from "@/hooks/use-products";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useFavorites } from "@/hooks/use-favorites";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { CustomerSearch } from "@/components/pos/CustomerSearch";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useCreateSale } from "@/hooks/use-sales-query";
@@ -35,7 +29,7 @@ const PosPage: React.FC = () => {
   // Initialize favorites after user is available
   const { refetch: refetchFavorites } = useFavorites(!!user);
 
-  const { products: allProducts, refetch: refetchProducts, error } = useProducts();
+  const { products: allProducts, refetch: refetchProducts, error, isLoading: productsLoading } = useProducts();
   const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
   const {
     cart,
@@ -114,11 +108,6 @@ const PosPage: React.FC = () => {
       : Number(product.piece_selling_price) || 0;
 
     addToCart(product, unitType, unitPrice);
-
-    toast({
-      title: "Added to Cart",
-      description: `${product.name} added to cart (${unitType})`,
-    });
   };
 
   const handleCheckout = async (
@@ -183,9 +172,9 @@ const PosPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-stretch gap-4 w-full sm:w-auto">
             {/* Historical Sales Toggle - Only for admin and super_admin */}
             {(user?.role === "admin" || user?.role === "super_admin") && (
-              <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
-                <History className="h-5 w-5 text-gray-500" />
-                <Label htmlFor="historical-mode" className="text-sm text-gray-600">
+              <div className="flex items-center gap-2 bg-card border p-2 rounded-lg">
+                <History className="h-5 w-5 text-muted-foreground" />
+                <Label htmlFor="historical-mode" className="text-sm text-muted-foreground">
                   Historical Sales
                 </Label>
                 <Switch
@@ -195,25 +184,13 @@ const PosPage: React.FC = () => {
                 />
               </div>
             )}
-            <div className="flex-1 flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
-              <User className="h-5 w-5 text-gray-500 flex-shrink-0" />
-              <span className="text-sm text-gray-600 whitespace-nowrap">Customer:</span>
-              <div className="w-full">
-                <Select
-                  value={selectedCustomer?.toString() || ""}
-                  onValueChange={(value) => setSelectedCustomer(value ? parseInt(value) : null)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a customer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers.map((customer) => (
-                      <SelectItem key={customer.id} value={customer.id.toString()}>
-                        {customer.name} - {customer.phone}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="flex-1 flex items-center gap-2 bg-card border p-2 rounded-lg">
+              <User className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <CustomerSearch
+                  selectedCustomer={selectedCustomerData || null}
+                  onSelect={(customer) => setSelectedCustomer(customer ? customer.id : null)}
+                />
               </div>
             </div>
           </div>
@@ -250,6 +227,7 @@ const PosPage: React.FC = () => {
                     (product) => product?.sku !== "SRV001"
                   )}
                   onSelect={handleAddToCart}
+                  isLoading={productsLoading}
                   searchProducts={async (query: string) => {
                     try {
                       if (!query.trim()) {

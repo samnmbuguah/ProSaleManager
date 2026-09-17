@@ -34,7 +34,7 @@ function ProtectedRoute({ component: Component, roles }: ProtectedRouteProps) {
     <RoleBasedRoute allowedRoles={roles || ["admin", "user", "client"]}>
       <div className="min-h-screen bg-background flex flex-col">
         <NavigationWrapper />
-        <main className="flex-1">
+        <main id="main-content" tabIndex={-1} className="flex-1 outline-none">
           <Component />
         </main>
       </div>
@@ -93,8 +93,7 @@ function App() {
       >
         Skip to main content
       </a>
-      <div id="main-content" tabIndex={-1} className="outline-none">
-        <Switch>
+      <Switch>
         <Route path="/auth" component={AuthPage} />
 
         <Route path="/" component={HomePage} />
@@ -231,7 +230,6 @@ function App() {
 
         <Route path="/admin" component={RootRedirect} />
       </Switch>
-      </div>
       <Toaster />
     </>
   );

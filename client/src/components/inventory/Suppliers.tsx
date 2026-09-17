@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import type { Supplier } from "@/types/supplier";
-import Swal from "sweetalert2";
 import {
   useSuppliersQuery,
   useCreateSupplier,
@@ -80,10 +79,9 @@ const Suppliers = () => {
           contact_person: "",
           status: "active" as const,
         });
-        await Swal.fire({
-          icon: "success",
+        toast({
           title: "Success",
-          text: "Supplier updated successfully",
+          description: "Supplier updated successfully",
         });
       } else {
         await createSupplierMutation.mutateAsync(formData as Omit<Supplier, "id" | "createdAt" | "updatedAt">);
@@ -96,10 +94,9 @@ const Suppliers = () => {
           contact_person: "",
           status: "active" as const,
         });
-        await Swal.fire({
-          icon: "success",
+        toast({
           title: "Success",
-          text: "Supplier created successfully",
+          description: "Supplier created successfully",
         });
       }
     } catch (error) {
@@ -138,10 +135,9 @@ const Suppliers = () => {
 
     try {
       await deleteSupplierMutation.mutateAsync(id);
-      await Swal.fire({
-        icon: "success",
+      toast({
         title: "Success",
-        text: "Supplier deleted successfully",
+        description: "Supplier deleted successfully",
       });
     } catch (error) {
       console.error("Error:", error);

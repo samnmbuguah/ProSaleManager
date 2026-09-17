@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { useCategories } from "@/hooks/use-categories";
 import { useCreateCategory } from "@/hooks/use-categories";
+import { useToast } from "@/hooks/use-toast";
 import React from "react";
 
 interface ProductFormProps {
@@ -54,6 +55,7 @@ export function ProductForm({ initialData, onSubmit, isSubmitting }: ProductForm
 
   const { data: categories, isLoading } = useCategories();
   const createCategory = useCreateCategory();
+  const { toast } = useToast();
   const [showAddCategory, setShowAddCategory] = React.useState(false);
   const [newCategoryName, setNewCategoryName] = React.useState("");
   const [newCategoryDesc, setNewCategoryDesc] = React.useState("");
@@ -219,10 +221,13 @@ export function ProductForm({ initialData, onSubmit, isSubmitting }: ProductForm
                       setNewCategoryDesc("");
                     }
                   } catch (err: unknown) {
-                    alert(
-                      (err as { response?: { data?: { message?: string } } })?.response?.data
-                        ?.message || "Failed to create category"
-                    );
+                    toast({
+                      variant: "destructive",
+                      title: "Error",
+                      description:
+                        (err as { response?: { data?: { message?: string } } })?.response?.data
+                          ?.message || "Failed to create category",
+                    });
                   }
                 }}
               >

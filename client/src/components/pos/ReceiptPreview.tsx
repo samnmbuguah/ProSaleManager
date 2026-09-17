@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
-import { MessageSquare, X } from "lucide-react";
-import { FaWhatsapp } from "react-icons/fa";
+import { X } from "lucide-react";
 import type { ReceiptData } from "@/hooks/use-pos";
 import { useReceiptSettingsApi } from "@/lib/receipt-settings";
 import { useRef } from "react";
@@ -10,11 +9,11 @@ import { useReactToPrint } from "react-to-print";
 
 interface ReceiptPreviewProps {
   receipt: ReceiptData;
-  onSend: (method: "whatsapp" | "sms") => Promise<void>;
+  onSend?: (method: "whatsapp" | "sms") => Promise<void>;
   onClose: () => void;
 }
 
-export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps) {
+export function ReceiptPreview({ receipt, onClose }: ReceiptPreviewProps) {
   const { settings, isLoading, isError, error } = useReceiptSettingsApi();
   const formatAmount = (value: number) =>
     new Intl.NumberFormat("en-KE", {
@@ -217,16 +216,7 @@ export function ReceiptPreview({ receipt, onSend, onClose }: ReceiptPreviewProps
         </CardContent>
 
         <CardFooter className="flex gap-2 justify-end print:hidden">
-          <Button variant="outline" size="sm" onClick={() => onSend("whatsapp")}>
-            <FaWhatsapp className="w-4 h-4 mr-2" />
-            WhatsApp
-            {receipt.receipt_status?.whatsapp && <span className="ml-2 text-green-500">✓</span>}
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => onSend("sms")}>
-            <MessageSquare className="w-4 h-4 mr-2" />
-            SMS
-            {receipt.receipt_status?.sms && <span className="ml-2 text-green-500">✓</span>}
-          </Button>
+          <span className="text-xs text-muted-foreground mr-auto self-center">WhatsApp / SMS receipts — coming soon</span>
           <Button variant="outline" size="icon" aria-label="Close" onClick={onClose}>
             <X className="w-4 h-4" />
           </Button>

@@ -11,6 +11,7 @@ import { productSchema, Product } from "@/types/product";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { useCategories } from "@/hooks/use-categories";
 import {
   Select,
@@ -40,6 +41,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
   // Key for localStorage
   const FORM_DRAFT_KEY = "productFormDraft";
 
+  const { toast } = useToast();
   const { data: categories, isLoading, refetch } = useCategories();
 
   // Ensure categories is always an array
@@ -315,7 +317,11 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
 
     const invalidField = validateForm();
     if (invalidField) {
-      alert(`Please fill the required field: ${invalidField.replace(/_/g, " ")}`);
+      toast({
+        variant: "destructive",
+        title: "Missing field",
+        description: `Please fill the required field: ${invalidField.replace(/_/g, " ")}`,
+      });
       return;
     }
 

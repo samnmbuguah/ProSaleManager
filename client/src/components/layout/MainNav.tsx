@@ -286,7 +286,7 @@ export default function MainNav() {
           <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" aria-label="Open menu">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
@@ -436,7 +436,7 @@ export default function MainNav() {
                 </Button>
               </Link>
             </div>
-            <Button variant="ghost" size="icon" onClick={handleLogout} className="hover:bg-accent">
+            <Button variant="ghost" size="icon" onClick={handleLogout} className="hover:bg-accent" aria-label="Log out">
               <LogOut className="h-4 w-4" />
             </Button>
             <Button

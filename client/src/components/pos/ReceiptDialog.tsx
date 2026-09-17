@@ -143,7 +143,6 @@ export const ReceiptDialog: React.FC<ReceiptDialogProps> = ({
         {receiptData && (
           <ReceiptPreview
             receipt={mapSaleToReceiptPreview(receiptData)}
-            onSend={async () => { }}
             onClose={() => onOpenChange(false)}
           />
         )}

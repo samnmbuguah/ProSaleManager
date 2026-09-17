@@ -528,9 +528,9 @@ export default function ProfilePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium">Two-Factor Authentication</h4>
-                  <p className="text-sm text-muted-foreground">Secure your account with 2FA</p>
+                  <p className="text-sm text-muted-foreground">Secure your account with 2FA — coming soon</p>
                 </div>
-                <Button variant="outline">Set Up 2FA</Button>
+                <Button variant="outline" disabled aria-disabled="true">Coming soon</Button>
               </div>
             </CardContent>
           </Card>
@@ -567,13 +567,13 @@ export default function ProfilePage() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <h4 className="font-medium">Language</h4>
+              <div className="space-y-2 opacity-60">
+                <h4 className="font-medium">Language <span className="text-xs font-normal text-muted-foreground">(coming soon)</span></h4>
                 <p className="text-sm text-muted-foreground">Select your preferred language</p>
                 <Select
                   value={preferences.language}
                   onValueChange={(value) => handlePreferenceChange("language", value)}
-                  disabled={isLoading.preferences}
+                  disabled
                 >
                   <SelectTrigger className="w-full md:w-[240px]">
                     <SelectValue placeholder="Select language" />
@@ -586,13 +586,13 @@ export default function ProfilePage() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <h4 className="font-medium">Theme</h4>
+              <div className="space-y-2 opacity-60">
+                <h4 className="font-medium">Theme <span className="text-xs font-normal text-muted-foreground">(coming soon)</span></h4>
                 <p className="text-sm text-muted-foreground">Select your preferred theme</p>
                 <Select
                   value={preferences.theme}
                   onValueChange={(value) => handlePreferenceChange("theme", value)}
-                  disabled={isLoading.preferences}
+                  disabled
                 >
                   <SelectTrigger className="w-full md:w-[240px]">
                     <SelectValue placeholder="Select theme" />

@@ -20,7 +20,7 @@ import ProductFiltersComponent from "@/components/inventory/ProductFilters";
 import { filterProducts } from "@/utils/productFilters";
 import { api } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
-import Swal from "sweetalert2";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { usePurchaseOrders } from "@/hooks/use-purchase-orders";
 import StockTake from "@/components/inventory/StockTake";
 import { useQueryClient } from "@tanstack/react-query";
@@ -34,6 +34,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 
 const InventoryPage: React.FC = () => {
   const { toast } = useToast();
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const { currentStore } = useStoreContext();
   const { user } = useAuthContext();
@@ -434,15 +435,13 @@ const InventoryPage: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "Do you really want to delete this product?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, delete it!",
-      cancelButtonText: "Cancel",
+    const confirmed = await confirm({
+      title: "Delete product?",
+      description: "Do you really want to delete this product? This action cannot be undone.",
+      confirmText: "Delete",
+      destructive: true,
     });
-    if (!result.isConfirmed) return;
+    if (!confirmed) return;
     try {
       await api.delete(API_ENDPOINTS.products.delete(id));
       toast({
@@ -451,7 +450,6 @@ const InventoryPage: React.FC = () => {
       });
       invalidateProducts();
     } catch (error: unknown) {
-      // Show SweetAlert2 error dialog for backend error
       let message = "Failed to delete product";
       if (
         typeof error === "object" &&
@@ -471,10 +469,10 @@ const InventoryPage: React.FC = () => {
       } else if (error instanceof Error) {
         message = error.message;
       }
-      Swal.fire({
+      toast({
+        variant: "destructive",
         title: "Error",
-        text: message,
-        icon: "error",
+        description: message,
       });
     }
   };
@@ -502,10 +500,10 @@ const InventoryPage: React.FC = () => {
   return (
     <div className="container mx-auto p-4 mt-16">
       <TabsNav activeTab={activeTab} setActiveTab={setActiveTab} userRole={user?.role} />
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
         {activeTab === "products" && (
           <>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
               <ProductSearchBar
                 searchQuery={searchQuery}
                 setSearchQuery={(q) => {
@@ -514,7 +512,7 @@ const InventoryPage: React.FC = () => {
                 }}
                 onSearch={handleSearch}
               />
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm text-muted-foreground">
                   Showing {filteredProducts.length} of {products.length} products
                 </span>
@@ -524,31 +522,34 @@ const InventoryPage: React.FC = () => {
                   </span>
                 )}
               </div>
-              <Button
-                variant="outline"
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                  />
-                </svg>
-                Filters
-              </Button>
-              {filteredProducts.length !== products.length && (
+              <div className="flex items-center gap-2">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  onClick={handleClearFilters}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center gap-2"
                 >
-                  Clear Filters
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                    />
+                  </svg>
+                  Filters
                 </Button>
-              )}
+                {filteredProducts.length !== products.length && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearFilters}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
             </div>
             <Button
               onClick={() => {
@@ -556,6 +557,7 @@ const InventoryPage: React.FC = () => {
                 setSelectedProduct(null);
                 setIsAddDialogOpen(true);
               }}
+              className="w-full sm:w-auto"
             >
               Add Product
             </Button>

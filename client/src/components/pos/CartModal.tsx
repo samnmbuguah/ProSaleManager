@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
-import Swal from "sweetalert2";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export default function CartModal({
   open,
@@ -11,23 +11,20 @@ export default function CartModal({
   onOpenChange: (open: boolean) => void;
 }) {
   const { cart, removeFromCart, clearCart } = useCart();
+  const confirm = useConfirm();
 
   const handleRemove = (itemId: number) => {
     removeFromCart(itemId);
   };
 
-  const handleClear = () => {
-    Swal.fire({
+  const handleClear = async () => {
+    const confirmed = await confirm({
       title: "Clear cart?",
-      text: "Are you sure you want to remove all items from your cart?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, clear it!",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        clearCart();
-      }
+      description: "Are you sure you want to remove all items from your cart?",
+      confirmText: "Clear",
+      destructive: true,
     });
+    if (confirmed) clearCart();
   };
 
   return (

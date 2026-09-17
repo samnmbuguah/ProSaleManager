@@ -332,39 +332,51 @@ export function SalesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sales?.map((sale) => (
-                    <TableRow key={sale.id}>
-                      <TableCell>{format(new Date(sale.createdAt), "PPp")}</TableCell>
-                      <TableCell>{sale.Customer?.name || "Walk-in Customer"}</TableCell>
-                      <TableCell>{sale.User?.name || sale.User?.email || "Unknown User"}</TableCell>
-                      <TableCell className="capitalize">{sale.payment_method}</TableCell>
-                      <TableCell>
-                        <Badge className={getPaymentStatusColor(sale.status)}>{sale.status}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {sale.receipt_status ? (
-                          <div className="flex gap-2">
-                            <Badge variant={sale.receipt_status?.sms ? "default" : "outline"}>
-                              SMS
-                            </Badge>
-                            <Badge variant={sale.receipt_status?.whatsapp ? "default" : "outline"}>
-                              WhatsApp
-                            </Badge>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">Not sent</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(sale.total_amount)}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" onClick={() => setSelectedSale(sale)}>
-                          View Details
-                        </Button>
+                  {sales && sales.length > 0 ? (
+                    sales.map((sale) => (
+                      <TableRow key={sale.id}>
+                        <TableCell>{format(new Date(sale.createdAt), "PPp")}</TableCell>
+                        <TableCell>{sale.Customer?.name || "Walk-in Customer"}</TableCell>
+                        <TableCell>{sale.User?.name || sale.User?.email || "Unknown User"}</TableCell>
+                        <TableCell className="capitalize">{sale.payment_method}</TableCell>
+                        <TableCell>
+                          <Badge className={getPaymentStatusColor(sale.status)}>{sale.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {sale.receipt_status ? (
+                            <div className="flex gap-2">
+                              <Badge variant={sale.receipt_status?.sms ? "default" : "outline"}>
+                                SMS
+                              </Badge>
+                              <Badge variant={sale.receipt_status?.whatsapp ? "default" : "outline"}>
+                                WhatsApp
+                              </Badge>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">Not sent</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(sale.total_amount)}
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" onClick={() => setSelectedSale(sale)}>
+                            View Details
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
+                        <div className="flex flex-col items-center gap-2">
+                          <Receipt className="h-8 w-8 opacity-50" />
+                          <p>No sales found</p>
+                          <p className="text-sm">Sales will appear here once recorded</p>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -465,19 +477,31 @@ export function SalesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orders?.map((order: Order) => (
-                    <TableRow key={order.id}>
-                      <TableCell>{format(new Date(order.createdAt), "PPp")}</TableCell>
-                      <TableCell>{order.status}</TableCell>
-                      <TableCell>{Array.isArray(order.items) ? order.items.length : 0}</TableCell>
-                      <TableCell className="text-right">KSh {order.total_amount}</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" onClick={() => setSelectedOrder(order)}>
-                          View Details
-                        </Button>
+                  {orders && orders.length > 0 ? (
+                    orders.map((order: Order) => (
+                      <TableRow key={order.id}>
+                        <TableCell>{format(new Date(order.createdAt), "PPp")}</TableCell>
+                        <TableCell className="capitalize">{order.status}</TableCell>
+                        <TableCell>{Array.isArray(order.items) ? order.items.length : 0}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(order.total_amount)}</TableCell>
+                        <TableCell>
+                          <Button variant="ghost" onClick={() => setSelectedOrder(order)}>
+                            View Details
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                        <div className="flex flex-col items-center gap-2">
+                          <Receipt className="h-8 w-8 opacity-50" />
+                          <p>No orders found</p>
+                          <p className="text-sm">Orders will appear here once placed</p>
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             )}

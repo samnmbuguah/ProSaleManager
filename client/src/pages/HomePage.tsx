@@ -26,7 +26,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import Swal from "sweetalert2";
 import { useToast } from "@/hooks/use-toast";
 import {
   User,
@@ -150,10 +149,9 @@ export default function HomePage() {
 
   const handleCheckout = () => {
     if (!cart.items.length) {
-      Swal.fire({
-        icon: "info",
+      toast({
         title: "Cart is empty",
-        text: "Please add items to your cart before placing an order.",
+        description: "Please add items to your cart before placing an order.",
       });
       return;
     }
@@ -184,10 +182,9 @@ export default function HomePage() {
           };
         }),
       });
-      Swal.fire({
-        icon: "success",
+      toast({
         title: "Order placed!",
-        text: "Your order has been submitted successfully. Our staff will process it and contact you soon.",
+        description: "Your order has been submitted successfully. Our staff will process it and contact you soon.",
       });
       clearCart();
     } catch (e: unknown) {
@@ -227,14 +224,10 @@ export default function HomePage() {
         message = e.message;
       }
 
-      Swal.fire({
-        icon: "error",
+      toast({
+        variant: "destructive",
         title: title,
-        text: message,
-        confirmButtonText: "OK",
-        customClass: {
-          popup: "swal-wide",
-        },
+        description: message,
       });
     } finally {
       setIsSubmitting(false);
@@ -320,19 +313,45 @@ export default function HomePage() {
   }, [shouldNavigateAfterAuth, user, currentStore, setLocation]);
 
   if (isLoading)
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-background">
+        <StoreNav
+          onLoginClick={() => setShowAuthDialog(true)}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          showSearch={true}
+          onCheckout={handleCheckout}
+          isSubmitting={isSubmitting}
+        />
+        <div className="container mx-auto px-4 py-8">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 h-32 animate-pulse" />
+          <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="bg-card border rounded-lg p-4 space-y-3 animate-pulse">
+                <div className="h-32 bg-muted rounded" />
+                <div className="h-4 bg-muted rounded w-3/4" />
+                <div className="h-4 bg-muted rounded w-1/2" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
 
   if (!Array.isArray(products)) {
-    Swal.fire({
-      icon: "error",
-      title: "Product Load Error",
-      text: "Failed to load products. Please refresh the page.",
-    });
-    return null;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center">
+        <p className="text-destructive font-semibold">Failed to load products.</p>
+        <p className="text-sm text-muted-foreground mt-1">Please refresh the page to try again.</p>
+        <Button variant="outline" className="mt-4" onClick={() => refetchProducts()}>
+          Retry
+        </Button>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <StoreNav
         onLoginClick={() => setShowAuthDialog(true)}
@@ -344,7 +363,7 @@ export default function HomePage() {
       />
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div id="main-content" tabIndex={-1} className="container mx-auto px-4 py-8 outline-none">
         {/* Hero Section */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 text-white">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-4">
@@ -449,6 +468,8 @@ export default function HomePage() {
               size="sm"
               onClick={() => setViewMode("grid")}
               className="h-8 w-8 p-0"
+              aria-label="Grid view"
+              aria-pressed={viewMode === "grid"}
             >
               <Grid className="w-3 h-3" />
             </Button>
@@ -457,6 +478,8 @@ export default function HomePage() {
               size="sm"
               onClick={() => setViewMode("list")}
               className="h-8 w-8 p-0"
+              aria-label="List view"
+              aria-pressed={viewMode === "list"}
             >
               <List className="w-3 h-3" />
             </Button>
@@ -518,34 +541,54 @@ export default function HomePage() {
 
         {/* Results Count */}
         <div className="mb-4 sm:mb-6">
-          <p className="text-gray-600 text-sm sm:text-base">
+          <p className="text-muted-foreground text-sm sm:text-base">
             Showing {paginatedProducts.length} of {sortedProducts.length} products
             {searchTerm && ` for "${searchTerm}"`}
           </p>
         </div>
 
         {/* Products Grid */}
-        <div
-          className={`grid gap-3 sm:gap-4 md:gap-6 mb-8 ${viewMode === "grid"
-            ? "grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-            : "grid-cols-1"
-            }`}
-        >
-          {paginatedProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onImageError={(productId) =>
-                setImageErrorIds((prev) => ({
-                  ...prev,
-                  [productId]: true,
-                }))
-              }
-              imageError={imageErrorIds[product.id] || false}
-              viewMode={viewMode}
-            />
-          ))}
-        </div>
+        {paginatedProducts.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-muted-foreground">No products found</p>
+            <p className="text-sm text-muted-foreground mt-1">Try adjusting your search or filters</p>
+            {(searchTerm || selectedCategory !== null) && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4"
+                onClick={() => {
+                  setSearchTerm("");
+                  setSelectedCategory(null);
+                }}
+              >
+                Clear filters
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div
+            className={`grid gap-3 sm:gap-4 md:gap-6 mb-8 ${viewMode === "grid"
+              ? "grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+              : "grid-cols-1"
+              }`}
+          >
+            {paginatedProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onImageError={(productId) =>
+                  setImageErrorIds((prev) => ({
+                    ...prev,
+                    [productId]: true,
+                  }))
+                }
+                imageError={imageErrorIds[product.id] || false}
+                viewMode={viewMode}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Pagination */}
         {totalPages > 1 && (
@@ -719,6 +762,7 @@ export default function HomePage() {
                   size="icon"
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>

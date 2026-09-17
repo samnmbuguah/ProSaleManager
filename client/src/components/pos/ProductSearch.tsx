@@ -112,6 +112,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
   products,
   onSelect,
   searchProducts,
+  isLoading,
 }) => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -250,24 +251,28 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
         {/* View Toggle and Pagination Controls */}
         <div className="flex items-center gap-2">
           {/* View Toggle */}
-          <div className="flex border rounded-md">
-            <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("list")}
-              className="rounded-r-none"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "grid" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("grid")}
-              className="rounded-l-none"
-            >
-              <Grid3X3 className="h-4 w-4" />
-            </Button>
-          </div>
+            <div className="flex border rounded-md" role="group" aria-label="View mode">
+              <Button
+                variant={viewMode === "list" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+                className="rounded-r-none"
+                aria-label="List view"
+                aria-pressed={viewMode === "list"}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "grid" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+                className="rounded-l-none"
+                aria-label="Grid view"
+                aria-pressed={viewMode === "grid"}
+              >
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
+            </div>
 
           {/* Pagination Limit Dropdown */}
           <div className="flex items-center space-x-2">
@@ -289,8 +294,14 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
       </div>
 
       {/* Products Display */}
-      {paginatedProducts.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-24 rounded-md bg-muted animate-pulse" />
+          ))}
+        </div>
+      ) : paginatedProducts.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
           <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
           <p>No products found</p>
           <p className="text-sm">Try searching for a product</p>

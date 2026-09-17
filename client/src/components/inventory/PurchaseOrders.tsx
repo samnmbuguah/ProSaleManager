@@ -17,7 +17,6 @@ import type {
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Loader2, Trash2 } from "lucide-react";
-import Swal from "sweetalert2";
 import { usePurchaseOrders } from "@/hooks/use-purchase-orders";
 import { api } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/api-endpoints";
@@ -88,18 +87,7 @@ export function PurchaseOrders({
       // No reload needed, React Query will refetch
     } catch (err: unknown) {
       const message = (err as Error)?.message || "Failed to mark as received";
-      if (
-        (err as { response?: { status?: number } })?.response?.status === 400 &&
-        message.includes("Product with id")
-      ) {
-        Swal.fire({
-          title: "Error",
-          text: message,
-          icon: "error",
-        });
-      } else {
-        toast({ title: "Error", description: message, variant: "destructive" });
-      }
+      toast({ title: "Error", description: message, variant: "destructive" });
     } finally {
       setMarkingReceivedId(null);
     }
