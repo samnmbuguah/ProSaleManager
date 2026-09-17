@@ -121,6 +121,9 @@ export const API_ENDPOINTS = {
     addPoints: `${API_BASE_URL}/loyalty/add-points`,
     redeemPoints: `${API_BASE_URL}/loyalty/redeem-points`,
   },
+  agent: {
+    message: `${API_BASE_URL}/agent/message`,
+  },
   favorites: {
     list: `${API_BASE_URL}/favorites`,
     check: (productId: number) => `${API_BASE_URL}/favorites/check/${productId}`,

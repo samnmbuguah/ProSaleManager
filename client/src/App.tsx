@@ -9,6 +9,7 @@ import StoreNav from "@/components/layout/StoreNav";
 import AuthPage from "@/pages/AuthPage";
 import HomePage from "@/pages/HomePage";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { AgentPanel } from "@/components/agent/AgentPanel";
 
 // Lazy-loaded heavy pages for code splitting
 const InventoryPage = lazy(() => import("@/pages/InventoryPage"));
@@ -242,6 +243,7 @@ function App() {
         <Route path="/admin" component={RootRedirect} />
       </Switch>
       </Suspense>
+      <AgentPanel />
       <Toaster />
     </>
   );

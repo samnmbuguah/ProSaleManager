@@ -1,10 +1,23 @@
 # Integrating AI Agents into ProSaleManager with LangGraph
 
-**Status:** Proposal / roadmap
+**Status:** Proposal / roadmap — Phase 0 implemented (see below)
 **Scope:** Backend (Express 5 + Sequelize + TypeScript), Web client, Mobile apps
 **Target runtime:** LangGraph.js (`@langchain/langgraph`) on Node 22 — co-located with the API
 
 ---
+
+## 0. Implementation status
+
+- **Phase 0 (done):** `server/src/services/agent/` (state, 3 read-only tools,
+  LLM switch, router → toolCall/respond graph with `MemorySaver`),
+  `POST /api/agent/message` behind `requireAuth` + `AGENT_ENABLED`, 20-case
+  eval golden set (`server/src/__tests__/agent/eval.test.ts`).
+- **Phase 1 (done):** floating `AgentPanel` chat UI in the web client
+  (`client/src/components/agent/` + `agentService.ts`, thread persisted in
+  localStorage); Postgres checkpointer (`AGENT_CHECKPOINT_URL`, falls back to
+  `MemorySaver`).
+- **Not yet:** write actions with HITL approval, proactive briefings,
+  multi-agent supervisor, pgvector RAG.
 
 ## 1. Executive summary
 
