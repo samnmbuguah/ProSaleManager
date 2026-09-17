@@ -52,6 +52,9 @@
     "uuid": "^11.1.1"
   },
   "dependencies": {
+    "@langchain/core": "^1.2.11",
+    "@langchain/langgraph": "^1.4.15",
+    "@langchain/openai": "^1.5.13",
     "@types/node-cron": "^3.0.11",
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
@@ -78,7 +81,6 @@
     "sequelize-cli": "^6.6.3",
     "sqlite3": "^5.1.7",
     "twilio": "^5.6.1",
-    "exceljs": "^4.4.0",
     "zod": "^3.25.28"
   },
   "devDependencies": {

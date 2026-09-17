@@ -61,8 +61,14 @@ export const createExpenseSchema = z.object({
 
 export const updateExpenseSchema = createExpenseSchema.partial();
 
+export const agentMessageSchema = z.object({
+  message: z.string().trim().min(1, "Message is required").max(2000),
+  threadId: z.string().trim().min(1).max(100).optional(),
+});
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
+export type AgentMessageInput = z.infer<typeof agentMessageSchema>;

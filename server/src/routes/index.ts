@@ -1,4 +1,5 @@
 import express from "express";
+import agentRoutes from "./agent.routes.js";
 import authRoutes from "./auth.routes.js";
 import productRoutes from "./products.js";
 import customerRoutes from "./customers.js";
@@ -26,6 +27,7 @@ router.get("/test-error", () => {
   throw new ApiError(418, "Test error handler");
 });
 
+router.use("/agent", agentRoutes);
 router.use("/auth", authRoutes);
 router.use("/products", productRoutes);
 router.use("/customers", customerRoutes);
