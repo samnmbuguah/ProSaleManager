@@ -18,7 +18,8 @@ import {
     Bar,
     Line
 } from "recharts";
-import { Package, TrendingUp, DollarSign, Layers } from "lucide-react";
+import { Package, TrendingUp, Banknote, Layers } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 interface StockValueReportProps {
     data: StockValueReportResponse;
@@ -33,14 +34,6 @@ export default function StockValueReport({ data }: StockValueReportProps) {
         return new Date(dateString).toLocaleDateString("en-KE", { month: "short", day: "numeric" });
     };
 
-    const formatCurrency = (amount: number): string => {
-        return new Intl.NumberFormat("en-KE", {
-            style: "currency",
-            currency: "KES",
-            maximumFractionDigits: 0
-        }).format(amount);
-    };
-
     return (
         <div className="space-y-6 pb-12">
             {/* KPI Overview */}
@@ -48,7 +41,7 @@ export default function StockValueReport({ data }: StockValueReportProps) {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Received Value</CardTitle>
-                        <DollarSign className="h-4 w-4 text-emerald-500" />
+                        <Banknote className="h-4 w-4 text-emerald-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{formatCurrency(data.total_value || 0)}</div>
@@ -107,7 +100,7 @@ export default function StockValueReport({ data }: StockValueReportProps) {
                                         axisLine={false}
                                     />
                                     <YAxis
-                                        tickFormatter={(v) => `Ksh ${v / 1000}k`}
+                                        tickFormatter={(v) => `KSh ${(v / 1000).toLocaleString("en-KE")}k`}
                                         tick={{ fontSize: 12 }}
                                         tickLine={false}
                                         axisLine={false}

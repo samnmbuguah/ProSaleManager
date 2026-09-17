@@ -1,10 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { Suspense, lazy, useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import ProductPerformance from "../components/reports/ProductPerformance";
 import InventoryStatus from "../components/reports/InventoryStatus";
-import ExpensesSummary from "../components/reports/ExpensesSummary";
 import {
   useCategoryPerformance,
   useInventoryReport,
@@ -14,15 +13,26 @@ import {
   useStockValueReport,
   useSalesHistory,
 } from "@/hooks/use-reports";
-import ReportCenter from "../components/reports/ReportCenter";
 import SalesHistoryTable from "../components/reports/SalesHistoryTable";
 import { getDatesFromPeriod } from "@/lib/utils";
-import { SalesExpensesChart } from "../components/reports/SalesExpensesChart";
-import { InventoryFilters, PerformanceFilters, ExpenseFilters } from "@/components/reports/ReportFilters";
+import { InventoryFilters, PerformanceFilters, ExpenseFilters } from "../components/reports/ReportFilters";
 import DashboardOverview from "../components/reports/DashboardOverview";
-import { SalesTrendChart } from "../components/reports/SalesTrendChart";
-import { CategoryPerformanceChart } from "../components/reports/CategoryPerformanceChart";
-import StockValueReport from "../components/reports/StockValueReport";
+
+// Heavy chart/PDF chunks are split out so the initial Reports bundle stays lean.
+const SalesExpensesChart = lazy(() =>
+  import("../components/reports/SalesExpensesChart").then((m) => ({ default: m.SalesExpensesChart })),
+);
+const SalesTrendChart = lazy(() =>
+  import("../components/reports/SalesTrendChart").then((m) => ({ default: m.SalesTrendChart })),
+);
+const CategoryPerformanceChart = lazy(() =>
+  import("../components/reports/CategoryPerformanceChart").then((m) => ({
+    default: m.CategoryPerformanceChart,
+  })),
+);
+const StockValueReport = lazy(() => import("../components/reports/StockValueReport"));
+const ExpensesSummary = lazy(() => import("../components/reports/ExpensesSummary"));
+const ReportCenter = lazy(() => import("../components/reports/ReportCenter"));
 import {
   TrendingUp,
   TrendingDown,
@@ -289,12 +299,14 @@ export default function ReportsPage() {
 
         {/* ── Main Chart: Sales + Expenses ─────────────────────────────── */}
         <div className="mb-8">
-          <SalesExpensesChart
-            salesData={salesSummary?.current?.salesByDay ?? {}}
-            expensesData={expensesByDay}
-            compareData={salesSummary?.compare?.salesByDay ?? {}}
-            isLoading={salesLoading || expensesLoading}
-          />
+          <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+            <SalesExpensesChart
+              salesData={salesSummary?.current?.salesByDay ?? {}}
+              expensesData={expensesByDay}
+              compareData={salesSummary?.compare?.salesByDay ?? {}}
+              isLoading={salesLoading || expensesLoading}
+            />
+          </Suspense>
         </div>
 
         {/* ── Summary Cards ────────────────────────────────────────────── */}
@@ -380,18 +392,24 @@ export default function ReportsPage() {
               isLoading={inventoryLoading || performanceLoading}
             />
 
-            <ReportCenter
-              salesSummary={salesSummary?.current}
-              expensesSummary={expensesSummary}
-              salesHistory={salesHistoryData || []}
-              periodLabel={formatPeriodLabel(period)}
-            />
+            <Suspense fallback={<Skeleton className="h-32 w-full" />}>
+              <ReportCenter
+                salesSummary={salesSummary?.current}
+                expensesSummary={expensesSummary}
+                salesHistory={salesHistoryData || []}
+                periodLabel={formatPeriodLabel(period)}
+              />
+            </Suspense>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-card p-6 rounded-lg border">
-                <SalesTrendChart data={salesSummary?.current?.salesByDay || []} title="Sales Trend" />
+                <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                  <SalesTrendChart data={salesSummary?.current?.salesByDay || []} title="Sales Trend" />
+                </Suspense>
               </div>
               <div className="bg-card p-6 rounded-lg border">
-                <CategoryPerformanceChart data={categoryPerformanceData || []} title="Category Performance" />
+                <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                  <CategoryPerformanceChart data={categoryPerformanceData || []} title="Category Performance" />
+                </Suspense>
               </div>
             </div>
           </TabsContent>
@@ -421,10 +439,12 @@ export default function ReportsPage() {
           </TabsContent>
 
           <TabsContent value="expenses">
-            <ExpensesSummary
-              expenses={expensesTabData?.expenses || []}
-              onFiltersChange={setExpenseFilters}
-            />
+            <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+              <ExpensesSummary
+                expenses={expensesTabData?.expenses || []}
+                onFiltersChange={setExpenseFilters}
+              />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="stock-value">
@@ -433,7 +453,15 @@ export default function ReportsPage() {
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
               </div>
             ) : (
-              <StockValueReport data={stockValueData || { total_value: 0, total_quantity: 0, unique_products: 0, count: 0, byDay: [], topProducts: [], logs: [] }} />
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center py-12">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
+                  </div>
+                }
+              >
+                <StockValueReport data={stockValueData || { total_value: 0, total_quantity: 0, unique_products: 0, count: 0, byDay: [], topProducts: [], logs: [] }} />
+              </Suspense>
             )}
           </TabsContent>
         </Tabs>
