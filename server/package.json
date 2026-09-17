@@ -43,7 +43,8 @@
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write .",
     "type-check": "tsc --noEmit",
-    "print:test": "tsx scripts/print-receipt.ts"
+    "print:test": "tsx scripts/print-receipt.ts",
+    "agent:smoke": "tsx scripts/agent-smoke.ts"
   },
   "keywords": [],
   "author": "",

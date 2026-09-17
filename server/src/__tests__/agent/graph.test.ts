@@ -13,6 +13,7 @@ const originalFetchers = { ...agentFetchers };
 
 beforeEach(() => {
   delete process.env.OPENAI_API_KEY;
+  delete process.env.OPENCODE_ZEN_API_KEY;
   agentFetchers.salesSummary = async (_storeId, period) => ({ period, count: 3, total: 4500 });
   agentFetchers.inventoryReport = async () => ({
     total: 10,
