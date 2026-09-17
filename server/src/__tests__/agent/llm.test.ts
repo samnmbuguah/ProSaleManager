@@ -12,6 +12,7 @@ const KEYS = [
   "OPENAI_API_KEY",
   "AGENT_BASE_URL",
   "AGENT_MODEL",
+  "AGENT_RESPONSES_API",
 ] as const;
 
 function snapshotEnv(): Record<string, string | undefined> {
@@ -45,6 +46,22 @@ describe("resolveLlmConfig", () => {
       apiKey: "sk-zen",
       baseURL: ZEN_BASE_URL,
       model: ZEN_DEFAULT_MODEL,
+      useResponsesApi: true,
+    });
+  });
+
+  it("lets chat/completions models opt out of the Responses API", () => {
+    expect(
+      resolveLlmConfig({
+        AGENT_ENABLED: "true",
+        OPENCODE_ZEN_API_KEY: "sk-zen",
+        AGENT_MODEL: "kimi-k2.5",
+        AGENT_RESPONSES_API: "false",
+      }),
+    ).toMatchObject({
+      provider: "zen",
+      model: "kimi-k2.5",
+      useResponsesApi: false,
     });
   });
 
@@ -66,7 +83,12 @@ describe("resolveLlmConfig", () => {
   it("falls back to plain OpenAI", () => {
     expect(
       resolveLlmConfig({ AGENT_ENABLED: "true", OPENAI_API_KEY: "sk-openai" }),
-    ).toEqual({ provider: "openai", apiKey: "sk-openai", model: "gpt-4o-mini" });
+    ).toEqual({
+      provider: "openai",
+      apiKey: "sk-openai",
+      model: "gpt-4o-mini",
+      useResponsesApi: false,
+    });
   });
 });
 
@@ -74,7 +96,13 @@ describe("getChatModel", () => {
   const saved = snapshotEnv();
 
   beforeEach(() => {
-    restoreEnv({ ...saved, AGENT_ENABLED: undefined, OPENCODE_ZEN_API_KEY: undefined, OPENAI_API_KEY: undefined });
+    restoreEnv({
+      ...saved,
+      AGENT_ENABLED: undefined,
+      OPENCODE_ZEN_API_KEY: undefined,
+      OPENAI_API_KEY: undefined,
+      AGENT_RESPONSES_API: undefined,
+    });
   });
 
   afterEach(() => {

@@ -6,17 +6,18 @@ export type LlmProvider = "openai" | "zen";
 export const ZEN_BASE_URL = "https://opencode.ai/zen/v1";
 
 /**
- * Default model. Must be a Zen model served on the chat/completions endpoint
- * (e.g. kimi-k2.5, deepseek-v4-flash); /responses-only models will not work
- * with ChatOpenAI.
+ * Default model. Served on Zen's Responses API, so AGENT_RESPONSES_API
+ * defaults to true. Chat/completions models (e.g. kimi-k2.5) need
+ * AGENT_RESPONSES_API=false instead.
  */
-export const ZEN_DEFAULT_MODEL = "kimi-k2.5";
+export const ZEN_DEFAULT_MODEL = "muse-spark-1.3-contributor-free";
 
 export interface LlmConfig {
   provider: LlmProvider;
   apiKey: string;
   baseURL?: string;
   model: string;
+  useResponsesApi: boolean;
 }
 
 /** Master switch for the AI assistant. Off by default. */
@@ -37,6 +38,9 @@ export function resolveLlmConfig(env: NodeJS.ProcessEnv = process.env): LlmConfi
       apiKey: env.OPENCODE_ZEN_API_KEY,
       baseURL: env.AGENT_BASE_URL || ZEN_BASE_URL,
       model: env.AGENT_MODEL || ZEN_DEFAULT_MODEL,
+      // The default model is Responses-API-only; explicit "false" required
+      // for chat/completions models such as kimi-k2.5.
+      useResponsesApi: env.AGENT_RESPONSES_API ? env.AGENT_RESPONSES_API === "true" : true,
     };
   }
   if (env.OPENAI_API_KEY) {
@@ -44,6 +48,7 @@ export function resolveLlmConfig(env: NodeJS.ProcessEnv = process.env): LlmConfi
       provider: "openai",
       apiKey: env.OPENAI_API_KEY,
       model: env.AGENT_MODEL || "gpt-4o-mini",
+      useResponsesApi: env.AGENT_RESPONSES_API === "true",
     };
   }
   return null;
@@ -61,6 +66,7 @@ export function getChatModel(): ChatOpenAI | null {
     apiKey: config.apiKey,
     model: config.model,
     temperature: 0,
+    useResponsesApi: config.useResponsesApi,
     ...(config.baseURL ? { configuration: { baseURL: config.baseURL } } : {}),
   });
 }

@@ -267,8 +267,24 @@ async function respondNode(state: AgentStateType) {
       ],
     };
   }
-  const reply = await model.invoke(state.messages);
-  return { messages: [reply] };
+  try {
+    const reply = await model.invoke(state.messages);
+    return { messages: [reply] };
+  } catch (error) {
+    // A billing lapse or outage must not 500 the chat: degrade to stub.
+    console.error(
+      "Live model failed, falling back to stub:",
+      error instanceof Error ? error.message : error,
+    );
+    const text = lastUserText(state);
+    return {
+      messages: [
+        new AIMessage(
+          `(live model unavailable) You said: "${text}". Ask about sales, inventory, or search for a product by name.`,
+        ),
+      ],
+    };
+  }
 }
 
 type ProposalOutcome =
