@@ -123,6 +123,7 @@ export const API_ENDPOINTS = {
   },
   agent: {
     message: `${API_BASE_URL}/agent/message`,
+    resume: `${API_BASE_URL}/agent/resume`,
   },
   favorites: {
     list: `${API_BASE_URL}/favorites`,

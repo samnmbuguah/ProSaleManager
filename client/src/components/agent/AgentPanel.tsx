@@ -5,7 +5,11 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { sendAgentMessage } from "@/services/agentService";
+import {
+  resumeAgentDecision,
+  sendAgentMessage,
+  type AgentProposal,
+} from "@/services/agentService";
 import { cn } from "@/lib/utils";
 
 interface ChatMessage {
@@ -25,6 +29,8 @@ export function AgentPanel() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [deciding, setDeciding] = useState(false);
+  const [pendingProposal, setPendingProposal] = useState<AgentProposal | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,8 +49,17 @@ export function AgentPanel() {
     try {
       const threadId = localStorage.getItem(THREAD_KEY) ?? undefined;
       const result = await sendAgentMessage(trimmed, threadId);
-      localStorage.setItem(THREAD_KEY, result.threadId);
-      setMessages((prev) => [...prev, { role: "assistant", content: result.reply }]);
+      if (result.threadId) localStorage.setItem(THREAD_KEY, result.threadId);
+      if (result.status === "approval_required") {
+        setPendingProposal(result.proposal);
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: "I've prepared a proposal — review it below." },
+        ]);
+      } else {
+        setPendingProposal(null);
+        setMessages((prev) => [...prev, { role: "assistant", content: result.reply }]);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Assistant request failed";
       setMessages((prev) => [...prev, { role: "assistant", content: `Sorry — ${message}` }]);
@@ -52,6 +67,43 @@ export function AgentPanel() {
     } finally {
       setSending(false);
     }
+  };
+
+  const decide = async (approved: boolean) => {
+    const threadId = localStorage.getItem(THREAD_KEY);
+    if (!threadId || deciding) return;
+    setDeciding(true);
+    try {
+      const result = await resumeAgentDecision(threadId, approved);
+      setPendingProposal(null);
+      setMessages((prev) => [...prev, { role: "assistant", content: result.reply }]);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Assistant decision failed";
+      setMessages((prev) => [...prev, { role: "assistant", content: `Sorry — ${message}` }]);
+      toast({ title: "Assistant error", description: message, variant: "destructive" });
+    } finally {
+      setDeciding(false);
+    }
+  };
+
+  const prettifyKey = (key: string) =>
+    key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const formatArgValue = (value: unknown): string => {
+    if (value == null) return "—";
+    if (Array.isArray(value)) {
+      return value
+        .map((item) =>
+          typeof item === "object" && item !== null
+            ? Object.entries(item as Record<string, unknown>)
+                .map(([k, v]) => `${prettifyKey(k)}: ${formatArgValue(v)}`)
+                .join(", ")
+            : String(item),
+        )
+        .join("; ");
+    }
+    if (typeof value === "object") return JSON.stringify(value);
+    return String(value);
   };
 
   return (
@@ -113,6 +165,45 @@ export function AgentPanel() {
                     {message.content}
                   </div>
                 ))
+              )}
+              {pendingProposal && (
+                <div
+                  role="group"
+                  aria-label="Approval request"
+                  className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm"
+                >
+                  <p className="font-semibold">Needs your approval</p>
+                  <p className="mt-1">{pendingProposal.summary}</p>
+                  <dl className="mt-2 space-y-1">
+                    {Object.entries(pendingProposal.args).map(([key, value]) => (
+                      <div key={key} className="flex gap-2 text-xs">
+                        <dt className="shrink-0 font-medium text-muted-foreground">
+                          {prettifyKey(key)}:
+                        </dt>
+                        <dd className="min-w-0 break-words">{formatArgValue(value)}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => void decide(true)}
+                      disabled={deciding}
+                      aria-label="Approve proposal"
+                    >
+                      {deciding ? <Loader2 className="h-4 w-4 animate-spin" /> : "Approve"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void decide(false)}
+                      disabled={deciding}
+                      aria-label="Reject proposal"
+                    >
+                      Reject
+                    </Button>
+                  </div>
+                </div>
               )}
               {sending && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
