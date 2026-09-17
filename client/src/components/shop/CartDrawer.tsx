@@ -64,7 +64,7 @@ export default function CartDrawer({
         <Button
           variant="outline"
           size="sm"
-          className="relative bg-white hover:bg-gray-50 border-gray-200"
+          className="relative bg-card hover:bg-accent border"
         >
           <ShoppingCart className="w-4 h-4" />
           {cart.items.length > 0 && (
@@ -96,7 +96,7 @@ export default function CartDrawer({
             <div className="flex-1 flex items-center justify-center text-center">
               <div>
                 <ShoppingCart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Your cart is empty</p>
+                <p className="text-muted-foreground">Your cart is empty</p>
                 <p className="text-sm text-gray-400">Add some items to get started</p>
               </div>
             </div>
@@ -123,7 +123,7 @@ export default function CartDrawer({
                       {/* Product Info */}
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm line-clamp-2">{item.product.name}</h4>
-                        <p className="text-xs text-gray-500 mb-1">{getUnitLabel(item.unit_type)}</p>
+                        <p className="text-xs text-muted-foreground mb-1">{getUnitLabel(item.unit_type)}</p>
                         <p className="text-sm font-semibold text-green-600">
                           KSh {item.unit_price.toLocaleString()}
                         </p>

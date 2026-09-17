@@ -531,7 +531,7 @@ export default function HomePage() {
 
         {/* Desktop Category Filter Sidebar */}
         {showFilters && (
-          <div className="hidden lg:block w-64 bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="hidden lg:block w-64 bg-card rounded-lg shadow-md p-6 mb-6">
             <CategoryFilter
               selectedCategory={selectedCategory}
               onCategoryChange={setSelectedCategory}
@@ -672,7 +672,7 @@ export default function HomePage() {
                     key={account.label}
                     type="button"
                     variant="outline"
-                    className="h-auto min-h-11 whitespace-normal bg-white px-3 py-2 text-sm"
+                    className="h-auto min-h-11 whitespace-normal bg-card px-3 py-2 text-sm"
                     disabled={isSubmitting}
                     onClick={() => {
                       loginForm.setValue("email", account.email, { shouldValidate: true });

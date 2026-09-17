@@ -97,7 +97,7 @@ export function PurchaseOrderForm({
       </div>
 
       {/* Low Stock Auto-fill Section */}
-      <div className="border rounded-lg p-4 bg-gray-50">
+      <div className="border rounded-lg p-4 bg-muted">
         <h3 className="text-md font-semibold mb-3">Auto-fill Low Stock Products</h3>
         <div className="flex gap-3 items-end">
           <div className="flex-1">
@@ -110,7 +110,7 @@ export function PurchaseOrderForm({
               placeholder="Enter threshold (e.g., 10)"
               min="1"
             />
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Products with stock ≤ this amount will be added
             </p>
           </div>

@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, User, ShoppingCart, AlertTriangle } from "lucide-react";
 import { CartItem } from "../../types/pos";
 import type { Customer } from "@/types/customer";
+import { formatCurrency } from "@/lib/utils";
 
 interface CartProps {
   items: CartItem[];
@@ -44,12 +45,7 @@ export const Cart: React.FC<CartProps> = ({
   const [stockValidation, setStockValidation] = useState<StockValidationResult[]>([]);
   const [isValidatingStock, setIsValidatingStock] = useState(false);
 
-  const formatPrice = (price: string | number) => {
-    return `KSh ${Number(price).toLocaleString("en-KE", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
+  const formatPrice = (price: string | number) => formatCurrency(price);
 
   const getUnitPrice = (product: CartItem["product"], unitType: string): number => {
     let price: number | string | null | undefined;
@@ -146,7 +142,7 @@ export const Cart: React.FC<CartProps> = ({
               <span className="text-sm font-medium text-blue-800">Customer</span>
             </div>
             <p className="font-semibold text-sm">{selectedCustomer.name}</p>
-            <p className="text-xs text-gray-600">{selectedCustomer.phone}</p>
+            <p className="text-xs text-muted-foreground">{selectedCustomer.phone}</p>
           </div>
         )}
 
@@ -169,7 +165,7 @@ export const Cart: React.FC<CartProps> = ({
                 return (
                   <div
                     key={item.id}
-                    className={`border rounded-lg p-3 ${hasStockIssue ? "bg-red-50 border-red-200" : "bg-white"}`}
+                    className={`border rounded-lg p-3 ${hasStockIssue ? "bg-red-50 border-red-200" : "bg-card"}`}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
@@ -177,7 +173,7 @@ export const Cart: React.FC<CartProps> = ({
                           {item.product.name}
                           {hasStockIssue && <AlertTriangle className="h-4 w-4 text-red-500" />}
                         </div>
-                        <div className="text-xs text-gray-500">{item.product.sku}</div>
+                        <div className="text-xs text-muted-foreground">{item.product.sku}</div>
                         {hasStockIssue && stockResult && (
                           <div className="text-xs text-red-600 mt-1">
                             Insufficient stock: Available {stockResult.available}, Required{" "}
@@ -199,7 +195,7 @@ export const Cart: React.FC<CartProps> = ({
 
                     <div className="grid grid-cols-2 gap-2 mb-2">
                       <div>
-                        <label htmlFor={`unit-type-${item.id}`} className="text-xs text-gray-600">
+                        <label htmlFor={`unit-type-${item.id}`} className="text-xs text-muted-foreground">
                           Unit Type
                         </label>
                         <Select
@@ -217,7 +213,7 @@ export const Cart: React.FC<CartProps> = ({
                         </Select>
                       </div>
                       <div>
-                        <label htmlFor={`quantity-${item.id}`} className="text-xs text-gray-600">
+                        <label htmlFor={`quantity-${item.id}`} className="text-xs text-muted-foreground">
                           Quantity
                         </label>
                         <input
@@ -235,7 +231,7 @@ export const Cart: React.FC<CartProps> = ({
 
                     <div className="flex justify-between items-center text-sm">
                       <div>
-                        <span className="text-gray-600">Unit Price:</span>
+                        <span className="text-muted-foreground">Unit Price:</span>
                         <input
                           type="number"
                           min={0}

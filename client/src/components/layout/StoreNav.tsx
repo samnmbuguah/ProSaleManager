@@ -75,7 +75,7 @@ export default function StoreNav({
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full hover:bg-gray-200"
+                                            className="flex items-center gap-2 px-3 py-1 bg-muted rounded-full hover:bg-gray-200"
                                         >
                                             <User className="w-4 h-4 text-gray-600" />
                                             <span className="text-sm text-gray-700">

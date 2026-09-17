@@ -46,7 +46,7 @@ function formatDateLabel(date: string) {
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
     return (
-        <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg text-sm">
+        <div className="bg-card border border-gray-200 rounded-lg p-3 shadow-lg text-sm">
             <p className="font-semibold text-gray-700 mb-2">{formatDateLabel(label)}</p>
             {payload.map((entry: any) => (
                 <div key={entry.name} className="flex items-center gap-2 mb-1">

@@ -28,7 +28,7 @@ export function ExpensePieChart({ data, totalAmount }: ExpensePieChartProps) {
         if (active && payload && payload.length) {
             const data = payload[0].payload;
             return (
-                <div className="bg-white p-3 border rounded-lg shadow-lg">
+                <div className="bg-card p-3 border rounded-lg shadow-lg">
                     <p className="font-medium">{data.category}</p>
                     <p className="text-sm text-muted-foreground">
                         Amount: {formatCurrency(data.amount)}

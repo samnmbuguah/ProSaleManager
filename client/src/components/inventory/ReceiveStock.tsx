@@ -280,19 +280,19 @@ export default function ReceiveStock() {
                         />
                         {/* Suggestions Dropdown */}
                         {searchQuery.trim() && (
-                            <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-50 max-h-60 overflow-auto">
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-card border rounded-md shadow-lg z-50 max-h-60 overflow-auto">
                                 {searchResults.length === 0 ? (
-                                    <div className="p-3 text-sm text-gray-500 text-center">No products found</div>
+                                    <div className="p-3 text-sm text-muted-foreground text-center">No products found</div>
                                 ) : (
                                     searchResults.map(product => (
                                         <div
                                             key={product.id}
-                                            className="p-3 hover:bg-gray-50 cursor-pointer flex justify-between items-center border-b last:border-0"
+                                            className="p-3 hover:bg-accent cursor-pointer flex justify-between items-center border-b last:border-0"
                                             onClick={() => handleAddProduct(product)}
                                         >
                                             <div>
                                                 <div className="font-medium text-sm">{product.name}</div>
-                                                <div className="text-xs text-gray-500">SKU: {product.sku}</div>
+                                                <div className="text-xs text-muted-foreground">SKU: {product.sku}</div>
                                             </div>
                                             <div className="text-xs font-semibold">Qty: {product.quantity}</div>
                                         </div>

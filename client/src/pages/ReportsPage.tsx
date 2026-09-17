@@ -26,10 +26,11 @@ import StockValueReport from "../components/reports/StockValueReport";
 import {
   TrendingUp,
   TrendingDown,
-  DollarSign,
+  Banknote,
   ShoppingCart,
   BarChart2,
 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 // ─── ErrorBoundary ────────────────────────────────────────────────────────────
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
@@ -228,8 +229,8 @@ export default function ReportsPage() {
             </button>
           </div>
 
-          {period === "custom" && (
-            <div className="flex gap-2 items-center bg-white p-1.5 rounded-md border shadow-sm">
+            {period === "custom" && (
+            <div className="flex gap-2 items-center bg-card p-1.5 rounded-md border shadow-sm">
               <input
                 type="date"
                 className="border p-1 rounded text-sm"
@@ -253,15 +254,15 @@ export default function ReportsPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <KpiCard
             title="Total Revenue"
-            value={`KSh ${totalRevenue.toLocaleString("en-KE")}`}
+            value={formatCurrency(totalRevenue)}
             sub={`${salesCount} transactions`}
-            icon={<DollarSign size={18} />}
+            icon={<Banknote size={18} />}
             isLoading={isKpiLoading}
             colorClass="text-primary"
           />
           <KpiCard
             title="Total Expenses"
-            value={`KSh ${totalExpenses.toLocaleString("en-KE")}`}
+            value={formatCurrency(totalExpenses)}
             sub={`${expensesSummary?.count ?? 0} records`}
             icon={<ShoppingCart size={18} />}
             isLoading={isKpiLoading}
@@ -269,7 +270,7 @@ export default function ReportsPage() {
           />
           <KpiCard
             title="Net Profit"
-            value={`KSh ${netProfit.toLocaleString("en-KE")}`}
+            value={formatCurrency(netProfit)}
             trend={netProfit}
             sub={netProfit >= 0 ? "Profitable period" : "Loss this period"}
             icon={netProfit >= 0 ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
@@ -299,7 +300,7 @@ export default function ReportsPage() {
         {/* ── Summary Cards ────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {/* Sales by Payment Method */}
-          <div className="bg-white rounded-lg border shadow-sm p-4">
+          <div className="bg-card rounded-lg border shadow-sm p-4">
             <h3 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wide">
               Payment Methods
             </h3>
@@ -308,7 +309,7 @@ export default function ReportsPage() {
                 {Object.entries(salesSummary.current.paymentMethods).map(([method, amount]: [string, unknown]) => (
                   <li key={method} className="flex justify-between items-center">
                     <span className="capitalize text-sm font-medium">{method}</span>
-                    <span className="text-sm font-semibold">KSh {Number(amount).toLocaleString()}</span>
+                    <span className="text-sm font-semibold">{formatCurrency(amount as number)}</span>
                   </li>
                 ))}
               </ul>
@@ -318,7 +319,7 @@ export default function ReportsPage() {
           </div>
 
           {/* Expenses by Category */}
-          <div className="bg-white rounded-lg border shadow-sm p-4">
+          <div className="bg-card rounded-lg border shadow-sm p-4">
             <h3 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wide">
               Expenses Breakdown
             </h3>
@@ -329,7 +330,7 @@ export default function ReportsPage() {
                   .map(({ category: cat, amount: amt }) => (
                     <li key={cat} className="flex justify-between items-center">
                       <span className="capitalize text-sm font-medium">{cat}</span>
-                      <span className="text-sm font-semibold">KSh {Number(amt).toLocaleString()}</span>
+                      <span className="text-sm font-semibold">{formatCurrency(amt)}</span>
                     </li>
                   ))}
               </ul>
@@ -339,7 +340,7 @@ export default function ReportsPage() {
           </div>
 
           {/* Top Sellers */}
-          <div className="bg-white rounded-lg border shadow-sm p-4">
+          <div className="bg-card rounded-lg border shadow-sm p-4">
             <h3 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wide">
               Top Sellers
             </h3>
@@ -351,7 +352,7 @@ export default function ReportsPage() {
                       <span className="text-xs text-muted-foreground font-bold w-4">{i + 1}.</span>
                       <span className="text-sm font-medium truncate">{p.productName}</span>
                     </span>
-                    <span className="text-sm font-semibold whitespace-nowrap">KSh {p.revenue.toLocaleString()}</span>
+                    <span className="text-sm font-semibold whitespace-nowrap">{formatCurrency(p.revenue)}</span>
                   </li>
                 ))}
               </ol>
@@ -386,10 +387,10 @@ export default function ReportsPage() {
               periodLabel={formatPeriodLabel(period)}
             />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-lg border">
+              <div className="bg-card p-6 rounded-lg border">
                 <SalesTrendChart data={salesSummary?.current?.salesByDay || []} title="Sales Trend" />
               </div>
-              <div className="bg-white p-6 rounded-lg border">
+              <div className="bg-card p-6 rounded-lg border">
                 <CategoryPerformanceChart data={categoryPerformanceData || []} title="Category Performance" />
               </div>
             </div>

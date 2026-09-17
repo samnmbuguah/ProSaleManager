@@ -26,7 +26,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders, onViewOrder, isLoadin
       case "cancelled":
         return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-gray-800";
     }
   };
 
@@ -39,7 +39,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders, onViewOrder, isLoadin
       case "failed":
         return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-gray-800";
     }
   };
 

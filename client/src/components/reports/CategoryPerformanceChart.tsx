@@ -31,7 +31,7 @@ export function CategoryPerformanceChart({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border rounded-lg shadow-lg">
+        <div className="bg-card p-3 border rounded-lg shadow-lg">
           <p className="font-medium">{label}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>

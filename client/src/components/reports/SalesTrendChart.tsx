@@ -32,7 +32,7 @@ export function SalesTrendChart({ data, title = "Sales Trend", height = 300 }: S
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 border rounded-lg shadow-lg">
+        <div className="bg-card p-3 border rounded-lg shadow-lg">
           <p className="font-medium">{formatDate(label)}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>

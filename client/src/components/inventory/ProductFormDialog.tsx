@@ -391,7 +391,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-card">
         <DialogHeader>
           <DialogTitle>{selectedProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
           <DialogDescription>Fill in the product details below.</DialogDescription>
@@ -413,7 +413,7 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
                 {fileValidationError}
               </div>
             )}
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               Supported formats: JPEG, PNG, WebP. Max size: 5MB per file. Max files: 10.
             </div>
             {Array.isArray(imagePreviews) && imagePreviews.length > 0 && (
@@ -687,14 +687,14 @@ const ProductFormDialog: React.FC<ProductFormDialogProps> = ({
           {uploading && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">
+                <span className="text-muted-foreground">
                   {uploadError ? "Upload Failed" : "Uploading..."}
                 </span>
-                <span className="text-gray-500">
+                <span className="text-muted-foreground">
                   {uploadProgress !== null ? `${uploadProgress}%` : "0%"}
                 </span>
               </div>
-              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                 <div
                   className={`h-full transition-all duration-300 ease-out ${uploadError
                     ? "bg-red-500"

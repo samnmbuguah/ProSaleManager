@@ -172,7 +172,7 @@ export default function SalesHistoryTable({ sales, isLoading, startDate, endDate
                                     {expandedRows.has(sale.id) && (
                                         <TableRow className="bg-slate-50/50">
                                             <TableCell colSpan={7} className="p-4">
-                                                <div className="bg-white rounded-lg border shadow-sm p-3 max-w-2xl mx-auto">
+                                                <div className="bg-card rounded-lg border shadow-sm p-3 max-w-2xl mx-auto">
                                                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Itemized Breakdown</h4>
                                                     <div className="space-y-2">
                                                         {sale.items.map((item, idx) => (

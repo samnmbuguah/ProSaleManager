@@ -34,7 +34,7 @@ export function PurchaseOrderItemsList({
         <h3 className="text-lg font-semibold">Order Items</h3>
       </div>
       {/* Header row for labels */}
-      <div className="flex gap-2 p-2 border-b font-semibold bg-gray-50 rounded-t items-center">
+      <div className="flex gap-2 p-2 border-b font-semibold bg-muted rounded-t items-center">
         <div className="w-60">Product</div>
         <div className="w-24">Unit</div>
         <div className="w-20">Quantity</div>

@@ -11,7 +11,7 @@ interface CustomerCardProps {
 
 const CustomerCard: React.FC<CustomerCardProps> = ({ customer, onEdit, onDelete }) => {
   return (
-    <div className="border rounded-lg p-4 shadow-sm bg-white hover:shadow-md transition-shadow">
+    <div className="border rounded-lg p-4 shadow-sm bg-card hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-2">
         <h2 className="text-lg font-semibold">{customer.name}</h2>
       </div>

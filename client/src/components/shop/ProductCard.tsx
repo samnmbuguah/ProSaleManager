@@ -117,11 +117,11 @@ const ProductCard: FC<ProductCardProps> = ({ product, onImageError, imageError, 
                         </CarouselItem>
                       ))}
                     </CarouselContent>
-                    <CarouselPrevious className="left-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-8 sm:w-8 bg-white/80 hover:bg-white shadow-md" />
-                    <CarouselNext className="right-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-8 sm:w-8 bg-white/80 hover:bg-white shadow-md" />
+                    <CarouselPrevious className="left-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-8 sm:w-8 bg-card/80 hover:bg-card shadow-md" />
+                    <CarouselNext className="right-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-8 sm:w-8 bg-card/80 hover:bg-card shadow-md" />
                   </Carousel>
                 ) : (
-                  <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                  <div className="w-full h-full bg-muted flex items-center justify-center">
                     <img
                       src={getImageUrl(displayImages[0])}
                       alt={product.name}
@@ -131,12 +131,12 @@ const ProductCard: FC<ProductCardProps> = ({ product, onImageError, imageError, 
                   </div>
                 )
               ) : (
-                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+                <div className="w-full h-full bg-muted flex items-center justify-center text-gray-400">
                   <Package className="w-8 h-8" />
                 </div>
               )
             ) : (
-              <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+              <div className="w-full h-full bg-muted flex items-center justify-center text-gray-400">
                 <Package className="w-8 h-8" />
               </div>
             )}
@@ -145,8 +145,8 @@ const ProductCard: FC<ProductCardProps> = ({ product, onImageError, imageError, 
           <Button
             variant="ghost"
             size="sm"
-            className={`absolute top-2 right-2 bg-white/80 hover:bg-white h-8 w-8 p-0 ${
-              favoriteStatus?.isFavorite ? "text-red-500" : "text-gray-600"
+            className={`absolute top-2 right-2 bg-card/80 hover:bg-card h-8 w-8 p-0 ${
+              favoriteStatus?.isFavorite ? "text-red-500" : "text-muted-foreground"
             }`}
             onClick={handleToggleFavorite}
             disabled={toggleFavorite.isPending}
@@ -166,7 +166,7 @@ const ProductCard: FC<ProductCardProps> = ({ product, onImageError, imageError, 
                 KSh {currentPrice.toLocaleString()}
               </span>
               {hasMultipleUnits && (
-                <span className="text-xs text-gray-500">{getUnitLabel(selectedUnit)}</span>
+                <span className="text-xs text-muted-foreground">{getUnitLabel(selectedUnit)}</span>
               )}
             </div>
           </div>
@@ -206,11 +206,11 @@ const ProductCard: FC<ProductCardProps> = ({ product, onImageError, imageError, 
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <CarouselPrevious className="left-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-8 sm:w-8 bg-white/80 hover:bg-white shadow-md" />
-                <CarouselNext className="right-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-8 sm:w-8 bg-white/80 hover:bg-white shadow-md" />
+                <CarouselPrevious className="left-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-8 sm:w-8 bg-card/80 hover:bg-card shadow-md" />
+                <CarouselNext className="right-1 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-8 sm:w-8 bg-card/80 hover:bg-card shadow-md" />
               </Carousel>
             ) : (
-              <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+              <div className="w-full h-full bg-muted rounded-lg flex items-center justify-center">
                 <img
                   src={getImageUrl(displayImages[0])}
                   alt={product.name}
@@ -220,13 +220,13 @@ const ProductCard: FC<ProductCardProps> = ({ product, onImageError, imageError, 
               </div>
             )
           ) : (
-            <div className="w-full h-full bg-gray-100 rounded-lg flex flex-col items-center justify-center text-gray-400 p-4 text-center">
+            <div className="w-full h-full bg-muted rounded-lg flex flex-col items-center justify-center text-gray-400 p-4 text-center">
               <Package className="w-8 h-8 mb-2" />
               <span className="text-xs">No image available</span>
             </div>
           )
         ) : (
-          <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+          <div className="w-full h-full bg-muted rounded-lg flex items-center justify-center">
             <div className="flex flex-col items-center text-gray-400">
               <Package className="w-8 h-8 mb-1" />
               <span className="text-xs">Image failed to load</span>
@@ -241,7 +241,7 @@ const ProductCard: FC<ProductCardProps> = ({ product, onImageError, imageError, 
           <h3 className="font-semibold text-base sm:text-lg mb-1 sm:mb-2 line-clamp-2">
             {product.name}
           </h3>
-          <p className="text-gray-600 text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2">
+          <p className="text-muted-foreground text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2">
             {product.description}
           </p>
           <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
@@ -261,7 +261,7 @@ const ProductCard: FC<ProductCardProps> = ({ product, onImageError, imageError, 
               KSh {currentPrice.toLocaleString()}
             </span>
             {hasMultipleUnits && (
-              <span className="text-xs sm:text-sm text-gray-500">{getUnitLabel(selectedUnit)}</span>
+              <span className="text-xs sm:text-sm text-muted-foreground">{getUnitLabel(selectedUnit)}</span>
             )}
           </div>
 
@@ -335,7 +335,7 @@ const ProductCard: FC<ProductCardProps> = ({ product, onImageError, imageError, 
           >
             <Heart
               className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                favoriteStatus?.isFavorite ? "text-red-500 fill-current" : "text-gray-600"
+                favoriteStatus?.isFavorite ? "text-red-500 fill-current" : "text-muted-foreground"
               }`}
             />
           </Button>

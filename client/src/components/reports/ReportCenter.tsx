@@ -62,7 +62,7 @@ export default function ReportCenter({ salesSummary, expensesSummary, salesHisto
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <Button
                     variant="outline"
-                    className="h-auto py-4 flex flex-col items-center gap-3 bg-white hover:bg-primary/5 hover:border-primary/30 transition-all border-slate-200"
+                    className="h-auto py-4 flex flex-col items-center gap-3 bg-card hover:bg-primary/5 hover:border-primary/30 transition-all border-slate-200"
                     onClick={handlePLDownload}
                     disabled={!salesSummary || !expensesSummary}
                 >
@@ -77,7 +77,7 @@ export default function ReportCenter({ salesSummary, expensesSummary, salesHisto
 
                 <Button
                     variant="outline"
-                    className="h-auto py-4 flex flex-col items-center gap-3 bg-white hover:bg-primary/5 hover:border-primary/30 transition-all border-slate-200"
+                    className="h-auto py-4 flex flex-col items-center gap-3 bg-card hover:bg-primary/5 hover:border-primary/30 transition-all border-slate-200"
                     onClick={handleSalesAuditDownload}
                     disabled={!salesHistory || salesHistory.length === 0}
                 >

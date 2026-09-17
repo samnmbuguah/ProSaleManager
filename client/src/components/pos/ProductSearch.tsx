@@ -87,7 +87,7 @@ const ProductImageCarousel: React.FC<{
       {displayImages.length > 1 && (
         <>
           <button
-            className="absolute -left-2 top-1/2 -translate-y-1/2 h-6 w-6 bg-white/90 hover:bg-white border shadow-md rounded-full flex items-center justify-center z-20"
+            className="absolute -left-2 top-1/2 -translate-y-1/2 h-6 w-6 bg-card/90 hover:bg-card border shadow-md rounded-full flex items-center justify-center z-20"
             onClick={goToPrevious}
             onMouseDown={(e) => e.stopPropagation()}
             onMouseUp={(e) => e.stopPropagation()}
@@ -95,7 +95,7 @@ const ProductImageCarousel: React.FC<{
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button
-            className="absolute -right-2 top-1/2 -translate-y-1/2 h-6 w-6 bg-white/90 hover:bg-white border shadow-md rounded-full flex items-center justify-center z-20"
+            className="absolute -right-2 top-1/2 -translate-y-1/2 h-6 w-6 bg-card/90 hover:bg-card border shadow-md rounded-full flex items-center justify-center z-20"
             onClick={goToNext}
             onMouseDown={(e) => e.stopPropagation()}
             onMouseUp={(e) => e.stopPropagation()}
@@ -184,7 +184,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h3 className="font-semibold text-sm line-clamp-1">{product.name}</h3>
-                <p className="text-xs text-gray-500">{product.sku}</p>
+                <p className="text-xs text-muted-foreground">{product.sku}</p>
               </div>
               <Badge variant="outline" className="text-xs ml-2">
                 {product.Category?.name || "No Category"}
@@ -194,26 +194,26 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
             <div className="flex items-center justify-between mt-2">
               <div className="flex space-x-4 text-xs">
                 <div>
-                  <span className="text-gray-600">Piece:</span>
+                  <span className="text-muted-foreground">Piece:</span>
                   <span className="font-medium ml-1">
                     {formatPrice(product.piece_selling_price)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-600">Pack:</span>
+                  <span className="text-muted-foreground">Pack:</span>
                   <span className="font-medium ml-1">
                     {formatPrice(product.pack_selling_price)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-600">Dozen:</span>
+                  <span className="text-muted-foreground">Dozen:</span>
                   <span className="font-medium ml-1">
                     {formatPrice(product.dozen_selling_price)}
                   </span>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                {!isSalesOrCashier && <span className="text-xs text-gray-500">Stock: {product.quantity}</span>}
+                {!isSalesOrCashier && <span className="text-xs text-muted-foreground">Stock: {product.quantity}</span>}
                 <Button
                   size="sm"
                   className="h-6 px-2 text-xs"
@@ -276,7 +276,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
 
           {/* Pagination Limit Dropdown */}
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600">Show:</span>
+            <span className="text-sm text-muted-foreground">Show:</span>
             <Select value={productsPerPage.toString()} onValueChange={handleProductsPerPageChange}>
               <SelectTrigger className="w-20">
                 <SelectValue />
@@ -336,7 +336,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h3 className="font-semibold text-sm line-clamp-2">{product.name}</h3>
-                      <p className="text-xs text-gray-500">{product.sku}</p>
+                      <p className="text-xs text-muted-foreground">{product.sku}</p>
                     </div>
                     <Badge variant="outline" className="text-xs">
                       {product.Category?.name || "No Category"}
@@ -345,17 +345,17 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
 
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-600">Piece:</span>
+                      <span className="text-muted-foreground">Piece:</span>
                       <span className="font-medium">
                         {formatPrice(product.piece_selling_price)}
                       </span>
                     </div>
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-600">Pack:</span>
+                      <span className="text-muted-foreground">Pack:</span>
                       <span className="font-medium">{formatPrice(product.pack_selling_price)}</span>
                     </div>
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-600">Dozen:</span>
+                      <span className="text-muted-foreground">Dozen:</span>
                       <span className="font-medium">
                         {formatPrice(product.dozen_selling_price)}
                       </span>
@@ -363,7 +363,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
                   </div>
 
                   <div className="flex items-center justify-between pt-2 border-t">
-                    {!isSalesOrCashier && <div className="text-xs text-gray-500">Stock: {product.quantity}</div>}
+                    {!isSalesOrCashier && <div className="text-xs text-muted-foreground">Stock: {product.quantity}</div>}
                     {isSalesOrCashier && <div></div>}
                     <Button
                       size="sm"
@@ -386,7 +386,7 @@ export const ProductSearch: React.FC<ProductSearchProps> = ({
 
       {/* Pagination Controls */}
       <div className="flex items-center justify-between mt-4">
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           Showing {(page - 1) * productsPerPage + 1} to{" "}
           {Math.min(page * productsPerPage, products.length)} of {products.length} products
         </div>

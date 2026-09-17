@@ -18,6 +18,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { Supplier } from "@/types/supplier";
 import type { PurchaseOrderItem } from "@/types/purchase-order";
 import { Loader2, Edit } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 interface PurchaseOrderDetailsProps {
   orderId: number | null;
@@ -56,13 +57,6 @@ export function PurchaseOrderDetails({
       setIsSaving(false);
     }
   }, [isOpen]);
-
-  const formatCurrency = (amount: string | number) => {
-    return `KSh ${Number(amount).toLocaleString("en-KE", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
 
   const handleItemChange = (index: number, field: keyof PurchaseOrderItem, value: string) => {
     const newItems = [...editedItems];

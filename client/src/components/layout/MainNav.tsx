@@ -189,11 +189,11 @@ export default function MainNav() {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
-              <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
-              <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-8 w-8 bg-muted rounded animate-pulse"></div>
+              <div className="h-6 w-32 bg-muted rounded animate-pulse"></div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="h-6 w-24 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-6 w-24 bg-muted rounded animate-pulse"></div>
             </div>
           </div>
         </div>
@@ -370,7 +370,7 @@ export default function MainNav() {
                     notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`px-3 py-2 text-sm border-b last:border-b-0 cursor-pointer hover:bg-muted/50 transition-colors ${notification.is_read ? "bg-white" : "bg-blue-50"
+                        className={`px-3 py-2 text-sm border-b last:border-b-0 cursor-pointer hover:bg-muted/50 transition-colors ${notification.is_read ? "bg-card" : "bg-blue-50"
                           } ${notification.id === -1 ? "bg-blue-50" : ""}`}
                         onClick={() => {
                           handleMarkAsRead(notification.id);
