@@ -1,24 +1,26 @@
-import { useEffect } from "react";
+import { useEffect, Suspense, lazy } from "react";
 import { Route, Switch } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
+import { Loader2 } from "lucide-react";
 
 import { RoleBasedRoute } from "@/components/auth/RoleBasedRoute";
 import MainNav from "@/components/layout/MainNav";
 import StoreNav from "@/components/layout/StoreNav";
-// Import your pages
 import AuthPage from "@/pages/AuthPage";
-import InventoryPage from "@/pages/InventoryPage";
-import ExpensesPage from "@/pages/ExpensesPage";
-import { SalesPage } from "@/pages/SalesPage";
-import CustomersPage from "@/pages/CustomersPage";
-import POSPage from "@/pages/PosPage";
-import ProfilePage from "@/pages/ProfilePage";
-import ReportsPage from "@/pages/ReportsPage";
 import HomePage from "@/pages/HomePage";
-import UserManagementPage from "@/pages/UserManagementPage";
-import FavoritesPage from "@/pages/FavoritesPage";
-import OrdersPage from "@/pages/OrdersPage";
 import { useAuthContext } from "@/contexts/AuthContext";
+
+// Lazy-loaded heavy pages for code splitting
+const InventoryPage = lazy(() => import("@/pages/InventoryPage"));
+const ExpensesPage = lazy(() => import("@/pages/ExpensesPage"));
+const SalesPage = lazy(() => import("@/pages/SalesPage").then((m) => ({ default: m.SalesPage })));
+const CustomersPage = lazy(() => import("@/pages/CustomersPage"));
+const POSPage = lazy(() => import("@/pages/PosPage"));
+const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
+const ReportsPage = lazy(() => import("@/pages/ReportsPage"));
+const UserManagementPage = lazy(() => import("@/pages/UserManagementPage"));
+const FavoritesPage = lazy(() => import("@/pages/FavoritesPage"));
+const OrdersPage = lazy(() => import("@/pages/OrdersPage"));
 import { useStoreContext } from "@/contexts/StoreContext";
 import { useLocation } from "wouter";
 
@@ -82,6 +84,14 @@ function RootRedirect() {
   return null;
 }
 
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[50vh] py-12">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
+
 function App() {
 
 
@@ -93,7 +103,8 @@ function App() {
       >
         Skip to main content
       </a>
-      <Switch>
+      <Suspense fallback={<PageLoader />}>
+        <Switch>
         <Route path="/auth" component={AuthPage} />
 
         <Route path="/" component={HomePage} />
@@ -230,6 +241,7 @@ function App() {
 
         <Route path="/admin" component={RootRedirect} />
       </Switch>
+      </Suspense>
       <Toaster />
     </>
   );
