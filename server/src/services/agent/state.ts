@@ -6,6 +6,17 @@ import type { BaseMessage } from "@langchain/core/messages";
  * authenticated request — never from model output — so every tool call stays
  * tenant-scoped and role-aware.
  */
+export interface PendingAction {
+  name: "create_expense" | "draft_purchase_order" | "receive_stock";
+  args: Record<string, unknown>;
+  summary: string;
+}
+
+export interface ActionDraft {
+  name: PendingAction["name"];
+  data: Record<string, unknown>;
+}
+
 export const AgentState = Annotation.Root({
   messages: Annotation<BaseMessage[]>({
     reducer: addMessages,
@@ -14,6 +25,22 @@ export const AgentState = Annotation.Root({
   intent: Annotation<string>({
     reducer: (_prev, next) => next ?? "",
     default: () => "",
+  }),
+  pendingAction: Annotation<PendingAction | null>({
+    reducer: (_prev, next) => next ?? null,
+    default: () => null,
+  }),
+  draft: Annotation<ActionDraft | null>({
+    reducer: (_prev, next) => next ?? null,
+    default: () => null,
+  }),
+  approved: Annotation<boolean | null>({
+    reducer: (_prev, next) => next ?? null,
+    default: () => null,
+  }),
+  decidedBy: Annotation<number | null>({
+    reducer: (_prev, next) => next ?? null,
+    default: () => null,
   }),
   storeId: Annotation<number | null>({
     reducer: (_prev, next) => next ?? null,

@@ -54,6 +54,9 @@ describe("agent eval golden set", () => {
     "answers %p",
     async (question, expected) => {
       const result = await runAgent({ message: question, storeId: 1, userId: 2, role: "admin" });
+      if (result.status !== "replied") {
+        throw new Error(`Expected a reply for "${question}", got status: ${result.status}`);
+      }
       for (const fragment of expected) {
         expect(result.reply).toContain(fragment);
       }

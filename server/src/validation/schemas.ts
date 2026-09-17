@@ -66,9 +66,15 @@ export const agentMessageSchema = z.object({
   threadId: z.string().trim().min(1).max(100).optional(),
 });
 
+export const agentResumeSchema = z.object({
+  threadId: z.string().trim().min(1, "Thread id is required").max(100),
+  approved: z.boolean(),
+});
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
 export type AgentMessageInput = z.infer<typeof agentMessageSchema>;
+export type AgentResumeInput = z.infer<typeof agentResumeSchema>;

@@ -4,6 +4,7 @@ export default {
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
+  setupFiles: ['<rootDir>/jest.setup.ts'],
   // The server has no unit tests yet; keep `npm test` green so CI-style
   // pipelines can run it unconditionally.
   passWithNoTests: true,

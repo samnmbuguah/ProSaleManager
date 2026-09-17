@@ -13,6 +13,7 @@ import SaleItem from "./SaleItem.js";
 import Expense from "./Expense.js";
 import Store from "./Store.js";
 import ReceiptSettings from "./ReceiptSettings.js";
+import AgentAction from "./AgentAction.js";
 import Favorite from "./Favorite.js";
 import StockTakeSession from "./StockTakeSession.js";
 import StockTakeItem from "./StockTakeItem.js";
@@ -26,6 +27,7 @@ setupAssociations();
 
 // Export models
 export {
+  AgentAction,
   sequelize,
   User,
   UserPreference,

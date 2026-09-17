@@ -16,8 +16,13 @@
   (`client/src/components/agent/` + `agentService.ts`, thread persisted in
   localStorage); Postgres checkpointer (`AGENT_CHECKPOINT_URL`, falls back to
   `MemorySaver`).
-- **Not yet:** write actions with HITL approval, proactive briefings,
-  multi-agent supervisor, pgvector RAG.
+- **Phase 2 (done):** write actions behind human approval — proposal →
+  `interrupt()` → approve/reject → transactional execute for expenses,
+  purchase-order drafts, and stock receipt; `AgentAction` audit trail +
+  migration; role gates mirroring the REST endpoints; approver notifications;
+  `/api/agent/resume` with store-ownership and role re-checks; approval card
+  in the web panel.
+- **Not yet:** proactive briefings, multi-agent supervisor, pgvector RAG.
 
 ## 1. Executive summary
 

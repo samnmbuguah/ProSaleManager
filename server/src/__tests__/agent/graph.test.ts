@@ -1,6 +1,14 @@
 import { runAgent } from "../../services/agent/graph.js";
 import { agentFetchers } from "../../services/agent/tools.js";
 
+async function replyFor(args: Parameters<typeof runAgent>[0]): Promise<string> {
+  const result = await runAgent(args);
+  if (result.status !== "replied") {
+    throw new Error(`Expected a reply, got status: ${result.status}`);
+  }
+  return result.reply;
+}
+
 const originalFetchers = { ...agentFetchers };
 
 beforeEach(() => {
@@ -24,24 +32,23 @@ const base = { storeId: 1, userId: 2, role: "admin" };
 describe("runAgent (stub mode)", () => {
   it("answers sales questions with tool data", async () => {
     const result = await runAgent({ message: "How were sales this week?", ...base });
+    expect(result.status).toBe("replied");
+    if (result.status !== "replied") throw new Error("expected reply");
     expect(result.reply).toContain("3 sale(s)");
     expect(result.reply).toContain("4500.00");
     expect(result.threadId).toMatch(/^thread-/);
   });
 
   it("answers inventory questions with tool data", async () => {
-    const result = await runAgent({ message: "What is low in stock?", ...base });
-    expect(result.reply).toContain("10 product(s)");
+    expect(await replyFor({ message: "What is low in stock?", ...base })).toContain("10 product(s)");
   });
 
   it("searches products by name", async () => {
-    const result = await runAgent({ message: "Sugar", ...base });
-    expect(result.reply).toContain("Sugar");
+    expect(await replyFor({ message: "Sugar", ...base })).toContain("Sugar");
   });
 
   it("echoes free chat in stub mode", async () => {
-    const result = await runAgent({ message: "Hello there", ...base });
-    expect(result.reply).toContain("Hello there");
+    expect(await replyFor({ message: "Hello there", ...base })).toContain("Hello there");
   });
 
   it("preserves a caller-supplied thread id", async () => {
