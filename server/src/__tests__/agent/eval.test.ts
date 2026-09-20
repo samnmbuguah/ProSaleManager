@@ -39,6 +39,7 @@ const originalFetchers = { ...agentFetchers };
 beforeEach(() => {
   delete process.env.OPENAI_API_KEY;
   delete process.env.OPENCODE_ZEN_API_KEY;
+  delete process.env.NVIDIA_API_KEY;
   resetCheckpointerCache();
   agentFetchers.salesSummary = async (_storeId, period) => ({ period, count: 3, total: 4500 });
   agentFetchers.inventoryReport = async () => ({

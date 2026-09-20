@@ -8,6 +8,7 @@ import {
 
 const KEYS = [
   "AGENT_ENABLED",
+  "NVIDIA_API_KEY",
   "OPENCODE_ZEN_API_KEY",
   "OPENAI_API_KEY",
   "AGENT_BASE_URL",
@@ -80,6 +81,33 @@ describe("resolveLlmConfig", () => {
     });
   });
 
+  it("prefers NVIDIA with chat/completions forced on", () => {
+    expect(
+      resolveLlmConfig({
+        AGENT_ENABLED: "true",
+        NVIDIA_API_KEY: "nvapi-test",
+        OPENCODE_ZEN_API_KEY: "sk-zen",
+        AGENT_RESPONSES_API: "true",
+      }),
+    ).toEqual({
+      provider: "nvidia",
+      apiKey: "nvapi-test",
+      baseURL: "https://integrate.api.nvidia.com/v1",
+      model: "deepseek-ai/deepseek-v4-flash-0731",
+      useResponsesApi: false,
+    });
+  });
+
+  it("honours a custom NVIDIA model", () => {
+    expect(
+      resolveLlmConfig({
+        AGENT_ENABLED: "true",
+        NVIDIA_API_KEY: "nvapi-test",
+        AGENT_MODEL: "meta/llama-3.1-70b-instruct",
+      }),
+    ).toMatchObject({ provider: "nvidia", model: "meta/llama-3.1-70b-instruct" });
+  });
+
   it("falls back to plain OpenAI", () => {
     expect(
       resolveLlmConfig({ AGENT_ENABLED: "true", OPENAI_API_KEY: "sk-openai" }),
@@ -99,6 +127,7 @@ describe("getChatModel", () => {
     restoreEnv({
       ...saved,
       AGENT_ENABLED: undefined,
+      NVIDIA_API_KEY: undefined,
       OPENCODE_ZEN_API_KEY: undefined,
       OPENAI_API_KEY: undefined,
       AGENT_RESPONSES_API: undefined,
