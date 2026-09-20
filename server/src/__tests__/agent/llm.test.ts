@@ -8,6 +8,7 @@ import {
 
 const KEYS = [
   "AGENT_ENABLED",
+  "OPENROUTER_API_KEY",
   "NVIDIA_API_KEY",
   "OPENCODE_ZEN_API_KEY",
   "OPENAI_API_KEY",
@@ -81,6 +82,34 @@ describe("resolveLlmConfig", () => {
     });
   });
 
+  it("prefers OpenRouter with chat/completions forced on", () => {
+    expect(
+      resolveLlmConfig({
+        AGENT_ENABLED: "true",
+        OPENROUTER_API_KEY: "sk-or-test",
+        NVIDIA_API_KEY: "nvapi-test",
+        OPENCODE_ZEN_API_KEY: "sk-zen",
+        AGENT_RESPONSES_API: "true",
+      }),
+    ).toEqual({
+      provider: "openrouter",
+      apiKey: "sk-or-test",
+      baseURL: "https://openrouter.ai/api/v1",
+      model: "z-ai/glm-5.2:free",
+      useResponsesApi: false,
+    });
+  });
+
+  it("honours a custom OpenRouter model", () => {
+    expect(
+      resolveLlmConfig({
+        AGENT_ENABLED: "true",
+        OPENROUTER_API_KEY: "sk-or-test",
+        AGENT_MODEL: "qwen/qwen3.8-27b:free",
+      }),
+    ).toMatchObject({ provider: "openrouter", model: "qwen/qwen3.8-27b:free" });
+  });
+
   it("prefers NVIDIA with chat/completions forced on", () => {
     expect(
       resolveLlmConfig({
@@ -127,6 +156,7 @@ describe("getChatModel", () => {
     restoreEnv({
       ...saved,
       AGENT_ENABLED: undefined,
+      OPENROUTER_API_KEY: undefined,
       NVIDIA_API_KEY: undefined,
       OPENCODE_ZEN_API_KEY: undefined,
       OPENAI_API_KEY: undefined,

@@ -1,6 +1,6 @@
 import { ChatOpenAI } from "@langchain/openai";
 
-export type LlmProvider = "openai" | "zen" | "nvidia";
+export type LlmProvider = "openai" | "zen" | "nvidia" | "openrouter";
 
 /** OpenCode Zen gateway. ChatOpenAI speaks /chat/completions under this base. */
 export const ZEN_BASE_URL = "https://opencode.ai/zen/v1";
@@ -15,6 +15,10 @@ export const ZEN_DEFAULT_MODEL = "muse-spark-1.3-contributor-free";
 /** NVIDIA NIM gateway (OpenAI chat/completions dialect — never Responses API). */
 export const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
 export const NVIDIA_DEFAULT_MODEL = "deepseek-ai/deepseek-v4-flash-0731";
+
+/** OpenRouter gateway (OpenAI chat/completions dialect — never Responses API). */
+export const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
+export const OPENROUTER_DEFAULT_MODEL = "z-ai/glm-5.2:free";
 
 export interface LlmConfig {
   provider: LlmProvider;
@@ -31,11 +35,21 @@ export function isAgentEnabled(): boolean {
 
 /**
  * Pure provider resolution (takes env explicitly so it is unit-testable).
- * Precedence: NVIDIA, then OpenCode Zen, then plain OpenAI. NVIDIA NIM only
- * speaks chat/completions, so useResponsesApi is forced off for it.
+ * Precedence: OpenRouter, then NVIDIA, then OpenCode Zen, then plain OpenAI.
+ * OpenRouter and NVIDIA NIM only speak chat/completions, so useResponsesApi
+ * is forced off for them.
  */
 export function resolveLlmConfig(env: NodeJS.ProcessEnv = process.env): LlmConfig | null {
   if (env.AGENT_ENABLED !== "true") return null;
+  if (env.OPENROUTER_API_KEY) {
+    return {
+      provider: "openrouter",
+      apiKey: env.OPENROUTER_API_KEY,
+      baseURL: env.AGENT_BASE_URL || OPENROUTER_BASE_URL,
+      model: env.AGENT_MODEL || OPENROUTER_DEFAULT_MODEL,
+      useResponsesApi: false,
+    };
+  }
   if (env.NVIDIA_API_KEY) {
     return {
       provider: "nvidia",

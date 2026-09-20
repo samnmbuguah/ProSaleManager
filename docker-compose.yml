@@ -15,6 +15,7 @@ services:
       - COOKIE_SECRET=${COOKIE_SECRET}
       - OPENCODE_ZEN_API_KEY=${OPENCODE_ZEN_API_KEY:-}
       - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - AGENT_MODEL=${AGENT_MODEL:-}
       - CLIENT_URL=https://prosale.169-58-102-217.sslip.io
     depends_on:

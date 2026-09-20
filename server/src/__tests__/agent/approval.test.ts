@@ -26,6 +26,7 @@ beforeEach(() => {
   delete process.env.OPENAI_API_KEY;
   delete process.env.OPENCODE_ZEN_API_KEY;
   delete process.env.NVIDIA_API_KEY;
+  delete process.env.OPENROUTER_API_KEY;
   resetCheckpointerCache();
   auditLog.length = 0;
   notifications.length = 0;
