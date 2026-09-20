@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
 import type { Request, Response } from "express";
 
-type StockHandler = (req: Request, res: Response) => Promise<void>;
+type StockHandler = (req: Request, res: Response) => Promise<unknown>;
 let receiveStock: StockHandler;
 let receiveStockBulk: StockHandler;
 
