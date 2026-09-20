@@ -154,6 +154,7 @@ describe("getChatModel", () => {
     process.env.NVIDIA_API_KEY = "nvapi-test";
     const model = getChatModel();
     expect(model).toBeInstanceOf(ChatOpenAI);
-    expect((model as unknown as { timeout?: number }).timeout).toBe(60_000);
+    // Forwarded to the OpenAI client; the SDK additionally forces maxRetries 0.
+    expect((model as unknown as { timeout?: number }).timeout).toBe(25_000);
   });
 });
