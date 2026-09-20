@@ -1,4 +1,4 @@
-import { runAgent } from "../../services/agent/graph.js";
+import { routeTarget, runAgent } from "../../services/agent/graph.js";
 import { agentFetchers } from "../../services/agent/tools.js";
 
 async function replyFor(args: Parameters<typeof runAgent>[0]): Promise<string> {
@@ -51,6 +51,21 @@ describe("runAgent (stub mode)", () => {
 
   it("echoes free chat in stub mode", async () => {
     expect(await replyFor({ message: "Hello there", ...base })).toContain("Hello there");
+  });
+
+  it("routes deterministically in stub mode", () => {
+    expect(routeTarget("chat", "admin", false)).toBe("respond");
+    expect(routeTarget("denied", "client", true)).toBe("respond");
+    expect(routeTarget("sales", "admin", false)).toBe("toolCall");
+    expect(routeTarget("search", "client", false)).toBe("toolCall");
+    expect(routeTarget("write:create_expense", "admin", true)).toBe("propose");
+    expect(routeTarget("continue", "admin", true)).toBe("propose");
+  });
+
+  it("routes reads to the live loop when a model is present", () => {
+    expect(routeTarget("chat", "admin", true)).toBe("liveAgent");
+    expect(routeTarget("sales", "admin", true)).toBe("liveAgent");
+    expect(routeTarget("orders", "client", true)).toBe("liveAgent");
   });
 
   it("preserves a caller-supplied thread id", async () => {

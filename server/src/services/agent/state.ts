@@ -42,6 +42,10 @@ export const AgentState = Annotation.Root({
     reducer: (_prev, next) => next ?? null,
     default: () => null,
   }),
+  iterations: Annotation<number>({
+    reducer: (a, b) => a + b,
+    default: () => 0,
+  }),
   storeId: Annotation<number | null>({
     reducer: (_prev, next) => next ?? null,
     default: () => null,

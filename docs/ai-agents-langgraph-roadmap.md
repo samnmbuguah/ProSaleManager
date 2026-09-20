@@ -26,6 +26,10 @@
   product search; revenue/inventory are staff-only), `get_my_orders` tool,
   proactive daily briefing job (`runDailyBriefings`, flag-gated 07:00 cron),
   24-case eval golden set.
+- **Live loop (done):** `liveAgent` ReAct node with bound tools + `ToolNode`
+  and a 6-round cap; reads route there whenever a model key is set while
+  denials and write proposals stay deterministic. Verified live against
+  NVIDIA NIM (DeepSeek). Providers: NVIDIA → Zen → OpenAI.
 - **Not yet:** multi-agent supervisor, pgvector RAG.
 
 ## 1. Executive summary
