@@ -80,6 +80,10 @@ export function getChatModel(): ChatOpenAI | null {
     model: config.model,
     temperature: 0,
     useResponsesApi: config.useResponsesApi,
+    // Fail fast (one retry): a stalled provider must surface quickly so the
+    // graph's graceful fallback kicks in instead of hanging the request.
+    timeout: 60_000,
+    maxRetries: 1,
     ...(config.baseURL ? { configuration: { baseURL: config.baseURL } } : {}),
   });
 }

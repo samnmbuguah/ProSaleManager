@@ -148,4 +148,12 @@ describe("getChatModel", () => {
     process.env.OPENCODE_ZEN_API_KEY = "sk-zen-test";
     expect(getChatModel()).toBeInstanceOf(ChatOpenAI);
   });
+
+  it("fails fast on stalled providers", () => {
+    process.env.AGENT_ENABLED = "true";
+    process.env.NVIDIA_API_KEY = "nvapi-test";
+    const model = getChatModel();
+    expect(model).toBeInstanceOf(ChatOpenAI);
+    expect((model as unknown as { timeout?: number }).timeout).toBe(60_000);
+  });
 });
